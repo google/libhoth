@@ -102,17 +102,17 @@ int libhoth_usb_fifo_open(struct libhoth_usb_device *dev,
     const struct libusb_endpoint_descriptor *endpoint = &interface->endpoint[i];
     enum libusb_endpoint_direction direction =
         endpoint->bEndpointAddress & LIBUSB_ENDPOINT_DIR_MASK;
-    enum libusb_endpoint_transfer_type transfer_type =
+    enum libusb_transfer_type transfer_type =
         endpoint->bmAttributes & LIBUSB_TRANSFER_TYPE_MASK;
     if (direction == LIBUSB_ENDPOINT_IN &&
-        transfer_type == LIBUSB_ENDPOINT_TRANSFER_TYPE_BULK) {
+        transfer_type == LIBUSB_TRANSFER_TYPE_BULK) {
       if (drvdata->ep_in != 0) {
         return LIBUSB_ERROR_INVALID_PARAM;
       }
       drvdata->ep_in = endpoint->bEndpointAddress;
       drvdata->max_packet_size_in = endpoint->wMaxPacketSize;
     } else if (direction == LIBUSB_ENDPOINT_OUT &&
-               transfer_type == LIBUSB_ENDPOINT_TRANSFER_TYPE_BULK) {
+               transfer_type == LIBUSB_TRANSFER_TYPE_BULK) {
       if (drvdata->ep_out != 0) {
         return LIBUSB_ERROR_INVALID_PARAM;
       }
