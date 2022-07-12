@@ -276,7 +276,7 @@ int htool_spi_init(struct htool_spi* spi, struct libhoth_usb_device* dev) {
 int htool_spi_update(const struct htool_spi* spi, uint32_t addr,
                      const void* buf, size_t len,
                      const struct htool_progress* progress) {
-  const uint32_t PAGE_SIZE = 256;
+  const uint32_t SPI_PAGE_SIZE = 256;
 
   // There is only enough space in the buffer for 3 page writes (and associated
   // erases and write-enable transactions)
@@ -294,7 +294,7 @@ int htool_spi_update(const struct htool_spi* spi, uint32_t addr,
 
   size_t len_remaining = len;
   while (len_remaining > 0) {
-    size_t page_end = ((addr + PAGE_SIZE) / PAGE_SIZE) * PAGE_SIZE;
+    size_t page_end = ((addr + SPI_PAGE_SIZE) / SPI_PAGE_SIZE) * SPI_PAGE_SIZE;
 
     if (page_end > need_erase_addr) {
       uint32_t erase_start_64k = (addr / 65536) * 65536;
