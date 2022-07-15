@@ -14,7 +14,7 @@
 
 #include "libhoth_usb.h"
 
-#include <libusb-1.0/libusb.h>
+#include <libusb.h>
 #include <stdlib.h>
 
 #include "libhoth_usb_device.h"

@@ -61,5 +61,6 @@ cc_binary(
     ],
     deps = [
         "//:libhoth_usb",
+        "@libusb//:libusb",
     ],
 )
