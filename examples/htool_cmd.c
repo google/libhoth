@@ -317,7 +317,7 @@ static int fill_cmd_invocation(struct htool_invocation* inv,
   int positional_param_index = 0;
   for (; cmd->params[num_params].type != HTOOL_PARAM_END; num_params++)
     ;
-  inv->args = malloc(num_params * sizeof(const char*));
+  inv->args = calloc(num_params, sizeof(const char*));
   for (int i = 0; i < argc; i++) {
     if (argv[i][0] == '-') {
       if (strcmp(argv[i], "--help") == 0) {
@@ -364,7 +364,7 @@ static int fill_global_flags(struct htool_invocation* inv,
   int num_params = 0;
   for (; cmd->params[num_params].type != HTOOL_PARAM_END; num_params++)
     ;
-  inv->args = malloc(num_params * sizeof(const char*));
+  inv->args = calloc(num_params, sizeof(const char*));
   for (int i = 0; i < argc; i++) {
     if (argv[i][0] != '-') {
       // the first non-flag parameter
