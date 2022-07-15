@@ -14,7 +14,7 @@
 
 #include "htool_usb.h"
 
-#include <libusb-1.0/libusb.h>
+#include <libusb.h>
 #include <stdbool.h>
 #include <stddef.h>
 #include <stdint.h>
@@ -288,9 +288,9 @@ libusb_device* htool_libusb_device(void) {
   const char* usb_loc_str;
   const char* usb_product_substr;
   int rv =
-      htool_get_param_string(htool_global_flags(), "usb_loc", &usb_loc_str);
-  htool_get_param_string(htool_global_flags(), "usb_product",
-                         &usb_product_substr);
+      htool_get_param_string(htool_global_flags(), "usb_loc", &usb_loc_str) ||
+      htool_get_param_string(htool_global_flags(), "usb_product",
+                             &usb_product_substr);
   if (rv) {
     return NULL;
   }

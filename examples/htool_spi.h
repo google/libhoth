@@ -15,6 +15,7 @@
 #ifndef LIBHOTH_EXAMPLES_HTOOL_SPI_H_
 #define LIBHOTH_EXAMPLES_HTOOL_SPI_H_
 
+#include <stddef.h>
 #include <stdint.h>
 
 struct htool_progress;

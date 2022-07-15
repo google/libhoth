@@ -9,5 +9,5 @@ cc_library(
         "libhoth_usb_mailbox.c",
     ],
     hdrs = ["libhoth_usb.h"],
-    linkopts = ["-lusb-1.0"],
+    deps = ["@libusb//:libusb"],
 )
