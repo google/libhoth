@@ -16,32 +16,6 @@ cc_library(
 )
 
 cc_binary(
-    name = "enumerate",
-    srcs = [
-        "bind.c",
-        "bind.h",
-        "enumerate.c",
-    ],
-    linkopts = ["-lusb-1.0"],
-    deps = ["//:libhoth_usb"],
-)
-
-cc_binary(
-    name = "ec_hello",
-    srcs = [
-        "bind.c",
-        "bind.h",
-        "ec_hello.c",
-    ],
-    linkopts = ["-lusb-1.0"],
-    deps = [
-        ":ec_util",
-        ":host_commands",
-        "//:libhoth_usb",
-    ],
-)
-
-cc_binary(
     name = "htool",
     srcs = [
         "ec_util.c",
@@ -60,6 +34,8 @@ cc_binary(
         "htool_usb.h",
     ],
     deps = [
+        ":ec_util",
+        ":host_commands",
         "//:libhoth_usb",
         "@libusb//:libusb",
     ],
