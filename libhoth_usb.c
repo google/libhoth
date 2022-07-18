@@ -98,10 +98,6 @@ int libhoth_usb_open(const struct libhoth_usb_device_init_options* options,
   if (status != LIBUSB_SUCCESS) {
     goto err_out;
   }
-  status = libusb_claim_interface(dev->handle, info.interface_id);
-  if (status != LIBUSB_SUCCESS) {
-    goto err_out;
-  }
 
   // Fill in driver-specific data
   switch (info.type) {
@@ -125,7 +121,6 @@ int libhoth_usb_open(const struct libhoth_usb_device_init_options* options,
 err_out:
   if (dev != NULL) {
     if (dev->handle != NULL) {
-      libusb_release_interface(dev->handle, dev->info.interface_id);
       libusb_close(dev->handle);
     }
     free(dev);
@@ -220,4 +215,19 @@ enum libusb_error transfer_status_to_error(
     default:
       return LIBUSB_ERROR_OTHER;
   }
+}
+
+int libhoth_claim_interface(struct libhoth_usb_device* dev) {
+  for (;;) {
+    int status = libusb_claim_interface(dev->handle, dev->info.interface_id);
+    if (status != LIBUSB_ERROR_BUSY) {
+      return status;
+    }
+    usleep(1000);
+  }
+  return 0;
+}
+
+int libhoth_release_interface(struct libhoth_usb_device* dev) {
+  return libusb_release_interface(dev->handle, dev->info.interface_id);
 }

@@ -41,6 +41,14 @@ struct libhoth_usb_device_init_options {
 int libhoth_usb_open(const struct libhoth_usb_device_init_options* options,
                      struct libhoth_usb_device** out);
 
+// Claim the USB device. This function MUST be called before any send/receive
+// request.
+int libhoth_claim_interface(struct libhoth_usb_device* dev);
+
+// Release the USB device. This function MUST be called after any send/receive
+// request.
+int libhoth_release_interface(struct libhoth_usb_device* dev);
+
 // Request is a buffer containing the EC request header and trailing payload.
 // This function is not thread-safe. In multi-threaded contexts, callers must
 // ensure libhoth_usb_send_request() and libhoth_usb_receive_response() occur
