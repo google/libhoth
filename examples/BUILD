@@ -1,8 +1,7 @@
-
 cc_library(
     name = "host_commands",
     textual_hdrs = [
-      "host_commands.h",
+        "host_commands.h",
     ],
 )
 
