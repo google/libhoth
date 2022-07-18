@@ -61,18 +61,18 @@ static int get_channel_status(struct libhoth_usb_device *dev,
   }
 
   *offset = resp.write_offset;
-  return 0;
+  return LIBHOTH_OK;
 }
 
 static int read_console(struct libhoth_usb_device *dev,
                         const struct htool_console_opts *opts,
-                        uint32_t *offset) {
+                        uint32_t *offset, size_t *response_size) {
   struct ec_channel_read_request req = {
       .channel_id = opts->channel_id,
       .offset = *offset,
       .size =
           HOTH_FIFO_MAX_REQUEST_SIZE - sizeof(struct ec_channel_read_response),
-      .timeout_us = 10000,
+      .timeout_us = 0,
   };
 
   struct {
@@ -85,22 +85,31 @@ static int read_console(struct libhoth_usb_device *dev,
                      HOTH_FIFO_MAX_REQUEST_SIZE,
                  "unexpected layout");
 
-  size_t response_size = 0;
+  *response_size = 0;
   int status = htool_exec_hostcmd(
       dev, EC_CMD_BOARD_SPECIFIC_BASE + EC_PRV_CMD_HOTH_CHANNEL_READ,
-      /*version=*/0, &req, sizeof(req), &resp, sizeof(resp), &response_size);
+      /*version=*/0, &req, sizeof(req), &resp, sizeof(resp), response_size);
   if (status != 0) {
     return status;
   }
 
-  int len = response_size - sizeof(resp.resp);
+  // Incomplete fragment; just ignore.
+  if (*response_size < sizeof(resp.resp)) {
+    *response_size = 0;
+    return LIBHOTH_OK;
+  }
+
+  // The return value "response_size" contains the actual number of characters
+  // received.
+  *response_size -= sizeof(resp.resp);
+  int len = *response_size;
   if (len > 0) {
     fwrite(resp.buffer, len, 1, stdout);
     fflush(stdout);
     *offset = resp.resp.offset + len;
   }
 
-  return 0;
+  return LIBHOTH_OK;
 }
 
 bool set_raw_terminal(int fd, struct termios *old_termios) {
@@ -171,7 +180,7 @@ static int write_console(struct libhoth_usb_device *dev,
 
   int numRead = read(0, req.buffer, sizeof(req.buffer));
   if (numRead <= 0) {
-    return 0;
+    return LIBHOTH_OK;
   }
 
   int numWrite = unescape(req.buffer, numRead, quit);
@@ -185,7 +194,7 @@ static int write_console(struct libhoth_usb_device *dev,
       dev, EC_CMD_BOARD_SPECIFIC_BASE + EC_PRV_CMD_HOTH_CHANNEL_WRITE,
       /*version=*/1, &req, sizeof(req.req) + numWrite, NULL, 0, NULL);
 
-  if (status != 0) {
+  if (status != LIBHOTH_OK) {
     if (status == HTOOL_ERROR_HOST_COMMAND_START + EC_RES_UNAVAILABLE) {
       fprintf(stderr,
               "This is likely because the RoT was unable to confirm that no "
@@ -195,7 +204,7 @@ static int write_console(struct libhoth_usb_device *dev,
     return status;
   }
 
-  return 0;
+  return LIBHOTH_OK;
 }
 
 int htool_console_run(struct libhoth_usb_device *dev,
@@ -222,9 +231,13 @@ int htool_console_run(struct libhoth_usb_device *dev,
   if (opts->history) offset -= 0x80000000;
   bool quit = false;
   while (!quit) {
-    status = read_console(dev, opts, &offset);
+    size_t response_size;
+    status = read_console(dev, opts, &offset, &response_size);
     if (status != LIBHOTH_OK) {
       break;
+    }
+    if (response_size == 0) {
+      usleep(10000);
     }
 
     status = write_console(dev, opts, &quit);

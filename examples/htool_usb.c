@@ -339,10 +339,10 @@ int htool_usb_print_devices(void) {
   return enumerate_devices(libusb_ctx, print_device, NULL);
 }
 
-int htool_exec_hostcmd(struct libhoth_usb_device* dev, uint16_t command,
-                       uint8_t version, const void* req_payload,
-                       size_t req_payload_size, void* resp_buf,
-                       size_t resp_buf_size, size_t* out_resp_size) {
+static int _htool_exec_hostcmd(struct libhoth_usb_device* dev, uint16_t command,
+                               uint8_t version, const void* req_payload,
+                               size_t req_payload_size, void* resp_buf,
+                               size_t resp_buf_size, size_t* out_resp_size) {
   struct {
     struct ec_host_request hdr;
     uint8_t payload_buf[1016];
@@ -410,4 +410,23 @@ int htool_exec_hostcmd(struct libhoth_usb_device* dev, uint16_t command,
     *out_resp_size = resp_payload_size;
   }
   return 0;
+}
+
+int htool_exec_hostcmd(struct libhoth_usb_device* dev, uint16_t command,
+                       uint8_t version, const void* req_payload,
+                       size_t req_payload_size, void* resp_buf,
+                       size_t resp_buf_size, size_t* out_resp_size) {
+  int status = libhoth_claim_interface(dev);
+  if (status != LIBUSB_SUCCESS) {
+    fprintf(stderr, "Could not claim USB device\n");
+    return -1;
+  }
+  int ret = _htool_exec_hostcmd(dev, command, version, req_payload,
+                                req_payload_size, resp_buf, resp_buf_size,
+                                out_resp_size);
+  status = libhoth_release_interface(dev);
+  if (status != LIBUSB_SUCCESS) {
+    fprintf(stderr, "Could not release USB device\n");
+  }
+  return ret;
 }
