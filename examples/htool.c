@@ -360,7 +360,7 @@ static const struct htool_cmd CMDS[] = {
                          "debugging hardware attached."},
                 {HTOOL_FLAG_BOOL, 'h', "history", "false",
                  .desc = "Include data bufferred before the current time."},
-                {HTOOL_FLAG_BOOL, 'l', "onlcr", "false",
+                {HTOOL_FLAG_BOOL, 'n', "onlcr", "false",
                  .desc = "Translate received \"\\n\" to \"\\r\\n\"."},
                 {}},
         .func = command_console,
