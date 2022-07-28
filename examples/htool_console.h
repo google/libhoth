@@ -24,6 +24,7 @@ struct htool_console_opts {
   uint32_t channel_id;
   bool force_drive_tx;
   bool history;
+  bool onlcr;
 };
 
 int htool_console_run(struct libhoth_usb_device* dev,

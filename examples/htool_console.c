@@ -103,7 +103,8 @@ static int read_console(struct libhoth_usb_device *dev,
   return 0;
 }
 
-bool set_raw_terminal(int fd, struct termios *old_termios) {
+static bool set_raw_terminal(int fd, struct termios *old_termios,
+                             const struct htool_console_opts *opts) {
   struct termios new_termios;
   if (tcgetattr(fd, old_termios) < 0) {
     return false;
@@ -112,6 +113,9 @@ bool set_raw_terminal(int fd, struct termios *old_termios) {
   new_termios.c_iflag &=
       ~(IGNBRK | BRKINT | PARMRK | ISTRIP | ICRNL | INLCR | IGNCR | IXON);
   new_termios.c_oflag &= ~OPOST;
+  if (opts->onlcr) {
+    new_termios.c_oflag |= ONLCR | OPOST;
+  }
   new_termios.c_lflag &= ~(ECHO | ECHONL | ICANON | IEXTEN | ISIG);
   new_termios.c_cflag &= ~(CSIZE | PARENB);
   new_termios.c_cflag |= CS8;
@@ -214,7 +218,7 @@ int htool_console_run(struct libhoth_usb_device *dev,
 
   // Change terminal settings to raw, and make read from stdio non-blocking.
   struct termios old_termios;
-  set_raw_terminal(STDIN_FILENO, &old_termios);
+  set_raw_terminal(STDIN_FILENO, &old_termios, opts);
   fcntl(STDIN_FILENO, F_SETFL, fcntl(0, F_GETFL) | O_NONBLOCK);
 
   // Start reading at the earliest history the eRoT has in its buffer (since the

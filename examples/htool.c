@@ -268,7 +268,8 @@ static int command_console(const struct htool_invocation* inv) {
 
   if (htool_get_param_u32_or_fourcc(inv, "channel", &opts.channel_id) ||
       htool_get_param_bool(inv, "force_drive_tx", &opts.force_drive_tx) ||
-      htool_get_param_bool(inv, "history", &opts.history)) {
+      htool_get_param_bool(inv, "history", &opts.history) ||
+      htool_get_param_bool(inv, "onlcr", &opts.onlcr)) {
     return -1;
   };
   struct libhoth_usb_device* dev = htool_libhoth_usb_device();
@@ -359,6 +360,8 @@ static const struct htool_cmd CMDS[] = {
                          "debugging hardware attached."},
                 {HTOOL_FLAG_BOOL, 'h', "history", "false",
                  .desc = "Include data bufferred before the current time."},
+                {HTOOL_FLAG_BOOL, 'l', "onlcr", "false",
+                 .desc = "Translate received \"\\n\" to \"\\r\\n\"."},
                 {}},
         .func = command_console,
     },
