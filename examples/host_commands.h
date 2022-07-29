@@ -238,6 +238,7 @@ struct ec_channel_write_request_v0 {
 } __attribute__((packed, aligned(4)));
 
 #define EC_CHANNEL_WRITE_REQUEST_FLAG_FORCE_DRIVE_TX (1 << 0)
+#define EC_CHANNEL_WRITE_REQUEST_FLAG_SEND_BREAK (1 << 1)
 
 struct ec_channel_write_request_v1 {
   uint32_t channel_id;
@@ -246,6 +247,28 @@ struct ec_channel_write_request_v1 {
   uint32_t flags;
 
   // followed by the bytes to write
+} __attribute__((packed, aligned(4)));
+
+// Takes struct ec_channel_uart_config_get_req as
+// input and returns ec_channel_uart_config as output.
+#define EC_PRV_CMD_HOTH_CHANNEL_UART_CONFIG_GET 0x0039
+
+struct ec_channel_uart_config_get_req {
+  uint32_t channel_id;
+} __attribute__((packed, aligned(4)));
+
+struct ec_channel_uart_config {
+  uint32_t baud_rate;
+  // must be 0
+  uint32_t reserved;
+} __attribute__((packed, aligned(4)));
+
+// Takes struct ec_channel_uart_config_set_req as input.
+#define EC_PRV_CMD_HOTH_CHANNEL_UART_CONFIG_SET 0x003a
+
+struct ec_channel_uart_config_set_req {
+  uint32_t channel_id;
+  struct ec_channel_uart_config config;
 } __attribute__((packed, aligned(4)));
 
 #endif  // LIBHOTH_EXAMPLES_HOST_COMMANDS_H_

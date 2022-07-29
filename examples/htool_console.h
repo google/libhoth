@@ -25,6 +25,7 @@ struct htool_console_opts {
   bool force_drive_tx;
   bool history;
   bool onlcr;
+  uint32_t baud_rate;
 };
 
 int htool_console_run(struct libhoth_usb_device* dev,
