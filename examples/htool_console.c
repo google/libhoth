@@ -131,10 +131,27 @@ void restore_terminal(int fd, const struct termios *old_termios) {
   tcsetattr(fd, TCSANOW, old_termios);
 }
 
+static int send_break(struct libhoth_usb_device *dev,
+                      const struct htool_console_opts *opts) {
+  struct ec_channel_write_request_v1 req = {
+      .channel_id = opts->channel_id,
+      .flags = EC_CHANNEL_WRITE_REQUEST_FLAG_SEND_BREAK,
+  };
+  if (opts->force_drive_tx) {
+    req.flags |= EC_CHANNEL_WRITE_REQUEST_FLAG_FORCE_DRIVE_TX;
+  }
+
+  return htool_exec_hostcmd(
+      dev, EC_CMD_BOARD_SPECIFIC_BASE + EC_PRV_CMD_HOTH_CHANNEL_WRITE,
+      /*version=*/1, &req, sizeof(req), NULL, 0, NULL);
+}
+
 // in-place escape sequence processing.
 // looks for ctrl-T/q.
 #define ESCAPE_CHAR '\24'
-static int unescape(char *buf, int in, bool *quit) {
+static int unescape_and_run_commands(struct libhoth_usb_device *dev,
+                                     const struct htool_console_opts *opts,
+                                     char *buf, int in, bool *quit) {
   static bool escaped = false;
   int out = 0;
   for (int i = 0; i < in; i++) {
@@ -153,12 +170,35 @@ static int unescape(char *buf, int in, bool *quit) {
         case ESCAPE_CHAR:
           buf[out++] = buf[i];
           break;
+        case 'h':
+        case 'H':
+        case '?': {
+          printf("\r\n%sSupported hotkeys:\r\n", kAnsiRed);
+          printf("  q: Quit\r\n");
+          printf("  b: Send break\r\n");
+          printf("  h: Display this help\r\n");
+          printf(
+              "  ctrl+T: (repeat command mode sequence) Send the command mode "
+              "character to the remote end\r\n");
+          printf("\r\n%s", kAnsiReset);
+          break;
+        }
+        case 'B':
+        case 'b': {
+          int status = send_break(dev, opts);
+          if (status != LIBHOTH_OK) {
+            fprintf(stderr,
+                    "send_break() failed: %d; unable to set baud-rate\n",
+                    status);
+          }
+          break;
+        }
         case 'Q':
         case 'q':
           *quit = true;
           return 0;
         default:
-          fprintf(stderr, "unsupported escape key.\n");
+          fprintf(stderr, "unsupported escape key.\r\n");
           break;
       }
     }
@@ -178,7 +218,8 @@ static int write_console(struct libhoth_usb_device *dev,
     return 0;
   }
 
-  int numWrite = unescape(req.buffer, numRead, quit);
+  int numWrite =
+      unescape_and_run_commands(dev, opts, req.buffer, numRead, quit);
   if (*quit || numWrite == 0) return 0;
 
   req.req.channel_id = opts->channel_id;
@@ -246,7 +287,7 @@ int htool_console_run(struct libhoth_usb_device *dev,
   if (status == LIBHOTH_OK) {
     printf("Using baud-rate %d\n", uart_config.baud_rate);
   }
-  printf("[ Use Ctrl+T-Q to quit ]\n%s", kAnsiReset);
+  printf("[ Use Ctrl+T-Q to quit, ctrl+T-H for help ]\n%s", kAnsiReset);
 
   // Get the channel write pointer. (any new serial data received after this
   // will be stored at this offset)
