@@ -202,15 +202,56 @@ static int write_console(struct libhoth_usb_device *dev,
   return 0;
 }
 
+static int get_uart_config(struct libhoth_usb_device *dev,
+                           const struct htool_console_opts *opts,
+                           struct ec_channel_uart_config *resp) {
+  struct ec_channel_uart_config_get_req req = {
+      .channel_id = opts->channel_id,
+  };
+  return htool_exec_hostcmd(
+      dev, EC_CMD_BOARD_SPECIFIC_BASE + EC_PRV_CMD_HOTH_CHANNEL_UART_CONFIG_GET,
+      /*version=*/0, &req, sizeof(req), resp, sizeof(*resp), NULL);
+}
+static int set_uart_config(struct libhoth_usb_device *dev,
+                           const struct htool_console_opts *opts,
+                           struct ec_channel_uart_config *config) {
+  struct ec_channel_uart_config_set_req req = {
+      .channel_id = opts->channel_id,
+      .config = *config,
+  };
+  return htool_exec_hostcmd(
+      dev, EC_CMD_BOARD_SPECIFIC_BASE + EC_PRV_CMD_HOTH_CHANNEL_UART_CONFIG_SET,
+      /*version=*/0, &req, sizeof(req), NULL, 0, NULL);
+}
+
 int htool_console_run(struct libhoth_usb_device *dev,
                       const struct htool_console_opts *opts) {
   printf("%sStarting Interactive Console\n", kAnsiRed);
+
+  struct ec_channel_uart_config uart_config = {};
+  int status = get_uart_config(dev, opts, &uart_config);
+  if (status == LIBHOTH_OK) {
+    if (opts->baud_rate != 0) {
+      uart_config.baud_rate = opts->baud_rate;
+      status = set_uart_config(dev, opts, &uart_config);
+      if (status != LIBHOTH_OK) {
+        fprintf(stderr,
+                "set_uart_config() failed: %d; unable to set baud-rate\n",
+                status);
+        return status;
+      }
+      status = get_uart_config(dev, opts, &uart_config);
+    }
+  }
+  if (status == LIBHOTH_OK) {
+    printf("Using baud-rate %d\n", uart_config.baud_rate);
+  }
   printf("[ Use Ctrl+T-Q to quit ]\n%s", kAnsiReset);
 
   // Get the channel write pointer. (any new serial data received after this
   // will be stored at this offset)
   uint32_t offset;
-  int status = get_channel_status(dev, opts, &offset);
+  status = get_channel_status(dev, opts, &offset);
   if (status != LIBHOTH_OK) {
     fprintf(stderr, "get_channel_status() failed: %d\n", status);
     return status;
