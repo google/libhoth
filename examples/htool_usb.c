@@ -28,6 +28,7 @@
 #include "htool_cmd.h"
 
 #define HOTH_VENDOR_ID 0x18d1
+#define HOTH_B_PRODUCT_ID 0x5014
 #define HOTH_D_PRODUCT_ID 0x022a
 
 static int enumerate_devices(
@@ -50,7 +51,8 @@ static int enumerate_devices(
       continue;
     }
     if (device_descriptor.idVendor != HOTH_VENDOR_ID ||
-        device_descriptor.idProduct != HOTH_D_PRODUCT_ID) {
+        (device_descriptor.idProduct != HOTH_B_PRODUCT_ID &&
+         device_descriptor.idProduct != HOTH_D_PRODUCT_ID)) {
       continue;
     }
     callback(cb_param, device[i], &device_descriptor);
