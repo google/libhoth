@@ -106,9 +106,6 @@ int libhoth_usb_mailbox_send_request(struct libhoth_usb_device *dev,
   struct libhoth_usb_mailbox *drvdata = &dev->driver_data.mailbox;
   const size_t max_payload_size =
       drvdata->max_packet_size_in - sizeof(struct mailbox_request);
-  if (request_size > max_payload_size) {
-    return LIBUSB_ERROR_INVALID_PARAM;
-  }
 
   uint32_t offset = 0;
   while (offset < request_size) {
@@ -164,9 +161,6 @@ int libhoth_usb_mailbox_receive_response(struct libhoth_usb_device *dev,
   struct libhoth_usb_mailbox *drvdata = &dev->driver_data.mailbox;
   const size_t max_payload_size =
       drvdata->max_packet_size_in - sizeof(struct mailbox_response);
-  if (response_size > max_payload_size) {
-    return LIBUSB_ERROR_INVALID_PARAM;
-  }
 
   uint32_t offset = 0;
   while (offset < response_size) {
