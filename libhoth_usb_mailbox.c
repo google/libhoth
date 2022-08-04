@@ -23,6 +23,14 @@
 
 #define LIBHOTH_USB_MAILBOX_MTU 64
 
+struct ec_host_response {
+  uint8_t struct_version;
+  uint8_t checksum;
+  uint16_t result;
+  uint16_t data_len;
+  uint16_t reserved;
+} __attribute__((packed));
+
 enum mailbox_request_type {
   MAILBOX_REQ_READ = 0x00,
   MAILBOX_REQ_WRITE = 0x02,
@@ -162,8 +170,14 @@ int libhoth_usb_mailbox_receive_response(struct libhoth_usb_device *dev,
   const size_t max_payload_size =
       drvdata->max_packet_size_in - sizeof(struct mailbox_response);
 
+  if (response_size < sizeof(struct ec_host_response)) {
+    return LIBUSB_ERROR_INVALID_PARAM;
+  }
+
+  uint32_t expected_size = response_size;
+
   uint32_t offset = 0;
-  while (offset < response_size) {
+  while (offset < expected_size) {
     int transferred;
     uint8_t length = (response_size - offset) < max_payload_size
                          ? response_size - offset
@@ -199,12 +213,23 @@ int libhoth_usb_mailbox_receive_response(struct libhoth_usb_device *dev,
     }
     memcpy((uint8_t *)response + offset, &packet[sizeof(response_header)],
            length);
+
+    if (offset == 0 && length >= sizeof(struct ec_host_response)) {
+      struct ec_host_response response_header;
+      memcpy(&response_header, response, sizeof(response_header));
+      if (response_header.struct_version != 3) {
+        return LIBHOTH_ERR_UNSUPPORTED_VERSION;
+      }
+      if (expected_size > sizeof(response_header) + response_header.data_len) {
+        expected_size = sizeof(response_header) + response_header.data_len;
+      }
+    }
     offset += length;
     if (transferred < max_payload_size) {
       break;
     }
   }
-  *actual_size = offset;
+  *actual_size = expected_size;
 
   return LIBHOTH_OK;
 }
