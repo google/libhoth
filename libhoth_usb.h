@@ -26,6 +26,7 @@ typedef enum {
   LIBHOTH_ERR_TIMEOUT = 4,
   LIBHOTH_ERR_OUT_UNDERFLOW = 5,
   LIBHOTH_ERR_IN_OVERFLOW = 6,
+  LIBHOTH_ERR_UNSUPPORTED_VERSION = 7,
 } libhoth_status;
 
 struct libhoth_usb_device;
