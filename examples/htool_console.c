@@ -64,6 +64,19 @@ static int get_channel_status(struct libhoth_usb_device *dev,
   return 0;
 }
 
+static int force_write(int fd, const void *buf, size_t count) {
+  const char *cbuf = buf;
+  while (count > 0) {
+    ssize_t bytes_written = write(fd, cbuf, count);
+    if (bytes_written < 0) {
+      return -1;
+    }
+    cbuf += bytes_written;
+    count -= bytes_written;
+  }
+  return 0;
+}
+
 static int read_console(struct libhoth_usb_device *dev,
                         const struct htool_console_opts *opts,
                         uint32_t *offset) {
@@ -95,8 +108,10 @@ static int read_console(struct libhoth_usb_device *dev,
 
   int len = response_size - sizeof(resp.resp);
   if (len > 0) {
-    fwrite(resp.buffer, len, 1, stdout);
-    fflush(stdout);
+    if (force_write(STDOUT_FILENO, resp.buffer, len) != 0) {
+      perror("Unable to write console output");
+      return -1;
+    }
     *offset = resp.resp.offset + len;
   }
 
@@ -173,7 +188,10 @@ static int write_console(struct libhoth_usb_device *dev,
     char buffer[64];
   } req;
 
+  fcntl(STDIN_FILENO, F_SETFL, fcntl(0, F_GETFL) | O_NONBLOCK);
   int numRead = read(0, req.buffer, sizeof(req.buffer));
+  // clear non-blocking, as it can affect STDOUT.
+  fcntl(STDIN_FILENO, F_SETFL, fcntl(0, F_GETFL) & ~O_NONBLOCK);
   if (numRead <= 0) {
     return 0;
   }
@@ -260,7 +278,6 @@ int htool_console_run(struct libhoth_usb_device *dev,
   // Change terminal settings to raw, and make read from stdio non-blocking.
   struct termios old_termios;
   set_raw_terminal(STDIN_FILENO, &old_termios, opts);
-  fcntl(STDIN_FILENO, F_SETFL, fcntl(0, F_GETFL) | O_NONBLOCK);
 
   // Start reading at the earliest history the eRoT has in its buffer (since the
   // buffer is much smaller than 2GB).
