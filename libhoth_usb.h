@@ -18,6 +18,10 @@
 #include <libusb.h>
 #include <stddef.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 typedef enum {
   LIBHOTH_OK = 0,
   LIBHOTH_ERR_UNKNOWN_VENDOR = 1,
@@ -62,5 +66,9 @@ int libhoth_usb_receive_response(struct libhoth_usb_device* dev, void* response,
                                  int timeout_ms);
 
 int libhoth_usb_close(struct libhoth_usb_device* dev);
+
+#ifdef __cplusplus
+}  // extern "C"
+#endif
 
 #endif  // _LIBHOTH_LIBHOTH_USB_H_
