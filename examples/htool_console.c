@@ -25,11 +25,11 @@
 #include <termios.h>
 #include <unistd.h>
 
-#include "../libhoth_usb.h"
+#include "../libhoth.h"
 #include "ec_util.h"
 #include "host_commands.h"
+#include "htool.h"
 #include "htool_console.h"
-#include "htool_usb.h"
 
 #define HOTH_FIFO_MAX_REQUEST_SIZE 1024
 #define MAX_CONSOLE_BUFFER_SIZE 0x3000
@@ -37,7 +37,7 @@
 const char kAnsiReset[] = "\033[0m";
 const char kAnsiRed[] = "\033[31m";
 
-static int get_channel_status(struct libhoth_usb_device *dev,
+static int get_channel_status(struct libhoth_device *dev,
                               const struct htool_console_opts *opts,
                               uint32_t *offset) {
   struct ec_channel_status_request req = {
@@ -78,7 +78,7 @@ static int force_write(int fd, const void *buf, size_t count) {
   return 0;
 }
 
-static int read_console(struct libhoth_usb_device *dev,
+static int read_console(struct libhoth_device *dev,
                         const struct htool_console_opts *opts,
                         uint32_t *offset) {
   struct ec_channel_read_request req = {
@@ -182,7 +182,7 @@ static int unescape(char *buf, int in, bool *quit) {
   return out;
 }
 
-static int write_console(struct libhoth_usb_device *dev,
+static int write_console(struct libhoth_device *dev,
                          const struct htool_console_opts *opts, bool *quit) {
   struct {
     struct ec_channel_write_request_v1 req;
@@ -221,7 +221,7 @@ static int write_console(struct libhoth_usb_device *dev,
   return 0;
 }
 
-static int get_uart_config(struct libhoth_usb_device *dev,
+static int get_uart_config(struct libhoth_device *dev,
                            const struct htool_console_opts *opts,
                            struct ec_channel_uart_config *resp) {
   struct ec_channel_uart_config_get_req req = {
@@ -231,7 +231,7 @@ static int get_uart_config(struct libhoth_usb_device *dev,
       dev, EC_CMD_BOARD_SPECIFIC_BASE + EC_PRV_CMD_HOTH_CHANNEL_UART_CONFIG_GET,
       /*version=*/0, &req, sizeof(req), resp, sizeof(*resp), NULL);
 }
-static int set_uart_config(struct libhoth_usb_device *dev,
+static int set_uart_config(struct libhoth_device *dev,
                            const struct htool_console_opts *opts,
                            struct ec_channel_uart_config *config) {
   struct ec_channel_uart_config_set_req req = {
@@ -243,7 +243,7 @@ static int set_uart_config(struct libhoth_usb_device *dev,
       /*version=*/0, &req, sizeof(req), NULL, 0, NULL);
 }
 
-int htool_console_run(struct libhoth_usb_device *dev,
+int htool_console_run(struct libhoth_device *dev,
                       const struct htool_console_opts *opts) {
   printf("%sStarting Interactive Console\n", kAnsiRed);
 
@@ -300,7 +300,7 @@ int htool_console_run(struct libhoth_usb_device *dev,
   return 0;
 }
 
-int htool_console_snapshot(struct libhoth_usb_device *dev) {
+int htool_console_snapshot(struct libhoth_device *dev) {
   size_t response_bytes_written;
   int status = htool_exec_hostcmd(dev, EC_CMD_CONSOLE_REQUEST,
     0, NULL, 0, NULL, 0, &response_bytes_written);

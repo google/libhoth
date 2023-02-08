@@ -26,13 +26,14 @@
 #include <sys/types.h>
 #include <unistd.h>
 
-#include "../libhoth_usb.h"
+#include "../libhoth.h"
 #include "ec_util.h"
 #include "host_commands.h"
+#include "htool.h"
 #include "htool_cmd.h"
 #include "htool_console.h"
 #include "htool_progress.h"
-#include "htool_spi.h"
+#include "htool_spi_proxy.h"
 #include "htool_usb.h"
 
 static int command_usb_list(const struct htool_invocation* inv) {
@@ -40,7 +41,7 @@ static int command_usb_list(const struct htool_invocation* inv) {
 }
 
 static int command_ec_reboot(const struct htool_invocation* inv) {
-  struct libhoth_usb_device* dev = htool_libhoth_usb_device();
+  struct libhoth_device* dev = htool_libhoth_device();
   if (!dev) {
     return -1;
   }
@@ -52,7 +53,7 @@ static int command_ec_reboot(const struct htool_invocation* inv) {
 }
 
 static int command_ec_get_version(const struct htool_invocation* inv) {
-  struct libhoth_usb_device* dev = htool_libhoth_usb_device();
+  struct libhoth_device* dev = htool_libhoth_device();
   if (!dev) {
     return -1;
   }
@@ -70,7 +71,7 @@ static int command_ec_get_version(const struct htool_invocation* inv) {
 }
 
 static int command_show_chipinfo(const struct htool_invocation* inv) {
-  struct libhoth_usb_device* dev = htool_libhoth_usb_device();
+  struct libhoth_device* dev = htool_libhoth_device();
   if (!dev) {
     return -1;
   }
@@ -115,7 +116,7 @@ static int command_spi_read(const struct htool_invocation* inv) {
     return -1;
   }
 
-  struct libhoth_usb_device* dev = htool_libhoth_usb_device();
+  struct libhoth_device* dev = htool_libhoth_device();
   if (!dev) {
     return -1;
   }
@@ -129,8 +130,8 @@ static int command_spi_read(const struct htool_invocation* inv) {
     return -1;
   }
 
-  struct htool_spi spi;
-  int status = htool_spi_init(&spi, dev);
+  struct htool_spi_proxy spi;
+  int status = htool_spi_proxy_init(&spi, dev);
   if (status) {
     goto cleanup1;
   }
@@ -143,7 +144,7 @@ static int command_spi_read(const struct htool_invocation* inv) {
   while (len_remaining > 0) {
     uint8_t buf[65536];
     size_t read_size = MIN(len_remaining, sizeof(buf));
-    status = htool_spi_read(&spi, addr, buf, read_size);
+    status = htool_spi_proxy_read(&spi, addr, buf, read_size);
     if (status) {
       goto cleanup1;
     }
@@ -178,7 +179,7 @@ static int command_spi_update(const struct htool_invocation* inv) {
     return -1;
   }
 
-  struct libhoth_usb_device* dev = htool_libhoth_usb_device();
+  struct libhoth_device* dev = htool_libhoth_device();
   if (!dev) {
     return -1;
   }
@@ -203,15 +204,15 @@ static int command_spi_update(const struct htool_invocation* inv) {
   size_t file_size = statbuf.st_size;
   uint8_t* file_data = mmap(NULL, file_size, PROT_READ, MAP_PRIVATE, fd, 0);
 
-  struct htool_spi spi;
-  int status = htool_spi_init(&spi, dev);
+  struct htool_spi_proxy spi;
+  int status = htool_spi_proxy_init(&spi, dev);
   if (status) {
     goto cleanup2;
   }
 
   struct htool_progress_stderr progress;
   htool_progress_stderr_init(&progress, "Erasing/Programming");
-  status = htool_spi_update(&spi, args.start, file_data, file_size,
+  status = htool_spi_proxy_update(&spi, args.start, file_data, file_size,
                             &progress.progress);
   if (status) {
     goto cleanup2;
@@ -220,7 +221,7 @@ static int command_spi_update(const struct htool_invocation* inv) {
   if (args.verify) {
     struct htool_progress_stderr progress;
     htool_progress_stderr_init(&progress, "Verifying");
-    status = htool_spi_verify(&spi, args.start, file_data, file_size,
+    status = htool_spi_proxy_verify(&spi, args.start, file_data, file_size,
                               &progress.progress);
     if (status) {
       goto cleanup2;
@@ -238,7 +239,7 @@ cleanup1:
 }
 
 static int do_target_reset(uint32_t reset_option) {
-  struct libhoth_usb_device* dev = htool_libhoth_usb_device();
+  struct libhoth_device* dev = htool_libhoth_device();
   if (!dev) {
     return -1;
   }
@@ -274,8 +275,7 @@ static int command_console(const struct htool_invocation* inv) {
       htool_get_param_bool(inv, "snapshot", &opts.snapshot)) {
     return -1;
   };
-
-  struct libhoth_usb_device* dev = htool_libhoth_usb_device();
+  struct libhoth_device* dev = htool_libhoth_device();
   if (!dev) {
     return -1;
   }
@@ -285,6 +285,107 @@ static int command_console(const struct htool_invocation* inv) {
   } else {
     return htool_console_run(dev, &opts);
   }
+}
+
+struct libhoth_device* htool_libhoth_device(void) {
+  static struct libhoth_device* result;
+  if (result) {
+    return result;
+  }
+
+  int rv;
+  const char *transport_method_str;
+  rv = htool_get_param_string(htool_global_flags(), "transport", &transport_method_str);
+  if(rv) {
+    return NULL;
+  }
+  
+  if(strlen(transport_method_str) <= 0 || 
+    (strncmp(transport_method_str, "usb", 3) == 0)) {
+    result = htool_libhoth_usb_device();
+  }
+  else if(strncmp(transport_method_str, "spidev", 6) == 0) {
+    result = htool_libhoth_spi_device();
+  }
+  else {
+    fprintf(stderr, "Unknown transport protocol %s\n\r\n", transport_method_str);
+    return NULL;
+  }
+
+  return result;
+}
+
+int htool_exec_hostcmd(struct libhoth_device* dev, uint16_t command,
+                       uint8_t version, const void* req_payload,
+                       size_t req_payload_size, void* resp_buf,
+                       size_t resp_buf_size, size_t* out_resp_size) {
+  struct {
+    struct ec_host_request hdr;
+    uint8_t payload_buf[LIBHOTH_MAILBOX_SIZE-sizeof(struct ec_host_request)];
+  } req;
+  if (req_payload_size > sizeof(req.payload_buf)) {
+    fprintf(stderr, "req_payload_size too large: %d > %d\n",
+            (int)req_payload_size, (int)sizeof(req.payload_buf));
+    return -1;
+  }
+  if (req_payload) {
+    memcpy(req.payload_buf, req_payload, req_payload_size);
+  }
+  int status = populate_ec_request_header(command, version, req.payload_buf,
+                                          req_payload_size, &req.hdr);
+  if (status != 0) {
+    fprintf(stderr, "populate_request_header failed: %d\n", status);
+    return -1;
+  }
+  status =
+      libhoth_send_request(dev, &req, sizeof(req.hdr) + req_payload_size);
+  if (status != LIBHOTH_OK) {
+    fprintf(stderr, "libhoth_usb_send() failed: %d\n", status);
+    return -1;
+  }
+  struct {
+    struct ec_host_response hdr;
+    uint8_t payload_buf[LIBHOTH_MAILBOX_SIZE-sizeof(struct ec_host_response)];
+  } resp;
+  size_t resp_size;
+  status = libhoth_receive_response(dev, &resp, sizeof(resp), &resp_size,
+                                        /*timeout_ms=*/5000);
+  if (status != LIBHOTH_OK) {
+    fprintf(stderr, "libhoth_usb_receive_response() failed: %d\n", status);
+    return -1;
+  }
+  status = validate_ec_response_header(&resp.hdr, resp.payload_buf, resp_size);
+  if (status != 0) {
+    fprintf(stderr, "EC response header invalid: %d\n", status);
+    return -1;
+  }
+  if (resp.hdr.result != EC_RES_SUCCESS) {
+    fprintf(stderr, "EC response contained error: %d\n", resp.hdr.result);
+    return HTOOL_ERROR_HOST_COMMAND_START + resp.hdr.result;
+  }
+
+  size_t resp_payload_size = resp_size - sizeof(struct ec_host_response);
+  if (out_resp_size) {
+    if (resp_payload_size > resp_buf_size) {
+      fprintf(stderr,
+              "Response payload too large to fit in supplied buffer: %zu > %zu\n",
+              resp_payload_size, resp_buf_size);
+      return -1;
+    }
+  } else {
+    if (resp_payload_size != resp_buf_size) {
+      fprintf(stderr, "Unexpected response payload size: got %zu expected %zu\n",
+              resp_payload_size, resp_buf_size);
+      return -1;
+    }
+  }
+  if (resp_buf) {
+    memcpy(resp_buf, resp.payload_buf, resp_payload_size);
+  }
+  if (out_resp_size) {
+    *out_resp_size = resp_payload_size;
+  }
+  return 0;
 }
 
 static const struct htool_cmd CMDS[] = {
@@ -381,12 +482,21 @@ static const struct htool_cmd CMDS[] = {
 };
 
 static const struct htool_param GLOBAL_FLAGS[] = {
+    {HTOOL_FLAG_VALUE, .name = "transport", .default_value = "",
+     .desc = "The method of connecting to the RoT; for example "
+             "'spidev' or 'usb'"},
     {HTOOL_FLAG_VALUE, .name = "usb_loc", .default_value = "",
      .desc = "The full bus-portlist location of the RoT; for example "
              "'1-10.4.4.1'."},
     {HTOOL_FLAG_VALUE, .name = "usb_product", .default_value = "",
      .desc = "If there is a single USB RoT with this substring in the USB "
              "product string, use it."},
+    {HTOOL_FLAG_VALUE, .name = "spidev_path", .default_value = "",
+     .desc = "The full SPIDEV path of the RoT; for example "
+             "'/dev/spidev0.0'."},
+    {HTOOL_FLAG_VALUE, .name = "mailbox_location", .default_value = "0",
+     .desc = "The location of the mailbox on the RoT; for example "
+             "'0x900000'."},
     {}};
 
 int main(int argc, const char* const* argv) {

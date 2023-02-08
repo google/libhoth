@@ -18,21 +18,13 @@
 #include <stddef.h>
 #include <stdint.h>
 
-#define HTOOL_ERROR_HOST_COMMAND_START 537200
-
 struct libusb_context;
 struct libusb_device;
-struct libhoth_usb_device;
+struct libhoth_device;
 
 struct libusb_context* htool_libusb_context(void);
 struct libusb_device* htool_libusb_device(void);
-struct libhoth_usb_device* htool_libhoth_usb_device(void);
 
 int htool_usb_print_devices(void);
-
-int htool_exec_hostcmd(struct libhoth_usb_device* dev, uint16_t command,
-                       uint8_t version, const void* req_payload,
-                       size_t req_payload_size, void* resp_buf,
-                       size_t resp_buf_size, size_t* out_resp_size);
 
 #endif  // LIBHOTH_EXAMPLES_HTOOL_USB_H_

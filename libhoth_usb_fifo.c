@@ -19,6 +19,7 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include "libhoth.h"
 #include "libhoth_usb_device.h"
 
 #define LIBHOTH_USB_FIFO_REQUEST_ID_SIZE 16
@@ -181,14 +182,14 @@ int libhoth_usb_fifo_send_request(struct libhoth_usb_device *dev,
 }
 
 int libhoth_usb_fifo_receive_response(struct libhoth_usb_device *dev,
-                                      void *response, size_t response_size,
+                                      void *response, size_t max_response_size,
                                       size_t *actual_size, int timeout_ms) {
   if (dev == NULL || response == NULL ||
-      response_size > LIBHOTH_USB_FIFO_MAX_REQUEST_SIZE) {
+      max_response_size > LIBHOTH_USB_FIFO_MAX_REQUEST_SIZE) {
     return LIBUSB_ERROR_INVALID_PARAM;
   }
   size_t max_in_transfer_size =
-      LIBHOTH_USB_FIFO_REQUEST_ID_SIZE + response_size;
+      LIBHOTH_USB_FIFO_REQUEST_ID_SIZE + max_response_size;
   struct libhoth_usb_fifo *drvdata = &dev->driver_data.fifo;
   if (drvdata->out_transfer->length == 0) {
     // OUT transfer not filled in. Forgot to call libhoth_usb_fifo_send_request?
