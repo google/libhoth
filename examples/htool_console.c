@@ -32,6 +32,7 @@
 #include "htool_usb.h"
 
 #define HOTH_FIFO_MAX_REQUEST_SIZE 1024
+#define MAX_CONSOLE_BUFFER_SIZE 0x3000
 
 const char kAnsiReset[] = "\033[0m";
 const char kAnsiRed[] = "\033[31m";
@@ -297,4 +298,33 @@ int htool_console_run(struct libhoth_usb_device *dev,
   restore_terminal(STDIN_FILENO, &old_termios);
   printf("\n");
   return 0;
+}
+
+int htool_console_snapshot(struct libhoth_usb_device *dev) {
+  size_t response_bytes_written;
+  int status = htool_exec_hostcmd(dev, EC_CMD_CONSOLE_REQUEST,
+    0, NULL, 0, NULL, 0, &response_bytes_written);
+  if (status != LIBHOTH_OK) {
+    fprintf(stderr, "EC_CMD_CONSOLE_REQUEST status: %d\n", status);
+    return status;
+  }
+
+  struct ec_params_console_read_v1 read_request = { .subcmd = CONSOLE_READ_NEXT };
+  const size_t max_bytes_per_read = MAILBOX_SIZE - sizeof(struct ec_host_response);
+  char ret[MAX_CONSOLE_BUFFER_SIZE] = { 0 };
+  int idx = 0;
+  while (true) {
+    char buf[MAILBOX_SIZE];
+    status = htool_exec_hostcmd(
+      dev, EC_CMD_CONSOLE_READ,
+      0, &read_request, sizeof(read_request), buf, max_bytes_per_read, &response_bytes_written);
+    if (status != LIBHOTH_OK) {
+      fprintf(stderr, "EC_CMD_CONSOLE_READ status: %d\n", status);
+      return status;
+    }
+    strncat(ret, buf, sizeof(buf));
+    if (response_bytes_written < max_bytes_per_read) break;
+  }
+  printf("%s\n", ret);
+  return status;
 }

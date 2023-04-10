@@ -26,6 +26,7 @@ struct htool_console_opts {
   bool history;
   bool onlcr;
   uint32_t baud_rate;
+  bool snapshot;
 };
 
 int htool_console_run(struct libhoth_usb_device* dev,
