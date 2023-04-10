@@ -271,4 +271,18 @@ struct ec_channel_uart_config_set_req {
   struct ec_channel_uart_config config;
 } __attribute__((packed, aligned(4)));
 
+#define EC_CMD_CONSOLE_REQUEST 0x0097
+#define EC_CMD_CONSOLE_READ 0x0098
+
+enum ec_console_read_subcmd {
+	CONSOLE_READ_NEXT = 0,
+	CONSOLE_READ_RECENT = 1,
+};
+
+struct ec_params_console_read_v1 {
+  uint8_t subcmd;
+} __ec_align1;
+
+#define MAILBOX_SIZE 1024
+
 #endif  // LIBHOTH_EXAMPLES_HOST_COMMANDS_H_

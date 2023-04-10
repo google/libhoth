@@ -270,14 +270,21 @@ static int command_console(const struct htool_invocation* inv) {
       htool_get_param_bool(inv, "force_drive_tx", &opts.force_drive_tx) ||
       htool_get_param_bool(inv, "history", &opts.history) ||
       htool_get_param_bool(inv, "onlcr", &opts.onlcr) ||
-      htool_get_param_u32(inv, "baud_rate", &opts.baud_rate)) {
+      htool_get_param_u32(inv, "baud_rate", &opts.baud_rate) ||
+      htool_get_param_bool(inv, "snapshot", &opts.snapshot)) {
     return -1;
   };
+
   struct libhoth_usb_device* dev = htool_libhoth_usb_device();
   if (!dev) {
     return -1;
   }
-  return htool_console_run(dev, &opts);
+
+  if (opts.snapshot) {
+    return htool_console_snapshot(dev);
+  } else {
+    return htool_console_run(dev, &opts);
+  }
 }
 
 static const struct htool_cmd CMDS[] = {
@@ -364,10 +371,12 @@ static const struct htool_cmd CMDS[] = {
                 {HTOOL_FLAG_BOOL, 'n', "onlcr", "false",
                  .desc = "Translate received \"\\n\" to \"\\r\\n\"."},
                 {HTOOL_FLAG_VALUE, 'b', "baud_rate", "0"},
-                {}},
+                {HTOOL_FLAG_BOOL, 's', "snapshot", "false",
+                 .desc = "Print a snapshot of most recent console messages."},
+                {}
+                },
         .func = command_console,
     },
-
     {},
 };
 
