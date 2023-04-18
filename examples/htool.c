@@ -301,10 +301,10 @@ struct libhoth_device* htool_libhoth_device(void) {
   }
   
   if(strlen(transport_method_str) <= 0 || 
-    (strncmp(transport_method_str, "usb", 3) == 0)) {
+    (strcmp(transport_method_str, "usb") == 0)) {
     result = htool_libhoth_usb_device();
   }
-  else if(strncmp(transport_method_str, "spidev", 6) == 0) {
+  else if(strcmp(transport_method_str, "spidev") == 0) {
     result = htool_libhoth_spi_device();
   }
   else {
