@@ -47,19 +47,18 @@ static int spi_nor_write(int fd, unsigned int address_mode_4b, unsigned int addr
     if(fd < 0 || !data || !data_len)
         return LIBHOTH_ERR_INVALID_PARAMETER;
 
-    uint8_t wp_buf[1];
-    uint8_t rq_buf[5];
-    struct spi_ioc_transfer xfer[3];
-    memset(xfer, 0, sizeof xfer);
-    memset(wp_buf, 0, sizeof wp_buf);
-    memset(rq_buf, 0, sizeof rq_buf);
+    uint8_t wp_buf[1] = {};
+    uint8_t rq_buf[5] = {};
+    struct spi_ioc_transfer xfer[3] = {};
 
 
     // Write Enable Message
     wp_buf[0] = 0x06;
-    xfer[0].tx_buf = (unsigned long)wp_buf;
-    xfer[0].len = 1;
-    xfer[0].cs_change = 1;
+    xfer[0] = (struct spi_ioc_transfer) {
+        .tx_buf = (unsigned long)wp_buf,
+        .len = 1,
+        .cs_change = 1,
+    };
 
     // Page Program OPCODE + Mailbox Address
     rq_buf[0] = 0x02;
@@ -84,8 +83,10 @@ static int spi_nor_write(int fd, unsigned int address_mode_4b, unsigned int addr
     
 
     // Write Data at mailbox address
-    xfer[2].tx_buf = (unsigned long)data;
-    xfer[2].len = data_len;
+    xfer[2] = (struct spi_ioc_transfer) {
+        .tx_buf = (unsigned long)data,
+        .len = data_len,
+    };
 
     int status = ioctl(fd, SPI_IOC_MESSAGE(3), xfer);
     if (status < 0) {
@@ -101,8 +102,7 @@ static int spi_nor_read(int fd, unsigned int address_mode_4b, unsigned int addre
         return LIBHOTH_ERR_INVALID_PARAMETER;
 
     uint8_t rd_request[5];
-    struct spi_ioc_transfer xfer[2];
-    memset(xfer, 0, sizeof xfer);
+    struct spi_ioc_transfer xfer[2] = {};
 
     // Read OPCODE and mailbox address
     rd_request[0] = 0x03; // Read
@@ -126,8 +126,10 @@ static int spi_nor_read(int fd, unsigned int address_mode_4b, unsigned int addre
     xfer[0].tx_buf = (unsigned long)rd_request;
     
     // Read in data
-    xfer[1].rx_buf = (unsigned long)data;
-    xfer[1].len = data_len;
+    xfer[1] = (struct spi_ioc_transfer) {
+        .rx_buf = (unsigned long)data,
+        .len = data_len,
+    };
 
     int status = ioctl(fd, SPI_IOC_MESSAGE(2), xfer);
     if (status < 0) {
