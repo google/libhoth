@@ -142,11 +142,12 @@ static int spi_nor_read(int fd, unsigned int address_mode_4b, unsigned int addre
 
 int libhoth_spi_open(const struct libhoth_spi_device_init_options* options,
                      struct libhoth_device** out) {
-  if (out == NULL || options == NULL || options->path == NULL) {
-    return LIBHOTH_ERR_INVALID_PARAMETER;
-  }
+    if (out == NULL || options == NULL || options->path == NULL) {
+        return LIBHOTH_ERR_INVALID_PARAMETER;
+    }
+
     int status;
-    int fd;
+    int fd = -1;
     struct libhoth_device* dev = NULL;
     struct libhoth_spi_device* spi_dev = NULL;
 
@@ -211,11 +212,13 @@ int libhoth_spi_open(const struct libhoth_spi_device_init_options* options,
     return LIBHOTH_OK;
 
     err_out:
+    if (fd >= 0) {
+        close(fd);
+    }
     if (dev != NULL) {
         free(dev);
     }
     if(spi_dev != NULL){
-        close(fd);
         free(spi_dev);
     }
 
