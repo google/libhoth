@@ -30,6 +30,7 @@ typedef enum {
   LIBHOTH_ERR_UNSUPPORTED_VERSION = 7,
   LIBHOTH_ERR_INVALID_PARAMETER = 8,
   LIBHOTH_ERR_FAIL = 9,
+  LIBHOTH_ERR_RESPONSE_BUFFER_OVERFLOW = 10,
 } libhoth_status;
 
 struct libhoth_device {

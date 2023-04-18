@@ -259,12 +259,12 @@ int libhoth_spi_receive_response(struct libhoth_device* dev, void *response,
     }
 
     total_bytes = 8;
-    memcpy(&host_response, response, 8);
+    memcpy(&host_response, response, sizeof(host_response));
     if(actual_size)
         *actual_size = total_bytes;
 
     if(max_response_size < (total_bytes + host_response.data_len)){
-        return LIBHOTH_ERR_INVALID_PARAMETER;
+        return LIBHOTH_ERR_RESPONSE_BUFFER_OVERFLOW;
     }
 
     // Read remainder of data based on header length
@@ -273,8 +273,9 @@ int libhoth_spi_receive_response(struct libhoth_device* dev, void *response,
         return status;
     }
 
-    if(actual_size)
+    if(actual_size) {
         *actual_size += host_response.data_len;
+    }
 
     return LIBHOTH_OK;
 }
