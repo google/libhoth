@@ -18,32 +18,27 @@
 
 int libhoth_send_request(struct libhoth_device* dev,
                              const void* request, size_t request_size) {
-  int status;
   if (dev == NULL) {
     return LIBHOTH_ERR_INVALID_PARAMETER;
   }
-  status = dev->send(dev, request, request_size);
-  return status;
+  return dev->send(dev, request, request_size);
 }
 
 int libhoth_receive_response(struct libhoth_device* dev, void* response,
                                  size_t max_response_size, size_t* actual_size,
                                  int timeout_ms) {
-  int status;
   if (dev == NULL) {
     return LIBHOTH_ERR_INVALID_PARAMETER;
   }
-  status = dev->receive(dev, response, max_response_size, actual_size, timeout_ms);
-  return status;
+  return dev->receive(dev, response, max_response_size, actual_size, timeout_ms);
 }
 
 int libhoth_close(struct libhoth_device* dev) {
-  int status;
   if (dev == NULL) {
     return LIBHOTH_ERR_INVALID_PARAMETER;
   }
   
-  status = dev->close(dev);
+  int status = dev->close(dev);
   free(dev);
   return status;
 }
