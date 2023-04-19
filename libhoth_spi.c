@@ -268,7 +268,8 @@ int libhoth_spi_receive_response(struct libhoth_device* dev, void *response,
     }
 
     // Read remainder of data based on header length
-    status = spi_nor_read(spi_dev->fd, spi_dev->address_mode_4b, spi_dev->mailbox_address + total_bytes, response + total_bytes, host_response.data_len);
+    uint8_t* const data_start = (uint8_t*)response + total_bytes;
+    status = spi_nor_read(spi_dev->fd, spi_dev->address_mode_4b, spi_dev->mailbox_address + total_bytes, data_start, host_response.data_len);
     if(status != LIBHOTH_OK){
         return status;
     }
