@@ -33,9 +33,9 @@ jobs:
       # Runs a set of commands using the runners shell
       - name: Build with Meson
         run: |
-          meson build
+          meson build --werror
           (cd build && ninja)
           
       - name: Build with Bazel
         run: |
-          bazel build ...
+          bazel build --copt="-Werror" ...

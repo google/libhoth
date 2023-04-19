@@ -311,8 +311,6 @@ int htool_console_snapshot(struct libhoth_device *dev) {
 
   struct ec_params_console_read_v1 read_request = { .subcmd = CONSOLE_READ_NEXT };
   const size_t max_bytes_per_read = MAILBOX_SIZE - sizeof(struct ec_host_response);
-  char ret[MAX_CONSOLE_BUFFER_SIZE] = { 0 };
-  int idx = 0;
   while (true) {
     char buf[MAILBOX_SIZE];
     status = htool_exec_hostcmd(
@@ -322,9 +320,9 @@ int htool_console_snapshot(struct libhoth_device *dev) {
       fprintf(stderr, "EC_CMD_CONSOLE_READ status: %d\n", status);
       return status;
     }
-    strncat(ret, buf, sizeof(buf));
+    fwrite(buf, strnlen(buf, sizeof(buf)), 1, stdout);
     if (response_bytes_written < max_bytes_per_read) break;
   }
-  printf("%s\n", ret);
+  printf("\n");
   return status;
 }
