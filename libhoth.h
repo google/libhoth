@@ -61,6 +61,6 @@ int libhoth_receive_response(struct libhoth_device* dev, void* response,
                                  size_t max_response_size, size_t* actual_size,
                                  int timeout_ms);
 
-int libhoth_close(struct libhoth_device* dev);
+int libhoth_device_close(struct libhoth_device* dev);
 
 #endif  // _LIBHOTH_LIBHOTH_H_

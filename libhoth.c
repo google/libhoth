@@ -33,7 +33,7 @@ int libhoth_receive_response(struct libhoth_device* dev, void* response,
   return dev->receive(dev, response, max_response_size, actual_size, timeout_ms);
 }
 
-int libhoth_close(struct libhoth_device* dev) {
+int libhoth_device_close(struct libhoth_device* dev) {
   if (dev == NULL) {
     return LIBHOTH_ERR_INVALID_PARAMETER;
   }
