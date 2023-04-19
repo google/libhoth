@@ -12,30 +12,30 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef LIBHOTH_EXAMPLES_HTOOL_SPI_H_
-#define LIBHOTH_EXAMPLES_HTOOL_SPI_H_
+#ifndef LIBHOTH_EXAMPLES_HTOOL_SPI_PROXY_H_
+#define LIBHOTH_EXAMPLES_HTOOL_SPI_PROXY_H_
 
 #include <stddef.h>
 #include <stdint.h>
 
 struct htool_progress;
 
-struct htool_spi {
-  struct libhoth_usb_device* dev;
+struct htool_spi_proxy {
+  struct libhoth_device* dev;
   bool is_4_byte;
 };
 
-int htool_spi_init(struct htool_spi* spi, struct libhoth_usb_device* dev);
+int htool_spi_proxy_init(struct htool_spi_proxy* spi, struct libhoth_device* dev);
 
-int htool_spi_read(const struct htool_spi* spi, uint32_t addr, void* buf,
+int htool_spi_proxy_read(const struct htool_spi_proxy* spi, uint32_t addr, void* buf,
                    size_t len);
 
-int htool_spi_verify(const struct htool_spi* spi, uint32_t addr,
+int htool_spi_proxy_verify(const struct htool_spi_proxy* spi, uint32_t addr,
                      const void* buf, size_t len,
                      const struct htool_progress* progress);
 
-int htool_spi_update(const struct htool_spi* spi, uint32_t addr,
+int htool_spi_proxy_update(const struct htool_spi_proxy* spi, uint32_t addr,
                      const void* buf, size_t len,
                      const struct htool_progress* progress);
 
-#endif  // LIBHOTH_EXAMPLES_HTOOL_SPI_H_
+#endif  // LIBHOTH_EXAMPLES_HTOOL_SPI_PROXY_H_

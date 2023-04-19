@@ -312,8 +312,8 @@ libusb_device* htool_libusb_device(void) {
   return select_device(ctx, filter_allow_all, NULL);
 }
 
-struct libhoth_usb_device* htool_libhoth_usb_device(void) {
-  static struct libhoth_usb_device* result;
+struct libhoth_device* htool_libhoth_usb_device(void) {
+  static struct libhoth_device* result;
   if (result) {
     return result;
   }
@@ -339,77 +339,4 @@ int htool_usb_print_devices(void) {
     return 1;
   }
   return enumerate_devices(libusb_ctx, print_device, NULL);
-}
-
-int htool_exec_hostcmd(struct libhoth_usb_device* dev, uint16_t command,
-                       uint8_t version, const void* req_payload,
-                       size_t req_payload_size, void* resp_buf,
-                       size_t resp_buf_size, size_t* out_resp_size) {
-  struct {
-    struct ec_host_request hdr;
-    uint8_t payload_buf[1016];
-  } req;
-  if (req_payload_size > sizeof(req.payload_buf)) {
-    fprintf(stderr, "req_payload_size too large: %d > %d\n",
-            (int)req_payload_size, (int)sizeof(req.payload_buf));
-    return -1;
-  }
-  if (req_payload) {
-    memcpy(req.payload_buf, req_payload, req_payload_size);
-  }
-  int status = populate_ec_request_header(command, version, req.payload_buf,
-                                          req_payload_size, &req.hdr);
-  if (status != 0) {
-    fprintf(stderr, "populate_request_header failed: %d\n", status);
-    return -1;
-  }
-  status =
-      libhoth_usb_send_request(dev, &req, sizeof(req.hdr) + req_payload_size);
-  if (status != LIBHOTH_OK) {
-    fprintf(stderr, "libhoth_usb_send() failed: %d\n", status);
-    return -1;
-  }
-  struct {
-    struct ec_host_response hdr;
-    uint8_t payload_buf[1016];
-  } resp;
-  size_t resp_size;
-  status = libhoth_usb_receive_response(dev, &resp, sizeof(resp), &resp_size,
-                                        /*timeout_ms=*/5000);
-  if (status != LIBHOTH_OK) {
-    fprintf(stderr, "libhoth_usb_receive_response() failed: %d\n", status);
-    return -1;
-  }
-  status = validate_ec_response_header(&resp.hdr, resp.payload_buf, resp_size);
-  if (status != 0) {
-    fprintf(stderr, "EC response header invalid: %d\n", status);
-    return -1;
-  }
-  if (resp.hdr.result != EC_RES_SUCCESS) {
-    fprintf(stderr, "EC response contained error: %d\n", resp.hdr.result);
-    return HTOOL_ERROR_HOST_COMMAND_START + resp.hdr.result;
-  }
-
-  size_t resp_payload_size = resp_size - 8;
-  if (out_resp_size) {
-    if (resp_payload_size > resp_buf_size) {
-      fprintf(stderr,
-              "Response payload too large to fit in supplied buffer: %d > %d\n",
-              (int)resp_payload_size, (int)resp_buf_size);
-      return -1;
-    }
-  } else {
-    if (resp_payload_size != resp_buf_size) {
-      fprintf(stderr, "Unexpected response payload size: got %d expected %d\n",
-              (int)resp_payload_size, (int)resp_buf_size);
-      return -1;
-    }
-  }
-  if (resp_buf) {
-    memcpy(resp_buf, resp.payload_buf, resp_payload_size);
-  }
-  if (out_resp_size) {
-    *out_resp_size = resp_payload_size;
-  }
-  return 0;
 }

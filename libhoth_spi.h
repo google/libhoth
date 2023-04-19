@@ -1,4 +1,4 @@
-// Copyright 2022 Google LLC
+// Copyright 2023 Google LLC
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -12,26 +12,27 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef _LIBHOTH_LIBHOTH_USB_H_
-#define _LIBHOTH_LIBHOTH_USB_H_
+#ifndef _LIBHOTH_LIBHOTH_SPI_H_
+#define _LIBHOTH_LIBHOTH_SPI_H_
 
-#include <libusb.h>
 #include <stddef.h>
 
 struct libhoth_device;
 
-struct libhoth_usb_device_init_options {
-  // The device to open
-  libusb_device* usb_device;
-  // The libusb context to use for operations. Can be NULL for the default
-  // context.
-  libusb_context* usb_ctx;
+struct libhoth_spi_device_init_options {
+  // The device filepath to open
+  const char* path;
+  // Address where mailbox is located
+  unsigned int mailbox;
+  int bits;
+  int mode;
+  int speed;
 };
 
 
 // Note that the options struct only needs to to live for the duration of 
-// this function call. It can be destroyed once libhoth_usb_open returns.
-int libhoth_usb_open(const struct libhoth_usb_device_init_options* options,
+// this function call. It can be destroyed once libhoth_spi_open returns.
+int libhoth_spi_open(const struct libhoth_spi_device_init_options* options,
                      struct libhoth_device** out);
 
-#endif  // _LIBHOTH_LIBHOTH_USB_H_
+#endif  // _LIBHOTH_LIBHOTH_SPI_H_

@@ -1,13 +1,20 @@
 package(default_visibility = ["//visibility:public"])
 
 cc_library(
-    name = "libhoth_usb",
+    name = "libhoth",
     srcs = [
+        "libhoth.c",
+        "libhoth_spi.c",
         "libhoth_usb.c",
         "libhoth_usb_device.h",
         "libhoth_usb_fifo.c",
         "libhoth_usb_mailbox.c",
     ],
-    hdrs = ["libhoth_usb.h"],
+    hdrs = [
+        "libhoth.h",
+        "libhoth_ec.h",
+        "libhoth_spi.h",
+        "libhoth_usb.h"
+    ],
     deps = ["@libusb//:libusb"],
 )

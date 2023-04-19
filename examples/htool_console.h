@@ -18,7 +18,7 @@
 #include <stdbool.h>
 #include <stdint.h>
 
-struct libhoth_usb_device;
+struct libhoth_device;
 
 struct htool_console_opts {
   uint32_t channel_id;
@@ -29,7 +29,7 @@ struct htool_console_opts {
   bool snapshot;
 };
 
-int htool_console_run(struct libhoth_usb_device* dev,
+int htool_console_run(struct libhoth_device* dev,
                       const struct htool_console_opts* opts);
 
 #endif  // LIBHOTH_EXAMPLES_HTOOL_CONSOLE_H_

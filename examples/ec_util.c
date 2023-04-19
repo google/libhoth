@@ -46,12 +46,12 @@ int populate_ec_request_header(uint16_t command, uint8_t command_version,
   }
 
   if (request_size > 0 && !request) {
-    fprintf(stderr, "Request data argument cannot be NULL with size > 0");
+    fprintf(stderr, "Request data argument cannot be NULL with size > 0\n");
     return -EINVAL;
   }
 
   if (request_size > UINT16_MAX) {
-    fprintf(stderr, "Error, request_size (%lu) > max (%lu)",
+    fprintf(stderr, "Error, request_size (%lu) > max (%lu)\n",
             (unsigned long)request_size, (unsigned long)UINT16_MAX);
     return -EINVAL;
   }
@@ -74,26 +74,26 @@ int validate_ec_response_header(const struct ec_host_response* response_header,
   uint8_t response_checksum;
 
   if (!response_header) {
-    fprintf(stderr, "response_header cannot be NULL");
+    fprintf(stderr, "response_header cannot be NULL\n");
     return -EINVAL;
   }
 
   if (!response && response_header->data_len > 0) {
     fprintf(
         stderr,
-        "response cannot be NULL if the response data_len is greater than 0");
+        "response cannot be NULL if the response data_len is greater than 0\n");
     return -EINVAL;
   }
 
   if (response_header->struct_version != EC_HOST_RESPONSE_VERSION) {
-    fprintf(stderr, "Error: unexpected struct_version. Got %u, expected %u",
+    fprintf(stderr, "Error: unexpected struct_version. Got %u, expected %u\n",
             response_header->struct_version, EC_HOST_RESPONSE_VERSION);
     return -EINVAL;
   }
 
   if (response_header->data_len > response_size) {
     fprintf(stderr,
-            "Error: insufficient response buffer size. Have %zu, need %u",
+            "Error: insufficient response buffer size. Have %zu, need %u\n",
             response_size, response_header->data_len);
     return -EINVAL;
   }
@@ -105,7 +105,7 @@ int validate_ec_response_header(const struct ec_host_response* response_header,
   // Since this checksum includes the `checksum` field in `response_header`, it
   // should be zero.
   if (response_checksum != 0) {
-    fprintf(stderr, "Error: response checksum (%u) != 0", response_checksum);
+    fprintf(stderr, "Error: response checksum (%u) != 0\n", response_checksum);
     return -EINVAL;
   }
 

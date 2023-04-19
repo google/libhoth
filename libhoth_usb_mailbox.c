@@ -19,17 +19,11 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include "libhoth.h"
+#include "libhoth_ec.h"
 #include "libhoth_usb_device.h"
 
 #define LIBHOTH_USB_MAILBOX_MTU 64
-
-struct ec_host_response {
-  uint8_t struct_version;
-  uint8_t checksum;
-  uint16_t result;
-  uint16_t data_len;
-  uint16_t reserved;
-} __attribute__((packed));
 
 enum mailbox_request_type {
   MAILBOX_REQ_READ = 0x00,
