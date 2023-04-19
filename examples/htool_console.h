@@ -32,4 +32,6 @@ struct htool_console_opts {
 int htool_console_run(struct libhoth_device* dev,
                       const struct htool_console_opts* opts);
 
+int htool_console_snapshot(struct libhoth_device *dev);
+
 #endif  // LIBHOTH_EXAMPLES_HTOOL_CONSOLE_H_
