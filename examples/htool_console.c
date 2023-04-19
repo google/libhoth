@@ -320,7 +320,7 @@ int htool_console_snapshot(struct libhoth_device *dev) {
       fprintf(stderr, "EC_CMD_CONSOLE_READ status: %d\n", status);
       return status;
     }
-    printf("%s", buf);
+    fwrite(buf, strnlen(buf, sizeof(buf)), 1, stdout);
     if (response_bytes_written < max_bytes_per_read) break;
   }
   printf("\n");
