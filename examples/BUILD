@@ -4,7 +4,14 @@ cc_library(
     name = "host_commands",
     textual_hdrs = [
         "host_commands.h",
+        "authorization_record.h",
     ],
+)
+
+cc_library(
+    name = "authorization_record",
+    hdrs = ["authorization_record.h"],
+    srcs = ["authorization_record.c"],
 )
 
 cc_library(
@@ -19,6 +26,8 @@ cc_library(
 cc_binary(
     name = "htool",
     srcs = [
+        "authorization_record.h",
+        "authorization_record.c",
         "ec_util.c",
         "ec_util.h",
         "host_commands.h",
@@ -44,6 +53,7 @@ cc_binary(
         "htool_usb.h",
     ],
     deps = [
+        ":authorization_record",
         ":ec_util",
         ":host_commands",
         "//:libhoth",
