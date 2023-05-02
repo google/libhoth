@@ -285,4 +285,29 @@ struct ec_params_console_read_v1 {
 
 #define MAILBOX_SIZE 1024
 
+#define EC_PRV_CMD_HOTH_PAYLOAD_UPDATE 0x0005
+#define EC_PRV_CMD_HOTH_PAYLOAD_STATUS 0x0006
+
+struct payload_status_response_header {
+  uint8_t version;
+  uint8_t lockdown_state;
+  uint8_t active_half;
+  uint8_t region_count;
+} __attribute__((packed));
+
+struct payload_region_state {
+  uint8_t validation_state; /* enum payload_validation_state */
+  uint8_t failure_reason;   /* enum payload_validation_failure_reason */
+  uint8_t reserved_0;
+  uint8_t image_type; /* enum image_type (dev, prod, breakout) */
+  uint16_t key_index;
+  uint16_t reserved_1;
+  uint32_t image_family; /* handy to disambiguate during enumeration */
+  uint32_t version_major;
+  uint32_t version_minor;
+  uint32_t version_point;
+  uint32_t version_subpoint;
+  uint32_t descriptor_offset; /* can be used to pull the image hash/signature */
+} __attribute__((packed));
+
 #endif  // LIBHOTH_EXAMPLES_HOST_COMMANDS_H_
