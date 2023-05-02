@@ -33,6 +33,7 @@
 #include "host_commands.h"
 #include "htool_cmd.h"
 #include "htool_console.h"
+#include "htool_payload.h"
 #include "htool_progress.h"
 #include "htool_spi_proxy.h"
 #include "htool_usb.h"
@@ -529,6 +530,12 @@ static const struct htool_cmd CMDS[] = {
                  .desc = "Print a snapshot of most recent console messages."},
                 {}},
         .func = command_console,
+    },
+    {
+        .verbs = (const char*[]){"payload", "status", NULL},
+        .desc = "Show payload status",
+        .params = (const struct htool_param[]){{}},
+        .func = htool_payload_status,
     },
     {},
 };
