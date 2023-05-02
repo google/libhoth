@@ -5,6 +5,8 @@ ecutil = library('ec_util', ecsrcs, dependencies: libusb, install: true, \
 executable(
   'htool',
   sources: [
+    'authorization_record.h',
+    'authorization_record.c',
     'ec_util.c',
     'htool.c',
     'htool_cmd.c',

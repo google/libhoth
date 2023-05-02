@@ -93,6 +93,48 @@ static int command_show_chipinfo(const struct htool_invocation* inv) {
   return 0;
 }
 
+static int command_authz_record_read(const struct htool_invocation* inv) {
+  struct libhoth_device* dev = htool_libhoth_device();
+  if (!dev) {
+    return -1;
+  }
+  return 0;
+}
+
+static int command_authz_record_erase(const struct htool_invocation* inv) {
+  struct libhoth_device* dev = htool_libhoth_device();
+  if (!dev) {
+    return -1;
+  }
+  return 0;
+}
+
+static int command_authz_record_build(const struct htool_invocation* inv) {
+  uint32_t caps;
+  if (htool_get_param_u32(inv, "caps", &caps)) {
+    return -1;
+  }
+
+  struct libhoth_device* dev = htool_libhoth_device();
+  if (!dev) {
+    return -1;
+  }
+  return 0;
+}
+
+static int command_authz_record_set(const struct htool_invocation* inv) {
+  const char* record;
+  if (htool_get_param_string(inv, "record", &record)) {
+    return -1;
+  }
+
+  struct libhoth_device* dev = htool_libhoth_device();
+  if (!dev) {
+    return -1;
+  }
+  return 0;
+}
+
 static int force_write(int fd, const void* buf, size_t size) {
   const uint8_t* cbuf = (const uint8_t*)buf;
   while (size > 0) {
@@ -578,6 +620,39 @@ static const struct htool_cmd CMDS[] = {
         .desc = "Show statistics",
         .params = (const struct htool_param[]){{}},
         .func = htool_statistics,
+    },
+    {
+        .verbs = (const char*[]){"authz_record", "read", NULL},
+        .desc = "Read the current authorization record",
+        .params = (const struct htool_param[]){{}},
+        .func = command_authz_record_read,
+    },
+    {
+        .verbs = (const char*[]){"authz_record", "erase", NULL},
+        .desc = "Erase the current authorization record",
+        .params = (const struct htool_param[]){{}},
+        .func = command_authz_record_erase,
+    },
+    {
+        .verbs = (const char*[]){"authz_record", "build", NULL},
+        .desc = "Build an empty authorization record for the chip",
+        .params =
+            (const struct htool_param[]){
+                {HTOOL_FLAG_VALUE, 'c', "caps", "0",
+                 .desc = "requested capabilities"},
+                {},
+            },
+        .func = command_authz_record_build,
+    },
+    {
+        .verbs = (const char*[]){"authz_record", "set", NULL},
+        .desc = "Upload an authorization record to the chip",
+        .params =
+            (const struct htool_param[]){
+                {HTOOL_POSITIONAL, .name = "record"},
+                {},
+            },
+        .func = command_authz_record_set,
     },
     {},
 };
