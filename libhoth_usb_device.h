@@ -19,8 +19,6 @@
 #include <stdbool.h>
 #include <stdint.h>
 
-#include "libhoth_usb.h"
-
 #define LIBHOTH_USB_VENDOR_ID 0x18d1
 #define LIBHOTH_USB_INTERFACE_CLASS LIBUSB_CLASS_VENDOR_SPEC
 #define LIBHOTH_USB_MAILBOX_INTERFACE_SUBCLASS 0x71
