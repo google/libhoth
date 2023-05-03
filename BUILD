@@ -4,6 +4,7 @@ cc_library(
     name = "libhoth",
     srcs = [
         "libhoth.c",
+        "libhoth_mtd.c",
         "libhoth_spi.c",
         "libhoth_usb.c",
         "libhoth_usb_fifo.c",
@@ -12,6 +13,7 @@ cc_library(
     hdrs = [
         "libhoth.h",
         "libhoth_ec.h",
+        "libhoth_mtd.h",
         "libhoth_spi.h",
         "libhoth_usb.h",
         "libhoth_usb_device.h",

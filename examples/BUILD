@@ -28,6 +28,7 @@ cc_binary(
         "htool_cmd.h",
         "htool_console.c",
         "htool_console.h",
+        "htool_mtd.c",
         "htool_progress.c",
         "htool_progress.h",
         "htool_spi.c",
