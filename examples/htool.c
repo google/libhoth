@@ -267,14 +267,20 @@ static int command_target_reset_pulse(const struct htool_invocation* inv) {
 static int command_console(const struct htool_invocation* inv) {
   struct htool_console_opts opts = {};
 
-  if (htool_get_param_u32_or_fourcc(inv, "channel", &opts.channel_id) ||
+  if(htool_get_param_bool(inv, "snapshot", &opts.snapshot)){
+    return -1;
+  };
+
+  if(!opts.snapshot)
+  {
+    if (htool_get_param_u32_or_fourcc(inv, "channel", &opts.channel_id) ||
       htool_get_param_bool(inv, "force_drive_tx", &opts.force_drive_tx) ||
       htool_get_param_bool(inv, "history", &opts.history) ||
       htool_get_param_bool(inv, "onlcr", &opts.onlcr) ||
-      htool_get_param_u32(inv, "baud_rate", &opts.baud_rate) ||
-      htool_get_param_bool(inv, "snapshot", &opts.snapshot)) {
-    return -1;
-  };
+      htool_get_param_u32(inv, "baud_rate", &opts.baud_rate)) {
+      return -1;
+    };
+  }
   struct libhoth_device* dev = htool_libhoth_device();
   if (!dev) {
     return -1;
