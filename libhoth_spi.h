@@ -17,6 +17,10 @@
 
 #include <stddef.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 struct libhoth_device;
 
 struct libhoth_spi_device_init_options {
@@ -34,5 +38,9 @@ struct libhoth_spi_device_init_options {
 // this function call. It can be destroyed once libhoth_spi_open returns.
 int libhoth_spi_open(const struct libhoth_spi_device_init_options* options,
                      struct libhoth_device** out);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif  // _LIBHOTH_LIBHOTH_SPI_H_

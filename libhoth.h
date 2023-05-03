@@ -17,6 +17,10 @@
 
 #include <stddef.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #define LIBHOTH_MAILBOX_SIZE 1024
 
 typedef enum {
@@ -62,5 +66,9 @@ int libhoth_receive_response(struct libhoth_device* dev, void* response,
                                  int timeout_ms);
 
 int libhoth_device_close(struct libhoth_device* dev);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif  // _LIBHOTH_LIBHOTH_H_

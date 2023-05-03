@@ -18,6 +18,10 @@
 #include <libusb.h>
 #include <stddef.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 struct libhoth_device;
 
 struct libhoth_usb_device_init_options {
@@ -33,5 +37,9 @@ struct libhoth_usb_device_init_options {
 // this function call. It can be destroyed once libhoth_usb_open returns.
 int libhoth_usb_open(const struct libhoth_usb_device_init_options* options,
                      struct libhoth_device** out);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif  // _LIBHOTH_LIBHOTH_USB_H_
