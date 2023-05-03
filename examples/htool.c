@@ -350,6 +350,9 @@ struct libhoth_device* htool_libhoth_device(void) {
   else if(strcmp(transport_method_str, "spidev") == 0) {
     result = htool_libhoth_spi_device();
   }
+  else if(strcmp(transport_method_str, "mtd") == 0) {
+    result = htool_libhoth_mtd_device();
+  }
   else {
     fprintf(stderr, "Unknown transport protocol %s\n\r\n", transport_method_str);
     return NULL;
@@ -535,7 +538,7 @@ static const struct htool_cmd CMDS[] = {
 static const struct htool_param GLOBAL_FLAGS[] = {
     {HTOOL_FLAG_VALUE, .name = "transport", .default_value = "",
      .desc = "The method of connecting to the RoT; for example "
-             "'spidev' or 'usb'"},
+             "'spidev'/'usb'/'mtd'"},
     {HTOOL_FLAG_VALUE, .name = "usb_loc", .default_value = "",
      .desc = "The full bus-portlist location of the RoT; for example "
              "'1-10.4.4.1'."},
@@ -545,9 +548,15 @@ static const struct htool_param GLOBAL_FLAGS[] = {
     {HTOOL_FLAG_VALUE, .name = "spidev_path", .default_value = "",
      .desc = "The full SPIDEV path of the RoT; for example "
              "'/dev/spidev0.0'."},
+    {HTOOL_FLAG_VALUE, .name = "mtddev_path", .default_value = "",
+     .desc = "The full MTD path of the RoT mailbox; for example "
+             "'/dev/mtd0'. If unspecified, will attempt to detect "
+             "the correct device automatically"},
+    {HTOOL_FLAG_VALUE, .name = "mtddev_name", .default_value = "hoth-mailbox",
+     .desc = "The MTD name of the RoT mailbox; for example 'hoth-mailbox'. "},
     {HTOOL_FLAG_VALUE, .name = "mailbox_location", .default_value = "0",
-     .desc = "The location of the mailbox on the RoT; for example "
-             "'0x900000'."},
+     .desc = "The location of the mailbox on the RoT, for 'spidev' "
+             "or 'mtd' transports; for example '0x900000'."},
     {}};
 
 int main(int argc, const char* const* argv) {

@@ -12,13 +12,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef LIBHOTH_EXAMPLES_HTOOL_H_
-#define LIBHOTH_EXAMPLES_HTOOL_H_
+#ifndef _LIBHOTH_LIBHOTH_MTD_H_
+#define _LIBHOTH_LIBHOTH_MTD_H_
 
 #include <stddef.h>
-#include <stdint.h>
-
-#define HTOOL_ERROR_HOST_COMMAND_START 537200
 
 #ifdef __cplusplus
 extern "C" {
@@ -26,18 +23,22 @@ extern "C" {
 
 struct libhoth_device;
 
-struct libhoth_device* htool_libhoth_mtd_device(void);
-struct libhoth_device* htool_libhoth_spi_device(void);
-struct libhoth_device* htool_libhoth_usb_device(void);
-struct libhoth_device* htool_libhoth_device(void);
+struct libhoth_mtd_device_init_options {
+  // The device filepath to open
+  const char* path;
+  // The device name to open
+  const char* name;
+  // Address where mailbox is located
+  unsigned int mailbox;
+};
 
-int htool_exec_hostcmd(struct libhoth_device* dev, uint16_t command,
-                       uint8_t version, const void* req_payload,
-                       size_t req_payload_size, void* resp_buf,
-                       size_t resp_buf_size, size_t* out_resp_size);
+// Note that the options struct only needs to to live for the duration of
+// this function call. It can be destroyed once libhoth_mtd_open returns.
+int libhoth_mtd_open(const struct libhoth_mtd_device_init_options* options,
+                     struct libhoth_device** out);
 
 #ifdef __cplusplus
-}  // extern "C"
+}
 #endif
 
-#endif  // LIBHOTH_EXAMPLES_HTOOL_H_
+#endif  // _LIBHOTH_LIBHOTH_MTD_H_
