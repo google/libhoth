@@ -33,6 +33,7 @@ const uint8_t SPI_OP_ERASE_4K = 0x20;
 const uint8_t SPI_OP_ERASE_64K = 0xd8;
 const uint8_t SPI_OP_WRITE_ENABLE = 0x06;
 const uint8_t SPI_OP_ENTER_4B = 0xb7;
+const uint8_t SPI_OP_READ_STATUS = 0x05;
 
 struct spi_operation_transaction {
   size_t header_offset;
@@ -253,14 +254,22 @@ static void spi_erase_generic(struct spi_operation* op,
   // SPI_OPERATION host commands
 }
 
-int htool_spi_proxy_init(struct htool_spi_proxy* spi, struct libhoth_device* dev) {
+int htool_spi_proxy_init(struct htool_spi_proxy* spi,
+                         struct libhoth_device* dev,
+                         bool is_4_byte, bool enter_exit_4b) {
   spi->dev = dev;
-  spi->is_4_byte = true;
+  spi->is_4_byte = is_4_byte;
 
   struct spi_operation op;
   spi_operation_init(&op);
   spi_operation_begin_transaction(&op);
-  spi_operation_write_mosi(&op, &SPI_OP_ENTER_4B, sizeof(SPI_OP_ENTER_4B));
+  if (enter_exit_4b) {
+    spi_operation_write_mosi(&op, &SPI_OP_ENTER_4B, sizeof(SPI_OP_ENTER_4B));
+  } else {
+    // Read status register to verify spi operation is allowed
+    spi_operation_write_mosi(&op, &SPI_OP_READ_STATUS,
+                             sizeof(SPI_OP_READ_STATUS));
+  }
   spi_operation_end_transaction(&op);
 
   int status = spi_operation_execute(&op, spi->dev);
