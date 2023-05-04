@@ -104,15 +104,38 @@ static int force_write(int fd, const void* buf, size_t size) {
   return 0;
 }
 
+static int get_address_mode( const char* address_mode, bool* is_4_byte,
+bool* enter_4byte) {
+  if (!strcmp(address_mode, "3B/4B")) {
+    *is_4_byte = true;
+    *enter_4byte = true;
+  }
+  else if (!strcmp(address_mode, "3B")) {
+    *is_4_byte = false;
+    *enter_4byte = false;
+  }
+  else if(!strcmp(address_mode, "4B")) {
+    *is_4_byte = true;
+    *enter_4byte = false;
+  }
+  else {
+    fprintf(stderr, "Invalid address_mode value: %s\n", address_mode);
+    return -1;
+  }
+  return 0;
+}
+
 static int command_spi_read(const struct htool_invocation* inv) {
   struct {
     uint32_t start;
     uint32_t length;
     const char* dest_file;
+    const char* address_mode;
   } args;
   if (htool_get_param_u32(inv, "start", &args.start) ||
       htool_get_param_u32(inv, "length", &args.length) ||
-      htool_get_param_string(inv, "dest-file", &args.dest_file)) {
+      htool_get_param_string(inv, "dest-file", &args.dest_file)||
+      htool_get_param_string(inv, "address_mode", &args.address_mode)) {
     return -1;
   }
 
@@ -130,8 +153,14 @@ static int command_spi_read(const struct htool_invocation* inv) {
     return -1;
   }
 
+  bool is_4_byte = true;
+  bool enter_exit_4b = true;
+  int status = get_address_mode(args.address_mode, &is_4_byte, &enter_exit_4b);
+  if (status) {
+    goto cleanup1;
+  }
   struct htool_spi_proxy spi;
-  int status = htool_spi_proxy_init(&spi, dev);
+  status = htool_spi_proxy_init(&spi, dev, is_4_byte, enter_exit_4b);
   if (status) {
     goto cleanup1;
   }
@@ -172,10 +201,12 @@ static int command_spi_update(const struct htool_invocation* inv) {
     uint32_t start;
     bool verify;
     const char* source_file;
+    const char* address_mode;
   } args;
   if (htool_get_param_u32(inv, "start", &args.start) ||
       htool_get_param_bool(inv, "verify", &args.verify) ||
-      htool_get_param_string(inv, "source-file", &args.source_file)) {
+      htool_get_param_string(inv, "source-file", &args.source_file)||
+      htool_get_param_string(inv, "address_mode", &args.address_mode)) {
     return -1;
   }
 
@@ -204,8 +235,14 @@ static int command_spi_update(const struct htool_invocation* inv) {
   size_t file_size = statbuf.st_size;
   uint8_t* file_data = mmap(NULL, file_size, PROT_READ, MAP_PRIVATE, fd, 0);
 
+  bool is_4_byte = true;
+  bool enter_exit_4b = true;
+  int status = get_address_mode(args.address_mode, &is_4_byte, &enter_exit_4b);
+  if (status) {
+    goto cleanup1;
+  }
   struct htool_spi_proxy spi;
-  int status = htool_spi_proxy_init(&spi, dev);
+  status = htool_spi_proxy_init(&spi, dev, is_4_byte, enter_exit_4b);
   if (status) {
     goto cleanup2;
   }
@@ -427,6 +464,10 @@ static const struct htool_cmd CMDS[] = {
                 {HTOOL_FLAG_VALUE, 's', "start", "0", .desc = "start address"},
                 {HTOOL_FLAG_VALUE, 'n', "length",
                  .desc = "the number of bytes to read"},
+                {HTOOL_FLAG_VALUE, 'a', "address_mode", "3B/4B",
+                  .desc = "3B: 3 byte mode no enter/exit 4B supported\n"
+                  "\t3B/4B: 3 Byte current but enter 4B for SPI operation\n"
+                  "\t4B: 4 byte mode only, no enter/exit 4B supported"},
                 {HTOOL_POSITIONAL, .name = "dest-file"},
                 {}},
         .func = command_spi_read,
@@ -438,6 +479,10 @@ static const struct htool_cmd CMDS[] = {
             (const struct htool_param[]){
                 {HTOOL_FLAG_VALUE, 's', "start", "0", .desc = "start address"},
                 {HTOOL_FLAG_BOOL, 'v', "verify", "true"},
+                {HTOOL_FLAG_VALUE, 'a', "address_mode", "3B/4B",
+                  .desc = "3B: 3 byte mode no enter/exit 4B supported\n"
+                  "\t3B/4B: 3 Byte current but enter 4B for SPI operation\n"
+                  "\t4B: 4 byte mode only, no enter/exit 4B supported"},
                 {HTOOL_POSITIONAL, .name = "source-file"},
                 {}},
         .func = command_spi_update,
