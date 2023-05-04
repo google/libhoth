@@ -77,7 +77,7 @@ static int mtd_write(int fd, unsigned int address, const void* data,
     return LIBHOTH_ERR_FAIL;
   }
 
-  size_t ret = -1;
+  ssize_t ret = -1;
   do {
     ret = write(fd, data, data_len);
     // Retry if interrupted
@@ -95,6 +95,51 @@ static int mtd_write(int fd, unsigned int address, const void* data,
   return LIBHOTH_OK;
 }
 
+static int mtd_open(const char* path, const char* name) {
+  if (strlen(path) > 0) {
+    return open(path, O_RDWR);
+  }
+
+  FILE* fp;
+  char* line = NULL;
+  size_t len = 0;
+  ssize_t read;
+
+  fp = fopen("/proc/mtd", "r");
+  if (fp == NULL) {
+    return -1;
+  }
+
+  int status;
+  int mtd_id = -1;
+  char mtd_size[20] = "";
+  char mtd_erasesize[20] = "";
+  char mtd_name[20] = "";
+  char resolved_path[20] = "";
+  while ((read = getline(&line, &len, fp)) != -1) {
+    status = sscanf(line, "mtd%d: %s %s %s", &mtd_id, mtd_size, mtd_erasesize,
+                    mtd_name);
+    if (status != 4 || mtd_id < 0) {
+      continue;
+    }
+    // Strip '"' if any.
+    if (mtd_name[0] == '"') {
+      int i;
+      int name_len = strlen(mtd_name);
+      for (i = 0; i < name_len - 2; ++i) {
+        mtd_name[i] = mtd_name[i + 1];
+        mtd_name[i + 1] = 0;
+      }
+    }
+    if (strcmp(mtd_name, name) == 0) {
+      sprintf(resolved_path, "/dev/mtd%d", mtd_id);
+      return open(resolved_path, O_RDWR);
+    }
+  }
+
+  return -1;
+}
+
 int libhoth_mtd_open(const struct libhoth_mtd_device_init_options* options,
                      struct libhoth_device** out) {
   if (out == NULL || options == NULL || options->path == NULL ||
@@ -107,12 +152,7 @@ int libhoth_mtd_open(const struct libhoth_mtd_device_init_options* options,
   struct libhoth_device* dev = NULL;
   struct libhoth_mtd_device* mtd_dev = NULL;
 
-  if (strlen(options->path) == 0) {
-    // TODO(daimeng): Auto-detect mailbox devpath
-    return LIBHOTH_ERR_INVALID_PARAMETER;
-  }
-
-  fd = open(options->path, O_RDWR);
+  fd = mtd_open(options->path, options->name);
   if (fd < 0) {
     status = LIBHOTH_ERR_INTERFACE_NOT_FOUND;
     goto err_out;
