@@ -328,6 +328,35 @@ static int command_console(const struct htool_invocation* inv) {
   }
 }
 
+static int command_flash_spi_info(const struct htool_invocation* inv) {
+  struct libhoth_device* dev = htool_libhoth_device();
+  if (!dev) {
+    return -1;
+  }
+  struct ec_response_flash_spi_info response;
+  int status = htool_exec_hostcmd(dev, EC_CMD_FLASH_SPI_INFO, /*version=*/0,
+                                  NULL, 0, &response, sizeof(response), NULL);
+  if (status) {
+    return -1;
+  }
+  uint32_t jedec_id =
+      (response.jedec[2] << 16) | (response.jedec[1] << 8) | response.jedec[0];
+  uint32_t device_id = (response.mfr_dev_id[1] << 8) | response.mfr_dev_id[0];
+  if ((jedec_id == 0) && (device_id == 0)) {
+    fprintf(
+        stderr,
+        "This is likely because the target device is not in reset, and thus it "
+        "is not safe to use the SPI bus through a non-SPI transport. Try using "
+        "'htool target reset on' to put the target in reset first.\n");
+    return -1;
+  }
+  printf("Jedec ID: 0x%x\n", jedec_id);
+  printf("Device ID: 0x%x\n", device_id);
+  printf("Status Reg1: 0x%x\n", response.sr1);
+  printf("Status Reg2: 0x%x\n", response.sr2);
+  return 0;
+}
+
 struct libhoth_device* htool_libhoth_device(void) {
   static struct libhoth_device* result;
   if (result) {
@@ -539,6 +568,10 @@ static const struct htool_cmd CMDS[] = {
         .params = (const struct htool_param[]){{}},
         .func = htool_payload_status,
     },
+    {.verbs = (const char*[]){"flash_spi_info", NULL},
+     .desc = "Get SPI NOR flash info.",
+     .params = (const struct htool_param[]){{}},
+     .func = command_flash_spi_info},
     {},
 };
 
