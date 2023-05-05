@@ -12,6 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include "htool.h"
+
 #include <errno.h>
 #include <fcntl.h>
 #include <stdbool.h>
@@ -29,7 +31,6 @@
 #include "../libhoth.h"
 #include "ec_util.h"
 #include "host_commands.h"
-#include "htool.h"
 #include "htool_cmd.h"
 #include "htool_console.h"
 #include "htool_progress.h"
@@ -104,21 +105,18 @@ static int force_write(int fd, const void* buf, size_t size) {
   return 0;
 }
 
-static int get_address_mode( const char* address_mode, bool* is_4_byte,
-bool* enter_4byte) {
+static int get_address_mode(const char* address_mode, bool* is_4_byte,
+                            bool* enter_4byte) {
   if (!strcmp(address_mode, "3B/4B")) {
     *is_4_byte = true;
     *enter_4byte = true;
-  }
-  else if (!strcmp(address_mode, "3B")) {
+  } else if (!strcmp(address_mode, "3B")) {
     *is_4_byte = false;
     *enter_4byte = false;
-  }
-  else if(!strcmp(address_mode, "4B")) {
+  } else if (!strcmp(address_mode, "4B")) {
     *is_4_byte = true;
     *enter_4byte = false;
-  }
-  else {
+  } else {
     fprintf(stderr, "Invalid address_mode value: %s\n", address_mode);
     return -1;
   }
@@ -134,7 +132,7 @@ static int command_spi_read(const struct htool_invocation* inv) {
   } args;
   if (htool_get_param_u32(inv, "start", &args.start) ||
       htool_get_param_u32(inv, "length", &args.length) ||
-      htool_get_param_string(inv, "dest-file", &args.dest_file)||
+      htool_get_param_string(inv, "dest-file", &args.dest_file) ||
       htool_get_param_string(inv, "address_mode", &args.address_mode)) {
     return -1;
   }
@@ -205,7 +203,7 @@ static int command_spi_update(const struct htool_invocation* inv) {
   } args;
   if (htool_get_param_u32(inv, "start", &args.start) ||
       htool_get_param_bool(inv, "verify", &args.verify) ||
-      htool_get_param_string(inv, "source-file", &args.source_file)||
+      htool_get_param_string(inv, "source-file", &args.source_file) ||
       htool_get_param_string(inv, "address_mode", &args.address_mode)) {
     return -1;
   }
@@ -250,7 +248,7 @@ static int command_spi_update(const struct htool_invocation* inv) {
   struct htool_progress_stderr progress;
   htool_progress_stderr_init(&progress, "Erasing/Programming");
   status = htool_spi_proxy_update(&spi, args.start, file_data, file_size,
-                            &progress.progress);
+                                  &progress.progress);
   if (status) {
     goto cleanup2;
   }
@@ -259,7 +257,7 @@ static int command_spi_update(const struct htool_invocation* inv) {
     struct htool_progress_stderr progress;
     htool_progress_stderr_init(&progress, "Verifying");
     status = htool_spi_proxy_verify(&spi, args.start, file_data, file_size,
-                              &progress.progress);
+                                    &progress.progress);
     if (status) {
       goto cleanup2;
     }
@@ -304,17 +302,16 @@ static int command_target_reset_pulse(const struct htool_invocation* inv) {
 static int command_console(const struct htool_invocation* inv) {
   struct htool_console_opts opts = {};
 
-  if(htool_get_param_bool(inv, "snapshot", &opts.snapshot)){
+  if (htool_get_param_bool(inv, "snapshot", &opts.snapshot)) {
     return -1;
   };
 
-  if(!opts.snapshot)
-  {
+  if (!opts.snapshot) {
     if (htool_get_param_u32_or_fourcc(inv, "channel", &opts.channel_id) ||
-      htool_get_param_bool(inv, "force_drive_tx", &opts.force_drive_tx) ||
-      htool_get_param_bool(inv, "history", &opts.history) ||
-      htool_get_param_bool(inv, "onlcr", &opts.onlcr) ||
-      htool_get_param_u32(inv, "baud_rate", &opts.baud_rate)) {
+        htool_get_param_bool(inv, "force_drive_tx", &opts.force_drive_tx) ||
+        htool_get_param_bool(inv, "history", &opts.history) ||
+        htool_get_param_bool(inv, "onlcr", &opts.onlcr) ||
+        htool_get_param_u32(inv, "baud_rate", &opts.baud_rate)) {
       return -1;
     };
   }
@@ -337,24 +334,23 @@ struct libhoth_device* htool_libhoth_device(void) {
   }
 
   int rv;
-  const char *transport_method_str;
-  rv = htool_get_param_string(htool_global_flags(), "transport", &transport_method_str);
-  if(rv) {
+  const char* transport_method_str;
+  rv = htool_get_param_string(htool_global_flags(), "transport",
+                              &transport_method_str);
+  if (rv) {
     return NULL;
   }
-  
-  if(strlen(transport_method_str) <= 0 || 
-    (strcmp(transport_method_str, "usb") == 0)) {
+
+  if (strlen(transport_method_str) <= 0 ||
+      (strcmp(transport_method_str, "usb") == 0)) {
     result = htool_libhoth_usb_device();
-  }
-  else if(strcmp(transport_method_str, "spidev") == 0) {
+  } else if (strcmp(transport_method_str, "spidev") == 0) {
     result = htool_libhoth_spi_device();
-  }
-  else if(strcmp(transport_method_str, "mtd") == 0) {
+  } else if (strcmp(transport_method_str, "mtd") == 0) {
     result = htool_libhoth_mtd_device();
-  }
-  else {
-    fprintf(stderr, "Unknown transport protocol %s\n\r\n", transport_method_str);
+  } else {
+    fprintf(stderr, "Unknown transport protocol %s\n\r\n",
+            transport_method_str);
     return NULL;
   }
 
@@ -367,7 +363,7 @@ int htool_exec_hostcmd(struct libhoth_device* dev, uint16_t command,
                        size_t resp_buf_size, size_t* out_resp_size) {
   struct {
     struct ec_host_request hdr;
-    uint8_t payload_buf[LIBHOTH_MAILBOX_SIZE-sizeof(struct ec_host_request)];
+    uint8_t payload_buf[LIBHOTH_MAILBOX_SIZE - sizeof(struct ec_host_request)];
   } req;
   if (req_payload_size > sizeof(req.payload_buf)) {
     fprintf(stderr, "req_payload_size too large: %d > %d\n",
@@ -383,19 +379,18 @@ int htool_exec_hostcmd(struct libhoth_device* dev, uint16_t command,
     fprintf(stderr, "populate_request_header failed: %d\n", status);
     return -1;
   }
-  status =
-      libhoth_send_request(dev, &req, sizeof(req.hdr) + req_payload_size);
+  status = libhoth_send_request(dev, &req, sizeof(req.hdr) + req_payload_size);
   if (status != LIBHOTH_OK) {
     fprintf(stderr, "libhoth_usb_send() failed: %d\n", status);
     return -1;
   }
   struct {
     struct ec_host_response hdr;
-    uint8_t payload_buf[LIBHOTH_MAILBOX_SIZE-sizeof(struct ec_host_response)];
+    uint8_t payload_buf[LIBHOTH_MAILBOX_SIZE - sizeof(struct ec_host_response)];
   } resp;
   size_t resp_size;
   status = libhoth_receive_response(dev, &resp, sizeof(resp), &resp_size,
-                                        /*timeout_ms=*/5000);
+                                    /*timeout_ms=*/5000);
   if (status != LIBHOTH_OK) {
     fprintf(stderr, "libhoth_usb_receive_response() failed: %d\n", status);
     return -1;
@@ -413,14 +408,16 @@ int htool_exec_hostcmd(struct libhoth_device* dev, uint16_t command,
   size_t resp_payload_size = resp_size - sizeof(struct ec_host_response);
   if (out_resp_size) {
     if (resp_payload_size > resp_buf_size) {
-      fprintf(stderr,
-              "Response payload too large to fit in supplied buffer: %zu > %zu\n",
-              resp_payload_size, resp_buf_size);
+      fprintf(
+          stderr,
+          "Response payload too large to fit in supplied buffer: %zu > %zu\n",
+          resp_payload_size, resp_buf_size);
       return -1;
     }
   } else {
     if (resp_payload_size != resp_buf_size) {
-      fprintf(stderr, "Unexpected response payload size: got %zu expected %zu\n",
+      fprintf(stderr,
+              "Unexpected response payload size: got %zu expected %zu\n",
               resp_payload_size, resp_buf_size);
       return -1;
     }
@@ -468,9 +465,10 @@ static const struct htool_cmd CMDS[] = {
                 {HTOOL_FLAG_VALUE, 'n', "length",
                  .desc = "the number of bytes to read"},
                 {HTOOL_FLAG_VALUE, 'a', "address_mode", "3B/4B",
-                  .desc = "3B: 3 byte mode no enter/exit 4B supported\n"
-                  "\t3B/4B: 3 Byte current but enter 4B for SPI operation\n"
-                  "\t4B: 4 byte mode only, no enter/exit 4B supported"},
+                 .desc =
+                     "3B: 3 byte mode no enter/exit 4B supported\n"
+                     "\t3B/4B: 3 Byte current but enter 4B for SPI operation\n"
+                     "\t4B: 4 byte mode only, no enter/exit 4B supported"},
                 {HTOOL_POSITIONAL, .name = "dest-file"},
                 {}},
         .func = command_spi_read,
@@ -483,9 +481,10 @@ static const struct htool_cmd CMDS[] = {
                 {HTOOL_FLAG_VALUE, 's', "start", "0", .desc = "start address"},
                 {HTOOL_FLAG_BOOL, 'v', "verify", "true"},
                 {HTOOL_FLAG_VALUE, 'a', "address_mode", "3B/4B",
-                  .desc = "3B: 3 byte mode no enter/exit 4B supported\n"
-                  "\t3B/4B: 3 Byte current but enter 4B for SPI operation\n"
-                  "\t4B: 4 byte mode only, no enter/exit 4B supported"},
+                 .desc =
+                     "3B: 3 byte mode no enter/exit 4B supported\n"
+                     "\t3B/4B: 3 Byte current but enter 4B for SPI operation\n"
+                     "\t4B: 4 byte mode only, no enter/exit 4B supported"},
                 {HTOOL_POSITIONAL, .name = "source-file"},
                 {}},
         .func = command_spi_update,
@@ -528,8 +527,7 @@ static const struct htool_cmd CMDS[] = {
                 {HTOOL_FLAG_VALUE, 'b', "baud_rate", "0"},
                 {HTOOL_FLAG_BOOL, 's', "snapshot", "false",
                  .desc = "Print a snapshot of most recent console messages."},
-                {}
-                },
+                {}},
         .func = command_console,
     },
     {},

@@ -16,8 +16,8 @@
 
 #include <stdlib.h>
 
-int libhoth_send_request(struct libhoth_device* dev,
-                             const void* request, size_t request_size) {
+int libhoth_send_request(struct libhoth_device* dev, const void* request,
+                         size_t request_size) {
   if (dev == NULL) {
     return LIBHOTH_ERR_INVALID_PARAMETER;
   }
@@ -25,19 +25,20 @@ int libhoth_send_request(struct libhoth_device* dev,
 }
 
 int libhoth_receive_response(struct libhoth_device* dev, void* response,
-                                 size_t max_response_size, size_t* actual_size,
-                                 int timeout_ms) {
+                             size_t max_response_size, size_t* actual_size,
+                             int timeout_ms) {
   if (dev == NULL) {
     return LIBHOTH_ERR_INVALID_PARAMETER;
   }
-  return dev->receive(dev, response, max_response_size, actual_size, timeout_ms);
+  return dev->receive(dev, response, max_response_size, actual_size,
+                      timeout_ms);
 }
 
 int libhoth_device_close(struct libhoth_device* dev) {
   if (dev == NULL) {
     return LIBHOTH_ERR_INVALID_PARAMETER;
   }
-  
+
   int status = dev->close(dev);
   free(dev);
   return status;

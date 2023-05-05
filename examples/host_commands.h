@@ -275,8 +275,8 @@ struct ec_channel_uart_config_set_req {
 #define EC_CMD_CONSOLE_READ 0x0098
 
 enum ec_console_read_subcmd {
-	CONSOLE_READ_NEXT = 0,
-	CONSOLE_READ_RECENT = 1,
+  CONSOLE_READ_NEXT = 0,
+  CONSOLE_READ_RECENT = 1,
 };
 
 struct ec_params_console_read_v1 {

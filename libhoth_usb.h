@@ -32,8 +32,7 @@ struct libhoth_usb_device_init_options {
   libusb_context* usb_ctx;
 };
 
-
-// Note that the options struct only needs to to live for the duration of 
+// Note that the options struct only needs to to live for the duration of
 // this function call. It can be destroyed once libhoth_usb_open returns.
 int libhoth_usb_open(const struct libhoth_usb_device_init_options* options,
                      struct libhoth_device** out);

@@ -12,17 +12,16 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "libhoth.h"
 #include "libhoth_usb.h"
 
 #include <libusb.h>
 #include <stdlib.h>
 
+#include "libhoth.h"
 #include "libhoth_usb_device.h"
 
-
-int libhoth_usb_send_request(struct libhoth_device* dev,
-                             const void* request, size_t request_size);
+int libhoth_usb_send_request(struct libhoth_device* dev, const void* request,
+                             size_t request_size);
 
 int libhoth_usb_receive_response(struct libhoth_device* dev, void* response,
                                  size_t max_response_size, size_t* actual_size,
@@ -146,7 +145,7 @@ int libhoth_usb_open(const struct libhoth_usb_device_init_options* options,
   return LIBHOTH_OK;
 
 err_out:
-  if(dev != NULL) {
+  if (dev != NULL) {
     if (usb_dev != NULL) {
       if (usb_dev->handle != NULL) {
         libusb_release_interface(usb_dev->handle, usb_dev->info.interface_id);
@@ -160,13 +159,14 @@ err_out:
   return status;
 }
 
-int libhoth_usb_send_request(struct libhoth_device* dev,
-                             const void* request, size_t request_size) {
+int libhoth_usb_send_request(struct libhoth_device* dev, const void* request,
+                             size_t request_size) {
   if (dev->user_ctx == NULL) {
     return LIBUSB_ERROR_INVALID_PARAM;
   }
 
-  struct libhoth_usb_device* usb_dev = (struct libhoth_usb_device*)dev->user_ctx;
+  struct libhoth_usb_device* usb_dev =
+      (struct libhoth_usb_device*)dev->user_ctx;
   switch (usb_dev->info.type) {
     case LIBHOTH_USB_INTERFACE_TYPE_MAILBOX:
       return libhoth_usb_mailbox_send_request(usb_dev, request, request_size);
@@ -184,15 +184,16 @@ int libhoth_usb_receive_response(struct libhoth_device* dev, void* response,
   if (dev->user_ctx == NULL) {
     return LIBUSB_ERROR_INVALID_PARAM;
   }
-  
-  struct libhoth_usb_device* usb_dev = (struct libhoth_usb_device*)dev->user_ctx;
+
+  struct libhoth_usb_device* usb_dev =
+      (struct libhoth_usb_device*)dev->user_ctx;
   switch (usb_dev->info.type) {
     case LIBHOTH_USB_INTERFACE_TYPE_MAILBOX:
-      return libhoth_usb_mailbox_receive_response(usb_dev, response, max_response_size,
-                                                  actual_size, timeout_ms);
+      return libhoth_usb_mailbox_receive_response(
+          usb_dev, response, max_response_size, actual_size, timeout_ms);
     case LIBHOTH_USB_INTERFACE_TYPE_FIFO:
-      return libhoth_usb_fifo_receive_response(usb_dev, response, max_response_size,
-                                               actual_size, timeout_ms);
+      return libhoth_usb_fifo_receive_response(
+          usb_dev, response, max_response_size, actual_size, timeout_ms);
     default:
       return LIBHOTH_ERR_INTERFACE_NOT_FOUND;
   }
@@ -205,7 +206,8 @@ int libhoth_usb_close(struct libhoth_device* dev) {
     return LIBUSB_ERROR_INVALID_PARAM;
   }
 
-  struct libhoth_usb_device* usb_dev = (struct libhoth_usb_device*)dev->user_ctx;
+  struct libhoth_usb_device* usb_dev =
+      (struct libhoth_usb_device*)dev->user_ctx;
   switch (usb_dev->info.type) {
     case LIBHOTH_USB_INTERFACE_TYPE_MAILBOX:
       status = libhoth_usb_mailbox_close(usb_dev);
