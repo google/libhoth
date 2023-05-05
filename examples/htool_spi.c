@@ -12,8 +12,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "htool.h"
-
 #include <stdbool.h>
 #include <stddef.h>
 #include <stdint.h>
@@ -24,6 +22,7 @@
 #include "../libhoth_spi.h"
 #include "ec_util.h"
 #include "host_commands.h"
+#include "htool.h"
 #include "htool_cmd.h"
 
 struct libhoth_device* htool_libhoth_spi_device(void) {
@@ -33,22 +32,23 @@ struct libhoth_device* htool_libhoth_spi_device(void) {
   }
 
   int rv;
-  const char *spidev_path_str;
+  const char* spidev_path_str;
   uint32_t mailbox_location;
-  rv = htool_get_param_string(htool_global_flags(), "spidev_path", &spidev_path_str) ||
-       htool_get_param_u32(htool_global_flags(), "mailbox_location", &mailbox_location);
-  if(rv) {
+  rv = htool_get_param_string(htool_global_flags(), "spidev_path",
+                              &spidev_path_str) ||
+       htool_get_param_u32(htool_global_flags(), "mailbox_location",
+                           &mailbox_location);
+  if (rv) {
     return NULL;
   }
 
-  if(strlen(spidev_path_str) <= 0)
-  {
+  if (strlen(spidev_path_str) <= 0) {
     fprintf(stderr, "Invalid spidev path: %s\n", spidev_path_str);
     return NULL;
   }
 
   struct libhoth_spi_device_init_options opts = {.path = spidev_path_str,
-                                                .mailbox = mailbox_location};
+                                                 .mailbox = mailbox_location};
   rv = libhoth_spi_open(&opts, &result);
   if (rv) {
     // TODO: Convert error-code to a string

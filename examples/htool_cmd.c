@@ -394,7 +394,9 @@ static int fill_global_flags(struct htool_invocation* inv,
 
 static struct htool_invocation global_flags_inv = {};
 
-struct htool_invocation* htool_global_flags(void) { return &global_flags_inv; }
+struct htool_invocation* htool_global_flags(void) {
+  return &global_flags_inv;
+}
 
 int htool_main(const struct htool_param* global_flags,
                const struct htool_cmd* cmds, int argc,

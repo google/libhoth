@@ -153,8 +153,8 @@ static void spi_operation_end_transaction(struct spi_operation* op) {
   spi_operation_read_miso_and_end_transaction(op, NULL, 0);
 }
 
-static int spi_read_chunk(const struct htool_spi_proxy* spi, uint32_t addr, void* buf,
-                          size_t len) {
+static int spi_read_chunk(const struct htool_spi_proxy* spi, uint32_t addr,
+                          void* buf, size_t len) {
   struct spi_operation op;
   spi_operation_init(&op);
 
@@ -166,8 +166,8 @@ static int spi_read_chunk(const struct htool_spi_proxy* spi, uint32_t addr, void
   return spi_operation_execute(&op, spi->dev);
 }
 
-int htool_spi_proxy_read(const struct htool_spi_proxy* spi, uint32_t addr, void* buf,
-                   size_t len) {
+int htool_spi_proxy_read(const struct htool_spi_proxy* spi, uint32_t addr,
+                         void* buf, size_t len) {
   uint8_t* cbuf = (uint8_t*)buf;
   while (len > 0) {
     size_t read_len = MIN(len, READ_CHUNK_SIZE);
@@ -183,8 +183,8 @@ int htool_spi_proxy_read(const struct htool_spi_proxy* spi, uint32_t addr, void*
 }
 
 int htool_spi_proxy_verify(const struct htool_spi_proxy* spi, uint32_t addr,
-                     const void* buf, size_t len,
-                     const struct htool_progress* progress) {
+                           const void* buf, size_t len,
+                           const struct htool_progress* progress) {
   uint8_t read_buf[READ_CHUNK_SIZE];
   const uint8_t* cbuf = (const uint8_t*)buf;
   size_t len_remaining = len;
@@ -255,8 +255,8 @@ static void spi_erase_generic(struct spi_operation* op,
 }
 
 int htool_spi_proxy_init(struct htool_spi_proxy* spi,
-                         struct libhoth_device* dev,
-                         bool is_4_byte, bool enter_exit_4b) {
+                         struct libhoth_device* dev, bool is_4_byte,
+                         bool enter_exit_4b) {
   spi->dev = dev;
   spi->is_4_byte = is_4_byte;
 
@@ -284,8 +284,8 @@ int htool_spi_proxy_init(struct htool_spi_proxy* spi,
 }
 
 int htool_spi_proxy_update(const struct htool_spi_proxy* spi, uint32_t addr,
-                     const void* buf, size_t len,
-                     const struct htool_progress* progress) {
+                           const void* buf, size_t len,
+                           const struct htool_progress* progress) {
   const uint32_t SPI_PAGE_SIZE = 256;
 
   // There is only enough space in the buffer for 3 page writes (and associated

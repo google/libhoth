@@ -12,19 +12,20 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "libhoth.h"
-#include "libhoth_ec.h"
 #include "libhoth_spi.h"
 
-#include <stdio.h>
+#include <fcntl.h>
+#include <linux/spi/spidev.h>
+#include <linux/types.h>
 #include <stdint.h>
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <fcntl.h>
-#include <unistd.h>
 #include <sys/ioctl.h>
-#include <linux/types.h>
-#include <linux/spi/spidev.h>
+#include <unistd.h>
+
+#include "libhoth.h"
+#include "libhoth_ec.h"
 
 struct libhoth_spi_device {
   int fd;
@@ -32,8 +33,8 @@ struct libhoth_spi_device {
   unsigned int address_mode_4b;
 };
 
-int libhoth_spi_send_request(struct libhoth_device* dev,
-                             const void* request, size_t request_size);
+int libhoth_spi_send_request(struct libhoth_device* dev, const void* request,
+                             size_t request_size);
 
 int libhoth_spi_receive_response(struct libhoth_device* dev, void* response,
                                  size_t max_response_size, size_t* actual_size,
@@ -41,254 +42,244 @@ int libhoth_spi_receive_response(struct libhoth_device* dev, void* response,
 
 int libhoth_spi_close(struct libhoth_device* dev);
 
+static int spi_nor_write(int fd, unsigned int address_mode_4b,
+                         unsigned int address, const void* data,
+                         size_t data_len) {
+  if (fd < 0 || !data || !data_len) return LIBHOTH_ERR_INVALID_PARAMETER;
 
-static int spi_nor_write(int fd, unsigned int address_mode_4b, unsigned int address, const void *data, size_t data_len)
-{
-    if(fd < 0 || !data || !data_len)
-        return LIBHOTH_ERR_INVALID_PARAMETER;
+  uint8_t wp_buf[1] = {};
+  uint8_t rq_buf[5] = {};
+  struct spi_ioc_transfer xfer[3] = {};
 
-    uint8_t wp_buf[1] = {};
-    uint8_t rq_buf[5] = {};
-    struct spi_ioc_transfer xfer[3] = {};
+  // Write Enable Message
+  wp_buf[0] = 0x06;
+  xfer[0] = (struct spi_ioc_transfer){
+      .tx_buf = (unsigned long)wp_buf,
+      .len = 1,
+      .cs_change = 1,
+  };
 
+  // Page Program OPCODE + Mailbox Address
+  rq_buf[0] = 0x02;
+  if (address_mode_4b) {
+    rq_buf[1] = (address >> 24) & 0xFF;
+    rq_buf[2] = (address >> 16) & 0xFF;
+    rq_buf[3] = (address >> 8) & 0xFF;
+    rq_buf[4] = address & 0xFF;
 
-    // Write Enable Message
-    wp_buf[0] = 0x06;
-    xfer[0] = (struct spi_ioc_transfer) {
-        .tx_buf = (unsigned long)wp_buf,
-        .len = 1,
-        .cs_change = 1,
-    };
+    xfer[1].len = 5;
+  } else {
+    rq_buf[1] = (address >> 16) & 0xFF;
+    rq_buf[2] = (address >> 8) & 0xFF;
+    rq_buf[3] = address & 0xFF;
 
-    // Page Program OPCODE + Mailbox Address
-    rq_buf[0] = 0x02;
-    if(address_mode_4b)
-    {
-        rq_buf[1] = (address >> 24) & 0xFF;
-        rq_buf[2] = (address >> 16) & 0xFF;
-        rq_buf[3] = (address >> 8) & 0xFF;
-        rq_buf[4] = address & 0xFF;
-    
-        xfer[1].len = 5;
-    }
-    else
-    {
-        rq_buf[1] = (address >> 16) & 0xFF;
-        rq_buf[2] = (address >> 8) & 0xFF;
-        rq_buf[3] = address & 0xFF;
+    xfer[1].len = 4;
+  }
+  xfer[1].tx_buf = (unsigned long)rq_buf;
 
-        xfer[1].len = 4;
-    }
-    xfer[1].tx_buf = (unsigned long)rq_buf;
-    
+  // Write Data at mailbox address
+  xfer[2] = (struct spi_ioc_transfer){
+      .tx_buf = (unsigned long)data,
+      .len = data_len,
+  };
 
-    // Write Data at mailbox address
-    xfer[2] = (struct spi_ioc_transfer) {
-        .tx_buf = (unsigned long)data,
-        .len = data_len,
-    };
+  int status = ioctl(fd, SPI_IOC_MESSAGE(3), xfer);
+  if (status < 0) {
+    return LIBHOTH_ERR_FAIL;
+  }
 
-    int status = ioctl(fd, SPI_IOC_MESSAGE(3), xfer);
-    if (status < 0) {
-        return LIBHOTH_ERR_FAIL;
-    }
-
-    return LIBHOTH_OK;
+  return LIBHOTH_OK;
 }
 
-static int spi_nor_read(int fd, unsigned int address_mode_4b, unsigned int address, void *data, size_t data_len)
-{
-    if(fd < 0 || !data || !data_len)
-        return LIBHOTH_ERR_INVALID_PARAMETER;
+static int spi_nor_read(int fd, unsigned int address_mode_4b,
+                        unsigned int address, void* data, size_t data_len) {
+  if (fd < 0 || !data || !data_len) return LIBHOTH_ERR_INVALID_PARAMETER;
 
-    uint8_t rd_request[5];
-    struct spi_ioc_transfer xfer[2] = {};
+  uint8_t rd_request[5];
+  struct spi_ioc_transfer xfer[2] = {};
 
-    // Read OPCODE and mailbox address
-    rd_request[0] = 0x03; // Read
-    if(address_mode_4b)
-    {
-        rd_request[1] = (address >> 24) & 0xFF;
-        rd_request[2] = (address >> 16) & 0xFF;
-        rd_request[3] = (address >> 8) & 0xFF;
-        rd_request[4] = address & 0xFF;
-    
-        xfer[0].len = 5;
-    }
-    else
-    {
-        rd_request[1] = (address >> 16) & 0xFF;
-        rd_request[2] = (address >> 8) & 0xFF;
-        rd_request[3] = address & 0xFF;
+  // Read OPCODE and mailbox address
+  rd_request[0] = 0x03;  // Read
+  if (address_mode_4b) {
+    rd_request[1] = (address >> 24) & 0xFF;
+    rd_request[2] = (address >> 16) & 0xFF;
+    rd_request[3] = (address >> 8) & 0xFF;
+    rd_request[4] = address & 0xFF;
 
-        xfer[0].len = 4;
-    }
-    xfer[0].tx_buf = (unsigned long)rd_request;
-    
-    // Read in data
-    xfer[1] = (struct spi_ioc_transfer) {
-        .rx_buf = (unsigned long)data,
-        .len = data_len,
-    };
+    xfer[0].len = 5;
+  } else {
+    rd_request[1] = (address >> 16) & 0xFF;
+    rd_request[2] = (address >> 8) & 0xFF;
+    rd_request[3] = address & 0xFF;
 
-    int status = ioctl(fd, SPI_IOC_MESSAGE(2), xfer);
-    if (status < 0) {
-        return LIBHOTH_ERR_FAIL;
-    }
+    xfer[0].len = 4;
+  }
+  xfer[0].tx_buf = (unsigned long)rd_request;
 
-    return LIBHOTH_OK;   
+  // Read in data
+  xfer[1] = (struct spi_ioc_transfer){
+      .rx_buf = (unsigned long)data,
+      .len = data_len,
+  };
+
+  int status = ioctl(fd, SPI_IOC_MESSAGE(2), xfer);
+  if (status < 0) {
+    return LIBHOTH_ERR_FAIL;
+  }
+
+  return LIBHOTH_OK;
 }
-
 
 int libhoth_spi_open(const struct libhoth_spi_device_init_options* options,
                      struct libhoth_device** out) {
-    if (out == NULL || options == NULL || options->path == NULL) {
-        return LIBHOTH_ERR_INVALID_PARAMETER;
+  if (out == NULL || options == NULL || options->path == NULL) {
+    return LIBHOTH_ERR_INVALID_PARAMETER;
+  }
+
+  int status;
+  int fd = -1;
+  struct libhoth_device* dev = NULL;
+  struct libhoth_spi_device* spi_dev = NULL;
+
+  fd = open(options->path, O_RDWR);
+  if (fd < 0) {
+    status = LIBHOTH_ERR_INTERFACE_NOT_FOUND;
+    goto err_out;
+  }
+
+  dev = calloc(1, sizeof(struct libhoth_device));
+  if (dev == NULL) {
+    status = LIBHOTH_ERR_MALLOC_FAILED;
+    goto err_out;
+  }
+
+  spi_dev = calloc(1, sizeof(struct libhoth_spi_device));
+  if (spi_dev == NULL) {
+    status = LIBHOTH_ERR_MALLOC_FAILED;
+    goto err_out;
+  }
+
+  if (options->bits) {
+    const uint8_t bits = (uint8_t)options->bits;
+    if (ioctl(fd, SPI_IOC_WR_BITS_PER_WORD, bits) < 0) {
+      status = LIBHOTH_ERR_FAIL;
+      goto err_out;
     }
+  }
 
-    int status;
-    int fd = -1;
-    struct libhoth_device* dev = NULL;
-    struct libhoth_spi_device* spi_dev = NULL;
-
-    fd = open(options->path,O_RDWR);
-    if (fd < 0) {
-        status = LIBHOTH_ERR_INTERFACE_NOT_FOUND;
-        goto err_out;
+  if (options->mode) {
+    const uint8_t mode = (uint8_t)options->mode;
+    if (ioctl(fd, SPI_IOC_WR_MODE, &mode) < 0) {
+      status = LIBHOTH_ERR_FAIL;
+      goto err_out;
     }
+  }
 
-    dev = calloc(1, sizeof(struct libhoth_device));
-    if (dev == NULL) {
-        status = LIBHOTH_ERR_MALLOC_FAILED;
-        goto err_out;
+  if (options->speed) {
+    const uint32_t speed = (uint32_t)options->speed;
+    if (ioctl(fd, SPI_IOC_WR_MAX_SPEED_HZ, &speed) < 0) {
+      status = LIBHOTH_ERR_FAIL;
+      goto err_out;
     }
+  }
 
-    spi_dev = calloc(1, sizeof(struct libhoth_spi_device));
-    if (spi_dev == NULL) {
-        status = LIBHOTH_ERR_MALLOC_FAILED;
-        goto err_out;
-    }
+  spi_dev->fd = fd;
+  spi_dev->mailbox_address = options->mailbox;
+  spi_dev->address_mode_4b = 1;
 
-    if(options->bits)
-    {
-        const uint8_t bits = (uint8_t)options->bits;
-        if (ioctl(fd, SPI_IOC_WR_BITS_PER_WORD, bits) < 0)
-        {
-            status = LIBHOTH_ERR_FAIL;
-            goto err_out;
-        }
-    }
+  dev->send = libhoth_spi_send_request;
+  dev->receive = libhoth_spi_receive_response;
+  dev->close = libhoth_spi_close;
+  dev->user_ctx = spi_dev;
 
-    if(options->mode)
-    {
-        const uint8_t mode = (uint8_t)options->mode;
-        if (ioctl(fd, SPI_IOC_WR_MODE, &mode) < 0)
-        {
-            status = LIBHOTH_ERR_FAIL;
-            goto err_out;
-        }
-    }
+  *out = dev;
+  return LIBHOTH_OK;
 
-    if(options->speed)
-    {
-        const uint32_t speed = (uint32_t)options->speed;
-        if (ioctl(fd, SPI_IOC_WR_MAX_SPEED_HZ, &speed) < 0)
-        {
-            status = LIBHOTH_ERR_FAIL;
-            goto err_out;
-        }
-    }
+err_out:
+  if (fd >= 0) {
+    close(fd);
+  }
+  if (dev != NULL) {
+    free(dev);
+  }
+  if (spi_dev != NULL) {
+    free(spi_dev);
+  }
 
-    spi_dev->fd = fd;
-    spi_dev->mailbox_address = options->mailbox;
-    spi_dev->address_mode_4b = 1;
+  return status;
+}
 
-    dev->send = libhoth_spi_send_request;
-    dev->receive = libhoth_spi_receive_response;
-    dev->close = libhoth_spi_close;
-    dev->user_ctx = spi_dev;
+int libhoth_spi_send_request(struct libhoth_device* dev, const void* request,
+                             size_t request_size) {
+  if (dev == NULL) {
+    return LIBHOTH_ERR_INVALID_PARAMETER;
+  }
 
-    *out = dev;
-    return LIBHOTH_OK;
+  struct libhoth_spi_device* spi_dev =
+      (struct libhoth_spi_device*)dev->user_ctx;
 
-    err_out:
-    if (fd >= 0) {
-        close(fd);
-    }
-    if (dev != NULL) {
-        free(dev);
-    }
-    if(spi_dev != NULL){
-        free(spi_dev);
-    }
+  return spi_nor_write(spi_dev->fd, spi_dev->address_mode_4b,
+                       spi_dev->mailbox_address, request, request_size);
+}
 
+int libhoth_spi_receive_response(struct libhoth_device* dev, void* response,
+                                 size_t max_response_size, size_t* actual_size,
+                                 int timeout_ms) {
+  if (dev == NULL) {
+    return LIBHOTH_ERR_INVALID_PARAMETER;
+  }
+
+  if (max_response_size < 8) {
+    return LIBHOTH_ERR_INVALID_PARAMETER;
+  }
+
+  size_t total_bytes;
+  int status;
+  struct ec_host_response host_response;
+  struct libhoth_spi_device* spi_dev =
+      (struct libhoth_spi_device*)dev->user_ctx;
+
+  // Read Header From Mailbox
+  status = spi_nor_read(spi_dev->fd, spi_dev->address_mode_4b,
+                        spi_dev->mailbox_address, response, 8);
+  if (status != LIBHOTH_OK) {
     return status;
-}
+  }
 
-int libhoth_spi_send_request(struct libhoth_device* dev,
-                                const void* request, size_t request_size) {
-    if(dev == NULL) {
-        return LIBHOTH_ERR_INVALID_PARAMETER;
-    }
+  total_bytes = 8;
+  memcpy(&host_response, response, sizeof(host_response));
+  if (actual_size) {
+    *actual_size = total_bytes;
+  }
 
-    struct libhoth_spi_device* spi_dev = (struct libhoth_spi_device*)dev->user_ctx;
-    
-    return spi_nor_write(spi_dev->fd, spi_dev->address_mode_4b, spi_dev->mailbox_address, request, request_size);
-}
+  if (max_response_size < (total_bytes + host_response.data_len)) {
+    return LIBHOTH_ERR_RESPONSE_BUFFER_OVERFLOW;
+  }
 
-int libhoth_spi_receive_response(struct libhoth_device* dev, void *response,
-                                size_t max_response_size, size_t* actual_size,
-                                int timeout_ms) {
-    if(dev == NULL) {
-        return LIBHOTH_ERR_INVALID_PARAMETER;
-    }
+  // Read remainder of data based on header length
+  uint8_t* const data_start = (uint8_t*)response + total_bytes;
+  status = spi_nor_read(spi_dev->fd, spi_dev->address_mode_4b,
+                        spi_dev->mailbox_address + total_bytes, data_start,
+                        host_response.data_len);
+  if (status != LIBHOTH_OK) {
+    return status;
+  }
 
-    if(max_response_size < 8){
-        return LIBHOTH_ERR_INVALID_PARAMETER;
-    }
+  if (actual_size) {
+    *actual_size += host_response.data_len;
+  }
 
-    size_t total_bytes;
-    int status;
-    struct ec_host_response host_response;
-    struct libhoth_spi_device* spi_dev = (struct libhoth_spi_device*)dev->user_ctx;
-    
-    // Read Header From Mailbox
-    status = spi_nor_read(spi_dev->fd, spi_dev->address_mode_4b, spi_dev->mailbox_address, response, 8);
-    if(status != LIBHOTH_OK){
-        return status;
-    }
-
-    total_bytes = 8;
-    memcpy(&host_response, response, sizeof(host_response));
-    if(actual_size) {
-        *actual_size = total_bytes;   
-    }
-
-    if(max_response_size < (total_bytes + host_response.data_len)){
-        return LIBHOTH_ERR_RESPONSE_BUFFER_OVERFLOW;
-    }
-
-    // Read remainder of data based on header length
-    uint8_t* const data_start = (uint8_t*)response + total_bytes;
-    status = spi_nor_read(spi_dev->fd, spi_dev->address_mode_4b, spi_dev->mailbox_address + total_bytes, data_start, host_response.data_len);
-    if(status != LIBHOTH_OK){
-        return status;
-    }
-
-    if(actual_size) {
-        *actual_size += host_response.data_len;
-    }
-
-    return LIBHOTH_OK;
+  return LIBHOTH_OK;
 }
 
 int libhoth_spi_close(struct libhoth_device* dev) {
-    if(dev == NULL) {
-        return LIBHOTH_ERR_INVALID_PARAMETER;
-    }
+  if (dev == NULL) {
+    return LIBHOTH_ERR_INVALID_PARAMETER;
+  }
 
-    struct libhoth_spi_device* spi_dev = (struct libhoth_spi_device*)dev->user_ctx;
-    close(spi_dev->fd);
-    free(dev->user_ctx);
-    return LIBHOTH_OK;
+  struct libhoth_spi_device* spi_dev =
+      (struct libhoth_spi_device*)dev->user_ctx;
+  close(spi_dev->fd);
+  free(dev->user_ctx);
+  return LIBHOTH_OK;
 }

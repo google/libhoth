@@ -25,18 +25,19 @@ struct htool_spi_proxy {
   bool is_4_byte;
 };
 
-int htool_spi_proxy_init(struct htool_spi_proxy* spi, struct libhoth_device* dev,
-                   bool is_4_byte, bool enter_exit_4b);
+int htool_spi_proxy_init(struct htool_spi_proxy* spi,
+                         struct libhoth_device* dev, bool is_4_byte,
+                         bool enter_exit_4b);
 
-int htool_spi_proxy_read(const struct htool_spi_proxy* spi, uint32_t addr, void* buf,
-                   size_t len);
+int htool_spi_proxy_read(const struct htool_spi_proxy* spi, uint32_t addr,
+                         void* buf, size_t len);
 
 int htool_spi_proxy_verify(const struct htool_spi_proxy* spi, uint32_t addr,
-                     const void* buf, size_t len,
-                     const struct htool_progress* progress);
+                           const void* buf, size_t len,
+                           const struct htool_progress* progress);
 
 int htool_spi_proxy_update(const struct htool_spi_proxy* spi, uint32_t addr,
-                     const void* buf, size_t len,
-                     const struct htool_progress* progress);
+                           const void* buf, size_t len,
+                           const struct htool_progress* progress);
 
 #endif  // LIBHOTH_EXAMPLES_HTOOL_SPI_PROXY_H_

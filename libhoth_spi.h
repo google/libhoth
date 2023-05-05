@@ -33,8 +33,7 @@ struct libhoth_spi_device_init_options {
   int speed;
 };
 
-
-// Note that the options struct only needs to to live for the duration of 
+// Note that the options struct only needs to to live for the duration of
 // this function call. It can be destroyed once libhoth_spi_open returns.
 int libhoth_spi_open(const struct libhoth_spi_device_init_options* options,
                      struct libhoth_device** out);

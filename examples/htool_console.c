@@ -302,20 +302,21 @@ int htool_console_run(struct libhoth_device *dev,
 
 int htool_console_snapshot(struct libhoth_device *dev) {
   size_t response_bytes_written;
-  int status = htool_exec_hostcmd(dev, EC_CMD_CONSOLE_REQUEST,
-    0, NULL, 0, NULL, 0, &response_bytes_written);
+  int status = htool_exec_hostcmd(dev, EC_CMD_CONSOLE_REQUEST, 0, NULL, 0, NULL,
+                                  0, &response_bytes_written);
   if (status != LIBHOTH_OK) {
     fprintf(stderr, "EC_CMD_CONSOLE_REQUEST status: %d\n", status);
     return status;
   }
 
-  struct ec_params_console_read_v1 read_request = { .subcmd = CONSOLE_READ_NEXT };
-  const size_t max_bytes_per_read = MAILBOX_SIZE - sizeof(struct ec_host_response);
+  struct ec_params_console_read_v1 read_request = {.subcmd = CONSOLE_READ_NEXT};
+  const size_t max_bytes_per_read =
+      MAILBOX_SIZE - sizeof(struct ec_host_response);
   while (true) {
     char buf[MAILBOX_SIZE];
-    status = htool_exec_hostcmd(
-      dev, EC_CMD_CONSOLE_READ,
-      0, &read_request, sizeof(read_request), buf, max_bytes_per_read, &response_bytes_written);
+    status = htool_exec_hostcmd(dev, EC_CMD_CONSOLE_READ, 0, &read_request,
+                                sizeof(read_request), buf, max_bytes_per_read,
+                                &response_bytes_written);
     if (status != LIBHOTH_OK) {
       fprintf(stderr, "EC_CMD_CONSOLE_READ status: %d\n", status);
       return status;
