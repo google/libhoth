@@ -37,6 +37,41 @@ static int clear_persistent_panic_info(struct libhoth_device* dev) {
   return 0;
 }
 
+static char* get_panic_console_log(
+    const struct ec_response_persistent_panic_info* pdata) {
+  char* console = calloc(sizeof(pdata->uart_buf) + 1, sizeof(char));
+
+  if (!console) {
+    fprintf(stderr, "Failed to allocate memory for panic console log\n");
+    return NULL;
+  }
+
+  char* cursor = console;
+
+  // To reconstruct the log, we consider the case where the uart buffer
+  // has wrapped: consider the head to be the oldest character written and
+  // advance through the buffer until we return to the head.
+  // The uart buffer is in the firmware's .bss section, so any unwritten
+  // bytes will be nul characters and we can simply skip them.
+  //
+  // If uart_head has all bits set, then this record is empty and is
+  // erased flash.
+  if (pdata->uart_head != 0xFFFFFFFF) {
+    size_t head = pdata->uart_head % sizeof(pdata->uart_buf);
+    size_t i = head;
+    do {
+      char ch = pdata->uart_buf[i];
+      if (ch != '\0') {
+        *cursor = ch;
+        cursor++;
+      }
+      i = (i + 1) % sizeof(pdata->uart_buf);
+    } while (i != head);
+  }
+
+  return console;
+}
+
 static int get_persistent_panic_info(struct libhoth_device* dev,
                                      struct panic_data* panic, char** log) {
   const uint16_t cmd =
@@ -66,7 +101,9 @@ static int get_persistent_panic_info(struct libhoth_device* dev,
     }
   }
 
-  // TODO(rkr35): Populate panic console log.
+  if (log) {
+    *log = get_panic_console_log(&pdata);
+  }
 
   memcpy(panic, pdata.panic_record, sizeof(*panic));
   return 0;
