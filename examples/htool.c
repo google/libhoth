@@ -42,7 +42,7 @@ static int command_usb_list(const struct htool_invocation* inv) {
   return htool_usb_print_devices();
 }
 
-static int command_ec_reboot(const struct htool_invocation* inv) {
+static int command_reboot(const struct htool_invocation* inv) {
   struct libhoth_device* dev = htool_libhoth_device();
   if (!dev) {
     return -1;
@@ -54,7 +54,7 @@ static int command_ec_reboot(const struct htool_invocation* inv) {
                             0, NULL);
 }
 
-static int command_ec_get_version(const struct htool_invocation* inv) {
+static int command_get_version(const struct htool_invocation* inv) {
   struct libhoth_device* dev = htool_libhoth_device();
   if (!dev) {
     return -1;
@@ -440,16 +440,18 @@ static const struct htool_cmd CMDS[] = {
         .func = command_usb_list,
     },
     {
-        .verbs = (const char*[]){"ec_reboot", NULL},
+        .verbs = (const char*[]){"reboot", NULL},
+        .alias = (const char*[]){"ec_reboot", NULL},
         .desc = "Reboot the RoT.",
         .params = (const struct htool_param[]){{}},
-        .func = command_ec_reboot,
+        .func = command_reboot,
     },
     {
-        .verbs = (const char*[]){"ec_get_version", NULL},
+        .verbs = (const char*[]){"show", "firmware_version", NULL},
+        .alias = (const char*[]){"ec_get_version", NULL},
         .desc = "Get the version of the RoT firmware.",
         .params = (const struct htool_param[]){{}},
-        .func = command_ec_get_version,
+        .func = command_get_version,
     },
     {
         .verbs = (const char*[]){"show", "chipinfo", NULL},
