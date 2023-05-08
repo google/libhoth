@@ -14,6 +14,7 @@ executable(
     'htool_progress.c',
     'htool_spi.c',
     'htool_spi_proxy.c',
+    'htool_statistics.c',
     'htool_usb.c'],
   implicit_include_directories: false,
   dependencies: [libusb],
