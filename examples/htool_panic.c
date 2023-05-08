@@ -33,7 +33,20 @@ static int check_expected_response_length(uint16_t length, uint16_t expected) {
 }
 
 static int clear_persistent_panic_info(struct libhoth_device* dev) {
-  printf("TODO: clear_persistent_panic_info\n");
+  size_t rlen;
+  struct ec_request_persistent_panic_info req = {
+      .operation = PERSISTENT_PANIC_INFO_ERASE};
+  const uint16_t cmd =
+      EC_CMD_BOARD_SPECIFIC_BASE + EC_PRV_CMD_HOTH_PERSISTENT_PANIC_INFO;
+
+  if (htool_exec_hostcmd(dev, cmd, 0, &req, sizeof(req), NULL, 0, &rlen)) {
+    return -1;
+  }
+
+  if (check_expected_response_length(rlen, 0)) {
+    return -1;
+  }
+
   return 0;
 }
 
