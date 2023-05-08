@@ -36,6 +36,26 @@ static int matches_verbs(const char* const* verbs, int argc,
   }
 }
 
+static const struct htool_cmd* find_command(const struct htool_cmd* cmds,
+                                            int argc, const char* const* argv,
+                                            int* num_verb_words) {
+  for (int i = 0; cmds[i].verbs; i++) {
+    int consume = matches_verbs(cmds[i].verbs, argc, argv);
+    if (consume) {
+      *num_verb_words = consume;
+      return &cmds[i];
+    }
+    if (cmds[i].alias) {
+      consume = matches_verbs(cmds[i].alias, argc, argv);
+      if (consume) {
+        *num_verb_words = consume;
+        return &cmds[i];
+      }
+    }
+  }
+  return NULL;
+}
+
 static void print_flags(const struct htool_param* params) {
   for (size_t i = 0; params[i].type != HTOOL_PARAM_END; i++) {
     const struct htool_param* param = &params[i];
@@ -413,26 +433,24 @@ int htool_main(const struct htool_param* global_flags,
   argc -= num_global_flag_args;
   argv += num_global_flag_args;
 
-  for (size_t i = 0;; i++) {
-    if (!cmds[i].verbs) {
-      fprintf(stderr, "Unknown subcommand\n");
-      enumerate_cmds(cmds);
-      fprintf(stderr, "\nGlobal flags:\n");
-      print_flags(global_flags);
-      return -1;
-    }
-    int num_verbs = matches_verbs(cmds[i].verbs, argc, argv);
-    if (num_verbs) {
-      argc -= num_verbs;
-      argv += num_verbs;
-      struct htool_invocation inv;
-      int rv = fill_cmd_invocation(&inv, &cmds[i], argc, argv);
-      if (rv != 0) {
-        return rv;
-      }
-      rv = cmds[i].func(&inv);
-      free(inv.args);
-      return rv;
-    }
+  int num_verb_words;
+  const struct htool_cmd* cmd = find_command(cmds, argc, argv, &num_verb_words);
+  if (!cmd) {
+    fprintf(stderr, "Unknown subcommand\n");
+    enumerate_cmds(cmds);
+    fprintf(stderr, "\nGlobal flags:\n");
+    print_flags(global_flags);
+    return -1;
   }
+  argc -= num_verb_words;
+  argv += num_verb_words;
+
+  struct htool_invocation inv;
+  int rv = fill_cmd_invocation(&inv, cmd, argc, argv);
+  if (rv != 0) {
+    return rv;
+  }
+  rv = cmd->func(&inv);
+  free(inv.args);
+  return rv;
 }

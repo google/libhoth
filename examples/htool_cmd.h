@@ -43,6 +43,7 @@ struct htool_invocation;
 
 struct htool_cmd {
   const char* const* verbs;
+  const char* const* alias;
   const char* desc;
   const struct htool_param* params;
   int (*func)(const struct htool_invocation*);
