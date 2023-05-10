@@ -32,7 +32,7 @@ struct cortex_panic_data {
 
 /* RISC-V RV32I registers saved on panic */
 struct rv32i_panic_data {
-  uint32_t regs[31]; /* sp, ra, gp, tp, a0-a7, t0-t6 s0-s11 */
+  uint32_t regs[31]; /* s11-s0, t6-t0, a7-a0, tp, gp, ra, sp */
   uint32_t mepc;     /* mepc */
   uint32_t mcause;   /* mcause */
 };

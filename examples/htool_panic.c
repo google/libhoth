@@ -293,7 +293,24 @@ static void print_panic_info_cortex_m(const struct cortex_panic_data* data) {
 }
 
 static void print_panic_info_riscv(const struct rv32i_panic_data* data) {
-  // TODO(rkr35): Pretty-print RISC-V registers.
+  const uint32_t* regs = data->regs;
+  printf("=== EXCEPTION: MCAUSE=%x ===\n", data->mcause);
+  printf("s11: %08x s10: %08x  s9: %08x  s8:   %08x\n", regs[0], regs[1],
+               regs[2], regs[3]);
+  printf("s7:  %08x s6:  %08x  s5: %08x  s4:   %08x\n", regs[4], regs[5],
+               regs[6], regs[7]);
+  printf("s3:  %08x s2:  %08x  s1: %08x  s0:   %08x\n", regs[8], regs[9],
+               regs[10], regs[11]);
+  printf("t6:  %08x t5:  %08x  t4: %08x  t3:   %08x\n", regs[12], regs[13],
+               regs[14], regs[15]);
+  printf("t2:  %08x t1:  %08x  t0: %08x  a7:   %08x\n", regs[16], regs[17],
+               regs[18], regs[19]);
+  printf("a6:  %08x a5:  %08x  a4: %08x  a3:   %08x\n", regs[20], regs[21],
+               regs[22], regs[23]);
+  printf("a2:  %08x a1:  %08x  a0: %08x  tp:   %08x\n", regs[24], regs[25],
+               regs[26], regs[27]);
+  printf("gp:  %08x ra:  %08x  sp: %08x  mepc: %08x\n", regs[28], regs[29],
+               regs[30], data->mepc);
 }
 
 static void print_panic_info(const struct panic_data* data) {
