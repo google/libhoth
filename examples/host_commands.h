@@ -434,4 +434,55 @@ struct payload_region_state {
   uint32_t descriptor_offset; /* can be used to pull the image hash/signature */
 } __attribute__((packed));
 
+#define EC_PRV_CMD_HOTH_PERSISTENT_PANIC_INFO 0x0014
+#define HOTH_PERSISTENT_PANIC_INFO_CHUNK_SIZE 512
+enum persistent_panic_op {
+  PERSISTENT_PANIC_INFO_GET = 0,
+  PERSISTENT_PANIC_INFO_ERASE = 1,
+};
+
+struct ec_request_persistent_panic_info {
+  /* The operation is one of persistent_panic_op. */
+  uint32_t operation;
+  /* When the operation is PERSISTENT_PANIC_INFO_GET, the index
+   * is which 512-byte chunk of the response to retrieve.
+   */
+  uint32_t index;
+} __attribute__((packed));
+
+struct persistent_panic_rw_version {
+  uint32_t epoch;
+  uint32_t major;
+  uint32_t minor;
+} __attribute__((packed));
+
+struct ec_response_persistent_panic_info {
+  uint8_t panic_record[144];
+
+  /* The uart_head is the next location in the buffer that console output
+   * would write to.
+   */
+  uint32_t uart_head;
+  /* The uart_tail is the next location the uart dma transmitter
+   * would had read from (had the firmware not crashed).
+   */
+  uint32_t uart_tail;
+  /* The uart_buf contains the last 4096 characters written to the uart
+   * output. The oldest character written is pointed to by head and the
+   * newest character written is pointed to by head-1.
+   */
+  char uart_buf[4096];
+  /* The reserved field pads this structure out to 6KiB. 6KiB is chosen
+   * because the erase granularity of the internal flash storage is 2KiB
+   */
+  uint8_t reserved0[1880];
+  /* The rw_version of the firmware which created this record */
+  struct persistent_panic_rw_version rw_version;
+  /* The version number of the persistent panic record struct.
+   * -1: Doesn't include rw_version field.
+   * 0: Includes rw_version field.
+   */
+  int32_t persistent_panic_record_version;
+} __attribute__((packed));
+
 #endif  // LIBHOTH_EXAMPLES_HOST_COMMANDS_H_

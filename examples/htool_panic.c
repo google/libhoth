@@ -14,13 +14,23 @@
 
 #include "htool_panic.h"
 
+#include <ctype.h>
 #include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
+#include "host_commands.h"
 #include "htool.h"
 #include "htool_cmd.h"
+
+static int check_expected_response_length(uint16_t length, uint16_t expected) {
+  if (length != expected) {
+    fprintf(stderr, "Bad response length %d (expected %d)\n", length, expected);
+    return -1;
+  }
+  return 0;
+}
 
 static int clear_persistent_panic_info(struct libhoth_device* dev) {
   printf("TODO: clear_persistent_panic_info\n");
@@ -29,13 +39,74 @@ static int clear_persistent_panic_info(struct libhoth_device* dev) {
 
 static int get_persistent_panic_info(struct libhoth_device* dev,
                                      struct panic_data* panic, char** log) {
-  printf("TODO: get_persistent_panic_info\n");
+  const uint16_t cmd =
+      EC_CMD_BOARD_SPECIFIC_BASE + EC_PRV_CMD_HOTH_PERSISTENT_PANIC_INFO;
+  struct ec_response_persistent_panic_info pdata;
+  memset(&pdata, 0, sizeof(pdata));
+  uint8_t* dest = (uint8_t*)&pdata;
+
+  // The persistent panic info record is 6KiB long, so we have to retrieve it
+  // in chunks.
+  const size_t chunk_size = HOTH_PERSISTENT_PANIC_INFO_CHUNK_SIZE;
+  for (size_t i = 0; i < sizeof(pdata) / chunk_size; ++i, dest += chunk_size) {
+    size_t rlen;
+
+    struct ec_request_persistent_panic_info req = {
+        .operation = PERSISTENT_PANIC_INFO_GET,
+        .index = i,
+    };
+
+    if (htool_exec_hostcmd(dev, cmd, 0, &req, sizeof(req), dest, chunk_size,
+                           &rlen)) {
+      return -1;
+    }
+
+    if (check_expected_response_length(rlen, chunk_size)) {
+      return -1;
+    }
+  }
+
+  // TODO(rkr35): Populate panic console log.
+
+  memcpy(panic, pdata.panic_record, sizeof(*panic));
   return 0;
 }
 
 static void print_hex_dump_buffer(size_t size, const void* buffer,
                                   uint32_t address) {
-  printf("TODO: print_hex_dump_buffer\n");
+  if (!buffer) {
+    fprintf(stderr, "print_hex_dump_buffer with null buffer.\n");
+    return;
+  }
+
+  enum { BYTES_PER_LINE = 16 };
+  const uint8_t* bytes = (const uint8_t*)buffer;
+  char line_ascii[BYTES_PER_LINE + 1] = {0};
+
+  for (size_t offset = 0; offset < size; offset += BYTES_PER_LINE) {
+    printf("0x%04lx: ", address + offset);
+    const size_t remaining = size - offset;
+    const size_t chunk_size =
+        remaining < BYTES_PER_LINE ? remaining : BYTES_PER_LINE;
+
+    for (size_t i = 0; i < BYTES_PER_LINE; ++i) {
+      if (i > 0 && (i % 8) == 0) {
+        // Insert a gap between sets of 8 bytes.
+        printf(" ");
+      }
+
+      if (i < chunk_size) {
+        uint8_t byte = bytes[offset + i];
+        printf("%02X ", byte);
+        line_ascii[i] = isgraph(byte) ? byte : '.';
+      } else {
+        printf("   ");  // filler instead of hex digits
+        line_ascii[i] = ' ';
+      }
+    }
+
+    printf("|%s|\n", line_ascii);
+  }
 }
 
 static void print_panic_info(const struct panic_data* data) {
