@@ -34,8 +34,10 @@ static int check_expected_response_length(uint16_t length, uint16_t expected) {
 
 static int clear_persistent_panic_info(struct libhoth_device* dev) {
   size_t rlen;
+
   struct ec_request_persistent_panic_info req = {
       .operation = PERSISTENT_PANIC_INFO_ERASE};
+
   const uint16_t cmd =
       EC_CMD_BOARD_SPECIFIC_BASE + EC_PRV_CMD_HOTH_PERSISTENT_PANIC_INFO;
 
@@ -85,8 +87,9 @@ static char* get_panic_console_log(
   return console;
 }
 
-static int get_persistent_panic_info(struct libhoth_device* dev,
-                                     struct ec_response_persistent_panic_info* panic) {
+static int get_persistent_panic_info(
+    struct libhoth_device* dev,
+    struct ec_response_persistent_panic_info* panic) {
   const uint16_t cmd =
       EC_CMD_BOARD_SPECIFIC_BASE + EC_PRV_CMD_HOTH_PERSISTENT_PANIC_INFO;
   uint8_t* dest = (uint8_t*)panic;
@@ -290,24 +293,25 @@ static void print_panic_info_riscv(const struct rv32i_panic_data* data) {
   const uint32_t* regs = data->regs;
   printf("=== EXCEPTION: MCAUSE=%x ===\n", data->mcause);
   printf("s11: %08x s10: %08x  s9: %08x  s8:   %08x\n", regs[0], regs[1],
-               regs[2], regs[3]);
+         regs[2], regs[3]);
   printf("s7:  %08x s6:  %08x  s5: %08x  s4:   %08x\n", regs[4], regs[5],
-               regs[6], regs[7]);
+         regs[6], regs[7]);
   printf("s3:  %08x s2:  %08x  s1: %08x  s0:   %08x\n", regs[8], regs[9],
-               regs[10], regs[11]);
+         regs[10], regs[11]);
   printf("t6:  %08x t5:  %08x  t4: %08x  t3:   %08x\n", regs[12], regs[13],
-               regs[14], regs[15]);
+         regs[14], regs[15]);
   printf("t2:  %08x t1:  %08x  t0: %08x  a7:   %08x\n", regs[16], regs[17],
-               regs[18], regs[19]);
+         regs[18], regs[19]);
   printf("a6:  %08x a5:  %08x  a4: %08x  a3:   %08x\n", regs[20], regs[21],
-               regs[22], regs[23]);
+         regs[22], regs[23]);
   printf("a2:  %08x a1:  %08x  a0: %08x  tp:   %08x\n", regs[24], regs[25],
-               regs[26], regs[27]);
+         regs[26], regs[27]);
   printf("gp:  %08x ra:  %08x  sp: %08x  mepc: %08x\n", regs[28], regs[29],
-               regs[30], data->mepc);
+         regs[30], data->mepc);
 }
 
-static void print_panic_info(const struct ec_response_persistent_panic_info* panic) {
+static void print_panic_info(
+    const struct ec_response_persistent_panic_info* panic) {
   const struct panic_data* data = (struct panic_data*)panic->panic_record;
 
   if (data->magic != PANIC_DATA_MAGIC) {
@@ -340,7 +344,9 @@ static void print_panic_info(const struct ec_response_persistent_panic_info* pan
          (const char*)&data->magic, data->magic);
 }
 
-int dump_panic_record_to_file(const char* filename, const struct ec_response_persistent_panic_info* panic) {
+int dump_panic_record_to_file(
+    const char* filename,
+    const struct ec_response_persistent_panic_info* panic) {
   FILE* file = fopen(filename, "wb");
   if (!file) {
     perror("Failed to open file");
