@@ -159,8 +159,69 @@ static void print_hex_dump_buffer(size_t size, const void* buffer,
   }
 }
 
+static const char* panic_arch_string(enum panic_arch arch) {
+  switch (arch) {
+    case PANIC_ARCH_CORTEX_M:
+      return "ARCH_CORTEX_M";
+    case PANIC_ARCH_RISCV_RV32I:
+      return "ARCH_RISCV_RV32I";
+    default:
+      return "arch-unknown";
+  }
+}
+
+static void print_panic_flags_string(uint8_t flags) {
+  if (flags & PANIC_DATA_FLAG_FRAME_VALID) {
+    printf("FRAME_VALID,");
+  }
+  if (flags & PANIC_DATA_FLAG_OLD_CONSOLE) {
+    printf("OLD_CONSOLE,");
+  }
+  if (flags & PANIC_DATA_FLAG_OLD_HOSTCMD) {
+    printf("OLD_HOSTCMD,");
+  }
+  if (flags & PANIC_DATA_FLAG_OLD_HOSTEVENT) {
+    printf("OLD_HOSTEVENT,");
+  }
+}
+
+static void print_panic_info_cortex_m(const struct cortex_panic_data* data) {
+  // TODO(rkr35): Pretty-print ARM Cortex-M registers.
+}
+
+static void print_panic_info_riscv(const struct rv32i_panic_data* data) {
+  // TODO(rkr35): Pretty-print RISC-V registers.
+}
+
 static void print_panic_info(const struct panic_data* data) {
-  printf("TODO: print_panic_info\n");
+  if (data->magic != PANIC_DATA_MAGIC) {
+    printf("Invalid panic record (magic is %08x, expected %08x).\n",
+           data->magic, PANIC_DATA_MAGIC);
+    return;
+  }
+
+  printf("arch: %s (%d)\n", panic_arch_string(data->arch), data->arch);
+  printf("version: %d\n", data->struct_version);
+
+  printf("flags: ");
+  print_panic_flags_string(data->flags);
+  printf(" (0x%02x)\n", data->flags);
+
+  switch (data->arch) {
+    case PANIC_ARCH_CORTEX_M:
+      print_panic_info_cortex_m(&data->cm);
+      break;
+    case PANIC_ARCH_RISCV_RV32I:
+      print_panic_info_riscv(&data->riscv);
+      break;
+    default:
+      printf("Unknown Architecture.  Hexdump Follows:\n");
+      print_hex_dump_buffer(sizeof(*data), data, 0);
+  }
+
+  printf("struct_size: %d\n", data->struct_size);
+  printf("magic: %.*s (0x%08x)\n", (int)sizeof(data->magic),
+         (const char*)&data->magic, data->magic);
 }
 
 int htool_panic_get_panic(const struct htool_invocation* inv) {
