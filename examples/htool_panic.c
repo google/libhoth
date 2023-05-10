@@ -185,8 +185,111 @@ static void print_panic_flags_string(uint8_t flags) {
   }
 }
 
+static void print_arm_register(int r, const uint32_t* reg, int offset) {
+  static const char* const NAMES[] = {
+      "r0", "r1", "r2",  "r3",  "r4",  "r5", "r6", "r7",
+      "r8", "r9", "r10", "r11", "r12", "sp", "lr", "pc",
+  };
+
+  if (r >= (sizeof(NAMES) / sizeof(NAMES[0]))) {
+    fprintf(stderr, "r (%d) is out-of-bounds of NAMES.\n", r);
+    return;
+  }
+
+  printf("%3s: %08x%s", NAMES[r], reg[offset], (r % 4 == 3) ? "\n" : " ");
+}
+
+static void print_mmfs_name(uint32_t mmfs) {
+  // These descriptions are documented in the ARM user guide, section 4.3.10:
+  // Configurable Fault Status Register.  The EC firmware misnames this
+  // register as MMFS (memory management fault status), which is the name of
+  // the first 8 bits of the CFSR.
+  // The following definitions were copied directly from the EC firmware.
+  static char const* const NAMES[32] = {
+      "Instruction access violation",
+      "Data access violation",
+      NULL,
+      "Unstack from exception violation",
+      "Stack from exception violation",
+      NULL,
+      NULL,
+      NULL,
+
+      "Instruction bus error",
+      "Precise data bus error",
+      "Imprecise data bus error",
+      "Unstack from exception bus fault",
+      "Stack from exception bus fault",
+      NULL,
+      NULL,
+      NULL,
+
+      "Undefined instructions",
+      "Invalid state",
+      "Invalid PC",
+      "No coprocessor",
+      NULL,
+      NULL,
+      NULL,
+      NULL,
+
+      "Unaligned",
+      "Divide by 0",
+      NULL,
+      NULL,
+
+      NULL,
+      NULL,
+      NULL,
+      NULL,
+  };
+
+  unsigned count = 0;
+  for (unsigned i = 0; i < 32; ++i) {
+    uint32_t bit = 1UL << i;
+    if ((mmfs & bit) != 0 && NAMES[i]) {
+      printf("%s%s", count ? ", " : "", NAMES[i]);
+      ++count;
+    }
+  }
+
+  printf("\n");
+}
+
 static void print_panic_info_cortex_m(const struct cortex_panic_data* data) {
-  // TODO(rkr35): Pretty-print ARM Cortex-M registers.
+  const uint32_t* lregs = data->regs;
+  const uint32_t* sregs = data->frame;
+
+  uint32_t exc_return = data->regs[11] & 0xf;
+  bool in_handler = exc_return == 1 || exc_return == 9;
+
+  printf("=== %s EXCEPTION: %02x ====== xPSR: %08x ===\n",
+         in_handler ? "HANDLER" : "PROCESS", lregs[1] & 0xFF, sregs[7]);
+
+  for (int i = 0; i < 4; ++i) {
+    print_arm_register(i, sregs, i);
+  }
+
+  for (int i = 4; i < 10; ++i) {
+    print_arm_register(i, lregs, i - 1);
+  }
+
+  print_arm_register(10, lregs, 9);
+  print_arm_register(11, lregs, 10);
+  print_arm_register(12, sregs, 4);
+  print_arm_register(13, lregs, in_handler ? 2 : 0);
+  print_arm_register(14, sregs, 5);
+  print_arm_register(15, sregs, 6);
+
+  printf("Reason: ");
+  print_mmfs_name(data->mmfs);
+  printf("Extra:\n");
+  printf("mmfs = %08x\n", data->mmfs);
+  printf("bfar = %08x\n", data->bfar);
+  printf("mfar = %08x\n", data->mfar);
+  printf("shcsr = %08x\n", data->shcsr);
+  printf("hfsr = %08x\n", data->hfsr);
+  printf("dfsr = %08x\n", data->dfsr);
 }
 
 static void print_panic_info_riscv(const struct rv32i_panic_data* data) {
