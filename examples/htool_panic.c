@@ -86,17 +86,16 @@ static char* get_panic_console_log(
 }
 
 static int get_persistent_panic_info(struct libhoth_device* dev,
-                                     struct panic_data* panic, char** log) {
+                                     struct ec_response_persistent_panic_info* panic) {
   const uint16_t cmd =
       EC_CMD_BOARD_SPECIFIC_BASE + EC_PRV_CMD_HOTH_PERSISTENT_PANIC_INFO;
-  struct ec_response_persistent_panic_info pdata;
-  memset(&pdata, 0, sizeof(pdata));
-  uint8_t* dest = (uint8_t*)&pdata;
+  uint8_t* dest = (uint8_t*)panic;
 
   // The persistent panic info record is 6KiB long, so we have to retrieve it
   // in chunks.
   const size_t chunk_size = HOTH_PERSISTENT_PANIC_INFO_CHUNK_SIZE;
-  for (size_t i = 0; i < sizeof(pdata) / chunk_size; ++i, dest += chunk_size) {
+  const size_t num_chunks = sizeof(*panic) / chunk_size;
+  for (size_t i = 0; i < num_chunks; ++i, dest += chunk_size) {
     size_t rlen;
 
     struct ec_request_persistent_panic_info req = {
@@ -114,11 +113,6 @@ static int get_persistent_panic_info(struct libhoth_device* dev,
     }
   }
 
-  if (log) {
-    *log = get_panic_console_log(&pdata);
-  }
-
-  memcpy(panic, pdata.panic_record, sizeof(*panic));
   return 0;
 }
 
@@ -313,7 +307,9 @@ static void print_panic_info_riscv(const struct rv32i_panic_data* data) {
                regs[30], data->mepc);
 }
 
-static void print_panic_info(const struct panic_data* data) {
+static void print_panic_info(const struct ec_response_persistent_panic_info* panic) {
+  const struct panic_data* data = (struct panic_data*)panic->panic_record;
+
   if (data->magic != PANIC_DATA_MAGIC) {
     printf("Invalid panic record (magic is %08x, expected %08x).\n",
            data->magic, PANIC_DATA_MAGIC);
@@ -344,12 +340,32 @@ static void print_panic_info(const struct panic_data* data) {
          (const char*)&data->magic, data->magic);
 }
 
+int dump_panic_record_to_file(const char* filename, const struct ec_response_persistent_panic_info* panic) {
+  FILE* file = fopen(filename, "wb");
+  if (!file) {
+    perror("Failed to open file");
+    return -1;
+  }
+
+  int rv = 0;
+
+  if (fwrite(panic, sizeof(*panic), 1, file) != 1 || ferror(file)) {
+    perror("Failed to write panic data to file");
+    rv = -1;
+  }
+
+  fclose(file);
+  return rv;
+}
+
 int htool_panic_get_panic(const struct htool_invocation* inv) {
   bool clear;
   bool hexdump;
+  const char* output_file = NULL;
 
   if (htool_get_param_bool(inv, "clear", &clear) ||
-      htool_get_param_bool(inv, "hexdump", &hexdump)) {
+      htool_get_param_bool(inv, "hexdump", &hexdump) ||
+      htool_get_param_string(inv, "file", &output_file)) {
     return -1;
   }
 
@@ -363,20 +379,22 @@ int htool_panic_get_panic(const struct htool_invocation* inv) {
     return clear_persistent_panic_info(dev);
   }
 
-  struct panic_data panic;
+  struct ec_response_persistent_panic_info panic;
   memset(&panic, 0, sizeof(panic));
 
-  char* console_log = NULL;
-
-  if (get_persistent_panic_info(dev, &panic, &console_log)) {
+  if (get_persistent_panic_info(dev, &panic)) {
     return -1;
   }
 
-  if (hexdump) {
-    print_hex_dump_buffer(sizeof(panic), &panic, 0);
+  if (output_file && output_file[0]) {
+    return dump_panic_record_to_file(output_file, &panic);
+  } else if (hexdump) {
+    print_hex_dump_buffer(sizeof(panic.panic_record), &panic.panic_record, 0);
   } else {
     print_panic_info(&panic);
   }
+
+  char* console_log = get_panic_console_log(&panic);
 
   if (console_log) {
     printf("Saved console log:\n");

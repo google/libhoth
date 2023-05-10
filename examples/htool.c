@@ -586,9 +586,10 @@ static const struct htool_cmd CMDS[] = {
         .params =
             (const struct htool_param[]){
                 {HTOOL_FLAG_BOOL, 'c', "clear", "false",
-                 .desc = "Clear the panic record saved in flash."},
+                 .desc = "Clear the stored panic record."},
                 {HTOOL_FLAG_BOOL, 'h', "hexdump", "false",
-                 .desc = "Output the panic record as raw hexdump."},
+                 .desc = "Output the panic record as a hexdump."},
+                {HTOOL_FLAG_VALUE, 'f', "file", "", .desc = "Dump the raw panic record to a file."},
                 {}},
         .func = htool_panic_get_panic,
     },
