@@ -42,8 +42,11 @@ int libhoth_mtd_receive_response(struct libhoth_device* dev, void* response,
 int libhoth_mtd_close(struct libhoth_device* dev);
 
 static int mtd_read(int fd, unsigned int address, void* data, size_t data_len) {
-  if (fd < 0 || !data || !data_len) {
+  if (fd < 0 || !data) {
     return LIBHOTH_ERR_INVALID_PARAMETER;
+  }
+  if (!data_len) {
+    return LIBHOTH_OK;
   }
 
   if (lseek(fd, address, SEEK_SET) < 0) {
