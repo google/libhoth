@@ -12,6 +12,8 @@ libusb = dependency('libusb-1.0')
 libhoth = library('hoth', libhoth_srcs, dependencies: libusb, install: true, \
     version: meson.project_version())
 install_headers('libhoth.h')
+install_headers('libhoth_usb.h')
+install_headers('libhoth_usb_device.h')
 
 pkg = import('pkgconfig')
 pkg.generate(libhoth, name: 'libhoth', description: 'Hoth interface library')

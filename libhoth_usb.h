@@ -37,6 +37,12 @@ struct libhoth_usb_device_init_options {
 int libhoth_usb_open(const struct libhoth_usb_device_init_options* options,
                      struct libhoth_device** out);
 
+int libhoth_usb_close(struct libhoth_device* dev);
+
+int libhoth_usb_receive_response(struct libhoth_device* dev, void* response,
+                                 size_t max_response_size, size_t* actual_size,
+                                 int timeout_ms);
+
 #ifdef __cplusplus
 }
 #endif

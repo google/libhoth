@@ -27,8 +27,6 @@ int libhoth_usb_receive_response(struct libhoth_device* dev, void* response,
                                  size_t max_response_size, size_t* actual_size,
                                  int timeout_ms);
 
-int libhoth_usb_close(struct libhoth_device* dev);
-
 static struct libhoth_usb_interface_info libhoth_usb_find_interface(
     const struct libusb_config_descriptor* configuration) {
   struct libhoth_usb_interface_info info = {
