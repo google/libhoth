@@ -39,6 +39,8 @@ cc_binary(
         "htool_console.h",
         "htool_constants.h",
         "htool_mtd.c",
+        "htool_panic.c",
+        "htool_panic.h",
         "htool_payload.c",
         "htool_payload.h",
         "htool_progress.c",

@@ -12,6 +12,7 @@ executable(
     'htool_cmd.c',
     'htool_console.c',
     'htool_mtd.c',
+    'htool_panic.c',
     'htool_payload.c',
     'htool_progress.c',
     'htool_spi.c',

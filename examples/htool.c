@@ -34,6 +34,7 @@
 #include "host_commands.h"
 #include "htool_cmd.h"
 #include "htool_console.h"
+#include "htool_panic.h"
 #include "htool_payload.h"
 #include "htool_progress.h"
 #include "htool_spi_proxy.h"
@@ -713,6 +714,20 @@ static const struct htool_cmd CMDS[] = {
         .desc = "Show statistics",
         .params = (const struct htool_param[]){{}},
         .func = htool_statistics,
+    },
+    {
+        .verbs = (const char*[]){"get_panic", NULL},
+        .desc = "Retrieve or clear the stored panic record.",
+        .params =
+            (const struct htool_param[]){
+                {HTOOL_FLAG_BOOL, 'c', "clear", "false",
+                 .desc = "Clear the stored panic record."},
+                {HTOOL_FLAG_BOOL, 'h', "hexdump", "false",
+                 .desc = "Output the panic record as a hexdump."},
+                {HTOOL_FLAG_VALUE, 'f', "file",
+                 "", .desc = "Dump the raw panic record to a file."},
+                {}},
+        .func = htool_panic_get_panic,
     },
     {
         .verbs = (const char*[]){"authz_record", "read", NULL},

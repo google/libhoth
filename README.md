@@ -38,6 +38,7 @@ Available subcommands: (append --help to subcommand for details)
   payload status - Show payload status
   flash_spi_info - Get SPI NOR flash info.
   statistics - Show statistics
+  get_panic - Retrieve or clear the stored panic record.
   authz_record read - Read the current authorization record
   authz_record erase - Erase the current authorization record
   authz_record build - Build an empty authorization record for the chip
