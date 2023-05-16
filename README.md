@@ -24,7 +24,6 @@ htool is a command line tool for performing basic actions against a hoth RoT.
 
 ```
 $ htool
-Unknown subcommand
 Available subcommands: (append --help to subcommand for details)
   usb list - List all RoTs connected via USB.
   reboot - Reboot the RoT.
@@ -40,6 +39,10 @@ Available subcommands: (append --help to subcommand for details)
   flash_spi_info - Get SPI NOR flash info.
   statistics - Show statistics
   get_panic - Retrieve or clear the stored panic record.
+  authz_record read - Read the current authorization record
+  authz_record erase - Erase the current authorization record
+  authz_record build - Build an empty authorization record for the chip
+  authz_record set - Upload an authorization record to the chip
 
 Global flags:
   --transport (default: "")

@@ -17,6 +17,8 @@
 
 #include <stdint.h>
 
+#include "authorization_record.h"
+
 #ifndef __packed
 #define __packed __attribute__((packed))
 #endif
@@ -406,6 +408,57 @@ enum ec_console_read_subcmd {
 struct ec_params_console_read_v1 {
   uint8_t subcmd;
 } __ec_align1;
+
+/* Program authorization records */
+#define EC_PRV_CMD_HOTH_SET_AUTHZ_RECORD 0x0017
+
+struct ec_authz_record_set_request {
+  // Authorization record index to program or erase. Currently only index=0 is
+  // supported.
+  uint8_t index;
+
+  // When `erase` is a non-zero value, the authorization record at `index` is
+  // erased and the value of `record` is ignored by firmware.
+  uint8_t erase;
+
+  uint8_t reserved[2];
+
+  // Authorization record to program.
+  struct authorization_record record;
+} __attribute__((packed, aligned(4)));
+
+#define EC_PRV_CMD_HOTH_GET_AUTHZ_RECORD 0x0018
+
+struct ec_authz_record_get_request {
+  // Authorization record index to get. Currently only index=0 is
+  // supported.
+  uint8_t index;
+  uint8_t reserved[3];
+} __attribute__((packed));
+
+struct ec_authz_record_get_response {
+  // Index of authorization record in the response. This value matches the
+  // `index` in the corresponding host command request.
+  uint8_t index;
+
+  // When `valid` is non-zero value, the `record` at `index` in this
+  // response is valid.
+  uint8_t valid;
+  uint8_t reserved[2];
+  struct authorization_record record;
+} __attribute__((packed, aligned(4)));
+
+#define EC_PRV_CMD_HOTH_GET_AUTHZ_RECORD_NONCE 0x0019
+
+struct ec_authz_record_get_nonce_response {
+  uint32_t authorization_nonce[8];
+
+  // key_id supported by RO and RW. These key_id's are expected to match one
+  // another to successfully program an authorization record. key_id == 0 should
+  // be interpreted as an unknown key_id.
+  uint32_t ro_supported_key_id;
+  uint32_t rw_supported_key_id;
+} __attribute__((packed));
 
 #define MAILBOX_SIZE 1024
 
