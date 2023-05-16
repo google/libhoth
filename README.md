@@ -24,24 +24,40 @@ htool is a command line tool for performing basic actions against a hoth RoT.
 
 ```
 $ htool
-Unknown subcommand
 Available subcommands: (append --help to subcommand for details)
   usb list - List all RoTs connected via USB.
-  ec_reboot - Reboot the RoT.
-  ec_get_version - Get the version of the RoT firmware.
+  reboot - Reboot the RoT.
+  show firmware_version - Get the version of the RoT firmware.
   show chipinfo - Return details about this specific RoT chip.
   spi read - Read from SPI flash into a file
   spi update - Write a file to SPI flash (erase + program).
   target reset on - Put the target device into reset.
   target reset off - Take the target device out of reset
   target reset pulse - Quickly put the target device in and out of reset
-  console - Open a console for communicating with the RoT or devices attached to the RoT
+  console - Open a console for communicating with the RoT or devices attached to the RoT.
+  payload status - Show payload status
+  flash_spi_info - Get SPI NOR flash info.
+  statistics - Show statistics
+  authz_record read - Read the current authorization record
+  authz_record erase - Erase the current authorization record
+  authz_record build - Build an empty authorization record for the chip
+  authz_record set - Upload an authorization record to the chip
 
 Global flags:
+  --transport (default: "")
+        The method of connecting to the RoT; for example 'spidev'/'usb'/'mtd'
   --usb_loc (default: "")
         The full bus-portlist location of the RoT; for example '1-10.4.4.1'.
   --usb_product (default: "")
         If there is a single USB RoT with this substring in the USB product string, use it.
+  --spidev_path (default: "")
+        The full SPIDEV path of the RoT; for example '/dev/spidev0.0'.
+  --mtddev_path (default: "")
+        The full MTD path of the RoT mailbox; for example '/dev/mtd0'. If unspecified, will attempt to detect the correct device automatically
+  --mtddev_name (default: "hoth-mailbox")
+        The MTD name of the RoT mailbox; for example 'hoth-mailbox'.
+  --mailbox_location (default: "0")
+        The location of the mailbox on the RoT, for 'spidev' or 'mtd' transports; for example '0x900000'.
 ```
 
 ```
