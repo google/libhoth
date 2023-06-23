@@ -1,0 +1,6 @@
+#ifndef LIBHOTH_GIT_VERSION_H
+#define LIBHOTH_GIT_VERSION_H
+
+#define STABLE_GIT_COMMIT "@GIT_COMMIT@" 
+
+#endif
