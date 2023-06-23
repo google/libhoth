@@ -2,6 +2,13 @@ ecsrcs = ['ec_util.c']
 ecutil = library('ec_util', ecsrcs, dependencies: libusb, install: true, \
     version: meson.project_version())
 
+git_version_h = vcs_tag(
+  command: ['git', 'describe', '--always', '--dirty', '--abbrev=40'],
+  input: 'git_version.h.in',
+  output: 'git_version.h',
+  replace_string: '@GIT_COMMIT@',
+)
+
 executable(
   'htool',
   sources: [
@@ -18,8 +25,8 @@ executable(
     'htool_spi.c',
     'htool_spi_proxy.c',
     'htool_statistics.c',
-    'htool_usb.c'],
-  implicit_include_directories: false,
+    'htool_usb.c',
+    git_version_h],
   dependencies: [libusb],
   link_with: [libhoth],
   install: true)

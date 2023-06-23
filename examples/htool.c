@@ -787,6 +787,8 @@ static const struct htool_param GLOBAL_FLAGS[] = {
     {HTOOL_FLAG_VALUE, .name = "mailbox_location", .default_value = "0",
      .desc = "The location of the mailbox on the RoT, for 'spidev' "
              "or 'mtd' transports; for example '0x900000'."},
+    {HTOOL_FLAG_BOOL, .name = "version", .default_value = "false",
+     .desc = "Print htool version."},
     {}};
 
 int main(int argc, const char* const* argv) {
