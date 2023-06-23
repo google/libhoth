@@ -58,6 +58,7 @@ cc_binary(
         ":authorization_record",
         ":ec_util",
         ":host_commands",
+        "//:git_version",
         "//:libhoth",
         "@libusb//:libusb",
     ],
