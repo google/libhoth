@@ -1,4 +1,7 @@
-package(default_visibility = ["//visibility:public"])
+package(
+    default_applicable_licenses = ["//third_party/libhoth:license"],
+    default_visibility = ["//visibility:public"],
+)
 
 cc_library(
     name = "libhoth",
