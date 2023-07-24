@@ -442,16 +442,19 @@ static int command_console(const struct htool_invocation* inv) {
 
   if (htool_get_param_bool(inv, "snapshot", &opts.snapshot)) {
     return -1;
-  };
+  }
 
   if (!opts.snapshot) {
     if (htool_get_param_u32_or_fourcc(inv, "channel", &opts.channel_id) ||
         htool_get_param_bool(inv, "force_drive_tx", &opts.force_drive_tx) ||
         htool_get_param_bool(inv, "history", &opts.history) ||
         htool_get_param_bool(inv, "onlcr", &opts.onlcr) ||
-        htool_get_param_u32(inv, "baud_rate", &opts.baud_rate)) {
+        htool_get_param_u32(inv, "baud_rate", &opts.baud_rate) ||
+        htool_get_param_u32(inv, "claim_timeout_secs",
+                            &opts.claim_timeout_secs) ||
+        htool_get_param_u32(inv, "yield_ms", &opts.yield_ms)) {
       return -1;
-    };
+    }
   }
   struct libhoth_device* dev = htool_libhoth_device();
   if (!dev) {
@@ -696,6 +699,15 @@ static const struct htool_cmd CMDS[] = {
                 {HTOOL_FLAG_VALUE, 'b', "baud_rate", "0"},
                 {HTOOL_FLAG_BOOL, 's', "snapshot", "false",
                  .desc = "Print a snapshot of most recent console messages."},
+                {HTOOL_FLAG_VALUE, .name = "claim_timeout_secs",
+                 .default_value = "60",
+                 .desc = "How long we should attempt to claim the device "
+                         "before returning a fatal error."},
+                {HTOOL_FLAG_VALUE, .name = "yield_ms", .default_value = "50",
+                 .desc = "After releasing the device, how long we should wait "
+                         "before claiming it again. Decrease to reduce console "
+                         "latency. Increase to reduce contention between "
+                         "concurrent clients."},
                 {}},
         .func = command_console,
     },

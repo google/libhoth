@@ -35,6 +35,7 @@ typedef enum {
   LIBHOTH_ERR_INVALID_PARAMETER = 8,
   LIBHOTH_ERR_FAIL = 9,
   LIBHOTH_ERR_RESPONSE_BUFFER_OVERFLOW = 10,
+  LIBHOTH_ERR_INTERFACE_BUSY = 11,
 } libhoth_status;
 
 struct libhoth_device {
@@ -43,6 +44,8 @@ struct libhoth_device {
   int (*receive)(struct libhoth_device *dev, void *response,
                  size_t max_response_size, size_t *actual_size, int timeout_ms);
   int (*close)(struct libhoth_device *dev);
+  int (*claim)(struct libhoth_device *dev);
+  int (*release)(struct libhoth_device *dev);
 
   void *user_ctx;
 };

@@ -130,6 +130,16 @@ static int spi_nor_read(int fd, unsigned int address_mode_4b,
   return LIBHOTH_OK;
 }
 
+static int libhoth_spi_claim(struct libhoth_device* dev) {
+  // no-op
+  return LIBHOTH_OK;
+}
+
+static int libhoth_spi_release(struct libhoth_device* dev) {
+  // no-op
+  return LIBHOTH_OK;
+}
+
 int libhoth_spi_open(const struct libhoth_spi_device_init_options* options,
                      struct libhoth_device** out) {
   if (out == NULL || options == NULL || options->path == NULL) {
@@ -190,6 +200,8 @@ int libhoth_spi_open(const struct libhoth_spi_device_init_options* options,
   dev->send = libhoth_spi_send_request;
   dev->receive = libhoth_spi_receive_response;
   dev->close = libhoth_spi_close;
+  dev->claim = libhoth_spi_claim;
+  dev->release = libhoth_spi_release;
   dev->user_ctx = spi_dev;
 
   *out = dev;
