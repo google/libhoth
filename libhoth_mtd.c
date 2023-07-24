@@ -98,6 +98,16 @@ static int mtd_write(int fd, unsigned int address, const void* data,
   return LIBHOTH_OK;
 }
 
+static int libhoth_mtd_claim(struct libhoth_device* dev) {
+  // no-op
+  return LIBHOTH_OK;
+}
+
+static int libhoth_mtd_release(struct libhoth_device* dev) {
+  // no-op
+  return LIBHOTH_OK;
+}
+
 static int mtd_open(const char* path, const char* name) {
   if (strlen(path) > 0) {
     return open(path, O_RDWR);
@@ -179,6 +189,8 @@ int libhoth_mtd_open(const struct libhoth_mtd_device_init_options* options,
   dev->send = libhoth_mtd_send_request;
   dev->receive = libhoth_mtd_receive_response;
   dev->close = libhoth_mtd_close;
+  dev->claim = libhoth_mtd_claim;
+  dev->release = libhoth_mtd_release;
   dev->user_ctx = mtd_dev;
 
   *out = dev;

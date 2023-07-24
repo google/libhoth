@@ -60,6 +60,24 @@ static struct libhoth_usb_interface_info libhoth_usb_find_interface(
   return info;
 }
 
+static int libhoth_usb_claim(struct libhoth_device* dev) {
+  struct libhoth_usb_device* usb_dev = dev->user_ctx;
+
+  int status =
+      libusb_claim_interface(usb_dev->handle, usb_dev->info.interface_id);
+
+  if (status == LIBUSB_ERROR_BUSY) {
+    return LIBHOTH_ERR_INTERFACE_BUSY;
+  }
+
+  return status;
+}
+
+static int libhoth_usb_release(struct libhoth_device* dev) {
+  struct libhoth_usb_device* usb_dev = dev->user_ctx;
+  return libusb_release_interface(usb_dev->handle, usb_dev->info.interface_id);
+}
+
 int libhoth_usb_open(const struct libhoth_usb_device_init_options* options,
                      struct libhoth_device** out) {
   if (out == NULL || options == NULL || options->usb_device == NULL) {
@@ -136,6 +154,8 @@ int libhoth_usb_open(const struct libhoth_usb_device_init_options* options,
   dev->send = libhoth_usb_send_request;
   dev->receive = libhoth_usb_receive_response;
   dev->close = libhoth_usb_close;
+  dev->claim = libhoth_usb_claim;
+  dev->release = libhoth_usb_release;
   dev->user_ctx = usb_dev;
 
   *out = dev;
