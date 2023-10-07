@@ -38,6 +38,7 @@
 #include "htool_payload.h"
 #include "htool_payload_update.h"
 #include "htool_progress.h"
+#include "htool_raw_host_command.h"
 #include "htool_spi_proxy.h"
 #include "htool_statistics.h"
 #include "htool_usb.h"
@@ -840,6 +841,12 @@ static const struct htool_cmd CMDS[] = {
                 "trigger.",
         .params = (const struct htool_param[]){{}},
         .func = command_arm_coordinated_reset,
+    },
+    {
+        .verbs = (const char*[]){"raw_host_command", NULL},
+        .desc = "Stream raw host commands via stdin/stdout",
+        .params = (const struct htool_param[]){{}},
+        .func = command_raw_host_command,
     },
     {},
 };

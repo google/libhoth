@@ -47,6 +47,8 @@ cc_binary(
         "htool_payload_update.h",
         "htool_progress.c",
         "htool_progress.h",
+        "htool_raw_host_command.c",
+        "htool_raw_host_command.h",
         "htool_spi.c",
         "htool_spi_proxy.c",
         "htool_spi_proxy.h",
