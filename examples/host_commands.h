@@ -478,6 +478,19 @@ struct ec_authz_record_get_nonce_response {
 #define EC_PRV_CMD_HOTH_PAYLOAD_UPDATE 0x0005
 #define EC_PRV_CMD_HOTH_PAYLOAD_STATUS 0x0006
 
+#define PAYLOAD_UPDATE_INITIATE 0
+#define PAYLOAD_UPDATE_CONTINUE 1
+#define PAYLOAD_UPDATE_FINALIZE 2
+#define PAYLOAD_UPDATE_AUX_DATA 3
+#define PAYLOAD_UPDATE_VERIFY 4
+#define PAYLOAD_UPDATE_ACTIVATE 5
+#define PAYLOAD_UPDATE_READ 6
+#define PAYLOAD_UPDATE_GET_STATUS 7
+#define PAYLOAD_UPDATE_ERASE 8
+#define PAYLOAD_UPDATE_VERIFY_CHUNK 9
+#define PAYLOAD_UPDATE_CONFIRM 10
+#define PAYLOAD_UPDATE_VERIFY_DESCRIPTOR 11
+
 struct payload_status_response_header {
   uint8_t version;
   uint8_t lockdown_state;
@@ -498,6 +511,13 @@ struct payload_region_state {
   uint32_t version_point;
   uint32_t version_subpoint;
   uint32_t descriptor_offset; /* can be used to pull the image hash/signature */
+} __attribute__((packed));
+
+struct payload_update_packet {
+  uint32_t offset; /* image offset */
+  uint32_t len; /* packet length excluding this header */
+  uint8_t type; /* One of PAYLOAD_UPDATE_* */
+  /* payload data immediately follows */
 } __attribute__((packed));
 
 #define EC_PRV_CMD_HOTH_PERSISTENT_PANIC_INFO 0x0014

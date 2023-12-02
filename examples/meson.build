@@ -21,6 +21,7 @@ executable(
     'htool_mtd.c',
     'htool_panic.c',
     'htool_payload.c',
+    'htool_payload_update.c',
     'htool_progress.c',
     'htool_spi.c',
     'htool_spi_proxy.c',
