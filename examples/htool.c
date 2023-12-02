@@ -594,7 +594,7 @@ int htool_exec_hostcmd(struct libhoth_device* dev, uint16_t command,
   } resp;
   size_t resp_size;
   status = libhoth_receive_response(dev, &resp, sizeof(resp), &resp_size,
-                                    /*timeout_ms=*/5000);
+                                    /*timeout_ms=*/15000);
   if (status != LIBHOTH_OK) {
     fprintf(stderr, "libhoth_usb_receive_response() failed: %d\n", status);
     return -1;
