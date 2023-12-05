@@ -296,6 +296,10 @@ struct ec_request_reset_target {
 /* Reset the target device. */
 #define EC_PRV_CMD_HOTH_RESET_TARGET 0x0012
 
+// Arm the coordinated reset trigger, which will cause the hoth to perform a
+// hard reset when it receives the hardware trigger event.
+#define EC_PRV_CMD_HOTH_ARM_COORDINATED_RESET 0x001A
+
 struct ec_spi_operation_request {
   // The number of MOSI bytes we're sending
   uint16_t mosi_len;

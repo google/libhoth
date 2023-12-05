@@ -497,6 +497,17 @@ static int command_flash_spi_info(const struct htool_invocation* inv) {
   return 0;
 }
 
+static int command_arm_coordinated_reset(const struct htool_invocation* inv) {
+  struct libhoth_device* dev = htool_libhoth_device();
+  if (!dev) {
+    return -1;
+  }
+
+  return htool_exec_hostcmd(
+      dev, EC_CMD_BOARD_SPECIFIC_BASE + EC_PRV_CMD_HOTH_ARM_COORDINATED_RESET,
+      /*version=*/0, NULL, 0, NULL, 0, NULL);
+}
+
 struct libhoth_device* htool_libhoth_device(void) {
   static struct libhoth_device* result;
   if (result) {
@@ -773,6 +784,13 @@ static const struct htool_cmd CMDS[] = {
                 {},
             },
         .func = command_authz_record_set,
+    },
+    {
+        .verbs = (const char*[]){"arm_coordinated_reset", NULL},
+        .desc = "Arms the coordinated reset to hard reset when it receives a "
+                "trigger.",
+        .params = (const struct htool_param[]){{}},
+        .func = command_arm_coordinated_reset,
     },
     {},
 };
