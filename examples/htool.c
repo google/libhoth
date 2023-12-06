@@ -508,6 +508,28 @@ static int command_arm_coordinated_reset(const struct htool_invocation* inv) {
       /*version=*/0, NULL, 0, NULL, 0, NULL);
 }
 
+static int command_passthrough_disable(const struct htool_invocation* inv) {
+  struct libhoth_device* dev = htool_libhoth_device();
+  if (!dev) {
+    return -1;
+  }
+
+  return htool_exec_hostcmd(
+      dev, EC_CMD_BOARD_SPECIFIC_BASE + EC_PRV_CMD_HOTH_SPS_PASSTHROUGH_DISABLE,
+      /*version=*/0, NULL, 0, NULL, 0, NULL);
+}
+
+static int command_passthrough_enable(const struct htool_invocation* inv) {
+  struct libhoth_device* dev = htool_libhoth_device();
+  if (!dev) {
+    return -1;
+  }
+
+  return htool_exec_hostcmd(
+      dev, EC_CMD_BOARD_SPECIFIC_BASE + EC_PRV_CMD_HOTH_SPS_PASSTHROUGH_ENABLE,
+      /*version=*/0, NULL, 0, NULL, 0, NULL);
+}
+
 struct libhoth_device* htool_libhoth_device(void) {
   static struct libhoth_device* result;
   if (result) {
@@ -671,6 +693,18 @@ static const struct htool_cmd CMDS[] = {
                 {HTOOL_POSITIONAL, .name = "source-file"},
                 {}},
         .func = command_spi_update,
+    },
+    {
+        .verbs = (const char*[]){"spi", "passthrough", "off", NULL},
+        .desc = "Disable SPS->SPI passthrough",
+        .params = (const struct htool_param[]){{}},
+        .func = command_passthrough_disable,
+    },
+    {
+        .verbs = (const char*[]){"spi", "passthrough", "on", NULL},
+        .desc = "Enable SPS->SPI passthrough",
+        .params = (const struct htool_param[]){{}},
+        .func = command_passthrough_enable,
     },
     {
         .verbs = (const char*[]){"target", "reset", "on", NULL},

@@ -413,6 +413,15 @@ struct ec_params_console_read_v1 {
   uint8_t subcmd;
 } __ec_align1;
 
+// After sending this command, any future synchronous SPI reads from the RoT's
+// SPI-slave interface will return all zeroes, but out-of-band methods (such as
+// EC_SPI_OPERATION via USB) will be able to interact with the SPI flash.
+#define EC_PRV_CMD_HOTH_SPS_PASSTHROUGH_DISABLE 0x003b
+
+// Re-enables SPS passthrough. Future out-of-band access to the SPI flash will
+// fail.
+#define EC_PRV_CMD_HOTH_SPS_PASSTHROUGH_ENABLE 0x003c
+
 /* Program authorization records */
 #define EC_PRV_CMD_HOTH_SET_AUTHZ_RECORD 0x0017
 
