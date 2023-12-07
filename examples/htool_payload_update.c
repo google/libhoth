@@ -23,6 +23,7 @@
 #include <sys/mman.h>
 #include <sys/stat.h>
 #include <sys/types.h>
+#include <unistd.h>
 
 #include "host_commands.h"
 #include "htool.h"
@@ -33,7 +34,8 @@ const int64_t TITAN_IMAGE_DESCRIPTOR_ALIGNMENT = 1 << 16;
 
 bool find_image_descriptor(uint8_t *image, size_t len, size_t offset_alignment,
                            int64_t magic) {
-  for (size_t offset = 0; offset < len; offset += offset_alignment) {
+  for (size_t offset = 0; offset + sizeof(int64_t) - 1 < len;
+       offset += offset_alignment) {
     int64_t magic_candidate;
     memcpy(&magic_candidate, image + offset, sizeof(int64_t));
     if (magic_candidate == magic) {
@@ -51,7 +53,7 @@ int send_payload_update_request_with_command(struct libhoth_device *dev,
   request.len = 0;
 
   int ret = htool_exec_hostcmd(
-      dev, EC_CMD_BOARD_SPECIFIC_BASE | EC_PRV_CMD_HOTH_PAYLOAD_UPDATE, 0,
+      dev, EC_CMD_BOARD_SPECIFIC_BASE + EC_PRV_CMD_HOTH_PAYLOAD_UPDATE, 0,
       &request, sizeof(request), NULL, 0, NULL);
   if (ret != 0) {
     fprintf(stderr, "Error code from hoth: %d\n", ret);
@@ -95,7 +97,7 @@ int send_image(struct libhoth_device *dev, const uint8_t *image, size_t size) {
         dev, EC_CMD_BOARD_SPECIFIC_BASE | EC_PRV_CMD_HOTH_PAYLOAD_UPDATE, 0,
         buffer, sizeof(request) + chunk_size, NULL, 0, NULL);
     if (ret != 0) {
-      fprintf(stderr, "Error code from hoth: %d", ret);
+      fprintf(stderr, "Error code from hoth: %d\n", ret);
       return -1;
     }
 
@@ -123,19 +125,23 @@ int htool_payload_update(const struct htool_invocation *inv) {
   struct stat statbuf;
   if (fstat(fd, &statbuf)) {
     fprintf(stderr, "fstat error: %s\n", strerror(errno));
-    return -1;
+    goto cleanup2;
   }
   if (statbuf.st_size > SIZE_MAX) {
-    fprintf(stderr, "file to large\n");
-    return -1;
+    fprintf(stderr, "file too large\n");
+    goto cleanup2;
   }
 
   uint8_t *image = mmap(NULL, statbuf.st_size, PROT_READ, MAP_PRIVATE, fd, 0);
+  if (image == MAP_FAILED) {
+    fprintf(stderr, "mmap error: %s\n", strerror(errno));
+    goto cleanup2;
+  }
 
   if (!find_image_descriptor(image, statbuf.st_size,
                              TITAN_IMAGE_DESCRIPTOR_ALIGNMENT,
                              TITAN_IMAGE_DESCRIPTOR_MAGIC)) {
-    fprintf(stderr, "Not a valid Titan image.");
+    fprintf(stderr, "Not a valid Titan image.\n");
     goto cleanup;
   }
 
@@ -146,7 +152,7 @@ int htool_payload_update(const struct htool_invocation *inv) {
   int ret =
       send_payload_update_request_with_command(dev, PAYLOAD_UPDATE_INITIATE);
   if (ret != 0) {
-    fprintf(stderr, "Error when initiating payload update.");
+    fprintf(stderr, "Error when initiating payload update.\n");
     goto cleanup;
   }
 
@@ -154,7 +160,7 @@ int htool_payload_update(const struct htool_invocation *inv) {
   fprintf(stderr, "Flashing the image to hoth.\n");
   ret = send_image(dev, image, statbuf.st_size);
   if (ret != 0) {
-    fprintf(stderr, "Error when flashing.");
+    fprintf(stderr, "Error when flashing.\n");
     goto cleanup;
   }
 
@@ -162,7 +168,7 @@ int htool_payload_update(const struct htool_invocation *inv) {
   fprintf(stderr, "Finalizing payload update.\n");
   ret = send_payload_update_request_with_command(dev, PAYLOAD_UPDATE_FINALIZE);
   if (ret != 0) {
-    fprintf(stderr, "Error when finalizing.");
+    fprintf(stderr, "Error when finalizing.\n");
     goto cleanup;
   }
 
@@ -171,7 +177,13 @@ int htool_payload_update(const struct htool_invocation *inv) {
 cleanup:
   ret = munmap(image, statbuf.st_size);
   if (ret != 0) {
-    fprintf(stderr, "munmap error: %d", ret);
+    fprintf(stderr, "munmap error: %d\n", ret);
+  }
+
+cleanup2:
+  ret = close(fd);
+  if (ret != 0) {
+    fprintf(stderr, "close error: %d\n", ret);
   }
   return -1;
 }
