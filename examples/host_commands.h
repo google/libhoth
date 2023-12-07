@@ -515,8 +515,8 @@ struct payload_region_state {
 
 struct payload_update_packet {
   uint32_t offset; /* image offset */
-  uint32_t len; /* packet length excluding this header */
-  uint8_t type; /* One of PAYLOAD_UPDATE_* */
+  uint32_t len;    /* packet length excluding this header */
+  uint8_t type;    /* One of PAYLOAD_UPDATE_* */
   /* payload data immediately follows */
 } __attribute__((packed));
 

@@ -768,8 +768,7 @@ static const struct htool_cmd CMDS[] = {
         .desc = "Perform payload update protocol for Titan images.",
         .params =
             (const struct htool_param[]){
-                {HTOOL_POSITIONAL, .name = "source-file"},
-                {}},
+                {HTOOL_POSITIONAL, .name = "source-file"}, {}},
         .func = htool_payload_update,
     },
     {.verbs = (const char*[]){"flash_spi_info", NULL},

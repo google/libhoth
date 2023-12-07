@@ -31,7 +31,8 @@
 const int64_t TITAN_IMAGE_DESCRIPTOR_MAGIC = 0x5F435344474D495F;
 const int64_t TITAN_IMAGE_DESCRIPTOR_ALIGNMENT = 1 << 16;
 
-bool find_image_descriptor(uint8_t *image, size_t len, size_t offset_alignment, int64_t magic) {
+bool find_image_descriptor(uint8_t *image, size_t len, size_t offset_alignment,
+                           int64_t magic) {
   for (size_t offset = 0; offset < len; offset += offset_alignment) {
     int64_t magic_candidate;
     memcpy(&magic_candidate, image + offset, sizeof(int64_t));
@@ -43,7 +44,7 @@ bool find_image_descriptor(uint8_t *image, size_t len, size_t offset_alignment, 
 }
 
 int send_payload_update_request_with_command(struct libhoth_device *dev,
-                                                    uint8_t command) {
+                                             uint8_t command) {
   struct payload_update_packet request;
   request.type = command;
   request.offset = 0;
@@ -59,8 +60,7 @@ int send_payload_update_request_with_command(struct libhoth_device *dev,
   return 0;
 }
 
-int send_image(struct libhoth_device *dev, const uint8_t *image,
-                      size_t size) {
+int send_image(struct libhoth_device *dev, const uint8_t *image, size_t size) {
   const size_t max_chunk_size = MAILBOX_SIZE - sizeof(struct ec_host_request) -
                                 sizeof(struct payload_update_packet);
 
@@ -107,7 +107,7 @@ int send_image(struct libhoth_device *dev, const uint8_t *image,
 int htool_payload_update(const struct htool_invocation *inv) {
   struct libhoth_device *dev = htool_libhoth_device();
   if (!dev) {
-   return -1;
+    return -1;
   }
 
   const char *image_file;
@@ -132,7 +132,9 @@ int htool_payload_update(const struct htool_invocation *inv) {
 
   uint8_t *image = mmap(NULL, statbuf.st_size, PROT_READ, MAP_PRIVATE, fd, 0);
 
-  if (!find_image_descriptor(image, statbuf.st_size, TITAN_IMAGE_DESCRIPTOR_ALIGNMENT, TITAN_IMAGE_DESCRIPTOR_MAGIC)) {
+  if (!find_image_descriptor(image, statbuf.st_size,
+                             TITAN_IMAGE_DESCRIPTOR_ALIGNMENT,
+                             TITAN_IMAGE_DESCRIPTOR_MAGIC)) {
     fprintf(stderr, "Not a valid Titan image.");
     goto cleanup;
   }
@@ -166,7 +168,7 @@ int htool_payload_update(const struct htool_invocation *inv) {
 
   return 0;
 
-  cleanup:
+cleanup:
   ret = munmap(image, statbuf.st_size);
   if (ret != 0) {
     fprintf(stderr, "munmap error: %d", ret);
