@@ -43,6 +43,8 @@ cc_binary(
         "htool_panic.h",
         "htool_payload.c",
         "htool_payload.h",
+        "htool_payload_update.c",
+        "htool_payload_update.h",
         "htool_progress.c",
         "htool_progress.h",
         "htool_spi.c",

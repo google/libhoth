@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef LIBHOTH_EXAMPLES_HTOOL_PAYLOAD_H_
-#define LIBHOTH_EXAMPLES_HTOOL_PAYLOAD_H_
+#ifndef LIBHOTH_EXAMPLES_HTOOL_PAYLOAD_UPDATE_H_
+#define LIBHOTH_EXAMPLES_HTOOL_PAYLOAD_UPDATE_H_
 
 #include "host_commands.h"
 #include "htool.h"
