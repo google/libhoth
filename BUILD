@@ -2,23 +2,8 @@ package(default_visibility = ["//visibility:public"])
 
 cc_library(
     name = "libhoth",
-    srcs = [
-        "libhoth.c",
-        "libhoth_mtd.c",
-        "libhoth_spi.c",
-        "libhoth_usb.c",
-        "libhoth_usb_fifo.c",
-        "libhoth_usb_mailbox.c",
-    ],
-    hdrs = [
-        "libhoth.h",
-        "libhoth_ec.h",
-        "libhoth_mtd.h",
-        "libhoth_spi.h",
-        "libhoth_usb.h",
-        "libhoth_usb_device.h",
-    ],
-    deps = ["@libusb//:libusb"],
+    srcs = ["libhoth.c"],
+    hdrs = ["libhoth.h"],
 )
 
 cc_library(
@@ -34,3 +19,52 @@ genrule(
     stamp = 1,
 )
 
+cc_library(
+    name = "libhoth_ec",
+    hdrs = ["libhoth_ec.h"],
+)
+
+cc_library(
+    name = "libhoth_mtd",
+    srcs = ["libhoth_mtd.c"],
+    hdrs = ["libhoth_mtd.h"],
+    deps = [
+        ":libhoth",
+        ":libhoth_ec",
+    ],
+)
+
+cc_library(
+    name = "libhoth_spi",
+    srcs = ["libhoth_spi.c"],
+    hdrs = ["libhoth_spi.h"],
+    deps = [
+        ":libhoth",
+        ":libhoth_ec",
+    ],
+)
+
+cc_library(
+    name = "libhoth_usb",
+    srcs = ["libhoth_usb.c"],
+    hdrs = ["libhoth_usb.h"],
+    deps = [
+        ":libhoth",
+        ":libhoth_usb_device",
+        "@libusb//:libusb",
+    ],
+)
+
+cc_library(
+    name = "libhoth_usb_device",
+    srcs = [
+        "libhoth_usb_fifo.c",
+        "libhoth_usb_mailbox.c",
+    ],
+    hdrs = ["libhoth_usb_device.h"],
+    deps = [
+        ":libhoth",
+        ":libhoth_ec",
+        "@libusb//:libusb",
+    ],
+)
