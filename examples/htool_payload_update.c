@@ -94,7 +94,7 @@ int send_image(struct libhoth_device *dev, const uint8_t *image, size_t size) {
     memcpy(buffer + sizeof(request), image + offset, chunk_size);
 
     int ret = htool_exec_hostcmd(
-        dev, EC_CMD_BOARD_SPECIFIC_BASE | EC_PRV_CMD_HOTH_PAYLOAD_UPDATE, 0,
+        dev, EC_CMD_BOARD_SPECIFIC_BASE + EC_PRV_CMD_HOTH_PAYLOAD_UPDATE, 0,
         buffer, sizeof(request) + chunk_size, NULL, 0, NULL);
     if (ret != 0) {
       fprintf(stderr, "Error code from hoth: %d\n", ret);

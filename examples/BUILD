@@ -62,6 +62,9 @@ cc_binary(
         ":host_commands",
         "//:git_version",
         "//:libhoth",
+        "//:libhoth_mtd",
+        "//:libhoth_spi",
+        "//:libhoth_usb",
         "@libusb//:libusb",
     ],
 )
