@@ -36,6 +36,7 @@
 #include "htool_console.h"
 #include "htool_panic.h"
 #include "htool_payload.h"
+#include "htool_payload_update.h"
 #include "htool_progress.h"
 #include "htool_spi_proxy.h"
 #include "htool_statistics.h"
@@ -593,7 +594,7 @@ int htool_exec_hostcmd(struct libhoth_device* dev, uint16_t command,
   } resp;
   size_t resp_size;
   status = libhoth_receive_response(dev, &resp, sizeof(resp), &resp_size,
-                                    /*timeout_ms=*/5000);
+                                    /*timeout_ms=*/180000);
   if (status != LIBHOTH_OK) {
     fprintf(stderr, "libhoth_usb_receive_response() failed: %d\n", status);
     return -1;
@@ -761,6 +762,14 @@ static const struct htool_cmd CMDS[] = {
         .desc = "Show payload status",
         .params = (const struct htool_param[]){{}},
         .func = htool_payload_status,
+    },
+    {
+        .verbs = (const char*[]){"payload", "update", NULL},
+        .desc = "Perform payload update protocol for Titan images.",
+        .params =
+            (const struct htool_param[]){
+                {HTOOL_POSITIONAL, .name = "source-file"}, {}},
+        .func = htool_payload_update,
     },
     {.verbs = (const char*[]){"flash_spi_info", NULL},
      .desc = "Get SPI NOR flash info.",
