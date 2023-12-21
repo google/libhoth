@@ -758,6 +758,12 @@ static const struct htool_cmd CMDS[] = {
         .func = command_console,
     },
     {
+        .verbs = (const char*[]){"payload", "getstatus", NULL},
+        .desc = "Show the current payload update status",
+        .params = (const struct htool_param[]){{}},
+        .func = htool_payload_update_getstatus,
+    },
+    {
         .verbs = (const char*[]){"payload", "status", NULL},
         .desc = "Show payload status",
         .params = (const struct htool_param[]){{}},
