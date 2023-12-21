@@ -188,7 +188,7 @@ cleanup2:
   return -1;
 }
 
-const char* payload_update_getstatus_valid_string(uint8_t v) {
+const char *payload_update_getstatus_valid_string(uint8_t v) {
   switch (v) {
     case 0:
       return "Invalid";
@@ -203,7 +203,7 @@ const char* payload_update_getstatus_valid_string(uint8_t v) {
   }
 }
 
-const char* payload_update_getstatus_half_string(uint8_t h) {
+const char *payload_update_getstatus_half_string(uint8_t h) {
   switch (h) {
     case 0:
       return "A";
@@ -214,8 +214,7 @@ const char* payload_update_getstatus_half_string(uint8_t h) {
   }
 }
 
-int htool_payload_update_getstatus()
-{
+int htool_payload_update_getstatus() {
   struct libhoth_device *dev = htool_libhoth_device();
   if (!dev) {
     return -1;
@@ -229,36 +228,35 @@ int htool_payload_update_getstatus()
   uint8_t response[sizeof(struct payload_update_status)];
   size_t rlen = 0;
   int ret = htool_exec_hostcmd(
-      dev, EC_CMD_BOARD_SPECIFIC_BASE + EC_PRV_CMD_HOTH_PAYLOAD_UPDATE, 0, &request,
-      sizeof(request), &response, sizeof(response), &rlen);
+      dev, EC_CMD_BOARD_SPECIFIC_BASE + EC_PRV_CMD_HOTH_PAYLOAD_UPDATE, 0,
+      &request, sizeof(request), &response, sizeof(response), &rlen);
   if (ret != 0) {
     fprintf(stderr, "HOTH_PAYLOAD_UPDATE_GET_STATUS error code: %d\n", ret);
     return -1;
   }
   if (rlen != sizeof(response)) {
-    fprintf(stderr, "HOTH_PAYLOAD_UPDATE_GET_STATUS expected exactly %ld response bytes, got %ld\n",
-      sizeof(response),
-      rlen);
+    fprintf(stderr,
+            "HOTH_PAYLOAD_UPDATE_GET_STATUS expected exactly %ld response "
+            "bytes, got %ld\n",
+            sizeof(response), rlen);
     return -1;
   }
 
-  struct payload_update_status *ppus = 
-      (struct payload_update_status*)(response);
-  printf("a_valid        : %s (%u)\n", 
-          payload_update_getstatus_valid_string(ppus->a_valid),
-          ppus->a_valid);
-  printf("b_valid        : %s (%u)\n", 
-          payload_update_getstatus_valid_string(ppus->b_valid),
-          ppus->b_valid);
-  printf("active_half    : %s (%u)\n", 
-          payload_update_getstatus_half_string(ppus->active_half),
-          ppus->active_half);
-  printf("next_half      : %s (%u)\n", 
-          payload_update_getstatus_half_string(ppus->next_half),
-          ppus->next_half);
-  printf("persistent_half: %s (%u)\n", 
-          payload_update_getstatus_half_string(ppus->persistent_half),
-          ppus->persistent_half);
+  struct payload_update_status *ppus =
+      (struct payload_update_status *)(response);
+  printf("a_valid        : %s (%u)\n",
+         payload_update_getstatus_valid_string(ppus->a_valid), ppus->a_valid);
+  printf("b_valid        : %s (%u)\n",
+         payload_update_getstatus_valid_string(ppus->b_valid), ppus->b_valid);
+  printf("active_half    : %s (%u)\n",
+         payload_update_getstatus_half_string(ppus->active_half),
+         ppus->active_half);
+  printf("next_half      : %s (%u)\n",
+         payload_update_getstatus_half_string(ppus->next_half),
+         ppus->next_half);
+  printf("persistent_half: %s (%u)\n",
+         payload_update_getstatus_half_string(ppus->persistent_half),
+         ppus->persistent_half);
 
   return 0;
 }
