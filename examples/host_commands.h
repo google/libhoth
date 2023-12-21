@@ -520,6 +520,16 @@ struct payload_update_packet {
   /* payload data immediately follows */
 } __attribute__((packed));
 
+struct payload_update_status {
+  uint8_t a_valid;         /* 0 = invalid, 1 = unverified, 2 = valid, */
+                           /* 3 = descriptor valid */
+  uint8_t b_valid;         /* 0 = invalid, 1 = unverified, 2 = valid, */
+                           /* 3 = descriptor valid */
+  uint8_t active_half;     /* 0, 1 */
+  uint8_t next_half;       /* 0, 1 */
+  uint8_t persistent_half; /* 0, 1 */
+} __attribute__((packed));
+
 #define EC_PRV_CMD_HOTH_PERSISTENT_PANIC_INFO 0x0014
 #define HOTH_PERSISTENT_PANIC_INFO_CHUNK_SIZE 512
 enum persistent_panic_op {
