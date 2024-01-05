@@ -445,7 +445,6 @@ static int command_console(const struct htool_invocation* inv) {
   if (htool_get_param_bool(inv, "snapshot", &opts.snapshot)) {
     return -1;
   }
-
   if (!opts.snapshot) {
     if (htool_get_param_u32_or_fourcc(inv, "channel", &opts.channel_id) ||
         htool_get_param_bool(inv, "force_drive_tx", &opts.force_drive_tx) ||
@@ -457,6 +456,11 @@ static int command_console(const struct htool_invocation* inv) {
         htool_get_param_u32(inv, "yield_ms", &opts.yield_ms)) {
       return -1;
     }
+  } else {
+    // Channel is optional in snapshot mode: 0 = legacy host command.
+    if (htool_get_param_u32_or_fourcc(inv, "channel", &opts.channel_id)) {
+      opts.channel_id = 0;
+    }
   }
   struct libhoth_device* dev = htool_libhoth_device();
   if (!dev) {
@@ -464,7 +468,7 @@ static int command_console(const struct htool_invocation* inv) {
   }
 
   if (opts.snapshot) {
-    return htool_console_snapshot(dev);
+    return htool_console_snapshot(dev, &opts);
   } else {
     return htool_console_run(dev, &opts);
   }

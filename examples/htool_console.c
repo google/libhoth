@@ -359,7 +359,7 @@ int htool_console_run(struct libhoth_device *dev,
   return status;
 }
 
-int htool_console_snapshot(struct libhoth_device *dev) {
+int htool_console_snapshot_legacy(struct libhoth_device *dev) {
   size_t response_bytes_written;
   int status = htool_exec_hostcmd(dev, EC_CMD_CONSOLE_REQUEST, 0, NULL, 0, NULL,
                                   0, &response_bytes_written);
@@ -384,5 +384,35 @@ int htool_console_snapshot(struct libhoth_device *dev) {
     if (response_bytes_written < max_bytes_per_read) break;
   }
   printf("\n");
+  return status;
+}
+
+int htool_console_snapshot(struct libhoth_device *dev,
+                           const struct htool_console_opts *opts) {
+  // Legacy host commands for console snapshot.
+  if (!opts->channel_id) {
+    return htool_console_snapshot_legacy(dev);
+  }
+  // Modern host commands similar to htool_console_run.
+  // Starting from current_offset - 0x80000000 so it's guaranteed to be outside
+  // of the Hoth buffer. Repeat read until reaching current offset.
+  uint32_t current_offset;
+  int status = get_channel_status(dev, opts, &current_offset);
+  if (status != LIBHOTH_OK) {
+    fprintf(stderr, "get_channel_status() failed: %d\n", status);
+    return status;
+  }
+  uint32_t offset = current_offset - 0x80000000;
+
+  while (true) {
+    status = read_console(dev, opts, &offset);
+    if (status != LIBHOTH_OK) {
+      break;
+    }
+    // Extra check in case UINT32_MAX wrap-around.
+    if (!(offset < current_offset || offset - current_offset > 0x80000000)) {
+      break;
+    }
+  }
   return status;
 }
