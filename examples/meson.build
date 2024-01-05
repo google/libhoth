@@ -23,6 +23,7 @@ executable(
     'htool_payload.c',
     'htool_payload_update.c',
     'htool_progress.c',
+    'htool_raw_host_command.c',
     'htool_spi.c',
     'htool_spi_proxy.c',
     'htool_statistics.c',
