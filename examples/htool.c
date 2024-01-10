@@ -581,12 +581,12 @@ int htool_exec_hostcmd(struct libhoth_device* dev, uint16_t command,
   int status = populate_ec_request_header(command, version, req.payload_buf,
                                           req_payload_size, &req.hdr);
   if (status != 0) {
-    fprintf(stderr, "populate_request_header failed: %d\n", status);
+    fprintf(stderr, "populate_ec_request_header() failed: %d\n", status);
     return -1;
   }
   status = libhoth_send_request(dev, &req, sizeof(req.hdr) + req_payload_size);
   if (status != LIBHOTH_OK) {
-    fprintf(stderr, "libhoth_usb_send() failed: %d\n", status);
+    fprintf(stderr, "libhoth_send_request() failed: %d\n", status);
     return -1;
   }
   struct {
@@ -597,7 +597,7 @@ int htool_exec_hostcmd(struct libhoth_device* dev, uint16_t command,
   status = libhoth_receive_response(dev, &resp, sizeof(resp), &resp_size,
                                     /*timeout_ms=*/180000);
   if (status != LIBHOTH_OK) {
-    fprintf(stderr, "libhoth_usb_receive_response() failed: %d\n", status);
+    fprintf(stderr, "libhoth_receive_response() failed: %d\n", status);
     return -1;
   }
   status = validate_ec_response_header(&resp.hdr, resp.payload_buf, resp_size);
