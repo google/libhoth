@@ -536,6 +536,36 @@ static int command_passthrough_enable(const struct htool_invocation* inv) {
       /*version=*/0, NULL, 0, NULL, 0, NULL);
 }
 
+static int command_srtm(const struct htool_invocation* inv) {
+  struct libhoth_device* dev = htool_libhoth_device();
+  if (!dev) {
+    return -1;
+  }
+
+  const char* measurement;
+  if (htool_get_param_string(inv, "measurement", &measurement) != 0) {
+    return -1;
+  }
+
+  size_t measurement_length = strlen(measurement);
+  if (measurement_length == 0) {
+    fprintf(stderr, "Must specify measurement\n");
+    return -1;
+  }
+  if (measurement_length > SRTM_DATA_MAX_SIZE_BYTES) {
+    fprintf(stderr, "Measurement exceeds %d byte limit, size: %ld\n",
+            SRTM_DATA_MAX_SIZE_BYTES, measurement_length);
+    return -1;
+  }
+  struct ec_srtm_request request = {0};
+  request.data_size = measurement_length;
+  memcpy(&request.data, measurement, measurement_length);
+
+  return htool_exec_hostcmd(
+      dev, EC_CMD_BOARD_SPECIFIC_BASE + EC_PRV_CMD_HAVEN_SRTM,
+      /*version=*/0, &request, sizeof(request), NULL, 0, NULL);
+}
+
 struct libhoth_device* htool_libhoth_device(void) {
   static struct libhoth_device* result;
   if (result) {
@@ -845,6 +875,17 @@ static const struct htool_cmd CMDS[] = {
                 "trigger.",
         .params = (const struct htool_param[]){{}},
         .func = command_arm_coordinated_reset,
+    },
+    {
+        .verbs = (const char*[]){"srtm", NULL},
+        .desc = "Pushes a measurement into PCR0.",
+        .params =
+            (const struct htool_param[]){
+                {HTOOL_FLAG_VALUE, 'm', "measurement", NULL,
+                 .desc = "The measurement to push into PCR0. Must be 64 bytes or "
+                         "smaller."},
+                {}},
+        .func = command_srtm,
     },
     {
         .verbs = (const char*[]){"raw_host_command", NULL},
