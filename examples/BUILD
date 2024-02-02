@@ -15,6 +15,15 @@ cc_library(
 )
 
 cc_library(
+    name = "srtm",
+    hdrs = ["srtm.h"],
+    srcs = ["srtm.c"],
+    deps = [
+        ":host_commands",
+    ],
+)
+
+cc_library(
     name = "ec_util",
     srcs = [
         "ec_util.c",
@@ -62,6 +71,7 @@ cc_binary(
         ":authorization_record",
         ":ec_util",
         ":host_commands",
+        ":srtm",
         "//:git_version",
         "//:libhoth",
         "//:libhoth_mtd",

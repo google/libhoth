@@ -42,6 +42,7 @@
 #include "htool_spi_proxy.h"
 #include "htool_statistics.h"
 #include "htool_usb.h"
+#include "srtm.h"
 
 static int command_usb_list(const struct htool_invocation* inv) {
   return htool_usb_print_devices();
@@ -547,19 +548,10 @@ static int command_srtm(const struct htool_invocation* inv) {
     return -1;
   }
 
-  size_t measurement_length = strlen(measurement);
-  if (measurement_length == 0) {
-    fprintf(stderr, "Must specify measurement\n");
-    return -1;
-  }
-  if (measurement_length > SRTM_DATA_MAX_SIZE_BYTES) {
-    fprintf(stderr, "Measurement exceeds %d byte limit, size: %ld\n",
-            SRTM_DATA_MAX_SIZE_BYTES, measurement_length);
-    return -1;
-  }
   struct ec_srtm_request request = {0};
-  request.data_size = measurement_length;
-  memcpy(&request.data, measurement, measurement_length);
+  if (srtm_request_from_hex_measurement(&request, measurement) != 0) {
+    return -1;
+  }
 
   return htool_exec_hostcmd(
       dev, EC_CMD_BOARD_SPECIFIC_BASE + EC_PRV_CMD_HAVEN_SRTM,
@@ -882,8 +874,8 @@ static const struct htool_cmd CMDS[] = {
         .params =
             (const struct htool_param[]){
                 {HTOOL_FLAG_VALUE, 'm', "measurement", NULL,
-                 .desc = "The measurement to push into PCR0. Must be 64 bytes or "
-                         "smaller."},
+                 .desc = "The measurement to push into PCR0. Must be a "
+                         "hexidecimal string of 128 bytes or less."},
                 {}},
         .func = command_srtm,
     },
