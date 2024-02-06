@@ -554,7 +554,7 @@ static int command_srtm(const struct htool_invocation* inv) {
   }
 
   return htool_exec_hostcmd(
-      dev, EC_CMD_BOARD_SPECIFIC_BASE + EC_PRV_CMD_HAVEN_SRTM,
+      dev, EC_CMD_BOARD_SPECIFIC_BASE + EC_PRV_CMD_HOTH_SRTM,
       /*version=*/0, &request, sizeof(request), NULL, 0, NULL);
 }
 
