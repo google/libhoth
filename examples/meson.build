@@ -28,6 +28,8 @@ executable(
     'htool_spi_proxy.c',
     'htool_statistics.c',
     'htool_usb.c',
+    'srtm.h',
+    'srtm.c',
     git_version_h],
   dependencies: [libusb],
   link_with: [libhoth],

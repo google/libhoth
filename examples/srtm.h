@@ -17,8 +17,9 @@
 
 #include "host_commands.h"
 
-// Populates an ec_srtm_request the given measurement data. `measurement` is expected to be
-// a hex string.
-int srtm_request_from_hex_measurement(struct ec_srtm_request* request, const char* measurement);
+// Populates an ec_srtm_request the given measurement data. `measurement` is
+// expected to be a hex string.
+int srtm_request_from_hex_measurement(struct ec_srtm_request* request,
+                                      const char* measurement);
 
 #endif  // LIBHOTH_EXAMPLES_SRTM_H_
