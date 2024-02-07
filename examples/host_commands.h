@@ -581,4 +581,15 @@ struct ec_response_persistent_panic_info {
   int32_t persistent_panic_record_version;
 } __attribute__((packed));
 
+// This command allows callers to push initial measurements into PCR0. This
+// command will fail if the TPM has already been started up, or if the
+// data to measure exceeds SRTM_DATA_MAX_SIZE_BYTES.
+#define EC_PRV_CMD_HOTH_SRTM 0x0044
+#define SRTM_DATA_MAX_SIZE_BYTES 64
+
+struct ec_srtm_request {
+  uint16_t data_size;
+  uint8_t data[SRTM_DATA_MAX_SIZE_BYTES];
+} __attribute__((packed, aligned(4)));
+
 #endif  // LIBHOTH_EXAMPLES_HOST_COMMANDS_H_
