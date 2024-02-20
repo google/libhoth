@@ -56,6 +56,17 @@ cc_library(
 )
 
 cc_library(
+    name = "libhoth_dbus",
+    srcs = ["libhoth_dbus.c"],
+    hdrs = ["libhoth_dbus.h"],
+    linkopts = ["-lsystemd"],
+    deps = [
+        ":libhoth",
+    ],
+)
+
+
+cc_library(
     name = "libhoth_usb_device",
     srcs = [
         "libhoth_usb_fifo.c",

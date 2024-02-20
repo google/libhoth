@@ -66,6 +66,7 @@ cc_binary(
         "htool_update_failure_reasons.h",
         "htool_usb.c",
         "htool_usb.h",
+        "htool_dbus.c",
     ],
     deps = [
         ":authorization_record",
@@ -77,6 +78,7 @@ cc_binary(
         "//:libhoth_mtd",
         "//:libhoth_spi",
         "//:libhoth_usb",
+        "//:libhoth_dbus",
         "@libusb//:libusb",
     ],
 )

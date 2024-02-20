@@ -583,6 +583,8 @@ struct libhoth_device* htool_libhoth_device(void) {
     result = htool_libhoth_spi_device();
   } else if (strcmp(transport_method_str, "mtd") == 0) {
     result = htool_libhoth_mtd_device();
+  } else if (strcmp(transport_method_str, "dbus") == 0) {
+    result = htool_libhoth_dbus_device();
   } else {
     fprintf(stderr, "Unknown transport protocol %s\n\r\n",
             transport_method_str);
@@ -895,7 +897,7 @@ static const struct htool_cmd CMDS[] = {
 static const struct htool_param GLOBAL_FLAGS[] = {
     {HTOOL_FLAG_VALUE, .name = "transport", .default_value = "",
      .desc = "The method of connecting to the RoT; for example "
-             "'spidev'/'usb'/'mtd'"},
+             "'spidev'/'usb'/'mtd'/'dbus'"},
     {HTOOL_FLAG_VALUE, .name = "usb_loc", .default_value = "",
      .desc = "The full bus-portlist location of the RoT; for example "
              "'1-10.4.4.1'."},
@@ -914,6 +916,8 @@ static const struct htool_param GLOBAL_FLAGS[] = {
     {HTOOL_FLAG_VALUE, .name = "mailbox_location", .default_value = "0",
      .desc = "The location of the mailbox on the RoT, for 'spidev' "
              "or 'mtd' transports; for example '0x900000'."},
+    {HTOOL_FLAG_VALUE, .name = "dbus_hoth_id", .default_value = "",
+     .desc = "The hoth ID associated with the RoT's hothd service."},
     {HTOOL_FLAG_BOOL, .name = "version", .default_value = "false",
      .desc = "Print htool version."},
     {}};
