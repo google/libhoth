@@ -1,4 +1,4 @@
-// Copyright 2022 Google LLC
+// Copyright 2024 Google LLC
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -213,7 +213,7 @@ static int write_console(struct libhoth_device *dev,
   req.req.channel_id = opts->channel_id;
   req.req.flags =
       opts->force_drive_tx ? EC_CHANNEL_WRITE_REQUEST_FLAG_FORCE_DRIVE_TX : 0;
-  req.req.flags |= 
+  req.req.flags |=
       flags.uart_break ? EC_CHANNEL_WRITE_REQUEST_FLAG_SEND_BREAK : 0;
 
   int status = htool_exec_hostcmd(
