@@ -150,7 +150,12 @@ void restore_terminal(int fd, const struct termios *old_termios) {
 // in-place escape sequence processing.
 // looks for ctrl-T/q.
 #define ESCAPE_CHAR '\24'
-static int unescape(char *buf, int in, bool *quit) {
+struct unescape_flags {
+  bool quit;
+  bool uart_break;
+};
+
+static int unescape(char *buf, int in, struct unescape_flags *flags) {
   static bool escaped = false;
   int out = 0;
   for (int i = 0; i < in; i++) {
@@ -171,7 +176,11 @@ static int unescape(char *buf, int in, bool *quit) {
           break;
         case 'Q':
         case 'q':
-          *quit = true;
+          flags->quit = true;
+          return 0;
+        case 'B':
+        case 'b':
+          flags->uart_break = true;
           return 0;
         default:
           fprintf(stderr, "unsupported escape key.\n");
@@ -197,12 +206,15 @@ static int write_console(struct libhoth_device *dev,
     return 0;
   }
 
-  int numWrite = unescape(req.buffer, numRead, quit);
-  if (*quit || numWrite == 0) return 0;
+  struct unescape_flags flags = {};
+  int numWrite = unescape(req.buffer, numRead, &flags);
+  if ((*quit = flags.quit) || (numWrite == 0 && !flags.uart_break)) return 0;
 
   req.req.channel_id = opts->channel_id;
   req.req.flags =
       opts->force_drive_tx ? EC_CHANNEL_WRITE_REQUEST_FLAG_FORCE_DRIVE_TX : 0;
+  req.req.flags |= 
+      flags.uart_break ? EC_CHANNEL_WRITE_REQUEST_FLAG_SEND_BREAK : 0;
 
   int status = htool_exec_hostcmd(
       dev, EC_CMD_BOARD_SPECIFIC_BASE + EC_PRV_CMD_HOTH_CHANNEL_WRITE,
