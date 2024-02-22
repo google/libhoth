@@ -148,7 +148,7 @@ void restore_terminal(int fd, const struct termios *old_termios) {
 }
 
 // in-place escape sequence processing.
-// looks for ctrl-T/q.
+// looks for ctrl-T + escape character. q - quit, b - send break
 #define ESCAPE_CHAR '\24'
 struct unescape_flags {
   bool quit;
