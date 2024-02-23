@@ -154,6 +154,10 @@ static const char* get_param(const struct htool_invocation* inv,
   return param_info.param->default_value;
 }
 
+bool htool_has_param(const struct htool_invocation* inv, const char* name) {
+  return get_param(inv, name) != NULL;
+}
+
 static const char* get_param_required(const struct htool_invocation* inv,
                                       const char* name) {
   const char* result = get_param(inv, name);

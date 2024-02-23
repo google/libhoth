@@ -458,8 +458,12 @@ static int command_console(const struct htool_invocation* inv) {
       return -1;
     }
   } else {
-    // Channel is optional in snapshot mode: 0 = legacy host command.
-    if (htool_get_param_u32_or_fourcc(inv, "channel", &opts.channel_id)) {
+    if (htool_has_param(inv, "channel")) {
+      if (htool_get_param_u32_or_fourcc(inv, "channel", &opts.channel_id)) {
+        return -1;
+      }
+    } else {
+      // Channel is optional in snapshot mode: 0 = legacy host command.
       opts.channel_id = 0;
     }
   }

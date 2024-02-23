@@ -56,6 +56,8 @@ struct htool_invocation {
   const char** args;
 };
 
+bool htool_has_param(const struct htool_invocation* inv, const char* name);
+
 int htool_get_param_bool(const struct htool_invocation* inv, const char* name,
                          bool* value);
 int htool_get_param_u32(const struct htool_invocation* inv, const char* name,
