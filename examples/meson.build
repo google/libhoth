@@ -18,6 +18,7 @@ executable(
     'htool.c',
     'htool_cmd.c',
     'htool_console.c',
+    'htool_dbus.c',
     'htool_mtd.c',
     'htool_panic.c',
     'htool_payload.c',

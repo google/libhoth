@@ -7,9 +7,11 @@ libhoth_srcs = [
   'libhoth_spi.c',
   'libhoth_usb_fifo.c',
   'libhoth_usb_mailbox.c',
+  'libhoth_dbus.c',
 ]
 libusb = dependency('libusb-1.0')
-libhoth = library('hoth', libhoth_srcs, dependencies: libusb, install: true, \
+libsystemd = dependency('libsystemd')
+libhoth = library('hoth', libhoth_srcs, dependencies: [libusb, libsystemd], install: true, \
     version: meson.project_version())
 install_headers('libhoth.h')
 install_headers('libhoth_usb.h')
