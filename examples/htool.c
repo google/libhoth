@@ -34,6 +34,7 @@
 #include "host_commands.h"
 #include "htool_cmd.h"
 #include "htool_console.h"
+#include "htool_i2c.h"
 #include "htool_panic.h"
 #include "htool_payload.h"
 #include "htool_payload_update.h"
@@ -884,6 +885,43 @@ static const struct htool_cmd CMDS[] = {
                          "hexidecimal string of 128 bytes or less."},
                 {}},
         .func = command_srtm,
+    },
+    {
+        .verbs = (const char*[]){"i2c", I2C_DETECT_CMD_STR, NULL},
+        .desc = "Detect I2C devices on bus",
+        .params =
+            (const struct htool_param[]){
+                {HTOOL_FLAG_VALUE, 'b', "bus", "0", .desc = "i2c bus"},
+                {HTOOL_FLAG_VALUE, 's', "start", "0", .desc = "7-bit start address"},
+                {HTOOL_FLAG_VALUE, 'e', "end", "127", .desc = "7-bit end address"},
+                {}},
+        .func = htool_i2c_run,
+    },
+    {
+        .verbs = (const char*[]){"i2c", I2C_READ_CMD_STR, NULL},
+        .desc = "Perform I2C transaction",
+        .params =
+            (const struct htool_param[]){
+                {HTOOL_FLAG_VALUE, 'b', "bus", "0", .desc = "i2c bus"},
+                {HTOOL_FLAG_VALUE, 'f', "frequency", "400", .desc = "i2c bus frequency (100/400/1000)"},
+                {HTOOL_FLAG_VALUE, 'a', "address", .desc = "start address"},
+                {HTOOL_FLAG_VALUE, 'o', "offset", "-1", .desc = "register offset to read"},
+                {HTOOL_FLAG_VALUE, 'l', "length", .desc = "how many bytes to read"},
+                {}},
+        .func = htool_i2c_run,
+    },
+    {
+        .verbs = (const char*[]){"i2c", I2C_WRITE_CMD_STR, NULL},
+        .desc = "Perform I2C transaction",
+        .params =
+            (const struct htool_param[]){
+                {HTOOL_FLAG_VALUE, 'b', "bus", "0", .desc = "i2c bus"},
+                {HTOOL_FLAG_VALUE, 'f', "frequency", "400", .desc = "i2c bus frequency (100/400/1000)"},
+                {HTOOL_FLAG_VALUE, 'a', "address", .desc = "start address"},
+                {HTOOL_FLAG_BOOL, 'r', "no_stop", "false", .desc = "don't send stop bit"},
+                {HTOOL_POSITIONAL, .name = "byte_stream"},
+                {}},
+        .func = htool_i2c_run,
     },
     {
         .verbs = (const char*[]){"raw_host_command", NULL},
