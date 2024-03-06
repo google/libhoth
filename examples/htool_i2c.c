@@ -57,7 +57,7 @@ static int i2c_detect(struct libhoth_device *dev,
   }
 
   struct ec_response_i2c_detect *pI2d =
-      (struct ex_response_i2c_detect *)(response);
+      (struct ec_response_i2c_detect *)(response);
 
   printf("Detected %u devices on bus.\n", pI2d->devices_count);
   if (pI2d->devices_count) {
