@@ -596,7 +596,7 @@ struct ec_srtm_request {
  * I2C Detect. This scans for I2C devices on the Hoth's I2C Bus
  */
 #define EC_PRV_CMD_HOTH_I2C_DETECT 0x0045
-#define I2C_DETECT_DATA_MAX_SIZE_BYTES (16) // 128 bits (addresses)
+#define I2C_DETECT_DATA_MAX_SIZE_BYTES (16)  // 128 bits (addresses)
 
 struct ec_request_i2c_detect {
   // Which I2C bus to run the scan on

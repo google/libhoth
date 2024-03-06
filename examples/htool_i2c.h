@@ -26,4 +26,4 @@ struct htool_invocation;
 
 int htool_i2c_run(const struct htool_invocation* inv);
 
-#endif // LIBHOTH_EXAMPLES_HTOOL_I2C_H_
+#endif  // LIBHOTH_EXAMPLES_HTOOL_I2C_H_

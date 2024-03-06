@@ -892,8 +892,10 @@ static const struct htool_cmd CMDS[] = {
         .params =
             (const struct htool_param[]){
                 {HTOOL_FLAG_VALUE, 'b', "bus", "0", .desc = "i2c bus"},
-                {HTOOL_FLAG_VALUE, 's', "start", "0", .desc = "7-bit start address"},
-                {HTOOL_FLAG_VALUE, 'e', "end", "127", .desc = "7-bit end address"},
+                {HTOOL_FLAG_VALUE, 's', "start", "0",
+                 .desc = "7-bit start address"},
+                {HTOOL_FLAG_VALUE, 'e', "end", "127",
+                 .desc = "7-bit end address"},
                 {}},
         .func = htool_i2c_run,
     },
@@ -903,10 +905,13 @@ static const struct htool_cmd CMDS[] = {
         .params =
             (const struct htool_param[]){
                 {HTOOL_FLAG_VALUE, 'b', "bus", "0", .desc = "i2c bus"},
-                {HTOOL_FLAG_VALUE, 'f', "frequency", "400", .desc = "i2c bus frequency (100/400/1000)"},
+                {HTOOL_FLAG_VALUE, 'f', "frequency", "400",
+                 .desc = "i2c bus frequency (100/400/1000)"},
                 {HTOOL_FLAG_VALUE, 'a', "address", .desc = "start address"},
-                {HTOOL_FLAG_VALUE, 'o', "offset", "-1", .desc = "register offset to read"},
-                {HTOOL_FLAG_VALUE, 'l', "length", .desc = "how many bytes to read"},
+                {HTOOL_FLAG_VALUE, 'o', "offset", "-1",
+                 .desc = "register offset to read"},
+                {HTOOL_FLAG_VALUE, 'l', "length",
+                 .desc = "how many bytes to read"},
                 {}},
         .func = htool_i2c_run,
     },
@@ -916,9 +921,11 @@ static const struct htool_cmd CMDS[] = {
         .params =
             (const struct htool_param[]){
                 {HTOOL_FLAG_VALUE, 'b', "bus", "0", .desc = "i2c bus"},
-                {HTOOL_FLAG_VALUE, 'f', "frequency", "400", .desc = "i2c bus frequency (100/400/1000)"},
+                {HTOOL_FLAG_VALUE, 'f', "frequency", "400",
+                 .desc = "i2c bus frequency (100/400/1000)"},
                 {HTOOL_FLAG_VALUE, 'a', "address", .desc = "start address"},
-                {HTOOL_FLAG_BOOL, 'r', "no_stop", "false", .desc = "don't send stop bit"},
+                {HTOOL_FLAG_BOOL, 'r', "no_stop", "false",
+                 .desc = "don't send stop bit"},
                 {HTOOL_POSITIONAL, .name = "byte_stream"},
                 {}},
         .func = htool_i2c_run,
