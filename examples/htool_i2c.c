@@ -14,6 +14,7 @@
 
 #include "htool_i2c.h"
 
+#include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
 
@@ -134,6 +135,69 @@ static int i2c_read(struct libhoth_device *dev, const struct htool_invocation* i
 
 static int i2c_write(struct libhoth_device *dev, const struct htool_invocation* inv)
 {
+    uint32_t bus;
+    uint32_t freq;
+    uint32_t addr;
+    bool no_stop;
+    char *byte_stream = NULL;
+
+    if (htool_get_param_u32(inv, "bus", &bus) ||
+        htool_get_param_u32(inv, "frequency", &freq) ||
+        htool_get_param_u32(inv, "address", &addr) ||
+        htool_get_param_bool(inv, "no_stop", &no_stop) ||
+        htool_get_param_string(inv, "byte_stream", (const char**)&byte_stream)) {
+        return -1;
+    }
+
+    if (byte_stream == NULL) {
+        return -1;
+    }
+
+    struct ec_request_i2c_transfer request;
+    request.bus_number = (uint8_t)(bus & 0xFF);
+    request.dev_address = (uint8_t)(addr & 0x7F);
+    request.speed_khz = (uint16_t)(freq & 0xFFFF);
+    request.flags = (no_stop ? I2C_BITS_NO_STOP : 0) |
+                    I2C_BITS_WRITE;
+    request.size_read = 0;
+
+    uint16_t idx = 0;
+    char *tk = strtok(byte_stream, " ");
+    while (tk && (idx < I2C_TRANSFER_DATA_MAX_SIZE_BYTES)) {
+        unsigned long int parsed = strtoul(tk, NULL, 0);
+        request.arg_bytes[idx++] = (uint8_t)parsed;
+        tk = strtok(NULL, " ");
+    }
+    request.size_write = idx;
+
+    uint8_t response[sizeof(struct ec_response_i2c_transfer)];
+    size_t rLen = 0;
+    int ret = htool_exec_hostcmd(
+        dev, EC_CMD_BOARD_SPECIFIC_BASE + EC_PRV_CMD_HOTH_I2C_TRANSFER, 0,
+        &request, sizeof(request), &response, sizeof(response), &rLen);
+    if (ret != 0) {
+        fprintf(stderr, "HOTH_I2C_TRANSFER [write] error code: %d\n", ret);
+        return -1;
+    }
+    if (rLen != sizeof(response)) {
+        fprintf(stderr,
+                "HOTH_I2C_TRANSFER [write] expected exactly %ld response "
+                "bytes, got %ld\n",
+                sizeof(response), rLen);
+        return -1;
+    }
+    
+    printf("Wrote %u bytes to I2C device %u:0x%02x\n", 
+            request.size_write,
+            request.bus_number,
+            request.dev_address);
+
+    struct ec_response_i2c_transfer *pI2t = 
+        (struct ec_response_i2c_transfer *)(response);
+    if (pI2t->bus_response) {
+        fprintf(stderr, "HOTH_I2C_TRANSFER [write] bus error: %d\n", pI2t->bus_response);
+    }
+
     return 0;
 }
 
