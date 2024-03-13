@@ -14,7 +14,6 @@
 
 #include "htool_i2c.h"
 
-#include <errno.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -102,7 +101,7 @@ static int i2c_read(struct libhoth_device *dev,
     request.size_write = 0;
   } else {
     request.size_write = 1;
-    request.arg_bytes[1] = (offset & 0xFF);
+    request.arg_bytes[0] = (offset & 0xFF);
   }
 
   uint8_t response[sizeof(struct ec_response_i2c_transfer)];
@@ -166,7 +165,7 @@ static int i2c_write(struct libhoth_device *dev,
   while (tk && (idx < I2C_TRANSFER_DATA_MAX_SIZE_BYTES)) {
     char *endptr;
     unsigned long int parsed = strtoul(tk, &endptr, 0);
-    if ((errno != 0 && parsed == 0) || tk == endptr) {
+    if (tk == endptr || parsed > UINT8_MAX || *endptr != '\0') {
       fprintf(stderr, "Invalid input data.\n");
       return -1;
     }
