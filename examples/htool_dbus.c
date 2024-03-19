@@ -14,6 +14,8 @@
 // limitations under the License.
 #include <stdio.h>
 
+#ifdef DBUS_BACKEND
+
 #include "../libhoth_dbus.h"
 #include "htool_cmd.h"
 
@@ -43,3 +45,12 @@ struct libhoth_device* htool_libhoth_dbus_device(void) {
 
   return result;
 }
+
+#else
+
+struct libhoth_device* htool_libhoth_dbus_device(void) {
+  fprintf(stderr, "This build doesn't have the D-Bus backend.\n");
+  return NULL;
+}
+
+#endif  // DBUS_BACKEND
