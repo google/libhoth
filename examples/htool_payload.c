@@ -67,9 +67,11 @@ int htool_payload_status() {
       // The rest of the fields won't have meaningful values.
       continue;
     }
-    printf("  failure_reason: %s (%u)\n",
-           payload_validation_failure_reason_string(rs->failure_reason),
-           rs->failure_reason);
+    if (rs->failure_reason) {
+      printf("  failure_reason: %s (%u)\n",
+             payload_validation_failure_reason_string(rs->failure_reason),
+             rs->failure_reason);
+    }
     printf("  image_type: %s (%u)\n", image_type_string(rs->image_type),
            rs->image_type);
     printf("  image_family: (0x%08x)\n", rs->image_family);
