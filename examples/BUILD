@@ -32,6 +32,13 @@ cc_library(
     deps = [":host_commands"],
 )
 
+config_setting(
+    name = "dbus_backend",
+    define_values = {
+        "dbus_backend": "true",
+    },
+)
+
 cc_binary(
     name = "htool",
     srcs = [
@@ -80,7 +87,9 @@ cc_binary(
         "//:libhoth_mtd",
         "//:libhoth_spi",
         "//:libhoth_usb",
-        "//:libhoth_dbus",
         "@libusb//:libusb",
-    ],
+    ] + select({
+        ":dbus_backend" : ["//:libhoth_dbus"],
+        "//conditions:default": [],
+    })
 )

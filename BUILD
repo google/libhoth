@@ -60,6 +60,7 @@ cc_library(
     srcs = ["libhoth_dbus.c"],
     hdrs = ["libhoth_dbus.h"],
     linkopts = ["-lsystemd"],
+    defines = ["DBUS_BACKEND"],
     deps = [
         ":libhoth",
     ],

@@ -1,0 +1,1 @@
+option('dbus_backend', type : 'boolean', value : false, description: 'Enable the D-Bus backend to use hothd as the transport')

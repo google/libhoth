@@ -9,6 +9,14 @@ git_version_h = vcs_tag(
   replace_string: '@GIT_COMMIT@',
 )
 
+link_with = [libhoth]
+c_args = []
+
+if get_option('dbus_backend')
+  link_with += libhoth_dbus
+  c_args += '-DDBUS_BACKEND'
+endif
+
 executable(
   'htool',
   sources: [
@@ -34,5 +42,6 @@ executable(
     'srtm.c',
     git_version_h],
   dependencies: [libusb],
-  link_with: [libhoth],
+  link_with: link_with,
+  c_args: c_args,
   install: true)
