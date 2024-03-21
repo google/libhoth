@@ -39,12 +39,10 @@ int htool_payload_status() {
 
   struct payload_status_response_header* ppsr =
       (struct payload_status_response_header*)(buffer);
-  printf("version       : %u\n", ppsr->version);
   printf("lockdown_state: %s (%u)\n",
          sps_eeprom_lockdown_status_string(ppsr->lockdown_state),
          ppsr->lockdown_state);
   printf("active_half   : %c\n", ppsr->active_half ? 'B' : 'A');
-  printf("region_count  : %u\n", ppsr->region_count);
 
   size_t expected_rlen =
       sizeof(struct payload_status_response_header) +
@@ -70,7 +68,6 @@ int htool_payload_status() {
            rs->failure_reason);
     printf("  image_type: %s (%u)\n", image_type_string(rs->image_type),
            rs->image_type);
-    printf("  key_index:  %u\n", rs->key_index);
     printf("  image_family: (0x%08x)\n", rs->image_family);
     printf("  version: %u.%u.%u.%u\n", rs->version_major, rs->version_minor,
            rs->version_point, rs->version_subpoint);
