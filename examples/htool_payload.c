@@ -63,6 +63,10 @@ int htool_payload_status() {
     printf("  validation_state: %s (%u)\n",
            payload_validation_state_string(rs->validation_state),
            rs->validation_state);
+    if (rs->validation_state == PAYLOAD_IMAGE_UNVERIFIED) {
+      // The rest of the fields won't have meaningful values.
+      continue;
+    }
     printf("  failure_reason: %s (%u)\n",
            payload_validation_failure_reason_string(rs->failure_reason),
            rs->failure_reason);
@@ -93,13 +97,13 @@ const char* sps_eeprom_lockdown_status_string(uint8_t st) {
 
 const char* payload_validation_state_string(uint8_t s) {
   switch (s) {
-    case 0:
+    case PAYLOAD_IMAGE_INVALID:
       return "Invalid";
-    case 1:
+    case PAYLOAD_IMAGE_UNVERIFIED:
       return "Unverified";
-    case 2:
+    case PAYLOAD_IMAGE_VALID:
       return "Valid";
-    case 3:
+    case PAYLOAD_DESCRIPTOR_VALID:
       return "Descriptor Valid";
     default:
       return "(unknown payload_validation_state)";
