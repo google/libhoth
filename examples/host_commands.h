@@ -498,6 +498,13 @@ struct payload_status_response_header {
   uint8_t region_count;
 } __attribute__((packed));
 
+enum payload_validation_state {
+  PAYLOAD_IMAGE_INVALID = 0,
+  PAYLOAD_IMAGE_UNVERIFIED = 1,
+  PAYLOAD_IMAGE_VALID = 2,
+  PAYLOAD_DESCRIPTOR_VALID = 3,
+};
+
 struct payload_region_state {
   uint8_t validation_state; /* enum payload_validation_state */
   uint8_t failure_reason;   /* enum payload_validation_failure_reason */

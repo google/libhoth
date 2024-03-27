@@ -39,12 +39,10 @@ int htool_payload_status() {
 
   struct payload_status_response_header* ppsr =
       (struct payload_status_response_header*)(buffer);
-  printf("version       : %u\n", ppsr->version);
   printf("lockdown_state: %s (%u)\n",
          sps_eeprom_lockdown_status_string(ppsr->lockdown_state),
          ppsr->lockdown_state);
   printf("active_half   : %c\n", ppsr->active_half ? 'B' : 'A');
-  printf("region_count  : %u\n", ppsr->region_count);
 
   size_t expected_rlen =
       sizeof(struct payload_status_response_header) +
@@ -65,12 +63,17 @@ int htool_payload_status() {
     printf("  validation_state: %s (%u)\n",
            payload_validation_state_string(rs->validation_state),
            rs->validation_state);
-    printf("  failure_reason: %s (%u)\n",
-           payload_validation_failure_reason_string(rs->failure_reason),
-           rs->failure_reason);
+    if (rs->validation_state == PAYLOAD_IMAGE_UNVERIFIED) {
+      // The rest of the fields won't have meaningful values.
+      continue;
+    }
+    if (rs->failure_reason) {
+      printf("  failure_reason: %s (%u)\n",
+             payload_validation_failure_reason_string(rs->failure_reason),
+             rs->failure_reason);
+    }
     printf("  image_type: %s (%u)\n", image_type_string(rs->image_type),
            rs->image_type);
-    printf("  key_index:  %u\n", rs->key_index);
     printf("  image_family: (0x%08x)\n", rs->image_family);
     printf("  version: %u.%u.%u.%u\n", rs->version_major, rs->version_minor,
            rs->version_point, rs->version_subpoint);
@@ -96,13 +99,13 @@ const char* sps_eeprom_lockdown_status_string(uint8_t st) {
 
 const char* payload_validation_state_string(uint8_t s) {
   switch (s) {
-    case 0:
+    case PAYLOAD_IMAGE_INVALID:
       return "Invalid";
-    case 1:
+    case PAYLOAD_IMAGE_UNVERIFIED:
       return "Unverified";
-    case 2:
+    case PAYLOAD_IMAGE_VALID:
       return "Valid";
-    case 3:
+    case PAYLOAD_DESCRIPTOR_VALID:
       return "Descriptor Valid";
     default:
       return "(unknown payload_validation_state)";
