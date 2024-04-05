@@ -81,12 +81,14 @@ static int i2c_read(struct libhoth_device *dev,
   uint32_t addr;
   uint32_t offset;
   uint32_t length;
+  bool repeated_start;
 
   if (htool_get_param_u32(inv, "bus", &bus) ||
       htool_get_param_u32(inv, "frequency", &freq) ||
       htool_get_param_u32(inv, "address", &addr) ||
       htool_get_param_u32(inv, "offset", &offset) ||
-      htool_get_param_u32(inv, "length", &length)) {
+      htool_get_param_u32(inv, "length", &length) ||
+      htool_get_param_bool(inv, "repeated_start", &repeated_start)) {
     return -1;
   }
 
@@ -95,7 +97,7 @@ static int i2c_read(struct libhoth_device *dev,
   request.dev_address = (uint8_t)(addr & 0x7F);
   request.size_read = (uint16_t)(length & 0xFFFF);
   request.speed_khz = (uint16_t)(freq & 0xFFFF);
-  request.flags = 0;
+  request.flags = (repeated_start ? I2C_BITS_REPEATED_START : 0);
 
   if (offset == UINT32_MAX) {
     request.size_write = 0;
