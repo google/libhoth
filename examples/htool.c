@@ -910,6 +910,9 @@ static const struct htool_cmd CMDS[] = {
                 {HTOOL_FLAG_VALUE, 'a', "address", .desc = "start address"},
                 {HTOOL_FLAG_VALUE, 'o', "offset", "-1",
                  .desc = "register offset to read"},
+                {HTOOL_FLAG_BOOL, 'r', "repeated_start", "true",
+                 .desc = "Use repeated start between write and read messages"
+                         " when reading register from given offset"},
                 {HTOOL_FLAG_VALUE, 'l', "length",
                  .desc = "how many bytes to read"},
                 {}},

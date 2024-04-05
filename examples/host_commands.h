@@ -634,6 +634,7 @@ struct ec_response_i2c_detect {
 #define I2C_BITS_WRITE (1 << 0)
 #define I2C_BITS_NO_STOP (1 << 1)
 #define I2C_BITS_NO_START (1 << 2)
+#define I2C_BITS_REPEATED_START (1 << 3)
 
 struct ec_request_i2c_transfer {
   // Which I2C bus to run the transfer on
