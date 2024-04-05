@@ -14,6 +14,7 @@
 
 #include "htool_i2c.h"
 
+#include <assert.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -126,7 +127,14 @@ static int i2c_read(struct libhoth_device *dev,
   struct ec_response_i2c_transfer *pI2t =
       (struct ec_response_i2c_transfer *)(response);
 
-  printf("Read %u bytes from 0x%02x\n", pI2t->read_bytes, request.dev_address);
+  if (offset != UINT32_MAX) {
+    printf("Read %u bytes from I2C device %u:0x%02x offset: 0x%02x\n",
+           pI2t->read_bytes, request.bus_number, request.dev_address,
+           offset & 0xFF);
+  } else {
+    printf("Read %u bytes from I2C device %u:0x%02x\n", pI2t->read_bytes,
+           request.bus_number, request.dev_address);
+  }
   for (uint16_t i = 0; i < pI2t->read_bytes; i++) {
     printf("0x%02X ", pI2t->resp_bytes[i]);
   }
@@ -140,12 +148,14 @@ static int i2c_write(struct libhoth_device *dev,
   uint32_t bus;
   uint32_t freq;
   uint32_t addr;
+  uint32_t offset;
   bool no_stop;
   char *byte_stream = NULL;
 
   if (htool_get_param_u32(inv, "bus", &bus) ||
       htool_get_param_u32(inv, "frequency", &freq) ||
       htool_get_param_u32(inv, "address", &addr) ||
+      htool_get_param_u32(inv, "offset", &offset) ||
       htool_get_param_bool(inv, "no_stop", &no_stop) ||
       htool_get_param_string(inv, "byte_stream", (const char **)&byte_stream)) {
     return -1;
@@ -163,6 +173,11 @@ static int i2c_write(struct libhoth_device *dev,
   request.size_read = 0;
 
   uint16_t idx = 0;
+
+  if (offset != UINT32_MAX) {
+    request.arg_bytes[idx++] = (uint8_t)(offset & 0xFF);
+  }
+
   char *tk = strtok(byte_stream, " ");
   while (tk && (idx < I2C_TRANSFER_DATA_MAX_SIZE_BYTES)) {
     char *endptr;
@@ -193,8 +208,15 @@ static int i2c_write(struct libhoth_device *dev,
     return -1;
   }
 
-  printf("Wrote %u bytes to I2C device %u:0x%02x\n", request.size_write,
-         request.bus_number, request.dev_address);
+  if (offset != UINT32_MAX) {
+    assert(request.size_write >= 1);
+    printf("Wrote %u bytes to I2C device %u:0x%02x at offset: 0x%02x\n",
+           request.size_write - 1, request.bus_number, request.dev_address,
+           offset & 0xFF);
+  } else {
+    printf("Wrote %u bytes to I2C device %u:0x%02x\n", request.size_write,
+           request.bus_number, request.dev_address);
+  }
 
   struct ec_response_i2c_transfer *pI2t =
       (struct ec_response_i2c_transfer *)(response);

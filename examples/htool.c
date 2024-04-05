@@ -927,6 +927,8 @@ static const struct htool_cmd CMDS[] = {
                 {HTOOL_FLAG_VALUE, 'f', "frequency", "400",
                  .desc = "i2c bus frequency (100/400/1000)"},
                 {HTOOL_FLAG_VALUE, 'a', "address", .desc = "start address"},
+                {HTOOL_FLAG_VALUE, 'o', "offset", "-1",
+                 .desc = "register offset to write"},
                 {HTOOL_FLAG_BOOL, 'r', "no_stop", "false",
                  .desc = "don't send stop bit"},
                 {HTOOL_POSITIONAL, .name = "byte_stream"},
