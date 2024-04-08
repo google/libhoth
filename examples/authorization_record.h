@@ -45,6 +45,11 @@ struct authorization_record {
 #define AUTHORIZATION_RECORD_MAGIC ("AUTHZREC")
 #define AUTHORIZATION_RECORD_SIZE (sizeof(struct authorization_record))
 
+// Note that changing the size of this structure may cause compatability issues;
+// the authorization infrastructure expects the above structure format.
+_Static_assert(AUTHORIZATION_RECORD_SIZE == 464,
+               "unexpected authorization_record size");
+
 int authorization_record_print_hex_string(
     const struct authorization_record* record);
 
