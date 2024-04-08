@@ -26,7 +26,7 @@ int authorization_record_print_hex_string(
     return -1;
   }
   int i;
-  const char* buf = (const char*)record;
+  const uint8_t* buf = (const uint8_t*)record;
   for (i = 0; i < sizeof(*record); ++i) {
     printf("%02x", buf[i]);
   }
