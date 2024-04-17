@@ -18,6 +18,10 @@
 #include <stddef.h>
 #include <stdint.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 struct libusb_context;
 struct libusb_device;
 struct libhoth_device;
@@ -26,5 +30,9 @@ struct libusb_context* htool_libusb_context(void);
 struct libusb_device* htool_libusb_device(void);
 
 int htool_usb_print_devices(void);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif  // LIBHOTH_EXAMPLES_HTOOL_USB_H_

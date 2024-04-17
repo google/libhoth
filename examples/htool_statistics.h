@@ -15,6 +15,14 @@
 #ifndef THIRD_PARTY_LIBHOTH_LIBHOTH_EXAMPLES_HTOOL_STATISTICS_H_
 #define THIRD_PARTY_LIBHOTH_LIBHOTH_EXAMPLES_HTOOL_STATISTICS_H_
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 int htool_statistics();
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif  // THIRD_PARTY_LIBHOTH_LIBHOTH_EXAMPLES_HTOOL_STATISTICS_H_

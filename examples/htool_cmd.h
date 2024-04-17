@@ -18,6 +18,10 @@
 #include <stdbool.h>
 #include <stdint.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 enum htool_param_type {
   HTOOL_PARAM_END = 0,
 
@@ -71,5 +75,9 @@ struct htool_invocation* htool_global_flags(void);
 
 int htool_main(const struct htool_param* global_flags,
                const struct htool_cmd* cmds, int argc, const char* const* argv);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif  // LIBHOTH_EXAMPLES_HTOOL_CMD_H_

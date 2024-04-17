@@ -17,6 +17,10 @@
 
 #include <stdint.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #define BIT(nr) (1UL << (nr))
 /* Hoth Reset causes */
 const uint32_t kResetFlagOther = BIT(0);      /* Other known reason */
@@ -39,5 +43,9 @@ const uint32_t kResetFlagRdd = BIT(15);        /* USB Type-C debug cable */
 const uint32_t kResetFlagRbox = BIT(16);       /* Fixed reset functionality */
 const uint32_t kResetFlagSecurity = BIT(17);   /* Security threat */
 const uint32_t kResetFlagApWatchdog = BIT(18); /* AP watchdog reset */
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif  // THIRD_PARTY_LIBHOTH_LIBHOTH_EXAMPLES_HTOOL_CONSTANTS_H_

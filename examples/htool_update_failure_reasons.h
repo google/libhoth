@@ -17,6 +17,10 @@
 
 #include <stdint.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 enum firmware_update_failure_reason {
   FIRMWARE_UPDATE_SUCCESS = 0,  // EC_SUCCESS
   FIRMWARE_UPDATE_NO_HEADER_FOUND = 1,
@@ -96,5 +100,9 @@ enum payload_update_failure_reason {
   PAYLOAD_UPDATE_GNVRAM_WRITE_ERROR = 45,
   PAYLOAD_UPDATE_ERROR_MAX = 46,
 };
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif  // THIRD_PARTY_LIBHOTH_LIBHOTH_EXAMPLES_HTOOL_UPDATE_FAILURE_REASONS_H_

@@ -18,6 +18,10 @@
 #include <stdint.h>
 #include <time.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 struct htool_progress {
   void (*func)(void*, uint64_t numerator, uint64_t denominator);
   void* param;
@@ -31,5 +35,9 @@ struct htool_progress_stderr {
 
 void htool_progress_stderr_init(struct htool_progress_stderr* progress,
                                 const char* action_title);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif  // LIBHOTH_EXAMPLES_HTOOL_PROGRESS_H_

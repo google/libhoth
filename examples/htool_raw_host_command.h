@@ -17,7 +17,15 @@
 
 #include <stdint.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 struct htool_invocation;
 int command_raw_host_command(const struct htool_invocation* inv);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

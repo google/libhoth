@@ -38,7 +38,7 @@ int htool_exec_hostcmd(struct libhoth_device* dev, uint16_t command,
                        size_t resp_buf_size, size_t* out_resp_size);
 
 #ifdef __cplusplus
-}  // extern "C"
+}
 #endif
 
 #endif  // LIBHOTH_EXAMPLES_HTOOL_H_

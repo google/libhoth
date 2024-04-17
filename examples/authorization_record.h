@@ -18,6 +18,10 @@
 #include <stddef.h>
 #include <stdint.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #define AUTHORIZATION_RECORD_MAGIC_SIZE 8
 #define AUTHORIZATION_RECORD_SIGNATURE_SIZE (96 * 4)
 #define AUTHORIZATION_RECORD_VERSION 1
@@ -55,5 +59,9 @@ int authorization_record_print_hex_string(
 
 int authorization_record_from_hex_string(struct authorization_record* record,
                                          const char* buf, size_t length);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif  // LIBHOTH_EXAMPLES_AUTHORIZATION_RECORD_H_

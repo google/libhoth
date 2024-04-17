@@ -18,6 +18,10 @@
 #include <stdbool.h>
 #include <stdint.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 struct libhoth_device;
 
 struct htool_console_opts {
@@ -36,5 +40,9 @@ int htool_console_run(struct libhoth_device* dev,
 
 int htool_console_snapshot(struct libhoth_device* dev,
                            const struct htool_console_opts* opts);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif  // LIBHOTH_EXAMPLES_HTOOL_CONSOLE_H_
