@@ -18,8 +18,16 @@
 #include "host_commands.h"
 #include "htool.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 struct htool_invocation;
 int htool_payload_update(const struct htool_invocation* inv);
 int htool_payload_update_getstatus();
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

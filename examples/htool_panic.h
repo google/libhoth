@@ -17,6 +17,10 @@
 
 #include <stdint.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /* ARM Cortex-Mx registers saved on panic */
 struct cortex_panic_data {
   uint32_t regs[12]; /* psp, ipsr, msp, r4-r11, lr */
@@ -76,5 +80,9 @@ enum panic_arch {
 
 struct htool_invocation;
 int htool_panic_get_panic(const struct htool_invocation* inv);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

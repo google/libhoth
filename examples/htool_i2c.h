@@ -15,6 +15,10 @@
 #ifndef LIBHOTH_EXAMPLES_HTOOL_I2C_H_
 #define LIBHOTH_EXAMPLES_HTOOL_I2C_H_
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #define I2C_DETECT_CMD_STR "detect"
 #define I2C_READ_CMD_STR "read"
 #define I2C_WRITE_CMD_STR "write"
@@ -23,5 +27,9 @@
 struct htool_invocation;
 
 int htool_i2c_run(const struct htool_invocation* inv);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif  // LIBHOTH_EXAMPLES_HTOOL_I2C_H_

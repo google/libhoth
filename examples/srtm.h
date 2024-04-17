@@ -17,9 +17,17 @@
 
 #include "host_commands.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 // Populates an ec_srtm_request the given measurement data. `measurement` is
 // expected to be a hex string.
 int srtm_request_from_hex_measurement(struct ec_srtm_request* request,
                                       const char* measurement);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif  // LIBHOTH_EXAMPLES_SRTM_H_

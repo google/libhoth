@@ -19,6 +19,10 @@
 #include <stdbool.h>
 #include <stdint.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #define LIBHOTH_USB_VENDOR_ID 0x18d1
 #define LIBHOTH_USB_INTERFACE_CLASS LIBUSB_CLASS_VENDOR_SPEC
 #define LIBHOTH_USB_MAILBOX_INTERFACE_SUBCLASS 0x71
@@ -93,4 +97,9 @@ int libhoth_usb_mailbox_close(struct libhoth_usb_device *dev);
 
 enum libusb_error transfer_status_to_error(
     enum libusb_transfer_status transfer_status);
+
+#ifdef __cplusplus
+}
+#endif
+
 #endif  // _LIBHOTH_USB_LIBHOTH_USB_DEVICE_H_

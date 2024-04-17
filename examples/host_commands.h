@@ -19,6 +19,10 @@
 
 #include "authorization_record.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #ifndef __packed
 #define __packed __attribute__((packed))
 #endif
@@ -669,5 +673,9 @@ struct ec_response_i2c_transfer {
   // Byte array to send if write
   uint8_t resp_bytes[I2C_TRANSFER_DATA_MAX_SIZE_BYTES];
 } __attribute__((packed, aligned(4)));
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif  // LIBHOTH_EXAMPLES_HOST_COMMANDS_H_

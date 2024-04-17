@@ -17,6 +17,10 @@
 
 #include <stdint.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 struct ec_host_response {
   uint8_t struct_version;
   uint8_t checksum;
@@ -24,5 +28,9 @@ struct ec_host_response {
   uint16_t data_len;
   uint16_t reserved;
 } __attribute__((packed));
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif  // _LIBHOTH_LIBHOTH_EC_H_
