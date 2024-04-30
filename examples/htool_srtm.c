@@ -1,4 +1,4 @@
-#include "srtm.h"
+#include "htool_srtm.h"
 
 #include <stdio.h>
 #include <string.h>

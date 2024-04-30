@@ -16,8 +16,8 @@ cc_library(
 
 cc_library(
     name = "srtm",
-    hdrs = ["srtm.h"],
-    srcs = ["srtm.c"],
+    hdrs = ["htool_srtm.h"],
+    srcs = ["htool_srtm.c"],
     deps = [
         ":host_commands",
     ],

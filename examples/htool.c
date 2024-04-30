@@ -41,9 +41,9 @@
 #include "htool_progress.h"
 #include "htool_raw_host_command.h"
 #include "htool_spi_proxy.h"
+#include "htool_srtm.h"
 #include "htool_statistics.h"
 #include "htool_usb.h"
-#include "srtm.h"
 
 static int command_usb_list(const struct htool_invocation* inv) {
   return htool_usb_print_devices();
