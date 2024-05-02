@@ -177,7 +177,7 @@ static int command_authz_record_build(const struct htool_invocation* inv) {
   }
   if (nonce_resp.ro_supported_key_id == 0) {
     fprintf(stderr,
-            "ro_supported_key_id = 0. Please reset the chip nad retry\n");
+            "ro_supported_key_id = 0. Please reset the chip and retry\n");
     return -1;
   }
   if (nonce_resp.ro_supported_key_id != nonce_resp.rw_supported_key_id) {
@@ -369,7 +369,7 @@ static int command_spi_update(const struct htool_invocation* inv) {
     goto cleanup1;
   }
   if (statbuf.st_size > SIZE_MAX) {
-    fprintf(stderr, "file to large\n");
+    fprintf(stderr, "file too large\n");
     goto cleanup1;
   }
   size_t file_size = statbuf.st_size;
