@@ -104,7 +104,7 @@ static void print_device(void* cb_param, libusb_device* dev,
                                                (unsigned char*)product_name,
                                                sizeof(product_name));
   if (len < 0) {
-    fprintf(stderr, " (unable to get product string: %s)", libusb_strerror(rv));
+    fprintf(stderr, " (unable to get product string: %s)", libusb_strerror(len));
     goto cleanup2;
   }
   fprintf(stderr, " - %.*s", len, product_name);
