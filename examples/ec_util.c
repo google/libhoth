@@ -18,6 +18,7 @@
 #include <stddef.h>
 #include <stdint.h>
 #include <stdio.h>
+#include <ctype.h>
 
 uint8_t calculate_ec_command_checksum(const void* header, size_t header_size,
                                       const void* data, size_t data_size) {
@@ -111,3 +112,40 @@ int validate_ec_response_header(const struct ec_host_response* response_header,
 
   return 0;
 }
+
+void hex_dump(FILE* out, const void* buffer, size_t size) {
+  if (!buffer || !size) {
+    fprintf(stderr, "hex_dump with null or empty buffer.\n");
+    return;
+  }
+
+  enum { BYTES_PER_LINE = 16 };
+  const uint8_t* bytes = (const uint8_t*)buffer;
+  char line_ascii[BYTES_PER_LINE + 1] = {0};
+
+  for (size_t offset = 0; offset < size; offset += BYTES_PER_LINE) {
+    fprintf(out, "0x%04lx: ", offset);
+    const size_t remaining = size - offset;
+    const size_t chunk_size =
+        remaining < BYTES_PER_LINE ? remaining : BYTES_PER_LINE;
+
+    for (size_t i = 0; i < BYTES_PER_LINE; ++i) {
+      if (i > 0 && (i % 8) == 0) {
+        // Insert a gap between sets of 8 bytes.
+        fprintf(out, " ");
+      }
+
+      if (i < chunk_size) {
+        uint8_t byte = bytes[offset + i];
+        fprintf(out, "%02X ", byte);
+        line_ascii[i] = isgraph(byte) ? byte : '.';
+      } else {
+        fprintf(out, "   ");  // filler instead of hex digits
+        line_ascii[i] = ' ';
+      }
+    }
+
+    fprintf(out, "|%s|\n", line_ascii);
+  }
+}
+

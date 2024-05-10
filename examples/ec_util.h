@@ -17,6 +17,7 @@
 
 #include <stddef.h>
 #include <stdint.h>
+#include <stdio.h>
 
 #include "host_commands.h"
 
@@ -33,6 +34,8 @@ int populate_ec_request_header(uint16_t command, uint8_t command_version,
 
 int validate_ec_response_header(const struct ec_host_response* response_header,
                                 const void* response, size_t response_size);
+
+void hex_dump(FILE* out, const void* buffer, size_t size);
 
 #ifdef __cplusplus
 }
