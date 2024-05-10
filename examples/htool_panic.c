@@ -23,6 +23,7 @@
 #include "host_commands.h"
 #include "htool.h"
 #include "htool_cmd.h"
+#include "ec_util.h"
 
 static int check_expected_response_length(uint16_t length, uint16_t expected) {
   if (length != expected) {
@@ -117,43 +118,6 @@ static int get_persistent_panic_info(
   }
 
   return 0;
-}
-
-static void print_hex_dump_buffer(size_t size, const void* buffer,
-                                  uint32_t address) {
-  if (!buffer) {
-    fprintf(stderr, "print_hex_dump_buffer with null buffer.\n");
-    return;
-  }
-
-  enum { BYTES_PER_LINE = 16 };
-  const uint8_t* bytes = (const uint8_t*)buffer;
-  char line_ascii[BYTES_PER_LINE + 1] = {0};
-
-  for (size_t offset = 0; offset < size; offset += BYTES_PER_LINE) {
-    printf("0x%04lx: ", address + offset);
-    const size_t remaining = size - offset;
-    const size_t chunk_size =
-        remaining < BYTES_PER_LINE ? remaining : BYTES_PER_LINE;
-
-    for (size_t i = 0; i < BYTES_PER_LINE; ++i) {
-      if (i > 0 && (i % 8) == 0) {
-        // Insert a gap between sets of 8 bytes.
-        printf(" ");
-      }
-
-      if (i < chunk_size) {
-        uint8_t byte = bytes[offset + i];
-        printf("%02X ", byte);
-        line_ascii[i] = isgraph(byte) ? byte : '.';
-      } else {
-        printf("   ");  // filler instead of hex digits
-        line_ascii[i] = ' ';
-      }
-    }
-
-    printf("|%s|\n", line_ascii);
-  }
 }
 
 static const char* panic_arch_string(enum panic_arch arch) {
@@ -336,7 +300,7 @@ static void print_panic_info(
       break;
     default:
       printf("Unknown Architecture.  Hexdump Follows:\n");
-      print_hex_dump_buffer(sizeof(*data), data, 0);
+      hex_dump(stdout, data, sizeof(*data));
   }
 
   printf("struct_size: %d\n", data->struct_size);
@@ -395,7 +359,7 @@ int htool_panic_get_panic(const struct htool_invocation* inv) {
   if (output_file && output_file[0]) {
     return dump_panic_record_to_file(output_file, &panic);
   } else if (hexdump) {
-    print_hex_dump_buffer(sizeof(panic.panic_record), &panic.panic_record, 0);
+    hex_dump(stdout, &panic.panic_record, sizeof(panic.panic_record));
   } else {
     print_panic_info(&panic);
   }
