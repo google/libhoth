@@ -20,10 +20,10 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include "ec_util.h"
 #include "host_commands.h"
 #include "htool.h"
 #include "htool_cmd.h"
-#include "ec_util.h"
 
 static int check_expected_response_length(uint16_t length, uint16_t expected) {
   if (length != expected) {
