@@ -14,11 +14,11 @@
 
 #include "ec_util.h"
 
+#include <ctype.h>
 #include <errno.h>
 #include <stddef.h>
 #include <stdint.h>
 #include <stdio.h>
-#include <ctype.h>
 
 uint8_t calculate_ec_command_checksum(const void* header, size_t header_size,
                                       const void* data, size_t data_size) {
@@ -107,6 +107,10 @@ int validate_ec_response_header(const struct ec_host_response* response_header,
   // should be zero.
   if (response_checksum != 0) {
     fprintf(stderr, "Error: response checksum (%u) != 0\n", response_checksum);
+    fprintf(stderr, "Response header:\n");
+    hex_dump(stderr, response_header, sizeof(*response_header));
+    fprintf(stderr, "Response body:\n");
+    hex_dump(stderr, response, response_header->data_len);
     return -EINVAL;
   }
 
@@ -137,7 +141,7 @@ void hex_dump(FILE* out, const void* buffer, size_t size) {
 
       if (i < chunk_size) {
         uint8_t byte = bytes[offset + i];
-        fprintf(out, "%02X ", byte);
+        fprintf(out, "%02x ", byte);
         line_ascii[i] = isgraph(byte) ? byte : '.';
       } else {
         fprintf(out, "   ");  // filler instead of hex digits
@@ -148,4 +152,3 @@ void hex_dump(FILE* out, const void* buffer, size_t size) {
     fprintf(out, "|%s|\n", line_ascii);
   }
 }
-
