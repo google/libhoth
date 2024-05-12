@@ -957,6 +957,10 @@ static const struct htool_param GLOBAL_FLAGS[] = {
     {HTOOL_FLAG_VALUE, .name = "spidev_path", .default_value = "",
      .desc = "The full SPIDEV path of the RoT; for example "
              "'/dev/spidev0.0'."},
+    {HTOOL_FLAG_BOOL, .name = "spidev_atomic", .default_value = "false",
+     .desc = "If true, force spidev to send the request and receive the "
+             "corresponding response with a single atomic ioctl.  This is "
+             "required on some systems for correctness."},
     {HTOOL_FLAG_VALUE, .name = "mtddev_path", .default_value = "",
      .desc = "The full MTD path of the RoT mailbox; for example "
              "'/dev/mtd0'. If unspecified, will attempt to detect "
