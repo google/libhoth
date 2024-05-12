@@ -31,6 +31,7 @@ struct libhoth_spi_device_init_options {
   int bits;
   int mode;
   int speed;
+  int atomic;
 };
 
 // Note that the options struct only needs to to live for the duration of
