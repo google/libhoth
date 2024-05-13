@@ -100,14 +100,15 @@ static void print_device(void* cb_param, libusb_device* dev,
     goto cleanup;
   }
   char product_name[512];
-  int len = libusb_get_string_descriptor_ascii(dev_handle, descriptor->iProduct,
+  int rv_or_len = libusb_get_string_descriptor_ascii(dev_handle, descriptor->iProduct,
                                                (unsigned char*)product_name,
                                                sizeof(product_name));
-  if (len < 0) {
-    fprintf(stderr, " (unable to get product string: %s)", libusb_strerror(rv));
+  if (rv_or_len < 0) {
+    fprintf(stderr, " (unable to get product string: %s)", libusb_strerror(rv_or_len));
     goto cleanup2;
   }
-  fprintf(stderr, " - %.*s", len, product_name);
+  // valid product_name is returned
+  fprintf(stderr, " - %.*s", rv_or_len, product_name);
 
 cleanup2:
   libusb_close(dev_handle);
