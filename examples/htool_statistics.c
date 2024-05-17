@@ -215,7 +215,7 @@ int htool_statistics() {
   if (flags & kResetFlagApWatchdog) printf(kIndent, "ResetFlagApWatchdog");
   // clang-format on
 
-  printf("Time since boot: %lu us\n", stat.time_since_hoth_boot_us);
+  printf("Time since boot: %llu us\n", stat.time_since_hoth_boot_us);
   if (stat.hoth_temperature == 0xFFFFFFFF) {
     printf("Temperature: (invalid)\n");
   } else {
