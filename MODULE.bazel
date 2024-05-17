@@ -1,0 +1,19 @@
+# Keep this in sync with meson.build
+module(
+    name = "libhoth",
+    version = "0.0.0",
+)
+
+# libusb is not yet available in the Bazel Central Registry 
+# (https://registry.bazel.build/).
+
+git_repository = use_repo_rule("@bazel_tools//tools/build_defs/repo:git.bzl", "git_repository")
+
+git_repository(
+    name = "libusb",
+    build_file = "external/libusb.BUILD",
+    commit = "4239bc3a50014b8e6a5a2a59df1fff3b7469543b",
+    remote = "https://github.com/libusb/libusb",
+    patches = ["external/libusb.patch"],
+    shallow_since = "1649581036 +0200",
+)
