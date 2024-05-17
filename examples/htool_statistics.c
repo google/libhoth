@@ -14,6 +14,7 @@
 
 #include "htool_statistics.h"
 
+#include <inttypes.h>
 #include <stdio.h>
 #include <stdlib.h>
 
@@ -215,7 +216,7 @@ int htool_statistics() {
   if (flags & kResetFlagApWatchdog) printf(kIndent, "ResetFlagApWatchdog");
   // clang-format on
 
-  printf("Time since boot: %lu us\n", stat.time_since_hoth_boot_us);
+  printf("Time since boot: %" PRIu64 " us\n", stat.time_since_hoth_boot_us);
   if (stat.hoth_temperature == 0xFFFFFFFF) {
     printf("Temperature: (invalid)\n");
   } else {
@@ -276,7 +277,7 @@ int htool_statistics() {
              PayloadUpdateErrorToString(
                  stat.payload_update_confirmation_cookie_failure_reason));
     } else {
-      printf("Payload Update Confirmation Cookie: %lu\n",
+      printf("Payload Update Confirmation Cookie: %" PRIu64 "\n",
              stat.payload_update_confirmation_cookie);
     }
   }
