@@ -26,8 +26,10 @@ cc_library(
     "config.h",
     "libusb/libusb.h",
   ],
-  copts = ["-isystem", "external/libusb/libusb", "-isystem", "external/libusb"],
+  copts = [
+    "-isystem", "external/{}/libusb".format(repo_name()), 
+    "-isystem", "external/{}".format(repo_name()),
+  ],
   linkopts = ["-lpthread"],
   visibility = ["//visibility:public"],
 )
-
