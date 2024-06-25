@@ -37,6 +37,7 @@ executable(
     'htool_spi.c',
     'htool_spi_proxy.c',
     'htool_statistics.c',
+    'htool_target_control.c',
     'htool_usb.c',
     'htool_srtm.h',
     'htool_srtm.c',

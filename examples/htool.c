@@ -936,6 +936,27 @@ static const struct htool_cmd CMDS[] = {
         .func = htool_i2c_run,
     },
     {
+        .verbs = (const char*[]){"i2c", I2C_MUXCTRL_CMD_STR,
+                                 I2C_MUXCTRL_GET_SUBCMD_STR, NULL},
+        .desc = "Get status of I2C Mux sel (if present)",
+        .params = (const struct htool_param[]){{}},
+        .func = htool_i2c_muxctrl_get,
+    },
+    {
+        .verbs = (const char*[]){"i2c", I2C_MUXCTRL_CMD_STR,
+                                 I2C_MUXCTRL_SELECT_TARGET_SUBCMD_STR, NULL},
+        .desc = "Change I2C Mux sel (if present) to select Target",
+        .params = (const struct htool_param[]){{}},
+        .func = htool_i2c_muxctrl_select_target,
+    },
+    {
+        .verbs = (const char*[]){"i2c", I2C_MUXCTRL_CMD_STR,
+                                 I2C_MUXCTRL_SELECT_HOST_SUBCMD_STR, NULL},
+        .desc = "Change I2C Mux sel (if present) to select Host",
+        .params = (const struct htool_param[]){{}},
+        .func = htool_i2c_muxctrl_select_host,
+    },
+    {
         .verbs = (const char*[]){"raw_host_command", NULL},
         .desc = "Stream raw host commands via stdin/stdout",
         .params = (const struct htool_param[]){{}},
