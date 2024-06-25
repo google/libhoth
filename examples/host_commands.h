@@ -674,6 +674,50 @@ struct ec_response_i2c_transfer {
   uint8_t resp_bytes[I2C_TRANSFER_DATA_MAX_SIZE_BYTES];
 } __attribute__((packed, aligned(4)));
 
+/* Control miscellaneous boolean functions on target */
+#define EC_PRV_CMD_HOTH_TARGET_CONTROL 0x0047
+
+/* Options and request struct for EC_PRV_CMD_HOTH_TARGET_CONTROL */
+enum ec_target_control_action {
+  // Returns the current enabled/disabled status of the given function.
+  EC_TARGET_CONTROL_ACTION_GET_STATUS = 0,
+
+  // Changes the status of the given function to "Disabled". Returns the
+  // previous enabled/disabled status of the given function.
+  EC_TARGET_CONTROL_ACTION_DISABLE = 1,
+
+  // Changes the status of the given function to "Enabled". Returns the previous
+  // enabled/disabled status of the given function.
+  EC_TARGET_CONTROL_ACTION_ENABLE = 2,
+};
+
+enum ec_target_control_function {
+  EC_TARGET_CONTROL_RESERVED0 = 0,
+  EC_TARGET_CONTROL_RESERVED1 = 1,
+  // Allow control over GPIO for I2C Mux select (if present)
+  EC_TARGET_CONTROL_I2C_MUX = 2,
+};
+
+enum ec_target_control_status {
+  EC_TARGET_CONTROL_STATUS_UNKNOWN = 0,
+  EC_TARGET_CONTROL_STATUS_DISABLED = 1,
+  EC_TARGET_CONTROL_STATUS_ENABLED = 2,
+};
+
+struct ec_request_target_control {
+  uint16_t function;  // must be ec_target_control_function
+  uint16_t action;    // must be ec_target_control_action
+  uint8_t args[];     // function+action specific args. Unused right now
+} __attribute__((packed, aligned(4)));
+
+struct ec_response_target_control {
+  // If the action changes the target control status, returns the status prior
+  // to the change requested by the host command.
+  //
+  // Must be ec_target_control_status
+  uint16_t status;
+} __attribute__((packed, aligned(4)));
+
 #ifdef __cplusplus
 }
 #endif

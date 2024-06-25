@@ -1,3 +1,4 @@
+
 // Copyright 2024 Google LLC
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,31 +13,17 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef LIBHOTH_EXAMPLES_HTOOL_I2C_H_
-#define LIBHOTH_EXAMPLES_HTOOL_I2C_H_
+#ifndef LIBHOTH_EXAMPLES_HTOOL_TARGET_CONTROL_H_
+#define LIBHOTH_EXAMPLES_HTOOL_TARGET_CONTROL_H_
 
+#include "host_commands.h"
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-#define I2C_DETECT_CMD_STR "detect"
-#define I2C_READ_CMD_STR "read"
-#define I2C_WRITE_CMD_STR "write"
-#define I2C_MUXCTRL_CMD_STR "mux_ctrl"
-#define I2C_MUXCTRL_GET_SUBCMD_STR "get"
-#define I2C_MUXCTRL_SELECT_TARGET_SUBCMD_STR "select_target"
-#define I2C_MUXCTRL_SELECT_HOST_SUBCMD_STR "select_host"
-
-// Forward declaration
-struct htool_invocation;
-
-int htool_i2c_run(const struct htool_invocation* inv);
-
-int htool_i2c_muxctrl_get(const struct htool_invocation* inv);
-
-int htool_i2c_muxctrl_select_target(const struct htool_invocation* inv);
-
-int htool_i2c_muxctrl_select_host(const struct htool_invocation* inv);
+int target_control_perform_action(enum ec_target_control_function function,
+                                  enum ec_target_control_action action,
+                                  struct ec_response_target_control* response);
 
 #ifdef __cplusplus
 }

@@ -23,6 +23,7 @@
 #include "host_commands.h"
 #include "htool.h"
 #include "htool_cmd.h"
+#include "htool_target_control.h"
 
 static int i2c_detect(struct libhoth_device *dev,
                       const struct htool_invocation *inv) {
@@ -247,4 +248,68 @@ int htool_i2c_run(const struct htool_invocation *inv) {
   }
 
   return -1;
+}
+
+// I2C mux control actions to Target control actions mapping
+enum {
+  I2C_MUXCTRL_ACTION_GET = EC_TARGET_CONTROL_ACTION_GET_STATUS,
+  I2C_MUXCTRL_ACTION_SELECT_TARGET = EC_TARGET_CONTROL_ACTION_ENABLE,
+  I2C_MUXCTRL_ACTION_SELECT_HOST = EC_TARGET_CONTROL_ACTION_DISABLE,
+};
+
+// Target control status to I2C mux control status mapping
+static const char *i2c_muxctrl_status_str_map(
+    const enum ec_target_control_status status) {
+  switch (status) {
+    case EC_TARGET_CONTROL_STATUS_ENABLED:
+      return "Target";
+    case EC_TARGET_CONTROL_STATUS_DISABLED:
+      return "Host";
+    default:
+      return "Unknown";
+  }
+}
+
+int htool_i2c_muxctrl_get(const struct htool_invocation *inv) {
+  struct ec_response_target_control response;
+  int ret = target_control_perform_action(EC_TARGET_CONTROL_I2C_MUX,
+                                          I2C_MUXCTRL_ACTION_GET, &response);
+  if (ret != 0) {
+    return ret;
+  }
+
+  printf("I2C Mux control status: %s\n",
+         i2c_muxctrl_status_str_map(response.status));
+  return 0;
+}
+
+static int i2c_mux_control_change_select(
+    const enum ec_target_control_action action) {
+  struct ec_response_target_control response;
+  int ret = target_control_perform_action(EC_TARGET_CONTROL_I2C_MUX, action,
+                                          &response);
+  if (ret != 0) {
+    return ret;
+  }
+  const enum ec_target_control_status old_status = response.status;
+
+  ret = target_control_perform_action(EC_TARGET_CONTROL_I2C_MUX,
+                                      I2C_MUXCTRL_ACTION_GET, &response);
+  if (ret != 0) {
+    return ret;
+  }
+  const enum ec_target_control_status new_status = response.status;
+
+  printf("I2C Mux control status changed: %s -> %s\n",
+         i2c_muxctrl_status_str_map(old_status),
+         i2c_muxctrl_status_str_map(new_status));
+  return 0;
+}
+
+int htool_i2c_muxctrl_select_target(const struct htool_invocation *inv) {
+  return i2c_mux_control_change_select(I2C_MUXCTRL_ACTION_SELECT_TARGET);
+}
+
+int htool_i2c_muxctrl_select_host(const struct htool_invocation *inv) {
+  return i2c_mux_control_change_select(I2C_MUXCTRL_ACTION_SELECT_HOST);
 }

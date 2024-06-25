@@ -72,6 +72,8 @@ cc_binary(
         "htool_spi_proxy.h",
         "htool_statistics.c",
         "htool_statistics.h",
+        "htool_target_control.c",
+        "htool_target_control.h",
         "htool_update_failure_reasons.h",
         "htool_usb.c",
         "htool_usb.h",
