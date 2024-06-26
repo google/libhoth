@@ -35,6 +35,7 @@
 #include "htool_cmd.h"
 #include "htool_console.h"
 #include "htool_i2c.h"
+#include "htool_jtag.h"
 #include "htool_panic.h"
 #include "htool_payload.h"
 #include "htool_payload_update.h"
@@ -961,6 +962,48 @@ static const struct htool_cmd CMDS[] = {
         .desc = "Stream raw host commands via stdin/stdout",
         .params = (const struct htool_param[]){{}},
         .func = command_raw_host_command,
+    },
+    {
+        .verbs = (const char*[]){"jtag", JTAG_READ_IDCODE_CMD_STR, NULL},
+        .desc = "Read IDCODE for a device over JTAG. Assumes only a single "
+                "device in chain",
+        .params =
+            (const struct htool_param[]){
+                {.type = HTOOL_FLAG_VALUE,
+                 .ch = 'd',
+                 .name = "clk_idiv",
+                 .default_value = "47",
+                 .desc = "Divisor to use for JTAG clock (TCK). A value of `n` "
+                         "sets the max clock rate to `(48/(n+1))` MHz. Default "
+                         "value of 47 sets the clock frequency to 1MHz"},
+                {}},
+        .func = command_jtag_operation_run,
+    },
+    {
+        .verbs = (const char*[]){"jtag", JTAG_TEST_BYPASS_CMD_STR, NULL},
+        .desc = "Send test pattern of 64 bytes to JTAG device in BYPASS mode. "
+                "Assumes only a single device in chain",
+        .params =
+            (const struct htool_param[]){
+                {.type = HTOOL_FLAG_VALUE,
+                 .ch = 'd',
+                 .name = "clk_idiv",
+                 .default_value = "47",
+                 .desc = "Divisor to use for JTAG clock (TCK). A value of `n` "
+                         "sets the max clock frequency to `(48/(n+1))` MHz. "
+                         "Default value of 47 sets the clock frequency to "
+                         "1MHz"},
+                // Default value for `tdi_bytes` is defined where function
+                // stored in `func` is defined
+                {.type = HTOOL_POSITIONAL,
+                 .name = "tdi_bytes",
+                 // Empty string used as placeholder to detect when no
+                 // value was provided at command line
+                 .default_value = "",
+                 .desc = "64 bytes (space separated) to send over TDI "
+                         "when the JTAG device is in BYPASS mode"},
+                {}},
+        .func = command_jtag_operation_run,
     },
     {},
 };
