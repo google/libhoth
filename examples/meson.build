@@ -24,6 +24,7 @@ executable(
     'authorization_record.c',
     'ec_util.c',
     'htool.c',
+    'htool_authz_command.c',
     'htool_cmd.c',
     'htool_console.c',
     'htool_dbus.c',
