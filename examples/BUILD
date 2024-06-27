@@ -56,6 +56,8 @@ cc_binary(
         "htool_constants.h",
         "htool_i2c.c",
         "htool_i2c.h",
+        "htool_jtag.h",
+        "htool_jtag.c",
         "htool_mtd.c",
         "htool_panic.c",
         "htool_panic.h",

@@ -718,6 +718,45 @@ struct ec_response_target_control {
   uint16_t status;
 } __attribute__((packed, aligned(4)));
 
+#define EC_PRV_CMD_HOTH_JTAG_OPERATION (0x0048)
+// Amount of bytes to send and receive for testing JTAG device in BYPASS mode
+#define EC_JTAG_TEST_BYPASS_PATTERN_LEN (64)
+
+enum ec_jtag_operation {
+  EC_JTAG_OP_UNDEFINED = 0,
+  EC_JTAG_OP_READ_IDCODE = 1,
+  EC_JTAG_OP_TEST_BYPASS = 2,
+};
+
+struct ec_request_jtag_operation {
+  // Integer divisor for JTAG clock. Clock frequency used is ~
+  // `(48/(clk_idiv+1))` MHz.
+  // This can be used to limit the max JTAG peripheral clock frequency - higher
+  // `clk_idiv` => lower the clock frequency.
+  uint16_t clk_idiv;
+  uint8_t operation;  // `enum ec_jtag_operation`
+  uint8_t reserved0;  // pad to 4-byte boundary
+  // Request data (if present) follows. See `struct
+  // ec_request_jtag_<op>_operation`
+} __attribute__((packed, aligned(4)));
+
+struct ec_request_jtag_test_bypass_operation {
+  // Test pattern to send over TDI with `EC_JTAG_OP_TEST_BYPASS`
+  uint8_t tdi_pattern[EC_JTAG_TEST_BYPASS_PATTERN_LEN];
+};
+
+// Separate response structures for each operation. Naming convention: `struct
+// ec_response_jtag_<op>_operation`
+
+struct ec_response_jtag_read_idcode_operation {
+  uint32_t idcode;
+} __attribute__((packed, aligned(4)));
+
+struct ec_response_jtag_test_bypass_operation {
+  // Pattern captured over TDO with `EC_JTAG_OP_TEST_BYPASS`
+  uint8_t tdo_pattern[EC_JTAG_TEST_BYPASS_PATTERN_LEN];
+} __attribute__((packed, aligned(4)));
+
 #ifdef __cplusplus
 }
 #endif

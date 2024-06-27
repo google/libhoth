@@ -28,6 +28,7 @@ executable(
     'htool_console.c',
     'htool_dbus.c',
     'htool_i2c.c',
+    'htool_jtag.c',
     'htool_mtd.c',
     'htool_panic.c',
     'htool_payload.c',
