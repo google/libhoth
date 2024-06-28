@@ -696,6 +696,8 @@ enum ec_target_control_function {
   EC_TARGET_CONTROL_RESERVED1 = 1,
   // Allow control over GPIO for I2C Mux select (if present)
   EC_TARGET_CONTROL_I2C_MUX = 2,
+  // Allow control over GPIO for Generic Mux select (if present)
+  EC_TARGET_CONTROL_GENERIC_MUX = 3,
 };
 
 enum ec_target_control_status {

@@ -44,6 +44,7 @@
 #include "htool_spi_proxy.h"
 #include "htool_srtm.h"
 #include "htool_statistics.h"
+#include "htool_target_usb.h"
 #include "htool_usb.h"
 
 static int command_usb_list(const struct htool_invocation* inv) {
@@ -956,6 +957,27 @@ static const struct htool_cmd CMDS[] = {
         .desc = "Change I2C Mux sel (if present) to select Host",
         .params = (const struct htool_param[]){{}},
         .func = htool_i2c_muxctrl_select_host,
+    },
+    {
+        .verbs = (const char*[]){"target_usb", TARGET_USB_MUXCTRL_CMD_STR,
+                                 TARGET_USB_MUXCTRL_GET_SUBCMD_STR, NULL},
+        .desc = "Get status of USB mux select (if present)",
+        .params = (const struct htool_param[]){{}},
+        .func = htool_target_usb_muxctrl_get,
+    },
+    {
+        .verbs = (const char*[]){"target_usb", TARGET_USB_MUXCTRL_CMD_STR,
+                                 TARGET_USB_MUXCTRL_CONNECT_TARGET_TO_HOST_SUBCMD_STR, NULL},
+        .desc = "Change USB mux select (if present) so that Target is connected to Host",
+        .params = (const struct htool_param[]){{}},
+        .func = htool_target_usb_muxctrl_connect_target_to_host,
+    },
+    {
+        .verbs = (const char*[]){"target_usb", TARGET_USB_MUXCTRL_CMD_STR,
+                                 TARGET_USB_MUXCTRL_CONNECT_TARGET_TO_FRONT_PANEL, NULL},
+        .desc = "Change USB mux select (if present) so that Target is connected to Front panel",
+        .params = (const struct htool_param[]){{}},
+        .func = htool_target_usb_muxctrl_connect_target_to_front_panel,
     },
     {
         .verbs = (const char*[]){"raw_host_command", NULL},
