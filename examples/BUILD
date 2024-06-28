@@ -76,6 +76,8 @@ cc_binary(
         "htool_statistics.h",
         "htool_target_control.c",
         "htool_target_control.h",
+        "htool_target_usb.c",
+        "htool_target_usb.h",
         "htool_update_failure_reasons.h",
         "htool_usb.c",
         "htool_usb.h",
