@@ -150,7 +150,7 @@ static int jtag_test_bypass(struct libhoth_device *dev,
     return ret;
   }
 
-  printf("Sending TDI values: ");
+  printf("TDI: ");
   for (uint8_t i = 0; i < EC_JTAG_TEST_BYPASS_PATTERN_LEN; i++) {
     printf("0x%02x ", request.params.tdi_pattern[i]);
   }
@@ -176,7 +176,7 @@ static int jtag_test_bypass(struct libhoth_device *dev,
   }
 
   bool tdo_matches_tdi = true;
-  printf("Captured TDO values: ");
+  printf("TDO: ");
   for (uint8_t i = 0; i < EC_JTAG_TEST_BYPASS_PATTERN_LEN; i++) {
     if (response.tdo_pattern[i] != request.params.tdi_pattern[i]) {
       tdo_matches_tdi = false;
