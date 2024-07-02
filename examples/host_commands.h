@@ -477,6 +477,31 @@ struct ec_authz_record_get_nonce_response {
   uint32_t rw_supported_key_id;
 } __attribute__((packed));
 
+#define AUTHORIZED_COMMAND_SIGNATURE_SIZE 64
+#define AUTHORIZED_COMMAND_NONCE_SIZE 32
+#define AUTHORIZED_COMMAND_VERSION 1
+
+#define EC_PRV_CMD_HOTH_GET_AUTHZ_COMMAND_NONCE 0x0035
+
+struct ec_authorized_command_get_nonce_response {
+  uint32_t nonce[AUTHORIZED_COMMAND_NONCE_SIZE / sizeof(uint32_t)];
+  uint32_t supported_key_info;
+} __attribute__((packed, aligned(4)));
+
+#define EC_PRV_CMD_HOTH_AUTHZ_COMMAND 0x0034
+
+struct ec_authorized_command_request {
+  uint8_t signature[AUTHORIZED_COMMAND_SIGNATURE_SIZE];
+  uint32_t version;
+  uint32_t size;
+  uint32_t key_info;
+  uint32_t dev_id_0;
+  uint32_t dev_id_1;
+  uint32_t nonce[AUTHORIZED_COMMAND_NONCE_SIZE / sizeof(uint32_t)];
+  uint32_t opcode;
+  uint32_t arg_bytes[];
+} __attribute__((packed, aligned(4)));
+
 #define MAILBOX_SIZE 1024
 
 #define EC_PRV_CMD_HOTH_PAYLOAD_UPDATE 0x0005
