@@ -49,6 +49,8 @@ cc_binary(
         "host_commands.h",
         "htool.c",
         "htool.h",
+        "htool_authz_command.h",
+        "htool_authz_command.c",
         "htool_cmd.c",
         "htool_cmd.h",
         "htool_console.c",

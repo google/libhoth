@@ -32,6 +32,7 @@
 #include "authorization_record.h"
 #include "ec_util.h"
 #include "host_commands.h"
+#include "htool_authz_command.h"
 #include "htool_cmd.h"
 #include "htool_console.h"
 #include "htool_i2c.h"
@@ -232,6 +233,70 @@ static int command_authz_record_set(const struct htool_invocation* inv) {
   if (status != 0) {
     return -1;
   }
+  return 0;
+}
+
+static int command_authz_host_command_build(
+    const struct htool_invocation* inv) {
+  uint32_t opcode;
+  if (htool_get_param_u32(inv, "opcode", &opcode)) {
+    return -1;
+  }
+
+  struct libhoth_device* dev = htool_libhoth_device();
+  if (!dev) {
+    return -1;
+  }
+
+  struct ec_response_chip_info chipinfo_resp;
+  int status = htool_exec_hostcmd(
+      dev, EC_CMD_BOARD_SPECIFIC_BASE + EC_PRV_CMD_HOTH_CHIP_INFO,
+      /*version=*/0, NULL, 0, &chipinfo_resp, sizeof(chipinfo_resp), NULL);
+  if (status != 0) {
+    fprintf(stderr, "Failed to get chip ID. status=%d\n", status);
+    return -1;
+  }
+
+  struct ec_authorized_command_get_nonce_response nonce_resp;
+  status = htool_exec_hostcmd(
+      dev, EC_CMD_BOARD_SPECIFIC_BASE + EC_PRV_CMD_HOTH_GET_AUTHZ_COMMAND_NONCE,
+      /*version=*/0, NULL, 0, &nonce_resp, sizeof(nonce_resp), NULL);
+  if (status != 0) {
+    fprintf(stderr, "Failed to get nonce. status=%d\n", status);
+    return -1;
+  }
+
+  struct ec_authorized_command_request request = authz_command_build_request(
+      chipinfo_resp.hardware_identity, opcode, nonce_resp.supported_key_info,
+      nonce_resp.nonce);
+  authz_command_print_request(&request);
+  return 0;
+}
+
+static int command_authz_host_command_send(const struct htool_invocation* inv) {
+  const char* command_hex;
+  if (htool_get_param_string(inv, "command", &command_hex)) {
+    return -1;
+  }
+
+  struct libhoth_device* dev = htool_libhoth_device();
+  if (!dev) {
+    return -1;
+  }
+
+  struct ec_authorized_command_request request;
+  int status = authz_command_hex_to_struct(command_hex, &request);
+  if (status != 0) {
+    return -1;
+  }
+
+  status = htool_exec_hostcmd(
+      dev, EC_CMD_BOARD_SPECIFIC_BASE + EC_PRV_CMD_HOTH_AUTHZ_COMMAND,
+      /*version=*/0, &request, sizeof(request), NULL, 0, NULL);
+  if (status != 0) {
+    return -1;
+  }
+
   return 0;
 }
 
@@ -871,6 +936,26 @@ static const struct htool_cmd CMDS[] = {
         .func = command_authz_record_set,
     },
     {
+        .verbs = (const char*[]){"authz_host_command", "build", NULL},
+        .desc = "Build an authorized host command",
+        .params =
+            (const struct htool_param[]){
+                {HTOOL_POSITIONAL, .name = "opcode"},
+                {},
+            },
+        .func = command_authz_host_command_build,
+    },
+    {
+        .verbs = (const char*[]){"authz_host_command", "send", NULL},
+        .desc = "Send an authorized host command",
+        .params =
+            (const struct htool_param[]){
+                {HTOOL_POSITIONAL, .name = "command"},
+                {},
+            },
+        .func = command_authz_host_command_send,
+    },
+    {
         .verbs = (const char*[]){"arm_coordinated_reset", NULL},
         .desc = "Arms the coordinated reset to hard reset when it receives a "
                 "trigger.",
@@ -966,16 +1051,22 @@ static const struct htool_cmd CMDS[] = {
         .func = htool_target_usb_muxctrl_get,
     },
     {
-        .verbs = (const char*[]){"target_usb", TARGET_USB_MUXCTRL_CMD_STR,
-                                 TARGET_USB_MUXCTRL_CONNECT_TARGET_TO_HOST_SUBCMD_STR, NULL},
-        .desc = "Change USB mux select (if present) so that Target is connected to Host",
+        .verbs =
+            (const char*[]){
+                "target_usb", TARGET_USB_MUXCTRL_CMD_STR,
+                TARGET_USB_MUXCTRL_CONNECT_TARGET_TO_HOST_SUBCMD_STR, NULL},
+        .desc = "Change USB mux select (if present) so that Target is "
+                "connected to Host",
         .params = (const struct htool_param[]){{}},
         .func = htool_target_usb_muxctrl_connect_target_to_host,
     },
     {
-        .verbs = (const char*[]){"target_usb", TARGET_USB_MUXCTRL_CMD_STR,
-                                 TARGET_USB_MUXCTRL_CONNECT_TARGET_TO_FRONT_PANEL, NULL},
-        .desc = "Change USB mux select (if present) so that Target is connected to Front panel",
+        .verbs =
+            (const char*[]){"target_usb", TARGET_USB_MUXCTRL_CMD_STR,
+                            TARGET_USB_MUXCTRL_CONNECT_TARGET_TO_FRONT_PANEL,
+                            NULL},
+        .desc = "Change USB mux select (if present) so that Target is "
+                "connected to Front panel",
         .params = (const struct htool_param[]){{}},
         .func = htool_target_usb_muxctrl_connect_target_to_front_panel,
     },
