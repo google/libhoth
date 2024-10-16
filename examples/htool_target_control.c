@@ -46,6 +46,26 @@ int target_control_perform_action(
 
   if (ret != 0) {
     fprintf(stderr, "HOTH_TARGET_CONTROL error code: %d\n", ret);
+    switch (ret) {
+      case (HTOOL_ERROR_HOST_COMMAND_START + EC_RES_INVALID_COMMAND):
+        fprintf(stderr,
+                "Command not supported, or requested action is forbidden on "
+                "function. Please confirm if the RoT FW version supports this "
+                "command, and requested action is allowed on the function\n");
+        break;
+      case (HTOOL_ERROR_HOST_COMMAND_START + EC_RES_INVALID_PARAM):
+        fprintf(stderr,
+                "Invalid function or action. Please confirm if the RoT "
+                "firmware version supports the given function, and action on "
+                "that function is correct\n");
+        break;
+      case (HTOOL_ERROR_HOST_COMMAND_START + EC_RES_ACCESS_DENIED):
+        fprintf(stderr,
+                "Not authorized to perform requested action on function. "
+                "Please use `authz_host_command` commands to authorize RoT to "
+                "perform requested action on function\n");
+        break;
+    }
     return -1;
   }
   if (response_length != sizeof(*response)) {
