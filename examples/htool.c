@@ -45,6 +45,7 @@
 #include "htool_spi_proxy.h"
 #include "htool_srtm.h"
 #include "htool_statistics.h"
+#include "htool_target_control.h"
 #include "htool_target_usb.h"
 #include "htool_usb.h"
 
@@ -736,6 +737,32 @@ int htool_exec_hostcmd(struct libhoth_device* dev, uint16_t command,
   return 0;
 }
 
+int htool_external_usb_host_check_presence(const struct htool_invocation* inv) {
+  struct libhoth_device* dev = htool_libhoth_device();
+  if (!dev) {
+    return -1;
+  }
+
+  struct ec_response_target_control response = {0};
+  const int action_status = target_control_perform_action(
+      EC_TARGET_DETECT_EXTERNAL_USB_HOST_PRESENCE,
+      EC_TARGET_CONTROL_ACTION_GET_STATUS, &response);
+  if (action_status != 0) {
+    return action_status;
+  }
+
+  if (response.status == EC_TARGET_EXTERNAL_USB_HOST_NOT_PRESENT) {
+    printf("External USB host: Not Present\n");
+    return 0;
+  } else if (response.status == EC_TARGET_EXTERNAL_USB_HOST_PRESENT) {
+    printf("External USB host: Present\n");
+    return 0;
+  } else {
+    printf("External USB host: Presence unknown(%u)\n", response.status);
+    return -1;
+  }
+}
+
 static const struct htool_cmd CMDS[] = {
     {
         .verbs = (const char*[]){"usb", "list", NULL},
@@ -1117,6 +1144,13 @@ static const struct htool_cmd CMDS[] = {
                          "when the JTAG device is in BYPASS mode"},
                 {}},
         .func = command_jtag_operation_run,
+    },
+    {
+        .verbs = (const char*[]){"external_usb_host", "check_presence", NULL},
+        .desc = "Check presence of an External USB host connected to the "
+                "system containing RoT",
+        .params = (const struct htool_param[]){{}},
+        .func = htool_external_usb_host_check_presence,
     },
     {},
 };
