@@ -723,12 +723,20 @@ enum ec_target_control_function {
   EC_TARGET_CONTROL_I2C_MUX = 2,
   // Allow control over GPIO for Generic Mux select (if present)
   EC_TARGET_CONTROL_GENERIC_MUX = 3,
+  // Allow checking whether external USB host is connected to system in which
+  // RoT is present
+  EC_TARGET_DETECT_EXTERNAL_USB_HOST_PRESENCE = 4,
+  EC_TARGET_CONTROL_FUNCTION_MAX,
 };
 
 enum ec_target_control_status {
   EC_TARGET_CONTROL_STATUS_UNKNOWN = 0,
   EC_TARGET_CONTROL_STATUS_DISABLED = 1,
   EC_TARGET_CONTROL_STATUS_ENABLED = 2,
+
+  // Recommended to be used for `EC_TARGET_DETECT_EXTERNAL_USB_HOST_PRESENCE`
+  EC_TARGET_EXTERNAL_USB_HOST_NOT_PRESENT = EC_TARGET_CONTROL_STATUS_DISABLED,
+  EC_TARGET_EXTERNAL_USB_HOST_PRESENT = EC_TARGET_CONTROL_STATUS_ENABLED,
 };
 
 struct ec_request_target_control {
