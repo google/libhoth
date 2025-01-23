@@ -12,9 +12,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "libhoth.h"
-
 #include <stdlib.h>
+
+#include "transports/libhoth_device.h"
 
 int libhoth_send_request(struct libhoth_device* dev, const void* request,
                          size_t request_size) {

@@ -25,7 +25,7 @@
 #include <sys/ioctl.h>
 #include <unistd.h>
 
-#include "libhoth.h"
+#include "libhoth_device.h"
 #include "libhoth_ec.h"
 
 struct libhoth_spi_device {

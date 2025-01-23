@@ -92,12 +92,13 @@ cc_binary(
         ":srtm",
         "//:git_version",
         "//:libhoth",
-        "//:libhoth_mtd",
-        "//:libhoth_spi",
-        "//:libhoth_usb",
+        "//transports:libhoth_device",
+        "//transports:libhoth_mtd",
+        "//transports:libhoth_spi",
+        "//transports:libhoth_usb",
         "@libusb//:libusb",
     ] + select({
-        ":dbus_backend" : ["//:libhoth_dbus"],
+        ":dbus_backend": ["//transports:libhoth_dbus"],
         "//conditions:default": [],
-    })
+    }),
 )

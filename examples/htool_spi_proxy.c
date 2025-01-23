@@ -20,7 +20,7 @@
 // for MIN()
 #include <sys/param.h>
 
-#include "../libhoth.h"
+#include "../transports/libhoth_device.h"
 #include "host_commands.h"
 #include "htool.h"
 #include "htool_progress.h"

@@ -17,7 +17,7 @@
 #include <libusb.h>
 #include <stdlib.h>
 
-#include "libhoth.h"
+#include "libhoth_device.h"
 #include "libhoth_usb_device.h"
 
 int libhoth_usb_send_request(struct libhoth_device* dev, const void* request,

@@ -9,7 +9,7 @@ git_version_h = vcs_tag(
   replace_string: '@GIT_COMMIT@',
 )
 
-link_with = [libhoth]
+link_with = [libhoth, libhoth_transport]
 c_args = []
 
 if get_option('dbus_backend')

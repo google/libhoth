@@ -20,7 +20,7 @@
 #include <string.h>
 #include <systemd/sd-bus.h>
 
-#include "libhoth.h"
+#include "libhoth_device.h"
 
 #define HOTHD_SERVICE "xyz.openbmc_project.Control.Hoth"
 #define HOTHD_OBJECT "/xyz/openbmc_project/Control/Hoth"

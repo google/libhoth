@@ -25,7 +25,7 @@
 #include <termios.h>
 #include <unistd.h>
 
-#include "../libhoth.h"
+#include "../transports/libhoth_device.h"
 #include "ec_util.h"
 #include "host_commands.h"
 #include "htool.h"

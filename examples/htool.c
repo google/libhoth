@@ -29,6 +29,7 @@
 #include <unistd.h>
 
 #include "../libhoth.h"
+#include "../transports/libhoth_device.h"
 #include "authorization_record.h"
 #include "ec_util.h"
 #include "host_commands.h"
