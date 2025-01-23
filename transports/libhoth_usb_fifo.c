@@ -19,7 +19,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "libhoth.h"
+#include "libhoth_device.h"
 #include "libhoth_usb_device.h"
 
 #define LIBHOTH_USB_FIFO_REQUEST_ID_SIZE 16

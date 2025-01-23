@@ -19,7 +19,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "../libhoth_spi.h"
+#include "../transports/libhoth_spi.h"
 #include "ec_util.h"
 #include "host_commands.h"
 #include "htool.h"

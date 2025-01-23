@@ -23,7 +23,7 @@
 #include <string.h>
 #include <unistd.h>
 
-#include "../libhoth_usb.h"
+#include "../transports/libhoth_usb.h"
 #include "ec_util.h"
 #include "host_commands.h"
 #include "htool_cmd.h"
