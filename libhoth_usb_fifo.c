@@ -83,8 +83,20 @@ static void fifo_transfer_callback(struct libusb_transfer *transfer) {
   }
 }
 
+// 32-bits XOR shift algorithm from "Xorshift RNGs" by George Marsaglia
+uint32_t libhoth_generate_pseudorandom_u32(uint32_t *seed) {
+  *seed ^= (*seed << 13);
+  // The paper seems to have a typo in the algorithm presented on Pg 4, missing
+  // the ^ operation for second assignment. Pg 3 shows 8 shift operations that
+  // can serve as basis for xorshift. All of them have ^= operation.
+  *seed ^= (*seed >> 17);
+  *seed ^= (*seed << 5);
+  return *seed;
+}
+
 int libhoth_usb_fifo_open(struct libhoth_usb_device *dev,
-                          const struct libusb_config_descriptor *descriptor) {
+                          const struct libusb_config_descriptor *descriptor,
+                          uint32_t prng_seed) {
   int status = LIBHOTH_OK;
   if (dev == NULL || descriptor == NULL ||
       dev->info.type != LIBHOTH_USB_INTERFACE_TYPE_FIFO) {
@@ -143,6 +155,7 @@ int libhoth_usb_fifo_open(struct libhoth_usb_device *dev,
     status = LIBHOTH_ERR_MALLOC_FAILED;
     goto err_out;
   }
+  drvdata->prng_state = prng_seed;
   return LIBHOTH_OK;
 err_out:
   if (drvdata->in_buffer != NULL) free(drvdata->in_buffer);
@@ -167,7 +180,8 @@ int libhoth_usb_fifo_send_request(struct libhoth_usb_device *dev,
   // Prepare the buffer with a request ID
   struct libhoth_usb_fifo *drvdata = &dev->driver_data.fifo;
   for (int i = 0; i < LIBHOTH_USB_FIFO_REQUEST_ID_SIZE; i++) {
-    drvdata->out_buffer[i] = (uint8_t)rand();
+    drvdata->out_buffer[i] =
+        (uint8_t)libhoth_generate_pseudorandom_u32(&drvdata->prng_state);
   }
 
   memcpy(drvdata->out_buffer + LIBHOTH_USB_FIFO_REQUEST_ID_SIZE, request,

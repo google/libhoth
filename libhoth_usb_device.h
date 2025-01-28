@@ -59,6 +59,7 @@ struct libhoth_usb_fifo {
   int all_transfers_completed;
   bool in_transfer_completed;
   bool out_transfer_completed;
+  uint32_t prng_state;
 };
 
 struct libhoth_usb_interface_info {
@@ -78,7 +79,8 @@ struct libhoth_usb_device {
 };
 
 int libhoth_usb_fifo_open(struct libhoth_usb_device *dev,
-                          const struct libusb_config_descriptor *descriptor);
+                          const struct libusb_config_descriptor *descriptor,
+                          uint32_t prng_seed);
 int libhoth_usb_fifo_send_request(struct libhoth_usb_device *dev,
                                   const void *request, size_t request_size);
 int libhoth_usb_fifo_receive_response(struct libhoth_usb_device *dev,
