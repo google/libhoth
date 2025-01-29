@@ -84,7 +84,7 @@ static void fifo_transfer_callback(struct libusb_transfer *transfer) {
 }
 
 // 32-bits XOR shift algorithm from "Xorshift RNGs" by George Marsaglia
-uint32_t libhoth_generate_pseudorandom_u32(uint32_t *seed) {
+static uint32_t libhoth_generate_pseudorandom_u32(uint32_t *seed) {
   *seed ^= (*seed << 13);
   // The paper seems to have a typo in the algorithm presented on Pg 4, missing
   // the ^ operation for second assignment. Pg 3 shows 8 shift operations that

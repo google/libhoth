@@ -331,7 +331,7 @@ struct libhoth_device* htool_libhoth_usb_device(void) {
   // systems. But it may have implementation defined resolution. So xor with PID
   // as well
   if (clock_gettime(CLOCK_MONOTONIC, &monotonic_time) != 0) {
-    fprintf(stderr, "Could not get clock time to generate PRNG seed");
+    fprintf(stderr, "Could not get clock time to generate PRNG seed\n");
     return NULL;
   }
   uint32_t prng_seed =
