@@ -17,11 +17,11 @@
 #include <stdlib.h>
 #include <unistd.h>
 
-#include "../protocol/host_cmd.h"
-#include "../transports/libhoth_device.h"
 #include "host_commands.h"
 #include "htool.h"
 #include "htool_cmd.h"
+#include "protocol/host_cmd.h"
+#include "transports/libhoth_device.h"
 
 // Return -1 on IO error.
 // Otherwise, return number of bytes of read.

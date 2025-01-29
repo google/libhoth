@@ -8,7 +8,6 @@ subdir('protocol')
 install_headers('transports/libhoth_device.h')
 install_headers('transports/libhoth_usb.h')
 install_headers('transports/libhoth_usb_device.h')
-install_headers('libhoth.h')
 
 libhoth = library('hoth', [], link_with: [libhoth_transport, libhoth_protocol], dependencies: [libusb], \
     version: meson.project_version())
