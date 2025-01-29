@@ -17,6 +17,7 @@
 
 #include <libusb.h>
 #include <stddef.h>
+#include <stdint.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -30,6 +31,9 @@ struct libhoth_usb_device_init_options {
   // The libusb context to use for operations. Can be NULL for the default
   // context.
   libusb_context* usb_ctx;
+  // Seed value to use for Pseudo-random number generator for communicating with
+  // RoT over USB FIFO interface
+  uint32_t prng_seed;
 };
 
 // Note that the options struct only needs to to live for the duration of
