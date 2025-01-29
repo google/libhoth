@@ -1,4 +1,6 @@
-project('libhoth', 'c', 'cpp', license: 'Apache-2.0', version: '0.0.0')
+project('libhoth', 'c', 'cpp', license: 'Apache-2.0', version: '0.0.0', 
+  default_options: {'include_dir' : '..'},
+  )
 
 subdir('transports')
 subdir('protocol')
