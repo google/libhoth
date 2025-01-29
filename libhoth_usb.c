@@ -142,7 +142,8 @@ int libhoth_usb_open(const struct libhoth_usb_device_init_options* options,
       status = libhoth_usb_mailbox_open(usb_dev, config_descriptor);
       break;
     case LIBHOTH_USB_INTERFACE_TYPE_FIFO:
-      status = libhoth_usb_fifo_open(usb_dev, config_descriptor, options->prng_seed);
+      status =
+          libhoth_usb_fifo_open(usb_dev, config_descriptor, options->prng_seed);
       break;
     default:
       status = LIBHOTH_ERR_INTERFACE_NOT_FOUND;

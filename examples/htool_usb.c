@@ -337,9 +337,8 @@ struct libhoth_device* htool_libhoth_usb_device(void) {
   uint32_t prng_seed =
       monotonic_time.tv_sec ^ monotonic_time.tv_nsec ^ getpid();
 
-  struct libhoth_usb_device_init_options opts = {.usb_device = usb_dev,
-                                                 .usb_ctx = ctx,
-                                                 .prng_seed = prng_seed};
+  struct libhoth_usb_device_init_options opts = {
+      .usb_device = usb_dev, .usb_ctx = ctx, .prng_seed = prng_seed};
 
   int rv = libhoth_usb_open(&opts, &result);
   if (rv) {
