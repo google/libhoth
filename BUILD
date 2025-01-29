@@ -12,12 +12,3 @@ genrule(
     tools = [":print_version_header.sh"],
     stamp = 1,
 )
-
-cc_library(
-    name = "libhoth",
-    srcs = ["libhoth.c"],
-    hdrs = ["libhoth.h"],
-    deps = [
-        "//transports:libhoth_device",
-    ],
-)

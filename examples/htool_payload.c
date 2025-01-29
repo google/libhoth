@@ -29,7 +29,7 @@ int htool_payload_status() {
   uint8_t buffer[sizeof(struct payload_status_response_header) +
                  2 * sizeof(struct payload_region_state)];
   size_t rlen = 0;
-  int ret = htool_exec_hostcmd(
+  int ret = hostcmd_exec(
       dev, EC_CMD_BOARD_SPECIFIC_BASE + EC_PRV_CMD_HOTH_PAYLOAD_STATUS, 0, NULL,
       0, &buffer, sizeof(buffer), &rlen);
   if (ret != 0) {

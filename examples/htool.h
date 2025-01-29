@@ -32,11 +32,6 @@ struct libhoth_device* htool_libhoth_spi_device(void);
 struct libhoth_device* htool_libhoth_usb_device(void);
 struct libhoth_device* htool_libhoth_device(void);
 
-int htool_exec_hostcmd(struct libhoth_device* dev, uint16_t command,
-                       uint8_t version, const void* req_payload,
-                       size_t req_payload_size, void* resp_buf,
-                       size_t resp_buf_size, size_t* out_resp_size);
-
 #ifdef __cplusplus
 }
 #endif

@@ -182,7 +182,7 @@ int htool_statistics() {
 
   struct ec_response_statistics stat;
   size_t rlen = 0;
-  int ret = htool_exec_hostcmd(
+  int ret = hostcmd_exec(
       dev, EC_CMD_BOARD_SPECIFIC_BASE + EC_PRV_CMD_HOTH_GET_STATISTICS, 0, NULL,
       0, &stat, sizeof(stat), &rlen);
   if (ret != 0) {

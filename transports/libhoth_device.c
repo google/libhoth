@@ -1,4 +1,4 @@
-// Copyright 2022 Google LLC
+// Copyright 2025 Google LLC
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -12,9 +12,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include <stdlib.h>
+#include "libhoth_device.h"
 
-#include "transports/libhoth_device.h"
+#include <stdlib.h>
 
 int libhoth_send_request(struct libhoth_device* dev, const void* request,
                          size_t request_size) {

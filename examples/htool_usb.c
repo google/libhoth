@@ -24,7 +24,6 @@
 #include <unistd.h>
 
 #include "../transports/libhoth_usb.h"
-#include "ec_util.h"
 #include "host_commands.h"
 #include "htool_cmd.h"
 

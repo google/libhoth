@@ -52,7 +52,7 @@ int send_payload_update_request_with_command(struct libhoth_device *dev,
   request.offset = 0;
   request.len = 0;
 
-  int ret = htool_exec_hostcmd(
+  int ret = hostcmd_exec(
       dev, EC_CMD_BOARD_SPECIFIC_BASE + EC_PRV_CMD_HOTH_PAYLOAD_UPDATE, 0,
       &request, sizeof(request), NULL, 0, NULL);
   if (ret != 0) {
@@ -93,7 +93,7 @@ int send_image(struct libhoth_device *dev, const uint8_t *image, size_t size) {
     memcpy(buffer, &request, sizeof(request));
     memcpy(buffer + sizeof(request), image + offset, chunk_size);
 
-    int ret = htool_exec_hostcmd(
+    int ret = hostcmd_exec(
         dev, EC_CMD_BOARD_SPECIFIC_BASE + EC_PRV_CMD_HOTH_PAYLOAD_UPDATE, 0,
         buffer, sizeof(request) + chunk_size, NULL, 0, NULL);
     if (ret != 0) {
@@ -227,7 +227,7 @@ int htool_payload_update_getstatus() {
 
   uint8_t response[sizeof(struct payload_update_status)];
   size_t rlen = 0;
-  int ret = htool_exec_hostcmd(
+  int ret = hostcmd_exec(
       dev, EC_CMD_BOARD_SPECIFIC_BASE + EC_PRV_CMD_HOTH_PAYLOAD_UPDATE, 0,
       &request, sizeof(request), &response, sizeof(response), &rlen);
   if (ret != 0) {

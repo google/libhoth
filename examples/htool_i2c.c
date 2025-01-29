@@ -44,7 +44,7 @@ static int i2c_detect(struct libhoth_device *dev,
 
   uint8_t response[sizeof(struct ec_response_i2c_detect)];
   size_t rLen = 0;
-  int ret = htool_exec_hostcmd(
+  int ret = hostcmd_exec(
       dev, EC_CMD_BOARD_SPECIFIC_BASE + EC_PRV_CMD_HOTH_I2C_DETECT, 0, &request,
       sizeof(request), &response, sizeof(response), &rLen);
   if (ret != 0) {
@@ -111,7 +111,7 @@ static int i2c_read(struct libhoth_device *dev,
 
   uint8_t response[sizeof(struct ec_response_i2c_transfer)];
   size_t rLen = 0;
-  int ret = htool_exec_hostcmd(
+  int ret = hostcmd_exec(
       dev, EC_CMD_BOARD_SPECIFIC_BASE + EC_PRV_CMD_HOTH_I2C_TRANSFER, 0,
       &request, sizeof(request), &response, sizeof(response), &rLen);
   if (ret != 0) {
@@ -195,7 +195,7 @@ static int i2c_write(struct libhoth_device *dev,
 
   uint8_t response[sizeof(struct ec_response_i2c_transfer)];
   size_t rLen = 0;
-  int ret = htool_exec_hostcmd(
+  int ret = hostcmd_exec(
       dev, EC_CMD_BOARD_SPECIFIC_BASE + EC_PRV_CMD_HOTH_I2C_TRANSFER, 0,
       &request, sizeof(request), &response, sizeof(response), &rLen);
   if (ret != 0) {

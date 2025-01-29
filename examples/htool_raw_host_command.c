@@ -17,8 +17,8 @@
 #include <stdlib.h>
 #include <unistd.h>
 
+#include "../protocol/host_cmd.h"
 #include "../transports/libhoth_device.h"
-#include "ec_util.h"
 #include "host_commands.h"
 #include "htool.h"
 #include "htool_cmd.h"
@@ -126,9 +126,9 @@ int command_raw_host_command(const struct htool_invocation* inv) {
     uint8_t resp_payload[RESP_BUF_LEN] = {0};
 
     size_t actual_resp_size = 0;
-    rv = htool_exec_hostcmd(dev, req.command, req.command_version, req_payload,
-                            req.data_len, resp_payload, RESP_BUF_LEN,
-                            &actual_resp_size);
+    rv = hostcmd_exec(dev, req.command, req.command_version, req_payload,
+                      req.data_len, resp_payload, RESP_BUF_LEN,
+                      &actual_resp_size);
     if (rv && rv < HTOOL_ERROR_HOST_COMMAND_START) {
       return rv;
     }

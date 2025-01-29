@@ -20,7 +20,6 @@
 #include <string.h>
 
 #include "../transports/libhoth_spi.h"
-#include "ec_util.h"
 #include "host_commands.h"
 #include "htool.h"
 #include "htool_cmd.h"

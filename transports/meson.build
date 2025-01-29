@@ -1,4 +1,5 @@
 transport_srcs = [
+  'libhoth_device.c',
   'libhoth_mtd.c',
   'libhoth_usb.c',
   'libhoth_spi.c',

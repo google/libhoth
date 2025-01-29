@@ -68,7 +68,7 @@ static int spi_operation_execute(struct spi_operation* op,
   size_t response_len;
 
   // hexdump(op->buf, op->pos);
-  int status = htool_exec_hostcmd(
+  int status = hostcmd_exec(
       dev, EC_CMD_BOARD_SPECIFIC_BASE + EC_PRV_CMD_HOTH_SPI_OPERATION,
       /*version=*/0, op->buf, op->pos, response_buf, sizeof(response_buf),
       &response_len);

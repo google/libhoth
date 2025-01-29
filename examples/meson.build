@@ -1,7 +1,3 @@
-ecsrcs = ['ec_util.c']
-ecutil = library('ec_util', ecsrcs, dependencies: libusb, install: true, \
-    version: meson.project_version())
-
 git_version_h = vcs_tag(
   command: ['git', 'describe', '--always', '--dirty', '--abbrev=40'],
   input: 'git_version.h.in',
@@ -9,7 +5,8 @@ git_version_h = vcs_tag(
   replace_string: '@GIT_COMMIT@',
 )
 
-link_with = [libhoth, libhoth_transport]
+incdir = include_directories('..')
+link_with = [libhoth_transport, libhoth_protocol, ]
 c_args = []
 
 if get_option('dbus_backend')
@@ -22,7 +19,6 @@ executable(
   sources: [
     'authorization_record.h',
     'authorization_record.c',
-    'ec_util.c',
     'htool.c',
     'htool_authz_command.c',
     'htool_cmd.c',
@@ -47,5 +43,6 @@ executable(
     git_version_h],
   dependencies: [libusb],
   link_with: link_with,
+  include_directories: incdir,
   c_args: c_args,
   install: true)
