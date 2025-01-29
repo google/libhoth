@@ -74,12 +74,6 @@ struct ec_response_flash_spi_info {
   uint8_t sr1, sr2;
 } __ec_align1;
 
-#define EC_CMD_BOARD_SPECIFIC_BASE 0x3E00
-#define EC_CMD_BOARD_SPECIFIC_LAST 0x3FFF
-
-// NOTE: All further commands in this file are offset by
-// EC_CMD_BOARD_SPECIFIC_BASE.
-
 struct boot_timing_data {
   uint32_t start_us;
   uint32_t end_us;
@@ -423,7 +417,6 @@ struct ec_authorized_command_request {
 #define MAILBOX_SIZE 1024
 
 #define EC_PRV_CMD_HOTH_PAYLOAD_UPDATE 0x0005
-#define EC_PRV_CMD_HOTH_PAYLOAD_STATUS 0x0006
 
 #define PAYLOAD_UPDATE_INITIATE 0
 #define PAYLOAD_UPDATE_CONTINUE 1
@@ -437,35 +430,6 @@ struct ec_authorized_command_request {
 #define PAYLOAD_UPDATE_VERIFY_CHUNK 9
 #define PAYLOAD_UPDATE_CONFIRM 10
 #define PAYLOAD_UPDATE_VERIFY_DESCRIPTOR 11
-
-struct payload_status_response_header {
-  uint8_t version;
-  uint8_t lockdown_state;
-  uint8_t active_half;
-  uint8_t region_count;
-} __attribute__((packed));
-
-enum payload_validation_state {
-  PAYLOAD_IMAGE_INVALID = 0,
-  PAYLOAD_IMAGE_UNVERIFIED = 1,
-  PAYLOAD_IMAGE_VALID = 2,
-  PAYLOAD_DESCRIPTOR_VALID = 3,
-};
-
-struct payload_region_state {
-  uint8_t validation_state; /* enum payload_validation_state */
-  uint8_t failure_reason;   /* enum payload_validation_failure_reason */
-  uint8_t reserved_0;
-  uint8_t image_type; /* enum image_type (dev, prod, breakout) */
-  uint16_t key_index;
-  uint16_t reserved_1;
-  uint32_t image_family; /* handy to disambiguate during enumeration */
-  uint32_t version_major;
-  uint32_t version_minor;
-  uint32_t version_point;
-  uint32_t version_subpoint;
-  uint32_t descriptor_offset; /* can be used to pull the image hash/signature */
-} __attribute__((packed));
 
 struct payload_update_packet {
   uint32_t offset; /* image offset */

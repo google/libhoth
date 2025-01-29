@@ -37,6 +37,11 @@ extern "C" {
 
 #define HTOOL_ERROR_HOST_COMMAND_START 537200
 
+// NOTE: All PRV commands in this file are offset by
+// EC_CMD_BOARD_SPECIFIC_BASE.
+#define EC_CMD_BOARD_SPECIFIC_BASE 0x3E00
+#define EC_CMD_BOARD_SPECIFIC_LAST 0x3FFF
+
 enum ec_status {
   EC_RES_SUCCESS = 0,
   EC_RES_INVALID_COMMAND = 1,
