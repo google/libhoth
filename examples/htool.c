@@ -46,6 +46,7 @@
 #include "htool_target_control.h"
 #include "htool_target_usb.h"
 #include "htool_usb.h"
+#include "protocol/firmware_version.h"
 #include "transports/libhoth_device.h"
 
 static int command_usb_list(const struct htool_invocation* inv) {
@@ -69,9 +70,10 @@ static int command_get_version(const struct htool_invocation* inv) {
   if (!dev) {
     return -1;
   }
+
   struct ec_response_get_version response;
-  int status = hostcmd_exec(dev, EC_CMD_GET_VERSION, /*version=*/0, NULL, 0,
-                            &response, sizeof(response), NULL);
+  int status = get_fw_version(dev, &response);
+
   if (status) {
     return -1;
   }

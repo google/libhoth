@@ -4,7 +4,7 @@ module(
     version = "0.0.0",
 )
 
-# libusb is not yet available in the Bazel Central Registry 
+# libusb is not yet available in the Bazel Central Registry
 # (https://registry.bazel.build/).
 
 git_repository = use_repo_rule("@bazel_tools//tools/build_defs/repo:git.bzl", "git_repository")
@@ -17,3 +17,5 @@ git_repository(
     patches = ["external/libusb.patch"],
     shallow_since = "1649581036 +0200",
 )
+
+bazel_dep(name = "googletest", version = "1.15.2")

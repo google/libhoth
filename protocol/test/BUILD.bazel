@@ -1,0 +1,22 @@
+cc_library(
+    name = "libhoth_device_mock",
+    hdrs = ["libhoth_device_mock.h"],
+    srcs = ["libhoth_device_mock.cc"],
+    deps = [
+        "@googletest//:gtest",
+        "//transports:libhoth_device",
+        "//protocol:host_cmd",
+    ],
+)
+
+cc_test(
+    name = "firmware_version_test",
+    srcs = ["firmware_version_test.cc"],
+    deps = [
+        "@googletest//:gtest",
+        "@googletest//:gtest_main",
+        "//transports:libhoth_device",
+        ":libhoth_device_mock",
+        "//protocol:firmware_version",
+    ],
+)
