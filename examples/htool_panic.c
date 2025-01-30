@@ -20,7 +20,6 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "ec_util.h"
 #include "host_commands.h"
 #include "htool.h"
 #include "htool_cmd.h"
@@ -42,7 +41,7 @@ static int clear_persistent_panic_info(struct libhoth_device* dev) {
   const uint16_t cmd =
       EC_CMD_BOARD_SPECIFIC_BASE + EC_PRV_CMD_HOTH_PERSISTENT_PANIC_INFO;
 
-  if (htool_exec_hostcmd(dev, cmd, 0, &req, sizeof(req), NULL, 0, &rlen)) {
+  if (hostcmd_exec(dev, cmd, 0, &req, sizeof(req), NULL, 0, &rlen)) {
     return -1;
   }
 
@@ -107,8 +106,7 @@ static int get_persistent_panic_info(
         .index = i,
     };
 
-    if (htool_exec_hostcmd(dev, cmd, 0, &req, sizeof(req), dest, chunk_size,
-                           &rlen)) {
+    if (hostcmd_exec(dev, cmd, 0, &req, sizeof(req), dest, chunk_size, &rlen)) {
       return -1;
     }
 

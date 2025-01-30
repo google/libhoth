@@ -3,6 +3,7 @@ package(default_visibility = ["//visibility:public"])
 cc_library(
     name = "libhoth_device",
     hdrs = ["libhoth_device.h"],
+    srcs = ["libhoth_device.c"],
 )
 
 cc_library(

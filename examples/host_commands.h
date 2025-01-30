@@ -18,78 +18,11 @@
 #include <stdint.h>
 
 #include "authorization_record.h"
+#include "protocol/host_cmd.h"
 
 #ifdef __cplusplus
 extern "C" {
 #endif
-
-#ifndef __packed
-#define __packed __attribute__((packed))
-#endif
-#ifndef __aligned
-#define __aligned(x) __attribute__((aligned(x)))
-#endif
-
-#define __ec_align1 __packed
-#define __ec_align2 __packed __aligned(2)
-#define __ec_align4 __packed __aligned(4)
-
-enum ec_status {
-  EC_RES_SUCCESS = 0,
-  EC_RES_INVALID_COMMAND = 1,
-  EC_RES_ERROR = 2,
-  EC_RES_INVALID_PARAM = 3,
-  EC_RES_ACCESS_DENIED = 4,
-  EC_RES_INVALID_RESPONSE = 5,
-  EC_RES_INVALID_VERSION = 6,
-  EC_RES_INVALID_CHECKSUM = 7,
-  EC_RES_IN_PROGRESS = 8,
-  EC_RES_UNAVAILABLE = 9,
-  EC_RES_TIMEOUT = 10,
-  EC_RES_OVERFLOW = 11,
-  EC_RES_INVALID_HEADER = 12,
-  EC_RES_REQUEST_TRUNCATED = 13,
-  EC_RES_RESPONSE_TOO_BIG = 14,
-  EC_RES_BUS_ERROR = 15,
-  EC_RES_BUSY = 16,
-  EC_RES_INVALID_HEADER_VERSION = 17,
-  EC_RES_INVALID_HEADER_CRC = 18,
-  EC_RES_INVALID_DATA_CRC = 19,
-  EC_RES_DUP_UNAVAILABLE = 20,
-  EC_RES_MAX = UINT16_MAX
-} __packed;
-
-#define EC_HOST_REQUEST_VERSION 3
-
-struct ec_host_request {
-  // Should be EC_HOST_REQUEST_VERSION
-  uint8_t struct_version;
-  // Checksum of request and data; sum of all bytes including checksum should
-  // total to 0.
-  uint8_t checksum;
-  // Command to send (EC_CMD_...)
-  uint16_t command;
-  // Command version
-  uint8_t command_version;
-  uint8_t reserved;
-  // Length of data that follows this header
-  uint16_t data_len;
-} __ec_align4;
-
-#define EC_HOST_RESPONSE_VERSION 3
-
-struct ec_host_response {
-  // Should be EC_HOST_RESPONSE_VERSION
-  uint8_t struct_version;
-  // Checksum of request and data; sum of all bytes including checksum should
-  // total to 0.
-  uint8_t checksum;
-  // One of the EC_RES_* status codes
-  uint16_t result;
-  // Length of data which follows this header.
-  uint16_t data_len;
-  uint16_t reserved;
-} __ec_align4;
 
 #define EC_CMD_GET_VERSION 0x0002
 

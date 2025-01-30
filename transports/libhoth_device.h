@@ -50,6 +50,27 @@ struct libhoth_device {
   void *user_ctx;
 };
 
+// Request is a buffer containing the EC request header and trailing payload.
+// This function is not thread-safe. In multi-threaded contexts, callers must
+// ensure libhoth_send_request() and libhoth_receive_response() occur
+// atomically (with respect to other calls to those functions).
+int libhoth_send_request(struct libhoth_device *dev, const void *request,
+                         size_t request_size);
+
+// Response is a buffer where the EC response header and trailing payload will
+// be written. Errors if libhoth_send_request() wasn't called previously.
+// Returns LIBHOTH_ERR_TIMEOUT if the response is not ready by the
+// specified timeout, and the user can call again later. If timeout_ms is zero,
+// returns immediately.
+// This function is not thread-safe. In multi-threaded contexts, callers must
+// ensure libhoth_send_request() and libhoth_receive_response() occur
+// atomically (with respect to other calls to those functions).
+int libhoth_receive_response(struct libhoth_device *dev, void *response,
+                             size_t max_response_size, size_t *actual_size,
+                             int timeout_ms);
+
+int libhoth_device_close(struct libhoth_device *dev);
+
 #ifdef __cplusplus
 }
 #endif

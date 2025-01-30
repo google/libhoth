@@ -6,6 +6,9 @@ cc_library(
         "host_commands.h",
         "authorization_record.h",
     ],
+    deps = [
+        "//protocol:host_cmd",
+    ],
 )
 
 cc_library(
@@ -23,15 +26,6 @@ cc_library(
     ],
 )
 
-cc_library(
-    name = "ec_util",
-    srcs = [
-        "ec_util.c",
-    ],
-    hdrs = ["ec_util.h"],
-    deps = [":host_commands"],
-)
-
 config_setting(
     name = "dbus_backend",
     define_values = {
@@ -44,8 +38,6 @@ cc_binary(
     srcs = [
         "authorization_record.h",
         "authorization_record.c",
-        "ec_util.c",
-        "ec_util.h",
         "host_commands.h",
         "htool.c",
         "htool.h",
@@ -87,11 +79,10 @@ cc_binary(
     ],
     deps = [
         ":authorization_record",
-        ":ec_util",
         ":host_commands",
         ":srtm",
         "//:git_version",
-        "//:libhoth",
+        "//protocol:host_cmd",
         "//transports:libhoth_device",
         "//transports:libhoth_mtd",
         "//transports:libhoth_spi",
