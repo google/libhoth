@@ -28,11 +28,11 @@ using ::testing::DoAll;
 using ::testing::Return;
 
 TEST_F(LibHothTest, firmware_version_test) {
-  struct ec_response_get_version exp_ver = {
-      .version_string_ro = "0.0.343/36e0ecd5 ok",
-      .version_string_rw = "0.6.2024102310/platform ok",
-      .current_image = 0,
-  };
+  struct ec_response_get_version exp_ver;
+
+  strcpy(exp_ver.version_string_ro, "0.0.343/36e0ecd5 ok");
+  strcpy(exp_ver.version_string_rw, "0.6.2024102310/platform ok");
+  exp_ver.current_image = 0;
 
   EXPECT_CALL(mock_, send(_, UsesCommand(EC_CMD_GET_VERSION), _))
       .WillOnce(Return(LIBHOTH_OK));
