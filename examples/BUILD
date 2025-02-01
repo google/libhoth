@@ -83,7 +83,7 @@ cc_binary(
         ":srtm",
         "//:git_version",
         "//protocol:host_cmd",
-        "//protocol:firmware_version",
+        "//protocol:rot_firmware_version",
         "//transports:libhoth_device",
         "//transports:libhoth_mtd",
         "//transports:libhoth_spi",

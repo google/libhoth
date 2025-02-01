@@ -10,11 +10,23 @@ cc_library(
 )
 
 cc_library(
-    name = "firmware_version",
-    hdrs = ["firmware_version.h"],
-    srcs = ["firmware_version.c"],
+    name = "rot_firmware_version",
+    hdrs = ["rot_firmware_version.h"],
+    srcs = ["rot_firmware_version.c"],
     deps = [
         "//transports:libhoth_device",
         ":host_cmd",
+    ],
+)
+
+cc_test(
+    name = "rot_firmware_version_test",
+    srcs = ["rot_firmware_version_test.cc"],
+    deps = [
+        "@googletest//:gtest",
+        "@googletest//:gtest_main",
+        "//transports:libhoth_device",
+        "//protocol/test:libhoth_device_mock",
+        ":rot_firmware_version",
     ],
 )

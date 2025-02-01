@@ -12,10 +12,11 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "firmware_version.h"
+#include "rot_firmware_version.h"
 
-int get_fw_version(struct libhoth_device* dev,
-                   struct ec_response_get_version* ver) {
-  return hostcmd_exec(dev, EC_CMD_GET_VERSION, /*version=*/0, NULL, 0, ver,
-                      sizeof(*ver), NULL);
+int libhoth_get_rot_fw_version(struct libhoth_device* dev,
+                               struct ec_response_get_version* ver) {
+  return hostcmd_exec(dev, EC_CMD_GET_VERSION, /*version=*/0,
+                      /*req_payload=*/NULL, /*req_payload_size=*/0, ver,
+                      sizeof(*ver), /*out_resp_size=*/NULL);
 }

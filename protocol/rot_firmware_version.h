@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef _LIBHOTH_PROTOCOL_FIRWARE_VERSION_H_
-#define _LIBHOTH_PROTOCOL_FIRWARE_VERSION_H_
+#ifndef _LIBHOTH_PROTOCOL_ROT_FIRMWARE_VERSION_H_
+#define _LIBHOTH_PROTOCOL_ROT_FIRMWARE_VERSION_H_
 
 #include "host_cmd.h"
 #include "transports/libhoth_device.h"
@@ -37,11 +37,11 @@ struct ec_response_get_version {
   uint32_t current_image;
 } __ec_align4;
 
-int get_fw_version(struct libhoth_device* dev,
-                   struct ec_response_get_version* ver);
+int libhoth_get_rot_fw_version(struct libhoth_device* dev,
+                               struct ec_response_get_version* ver);
 
 #ifdef __cplusplus
 }
 #endif
 
-#endif  // _LIBHOTH_TRANSPORTS_FIRWARE_VERSION_H_
+#endif  // _LIBHOTH_PROTOCOL_ROT_FIRWARE_VERSION_H_
