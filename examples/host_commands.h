@@ -24,8 +24,6 @@
 extern "C" {
 #endif
 
-#define EC_CMD_GET_VERSION 0x0002
-
 enum ec_image {
   EC_IMAGE_UNKNOWN = 0,
   EC_IMAGE_RO,
@@ -34,19 +32,6 @@ enum ec_image {
   EC_IMAGE_RO_B,
   EC_IMAGE_RW_B
 };
-
-struct ec_response_get_version {
-  // Null-terminated RO version string
-  char version_string_ro[32];
-
-  // Null-terminated RW version string
-  char version_string_rw[32];
-
-  char reserved[32];
-
-  // One of ec_image
-  uint32_t current_image;
-} __ec_align4;
 
 #define EC_CMD_HELLO 0x0001
 
