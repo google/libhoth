@@ -1,5 +1,6 @@
 protocol_srcs = [
   'host_cmd.c',
+  'rot_firmware_version.c',
 ]
 
 incdir = include_directories('..')
