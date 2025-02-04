@@ -30,3 +30,25 @@ cc_test(
         ":rot_firmware_version",
     ],
 )
+
+cc_library(
+    name = "payload_status",
+    hdrs = ["payload_status.h"],
+    srcs = ["payload_status.c"],
+    deps = [
+        "//transports:libhoth_device",
+        ":host_cmd",
+    ],
+)
+
+cc_test(
+    name = "payload_status_test",
+    srcs = ["payload_status_test.cc"],
+    deps = [
+        "@googletest//:gtest",
+        "@googletest//:gtest_main",
+        "//transports:libhoth_device",
+        "//protocol/test:libhoth_device_mock",
+        ":payload_status",
+    ],
+)

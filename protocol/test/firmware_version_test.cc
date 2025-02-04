@@ -12,17 +12,20 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "protocol/rot_firmware_version.h"
+#ifndef _LIBHOTH_PROTOCOL_TEST_FIRMWARE_VERSION_TEST_H_
+#define _LIBHOTH_PROTOCOL_TEST_FIRMWARE_VERSION_TEST_H_
+
+#include "protocol/firmware_version.h"
 
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
 
-#include "test/libhoth_device_mock.h"
+#include "libhoth_device_mock.h"
 
 using ::testing::_;
+using ::testing::ContainerEq;
 using ::testing::DoAll;
 using ::testing::Return;
-using ::testing::StrEq;
 
 TEST_F(LibHothTest, firmware_version_test) {
   struct ec_response_get_version exp_ver;
@@ -38,9 +41,11 @@ TEST_F(LibHothTest, firmware_version_test) {
       .WillOnce(DoAll(CopyResp(&exp_ver, sizeof(exp_ver)), Return(LIBHOTH_OK)));
 
   struct ec_response_get_version ver;
-  EXPECT_EQ(libhoth_get_rot_fw_version(&hoth_dev_, &ver), LIBHOTH_OK);
+  EXPECT_EQ(get_fw_version(&hoth_dev_, &ver), LIBHOTH_OK);
 
-  ASSERT_THAT(exp_ver.version_string_ro, StrEq(ver.version_string_ro));
-  ASSERT_THAT(exp_ver.version_string_rw, StrEq(ver.version_string_rw));
+  ASSERT_THAT(exp_ver.version_string_ro, ContainerEq(ver.version_string_ro));
+  ASSERT_THAT(exp_ver.version_string_rw, ContainerEq(ver.version_string_rw));
   EXPECT_EQ(exp_ver.current_image, ver.current_image);
 }
+
+#endif  //_LIBHOTH_PROTOCOL_TEST_FIRMWARE_VERSION_TEST_H_

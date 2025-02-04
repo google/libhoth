@@ -21,10 +21,6 @@
 extern "C" {
 #endif
 
-const char* sps_eeprom_lockdown_status_string(uint8_t st);
-const char* payload_validation_state_string(uint8_t s);
-const char* payload_validation_failure_reason_string(uint8_t r);
-const char* image_type_string(uint8_t type);
 int htool_payload_status();
 
 #ifdef __cplusplus
