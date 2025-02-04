@@ -10,3 +10,8 @@ cc_library(
         "//protocol:host_cmd",
     ],
 )
+
+filegroup(
+    name = "test_data",
+    srcs = glob(["*.bin"]),
+)
