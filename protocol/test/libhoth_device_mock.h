@@ -55,6 +55,8 @@ ACTION_P(CopyResp, response, resp_size) {
     uint8_t payload_buf[LIBHOTH_MAILBOX_SIZE - sizeof(struct ec_host_response)];
   } resp;
 
+  ASSERT_LE(full_resp_size, sizeof(resp));
+
   resp.hdr.struct_version = EC_HOST_RESPONSE_VERSION;
   resp.hdr.result = EC_RES_SUCCESS;
   resp.hdr.data_len = resp_size;

@@ -52,3 +52,28 @@ cc_test(
         ":payload_status",
     ],
 )
+
+cc_library(
+    name = "panic",
+    hdrs = ["panic.h"],
+    srcs = ["panic.c"],
+    deps = [
+        "//transports:libhoth_device",
+        ":host_cmd",
+    ],
+)
+
+cc_test(
+    name = "panic_test",
+    srcs = ["panic_test.cc"],
+    deps = [
+        "@googletest//:gtest",
+        "@googletest//:gtest_main",
+        "//transports:libhoth_device",
+        "//protocol/test:libhoth_device_mock",
+        ":panic",
+    ],
+    data = [
+        "//protocol/test:test_data",
+    ],
+)
