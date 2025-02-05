@@ -57,6 +57,7 @@ enum payload_update_err libhoth_payload_update(struct libhoth_device* dev,
     return PAYLOAD_UPDATE_BAD_IMG;
   }
 
+  fprintf(stderr, "Initiating payload update protocol with libhoth.\n");
   if (send_payload_update_request_with_command(dev, PAYLOAD_UPDATE_INITIATE) !=
       0) {
     return PAYLOAD_UPDATE_INITIATE_FAIL;
@@ -66,6 +67,7 @@ enum payload_update_err libhoth_payload_update(struct libhoth_device* dev,
                                 sizeof(struct ec_host_request) -
                                 sizeof(struct payload_update_packet);
 
+  fprintf(stderr, "Flashing the image to hoth.\n");
   for (size_t offset = 0; offset < size; ++offset) {
     if (image[offset] == 0xFF) {
       continue;
@@ -104,6 +106,7 @@ enum payload_update_err libhoth_payload_update(struct libhoth_device* dev,
     offset += chunk_size - 1;
   }
 
+  fprintf(stderr, "Finalizing payload update.\n");
   if (send_payload_update_request_with_command(dev, PAYLOAD_UPDATE_FINALIZE) !=
       0) {
     return PAYLOAD_UPDATE_FINALIZE_FAIL;
