@@ -62,6 +62,7 @@ ACTION_P(CopyResp, response, resp_size) {
   resp.hdr.data_len = resp_size;
   resp.hdr.reserved = 0;
   resp.hdr.checksum = 0;
+
   std::memcpy(resp.payload_buf, response, resp_size);
 
   resp.hdr.checksum = calculate_ec_command_checksum(

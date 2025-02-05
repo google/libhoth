@@ -416,38 +416,6 @@ struct ec_authorized_command_request {
 
 #define MAILBOX_SIZE 1024
 
-#define EC_PRV_CMD_HOTH_PAYLOAD_UPDATE 0x0005
-
-#define PAYLOAD_UPDATE_INITIATE 0
-#define PAYLOAD_UPDATE_CONTINUE 1
-#define PAYLOAD_UPDATE_FINALIZE 2
-#define PAYLOAD_UPDATE_AUX_DATA 3
-#define PAYLOAD_UPDATE_VERIFY 4
-#define PAYLOAD_UPDATE_ACTIVATE 5
-#define PAYLOAD_UPDATE_READ 6
-#define PAYLOAD_UPDATE_GET_STATUS 7
-#define PAYLOAD_UPDATE_ERASE 8
-#define PAYLOAD_UPDATE_VERIFY_CHUNK 9
-#define PAYLOAD_UPDATE_CONFIRM 10
-#define PAYLOAD_UPDATE_VERIFY_DESCRIPTOR 11
-
-struct payload_update_packet {
-  uint32_t offset; /* image offset */
-  uint32_t len;    /* packet length excluding this header */
-  uint8_t type;    /* One of PAYLOAD_UPDATE_* */
-  /* payload data immediately follows */
-} __attribute__((packed));
-
-struct payload_update_status {
-  uint8_t a_valid;         /* 0 = invalid, 1 = unverified, 2 = valid, */
-                           /* 3 = descriptor valid */
-  uint8_t b_valid;         /* 0 = invalid, 1 = unverified, 2 = valid, */
-                           /* 3 = descriptor valid */
-  uint8_t active_half;     /* 0, 1 */
-  uint8_t next_half;       /* 0, 1 */
-  uint8_t persistent_half; /* 0, 1 */
-} __attribute__((packed));
-
 // This command allows callers to push initial measurements into PCR0. This
 // command will fail if the TPM has already been started up, or if the
 // data to measure exceeds SRTM_DATA_MAX_SIZE_BYTES.

@@ -28,83 +28,7 @@
 #include "host_commands.h"
 #include "htool.h"
 #include "htool_cmd.h"
-
-const int64_t TITAN_IMAGE_DESCRIPTOR_MAGIC = 0x5F435344474D495F;
-const int64_t TITAN_IMAGE_DESCRIPTOR_ALIGNMENT = 1 << 16;
-
-bool find_image_descriptor(uint8_t *image, size_t len, size_t offset_alignment,
-                           int64_t magic) {
-  for (size_t offset = 0; offset + sizeof(int64_t) - 1 < len;
-       offset += offset_alignment) {
-    int64_t magic_candidate;
-    memcpy(&magic_candidate, image + offset, sizeof(int64_t));
-    if (magic_candidate == magic) {
-      return true;
-    }
-  }
-  return false;
-}
-
-int send_payload_update_request_with_command(struct libhoth_device *dev,
-                                             uint8_t command) {
-  struct payload_update_packet request;
-  request.type = command;
-  request.offset = 0;
-  request.len = 0;
-
-  int ret = hostcmd_exec(
-      dev, EC_CMD_BOARD_SPECIFIC_BASE + EC_PRV_CMD_HOTH_PAYLOAD_UPDATE, 0,
-      &request, sizeof(request), NULL, 0, NULL);
-  if (ret != 0) {
-    fprintf(stderr, "Error code from hoth: %d\n", ret);
-    return -1;
-  }
-  return 0;
-}
-
-int send_image(struct libhoth_device *dev, const uint8_t *image, size_t size) {
-  const size_t max_chunk_size = MAILBOX_SIZE - sizeof(struct ec_host_request) -
-                                sizeof(struct payload_update_packet);
-
-  for (size_t offset = 0; offset < size; ++offset) {
-    if (image[offset] == 0xFF) {
-      continue;
-    }
-    struct payload_update_packet request;
-
-    size_t chunk_size = max_chunk_size;
-    if (size - offset < chunk_size) {
-      chunk_size = size - offset;
-    }
-
-    while (chunk_size > 0 && image[offset + chunk_size - 1] == 0xFF) {
-      --chunk_size;
-    }
-
-    if (chunk_size == 0) {
-      continue;
-    }
-
-    request.offset = offset;
-    request.len = chunk_size;
-    request.type = PAYLOAD_UPDATE_CONTINUE;
-
-    uint8_t buffer[sizeof(struct payload_update_packet) + MAILBOX_SIZE];
-    memcpy(buffer, &request, sizeof(request));
-    memcpy(buffer + sizeof(request), image + offset, chunk_size);
-
-    int ret = hostcmd_exec(
-        dev, EC_CMD_BOARD_SPECIFIC_BASE + EC_PRV_CMD_HOTH_PAYLOAD_UPDATE, 0,
-        buffer, sizeof(request) + chunk_size, NULL, 0, NULL);
-    if (ret != 0) {
-      fprintf(stderr, "Error code from hoth: %d\n", ret);
-      return -1;
-    }
-
-    offset += chunk_size - 1;
-  }
-  return 0;
-}
+#include "protocol/payload_update.h"
 
 int htool_payload_update(const struct htool_invocation *inv) {
   struct libhoth_device *dev = htool_libhoth_device();
@@ -125,62 +49,47 @@ int htool_payload_update(const struct htool_invocation *inv) {
   struct stat statbuf;
   if (fstat(fd, &statbuf)) {
     fprintf(stderr, "fstat error: %s\n", strerror(errno));
-    goto cleanup2;
+    goto cleanup;
   }
   if (statbuf.st_size > SIZE_MAX) {
     fprintf(stderr, "file too large\n");
-    goto cleanup2;
+    goto cleanup;
   }
 
   uint8_t *image = mmap(NULL, statbuf.st_size, PROT_READ, MAP_PRIVATE, fd, 0);
   if (image == MAP_FAILED) {
     fprintf(stderr, "mmap error: %s\n", strerror(errno));
-    goto cleanup2;
-  }
-
-  if (!find_image_descriptor(image, statbuf.st_size,
-                             TITAN_IMAGE_DESCRIPTOR_ALIGNMENT,
-                             TITAN_IMAGE_DESCRIPTOR_MAGIC)) {
-    fprintf(stderr, "Not a valid Titan image.\n");
     goto cleanup;
   }
 
-  // Hoth payload update protocol.
-
-  // Send initiate.
-  fprintf(stderr, "Initiating payload update protocol with hoth.\n");
-  int ret =
-      send_payload_update_request_with_command(dev, PAYLOAD_UPDATE_INITIATE);
-  if (ret != 0) {
-    fprintf(stderr, "Error when initiating payload update.\n");
-    goto cleanup;
+  enum payload_update_err ret =
+      libhoth_payload_update(dev, image, statbuf.st_size);
+  switch (ret) {
+    case PAYLOAD_UPDATE_OK:
+      fprintf(stderr, "Payload update finished\n");
+      break;
+    case PAYLOAD_UPDATE_BAD_IMG:
+      fprintf(stderr, "Not a valid Titan image.\n");
+      break;
+    case PAYLOAD_UPDATE_INITIATE_FAIL:
+      fprintf(stderr, "Error when initiating payload update.\n");
+      break;
+    case PAYLOAD_UPDATE_FLASH_FAIL:
+      fprintf(stderr, "Error when flashing.\n");
+      break;
+    case PAYLOAD_UPDATE_FINALIZE_FAIL:
+      break;
+      fprintf(stderr, "Error when finalizing.\n");
+    default:
+      break;
   }
 
-  // Send continue.
-  fprintf(stderr, "Flashing the image to hoth.\n");
-  ret = send_image(dev, image, statbuf.st_size);
-  if (ret != 0) {
-    fprintf(stderr, "Error when flashing.\n");
-    goto cleanup;
-  }
-
-  // Send finalize.
-  fprintf(stderr, "Finalizing payload update.\n");
-  ret = send_payload_update_request_with_command(dev, PAYLOAD_UPDATE_FINALIZE);
-  if (ret != 0) {
-    fprintf(stderr, "Error when finalizing.\n");
-    goto cleanup;
-  }
-
-  return 0;
-
-cleanup:
   ret = munmap(image, statbuf.st_size);
   if (ret != 0) {
     fprintf(stderr, "munmap error: %d\n", ret);
   }
 
-cleanup2:
+cleanup:
   ret = close(fd);
   if (ret != 0) {
     fprintf(stderr, "close error: %d\n", ret);
@@ -220,43 +129,26 @@ int htool_payload_update_getstatus() {
     return -1;
   }
 
-  struct payload_update_packet request;
-  request.type = PAYLOAD_UPDATE_GET_STATUS;
-  request.offset = 0;
-  request.len = 0;
+  struct payload_update_status pus;
+  int ret = libhoth_payload_update_getstatus(dev, &pus);
 
-  uint8_t response[sizeof(struct payload_update_status)];
-  size_t rlen = 0;
-  int ret = hostcmd_exec(
-      dev, EC_CMD_BOARD_SPECIFIC_BASE + EC_PRV_CMD_HOTH_PAYLOAD_UPDATE, 0,
-      &request, sizeof(request), &response, sizeof(response), &rlen);
   if (ret != 0) {
-    fprintf(stderr, "HOTH_PAYLOAD_UPDATE_GET_STATUS error code: %d\n", ret);
-    return -1;
-  }
-  if (rlen != sizeof(response)) {
-    fprintf(stderr,
-            "HOTH_PAYLOAD_UPDATE_GET_STATUS expected exactly %ld response "
-            "bytes, got %ld\n",
-            sizeof(response), rlen);
+    fprintf(stderr, "Failed to get payload update status\n");
     return -1;
   }
 
-  struct payload_update_status *ppus =
-      (struct payload_update_status *)(response);
   printf("a_valid        : %s (%u)\n",
-         payload_update_getstatus_valid_string(ppus->a_valid), ppus->a_valid);
+         payload_update_getstatus_valid_string(pus.a_valid), pus.a_valid);
   printf("b_valid        : %s (%u)\n",
-         payload_update_getstatus_valid_string(ppus->b_valid), ppus->b_valid);
+         payload_update_getstatus_valid_string(pus.b_valid), pus.b_valid);
   printf("active_half    : %s (%u)\n",
-         payload_update_getstatus_half_string(ppus->active_half),
-         ppus->active_half);
+         payload_update_getstatus_half_string(pus.active_half),
+         pus.active_half);
   printf("next_half      : %s (%u)\n",
-         payload_update_getstatus_half_string(ppus->next_half),
-         ppus->next_half);
+         payload_update_getstatus_half_string(pus.next_half), pus.next_half);
   printf("persistent_half: %s (%u)\n",
-         payload_update_getstatus_half_string(ppus->persistent_half),
-         ppus->persistent_half);
+         payload_update_getstatus_half_string(pus.persistent_half),
+         pus.persistent_half);
 
   return 0;
 }

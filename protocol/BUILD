@@ -77,3 +77,28 @@ cc_test(
         "//protocol/test:test_data",
     ],
 )
+
+cc_library(
+    name = "payload_update",
+    hdrs = ["payload_update.h"],
+    srcs = ["payload_update.c"],
+    deps = [
+        "//transports:libhoth_device",
+        ":host_cmd",
+    ],
+)
+
+cc_test(
+    name = "payload_update_test",
+    srcs = ["payload_update_test.cc"],
+    deps = [
+        "@googletest//:gtest",
+        "@googletest//:gtest_main",
+        "//transports:libhoth_device",
+        "//protocol/test:libhoth_device_mock",
+        ":payload_update",
+    ],
+    data = [
+        "//protocol/test:test_data",
+    ],
+)
