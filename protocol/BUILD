@@ -124,3 +124,25 @@ cc_test(
         ":statistics",
     ],
 )
+
+cc_library(
+    name = "reboot",
+    hdrs = ["reboot.h"],
+    srcs = ["reboot.c"],
+    deps = [
+        "//transports:libhoth_device",
+        ":host_cmd",
+    ],
+)
+
+cc_test(
+    name = "reboot_test",
+    srcs = ["reboot_test.cc"],
+    deps = [
+        "@googletest//:gtest",
+        "@googletest//:gtest_main",
+        "//transports:libhoth_device",
+        "//protocol/test:libhoth_device_mock",
+        ":reboot",
+    ],
+)
