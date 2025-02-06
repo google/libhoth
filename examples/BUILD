@@ -86,6 +86,7 @@ cc_binary(
         "//protocol:rot_firmware_version",
         "//protocol:payload_status",
         "//protocol:panic",
+        "//protocol:payload_update",
         "//transports:libhoth_device",
         "//transports:libhoth_mtd",
         "//transports:libhoth_spi",

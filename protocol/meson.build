@@ -3,6 +3,7 @@ protocol_srcs = [
   'rot_firmware_version.c',
   'payload_status.c',
   'panic.c',
+  'payload_update.c',
 ]
 
 incdir = include_directories('..')
