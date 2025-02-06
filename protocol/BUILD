@@ -102,3 +102,25 @@ cc_test(
         "//protocol/test:test_data",
     ],
 )
+
+cc_library(
+    name = "statistics",
+    hdrs = ["statistics.h"],
+    srcs = ["statistics.c"],
+    deps = [
+        "//transports:libhoth_device",
+        ":host_cmd",
+    ],
+)
+
+cc_test(
+    name = "statistics_test",
+    srcs = ["statistics_test.cc"],
+    deps = [
+        "@googletest//:gtest",
+        "@googletest//:gtest_main",
+        "//transports:libhoth_device",
+        "//protocol/test:libhoth_device_mock",
+        ":statistics",
+    ],
+)
