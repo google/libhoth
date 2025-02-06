@@ -22,6 +22,10 @@
 #include "htool.h"
 #include "htool_constants.h"
 #include "htool_update_failure_reasons.h"
+#include "protocol/statistics.h"
+
+#define STATISTIC_OFFSET(field) \
+  (offsetof(struct ec_response_statistics, field) / sizeof(uint32_t))
 
 const char* FirmwareUpdateErrorToString(uint16_t reason) {
   switch (reason) {
@@ -181,10 +185,7 @@ int htool_statistics() {
   }
 
   struct ec_response_statistics stat;
-  size_t rlen = 0;
-  int ret = hostcmd_exec(
-      dev, EC_CMD_BOARD_SPECIFIC_BASE + EC_PRV_CMD_HOTH_GET_STATISTICS, 0, NULL,
-      0, &stat, sizeof(stat), &rlen);
+  int ret = libhoth_get_statistics(dev, &stat);
   if (ret != 0) {
     fprintf(stderr, "HOTH_STATISTICS error code: %d\n", ret);
     return -1;
