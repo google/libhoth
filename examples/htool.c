@@ -46,6 +46,7 @@
 #include "htool_target_control.h"
 #include "htool_target_usb.h"
 #include "htool_usb.h"
+#include "protocol/reboot.h"
 #include "protocol/rot_firmware_version.h"
 #include "transports/libhoth_device.h"
 
@@ -58,11 +59,8 @@ static int command_reboot(const struct htool_invocation* inv) {
   if (!dev) {
     return -1;
   }
-  struct ec_params_reboot_ec req = {
-      .cmd = EC_REBOOT_COLD,
-  };
-  return hostcmd_exec(dev, EC_CMD_REBOOT_EC, 0, &req, sizeof(req), NULL, 0,
-                      NULL);
+
+  return libhoth_reboot(dev);
 }
 
 static int command_get_version(const struct htool_invocation* inv) {

@@ -45,19 +45,6 @@ struct ec_response_hello {
   uint32_t out_data;
 } __ec_align4;
 
-#define EC_CMD_REBOOT_EC 0x00D2
-
-enum ec_reboot_cmd {
-  EC_REBOOT_COLD = 4,
-};
-
-struct ec_params_reboot_ec {
-  // enum ec_reboot_cmd
-  uint8_t cmd;
-  // Should be 0
-  uint8_t flags;
-} __ec_align1;
-
 #define EC_CMD_FLASH_SPI_INFO 0x0018
 
 struct ec_response_flash_spi_info {

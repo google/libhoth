@@ -88,6 +88,7 @@ cc_binary(
         "//protocol:panic",
         "//protocol:payload_update",
         "//protocol:statistics",
+        "//protocol:reboot",
         "//transports:libhoth_device",
         "//transports:libhoth_mtd",
         "//transports:libhoth_spi",
