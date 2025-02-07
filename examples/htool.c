@@ -1071,6 +1071,34 @@ static const struct htool_cmd CMDS[] = {
         .params = (const struct htool_param[]){{}},
         .func = htool_external_usb_host_check_presence,
     },
+    {
+        .verbs =
+            (const char*[]){"jtag", JTAG_PROGRAM_AND_VERIFY_PLD_CMD_STR, NULL},
+        .desc = "Program and verify a PLD over JTAG. Assumes only a single "
+                "device in chain",
+        .params =
+            (const struct htool_param[]){
+                {.type = HTOOL_FLAG_VALUE,
+                 .ch = 'o',
+                 .name = "offset",
+                 .default_value = "0",
+                 .desc = "Offset to read program and verify data from"},
+                {}},
+        .func = command_jtag_operation_run,
+    },
+    {
+        .verbs = (const char*[]){"jtag", JTAG_VERIFY_PLD_CMD_STR, NULL},
+        .desc = "Verify a PLD over JTAG. Assumes only a single device in chain",
+        .params =
+            (const struct htool_param[]){
+                {.type = HTOOL_FLAG_VALUE,
+                 .ch = 'o',
+                 .name = "offset",
+                 .default_value = "0",
+                 .desc = "Offset to read verify data from"},
+                {}},
+        .func = command_jtag_operation_run,
+    },
     {},
 };
 

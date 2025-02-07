@@ -431,6 +431,8 @@ enum ec_jtag_operation {
   EC_JTAG_OP_UNDEFINED = 0,
   EC_JTAG_OP_READ_IDCODE = 1,
   EC_JTAG_OP_TEST_BYPASS = 2,
+  EC_JTAG_OP_PROGRAM_AND_VERIFY_PLD = 3,
+  EC_JTAG_OP_VERIFY_PLD = 4,
 };
 
 struct ec_request_jtag_operation {
@@ -449,6 +451,16 @@ struct ec_request_jtag_test_bypass_operation {
   // Test pattern to send over TDI with `EC_JTAG_OP_TEST_BYPASS`
   uint8_t tdi_pattern[EC_JTAG_TEST_BYPASS_PATTERN_LEN];
 };
+
+struct ec_request_jtag_program_and_verify_pld_operation {
+  // Offset in external flash where data to program and verify PLD is stored
+  uint32_t data_offset;
+} __attribute__((packed, aligned(4)));
+
+struct ec_request_jtag_verify_pld_operation {
+  // Offset in external flash where data to verify PLD is stored
+  uint32_t data_offset;
+} __attribute__((packed, aligned(4)));
 
 // Separate response structures for each operation. Naming convention: `struct
 // ec_response_jtag_<op>_operation`
