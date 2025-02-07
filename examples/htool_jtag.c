@@ -22,6 +22,7 @@
 #include "host_commands.h"
 #include "htool.h"
 #include "htool_cmd.h"
+#include "protocol/host_cmd.h"
 
 char JTAG_TEST_BYPASS_PATTERN_DEFAULT_VALUE[] =
     // PRBS9 with '0' bit added at the beginning to make it exactly 64 bytes
@@ -214,7 +215,7 @@ static int jtag_program_and_verify_pld(struct libhoth_device *dev,
   };
 
   size_t response_length = 0;
-  int ret = htool_exec_hostcmd(
+  int ret = hostcmd_exec(
       dev, EC_CMD_BOARD_SPECIFIC_BASE + EC_PRV_CMD_HOTH_JTAG_OPERATION,
       /*version=*/0, &request, sizeof(request), /*resp_buf=*/NULL,
       /*resp_buf_size=*/0, &response_length);
@@ -258,7 +259,7 @@ static int jtag_verify_pld(struct libhoth_device *dev,
   };
 
   size_t response_length = 0;
-  int ret = htool_exec_hostcmd(
+  int ret = hostcmd_exec(
       dev, EC_CMD_BOARD_SPECIFIC_BASE + EC_PRV_CMD_HOTH_JTAG_OPERATION,
       /*version=*/0, &request, sizeof(request), /*resp_buf=*/NULL,
       /*resp_buf_size=*/0, &response_length);
