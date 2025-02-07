@@ -89,6 +89,7 @@ cc_binary(
         "//protocol:payload_update",
         "//protocol:statistics",
         "//protocol:reboot",
+        "//protocol:chipinfo",
         "//transports:libhoth_device",
         "//transports:libhoth_mtd",
         "//transports:libhoth_spi",

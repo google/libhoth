@@ -12,24 +12,13 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "reboot.h"
+#include "chipinfo.h"
 
-#include <gmock/gmock.h>
-#include <gtest/gtest.h>
+#include "host_cmd.h"
 
-#include "test/libhoth_device_mock.h"
-
-using ::testing::_;
-using ::testing::DoAll;
-using ::testing::Return;
-
-TEST_F(LibHothTest, reboot_test) {
-  EXPECT_CALL(mock_, send(_, UsesCommand(EC_CMD_REBOOT_EC), _))
-      .WillOnce(Return(LIBHOTH_OK));
-
-  uint32_t dummy;
-  EXPECT_CALL(mock_, receive)
-      .WillOnce(DoAll(CopyResp(&dummy, 0), Return(LIBHOTH_OK)));
-
-  EXPECT_EQ(libhoth_reboot(&hoth_dev_), LIBHOTH_OK);
+int libhoth_chipinfo(struct libhoth_device* dev,
+                     struct ec_response_chip_info* chipinfo) {
+  return hostcmd_exec(
+      dev, EC_CMD_BOARD_SPECIFIC_BASE + EC_PRV_CMD_HOTH_CHIP_INFO,
+      /*version=*/0, NULL, 0, chipinfo, sizeof(*chipinfo), NULL);
 }

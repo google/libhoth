@@ -6,6 +6,7 @@ protocol_srcs = [
   'payload_update.c',
   'statistics.c',
   'reboot.c',
+  'chipinfo.c',
 ]
 
 incdir = include_directories('..')

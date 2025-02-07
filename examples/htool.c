@@ -46,6 +46,7 @@
 #include "htool_target_control.h"
 #include "htool_target_usb.h"
 #include "htool_usb.h"
+#include "protocol/chipinfo.h"
 #include "protocol/reboot.h"
 #include "protocol/rot_firmware_version.h"
 #include "transports/libhoth_device.h"
@@ -88,9 +89,7 @@ static int command_show_chipinfo(const struct htool_invocation* inv) {
     return -1;
   }
   struct ec_response_chip_info response;
-  int status =
-      hostcmd_exec(dev, EC_CMD_BOARD_SPECIFIC_BASE + EC_PRV_CMD_HOTH_CHIP_INFO,
-                   /*version=*/0, NULL, 0, &response, sizeof(response), NULL);
+  int status = libhoth_chipinfo(dev, &response);
   if (status != 0) {
     return -1;
   }
@@ -162,9 +161,7 @@ static int command_authz_record_build(const struct htool_invocation* inv) {
   *(uint32_t*)record.capabilities = caps;
 
   struct ec_response_chip_info chipinfo_resp;
-  status = hostcmd_exec(
-      dev, EC_CMD_BOARD_SPECIFIC_BASE + EC_PRV_CMD_HOTH_CHIP_INFO,
-      /*version=*/0, NULL, 0, &chipinfo_resp, sizeof(chipinfo_resp), NULL);
+  status = libhoth_chipinfo(dev, &chipinfo_resp);
   if (status != 0) {
     return -1;
   }
@@ -249,9 +246,7 @@ static int command_authz_host_command_build(
   }
 
   struct ec_response_chip_info chipinfo_resp;
-  int status = hostcmd_exec(
-      dev, EC_CMD_BOARD_SPECIFIC_BASE + EC_PRV_CMD_HOTH_CHIP_INFO,
-      /*version=*/0, NULL, 0, &chipinfo_resp, sizeof(chipinfo_resp), NULL);
+  int status = libhoth_chipinfo(dev, &chipinfo_resp);
   if (status != 0) {
     fprintf(stderr, "Failed to get chip ID. status=%d\n", status);
     return -1;

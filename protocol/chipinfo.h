@@ -12,24 +12,31 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "reboot.h"
+#ifndef LIBHOTH_PROTOCOL_CHIPINFO_H_
+#define LIBHOTH_PROTOCOL_CHIPINFO_H_
 
-#include <gmock/gmock.h>
-#include <gtest/gtest.h>
+#ifdef __cplusplus
+extern "C" {
+#endif
 
-#include "test/libhoth_device_mock.h"
+#include <stdint.h>
 
-using ::testing::_;
-using ::testing::DoAll;
-using ::testing::Return;
+#include "transports/libhoth_device.h"
 
-TEST_F(LibHothTest, reboot_test) {
-  EXPECT_CALL(mock_, send(_, UsesCommand(EC_CMD_REBOOT_EC), _))
-      .WillOnce(Return(LIBHOTH_OK));
+#define EC_PRV_CMD_HOTH_CHIP_INFO 0x0010
 
-  uint32_t dummy;
-  EXPECT_CALL(mock_, receive)
-      .WillOnce(DoAll(CopyResp(&dummy, 0), Return(LIBHOTH_OK)));
+struct ec_response_chip_info {
+  uint64_t hardware_identity;
+  uint16_t hardware_category;
+  uint16_t reserved0;
+  uint32_t info_variant;
+} __attribute__((packed, aligned(4)));
 
-  EXPECT_EQ(libhoth_reboot(&hoth_dev_), LIBHOTH_OK);
+int libhoth_chipinfo(struct libhoth_device* dev,
+                     struct ec_response_chip_info* chipinfo);
+
+#ifdef __cplusplus
 }
+#endif
+
+#endif
