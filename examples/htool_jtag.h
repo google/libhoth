@@ -21,6 +21,8 @@ extern "C" {
 
 #define JTAG_READ_IDCODE_CMD_STR "read_idcode"
 #define JTAG_TEST_BYPASS_CMD_STR "test_bypass"
+#define JTAG_PROGRAM_AND_VERIFY_PLD_CMD_STR "program_and_verify_pld"
+#define JTAG_VERIFY_PLD_CMD_STR "verify_pld"
 
 // Forward declaration
 struct htool_invocation;

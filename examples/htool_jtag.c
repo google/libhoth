@@ -190,6 +190,94 @@ static int jtag_test_bypass(struct libhoth_device *dev,
   return 0;
 }
 
+static int jtag_program_and_verify_pld(struct libhoth_device *dev,
+                                       const struct htool_invocation *inv) {
+  uint32_t offset;
+
+  if (htool_get_param_u32(inv, "offset", &offset)) {
+    return -1;
+  }
+
+  struct {
+    struct ec_request_jtag_operation operation;
+    struct ec_request_jtag_program_and_verify_pld_operation params;
+  } __attribute__((packed, aligned(4))) request = {
+      .operation =
+          {
+              .clk_idiv = (uint16_t)0,  // Not used
+              .operation = EC_JTAG_OP_PROGRAM_AND_VERIFY_PLD,
+          },
+      .params =
+          {
+              .data_offset = offset,
+          },
+  };
+
+  size_t response_length = 0;
+  int ret = htool_exec_hostcmd(
+      dev, EC_CMD_BOARD_SPECIFIC_BASE + EC_PRV_CMD_HOTH_JTAG_OPERATION,
+      /*version=*/0, &request, sizeof(request), /*resp_buf=*/NULL,
+      /*resp_buf_size=*/0, &response_length);
+
+  if (ret != 0) {
+    fprintf(stderr, "HOTH_JTAG_OPERATION error code: %d\n", ret);
+    return -1;
+  }
+
+  if (response_length != 0) {
+    fprintf(stderr,
+            "HOTH_JTAG_OPERATION expected exactly %u response bytes, got %zu\n",
+            0, response_length);
+    return -1;
+  }
+
+  return 0;
+}
+
+static int jtag_verify_pld(struct libhoth_device *dev,
+                           const struct htool_invocation *inv) {
+  uint32_t offset;
+
+  if (htool_get_param_u32(inv, "offset", &offset)) {
+    return -1;
+  }
+
+  struct {
+    struct ec_request_jtag_operation operation;
+    struct ec_request_jtag_program_and_verify_pld_operation params;
+  } __attribute__((packed, aligned(4))) request = {
+      .operation =
+          {
+              .clk_idiv = (uint16_t)0,  // Not used
+              .operation = EC_JTAG_OP_VERIFY_PLD,
+          },
+      .params =
+          {
+              .data_offset = offset,
+          },
+  };
+
+  size_t response_length = 0;
+  int ret = htool_exec_hostcmd(
+      dev, EC_CMD_BOARD_SPECIFIC_BASE + EC_PRV_CMD_HOTH_JTAG_OPERATION,
+      /*version=*/0, &request, sizeof(request), /*resp_buf=*/NULL,
+      /*resp_buf_size=*/0, &response_length);
+
+  if (ret != 0) {
+    fprintf(stderr, "HOTH_JTAG_OPERATION error code: %d\n", ret);
+    return -1;
+  }
+
+  if (response_length != 0) {
+    fprintf(stderr,
+            "HOTH_JTAG_OPERATION expected exactly %u response bytes, got %zu\n",
+            0, response_length);
+    return -1;
+  }
+
+  return 0;
+}
+
 int command_jtag_operation_run(const struct htool_invocation *inv) {
   struct libhoth_device *dev = htool_libhoth_device();
   if (!dev) {
@@ -202,6 +290,12 @@ int command_jtag_operation_run(const struct htool_invocation *inv) {
   } else if (strncmp(inv->cmd->verbs[1], JTAG_TEST_BYPASS_CMD_STR,
                      sizeof(JTAG_TEST_BYPASS_CMD_STR)) == 0) {
     return jtag_test_bypass(dev, inv);
+  } else if (strncmp(inv->cmd->verbs[1], JTAG_PROGRAM_AND_VERIFY_PLD_CMD_STR,
+                     sizeof(JTAG_PROGRAM_AND_VERIFY_PLD_CMD_STR)) == 0) {
+    return jtag_program_and_verify_pld(dev, inv);
+  } else if (strncmp(inv->cmd->verbs[1], JTAG_VERIFY_PLD_CMD_STR,
+                     sizeof(JTAG_VERIFY_PLD_CMD_STR)) == 0) {
+    return jtag_verify_pld(dev, inv);
   }
   return -1;
 }
