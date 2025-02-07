@@ -61,14 +61,6 @@ struct ec_response_flash_spi_info {
   uint8_t sr1, sr2;
 } __ec_align1;
 
-#define EC_PRV_CMD_HOTH_CHIP_INFO 0x0010
-struct ec_response_chip_info {
-  uint64_t hardware_identity;
-  uint16_t hardware_category;
-  uint16_t reserved0;
-  uint32_t info_variant;
-} __attribute__((packed, aligned(4)));
-
 /* Options and request struct for EC_PRV_CMD_HOTH_RESET_TARGET */
 enum ec_target_reset_option {
   EC_TARGET_RESET_OPTION_RELEASE = 0,  // Release target from reset
