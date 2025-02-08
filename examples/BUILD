@@ -90,6 +90,7 @@ cc_binary(
         "//protocol:statistics",
         "//protocol:reboot",
         "//protocol:chipinfo",
+        "//protocol:i2c",
         "//transports:libhoth_device",
         "//transports:libhoth_mtd",
         "//transports:libhoth_spi",
