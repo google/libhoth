@@ -168,3 +168,25 @@ cc_test(
         ":chipinfo",
     ],
 )
+
+cc_library(
+    name = "i2c",
+    hdrs = ["i2c.h"],
+    srcs = ["i2c.c"],
+    deps = [
+        "//transports:libhoth_device",
+        ":host_cmd",
+    ],
+)
+
+cc_test(
+    name = "i2c_test",
+    srcs = ["i2c_test.cc"],
+    deps = [
+        "@googletest//:gtest",
+        "@googletest//:gtest_main",
+        "//transports:libhoth_device",
+        "//protocol/test:libhoth_device_mock",
+        ":i2c",
+    ],
+)

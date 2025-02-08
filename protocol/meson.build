@@ -7,6 +7,7 @@ protocol_srcs = [
   'statistics.c',
   'reboot.c',
   'chipinfo.c',
+  'i2c.c',
 ]
 
 incdir = include_directories('..')

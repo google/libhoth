@@ -24,6 +24,7 @@
 #include "htool.h"
 #include "htool_cmd.h"
 #include "htool_target_control.h"
+#include "protocol/i2c.h"
 
 static int i2c_detect(struct libhoth_device *dev,
                       const struct htool_invocation *inv) {
@@ -42,34 +43,19 @@ static int i2c_detect(struct libhoth_device *dev,
   request.start_address = (uint8_t)(start_addr & 0x7F);
   request.end_address = (uint8_t)(end_addr & 0x7F);
 
-  uint8_t response[sizeof(struct ec_response_i2c_detect)];
-  size_t rLen = 0;
-  int ret = hostcmd_exec(
-      dev, EC_CMD_BOARD_SPECIFIC_BASE + EC_PRV_CMD_HOTH_I2C_DETECT, 0, &request,
-      sizeof(request), &response, sizeof(response), &rLen);
+  struct ec_response_i2c_detect response;
+  int ret = libhoth_i2c_detect(dev, &request, &response);
   if (ret != 0) {
-    fprintf(stderr, "HOTH_I2C_DETECT error code: %d\n", ret);
-    return -1;
-  }
-  if (rLen != sizeof(response)) {
-    fprintf(stderr,
-            "HOTH_I2C_DETECT expected exactly %ld response "
-            "bytes, got %ld\n",
-            sizeof(response), rLen);
-    return -1;
+    return ret;
   }
 
-  struct ec_response_i2c_detect *pI2d =
-      (struct ec_response_i2c_detect *)(response);
-
-  printf("Detected %u devices on bus.\n", pI2d->devices_count);
-  if (pI2d->devices_count) {
-    for (uint8_t i = 0; i < I2C_DETECT_DATA_MAX_SIZE_BYTES; i++) {
-      for (uint8_t b = 0; b < 8; b++) {
-        if (pI2d->devices_mask[i] & (1 << b)) {
-          printf("0x%02X ", (i * 8 + b));
-        }
-      }
+  printf("Detected %u devices on bus.\n", response.devices_count);
+  if (response.devices_count) {
+    uint8_t device_list[response.devices_count];
+    libhoth_i2c_device_list(response.devices_mask, response.devices_count,
+                            device_list);
+    for (uint16_t i = 0; i < response.devices_count; i++) {
+      printf("0x%02X ", device_list[i]);
     }
     printf("\n");
   }
@@ -109,36 +95,23 @@ static int i2c_read(struct libhoth_device *dev,
     request.arg_bytes[0] = (offset & 0xFF);
   }
 
-  uint8_t response[sizeof(struct ec_response_i2c_transfer)];
-  size_t rLen = 0;
-  int ret = hostcmd_exec(
-      dev, EC_CMD_BOARD_SPECIFIC_BASE + EC_PRV_CMD_HOTH_I2C_TRANSFER, 0,
-      &request, sizeof(request), &response, sizeof(response), &rLen);
+  struct ec_response_i2c_transfer response;
+  int ret = libhoth_i2c_transfer(dev, &request, &response);
   if (ret != 0) {
-    fprintf(stderr, "HOTH_I2C_TRANSFER [read] error code: %d\n", ret);
-    return -1;
+    return ret;
   }
-  if (rLen != sizeof(response)) {
-    fprintf(stderr,
-            "HOTH_I2C_TRANSFER [read] expected exactly %ld response "
-            "bytes, got %ld\n",
-            sizeof(response), rLen);
-    return -1;
-  }
-
-  struct ec_response_i2c_transfer *pI2t =
-      (struct ec_response_i2c_transfer *)(response);
 
   if (offset != UINT32_MAX) {
     printf("Read %u bytes from I2C device %u:0x%02x offset: 0x%02x\n",
-           pI2t->read_bytes, request.bus_number, request.dev_address,
+           response.read_bytes, request.bus_number, request.dev_address,
            offset & 0xFF);
   } else {
-    printf("Read %u bytes from I2C device %u:0x%02x\n", pI2t->read_bytes,
+    printf("Read %u bytes from I2C device %u:0x%02x\n", response.read_bytes,
            request.bus_number, request.dev_address);
   }
-  for (uint16_t i = 0; i < pI2t->read_bytes; i++) {
-    printf("0x%02X ", pI2t->resp_bytes[i]);
+
+  for (uint16_t i = 0; i < response.read_bytes; i++) {
+    printf("0x%02X ", response.resp_bytes[i]);
   }
   printf("\n");
 
@@ -193,21 +166,10 @@ static int i2c_write(struct libhoth_device *dev,
   }
   request.size_write = idx;
 
-  uint8_t response[sizeof(struct ec_response_i2c_transfer)];
-  size_t rLen = 0;
-  int ret = hostcmd_exec(
-      dev, EC_CMD_BOARD_SPECIFIC_BASE + EC_PRV_CMD_HOTH_I2C_TRANSFER, 0,
-      &request, sizeof(request), &response, sizeof(response), &rLen);
+  struct ec_response_i2c_transfer response;
+  int ret = libhoth_i2c_transfer(dev, &request, &response);
   if (ret != 0) {
-    fprintf(stderr, "HOTH_I2C_TRANSFER [write] error code: %d\n", ret);
-    return -1;
-  }
-  if (rLen != sizeof(response)) {
-    fprintf(stderr,
-            "HOTH_I2C_TRANSFER [write] expected exactly %ld response "
-            "bytes, got %ld\n",
-            sizeof(response), rLen);
-    return -1;
+    return ret;
   }
 
   if (offset != UINT32_MAX) {
@@ -220,11 +182,9 @@ static int i2c_write(struct libhoth_device *dev,
            request.bus_number, request.dev_address);
   }
 
-  struct ec_response_i2c_transfer *pI2t =
-      (struct ec_response_i2c_transfer *)(response);
-  if (pI2t->bus_response) {
+  if (response.bus_response) {
     fprintf(stderr, "HOTH_I2C_TRANSFER [write] bus error: %d\n",
-            pI2t->bus_response);
+            response.bus_response);
   }
 
   return 0;
