@@ -341,8 +341,7 @@ static int fill_cmd_invocation(struct htool_invocation* inv,
   inv->cmd = cmd;
   int num_params = 0;
   int positional_param_index = 0;
-  for (; cmd->params[num_params].type != HTOOL_PARAM_END; num_params++)
-    ;
+  for (; cmd->params[num_params].type != HTOOL_PARAM_END; num_params++);
   inv->args = calloc(num_params, sizeof(const char*));
   for (int i = 0; i < argc; i++) {
     if (argv[i][0] == '-') {
@@ -388,8 +387,7 @@ static int fill_global_flags(struct htool_invocation* inv,
                              const char* const* argv) {
   inv->cmd = cmd;
   int num_params = 0;
-  for (; cmd->params[num_params].type != HTOOL_PARAM_END; num_params++)
-    ;
+  for (; cmd->params[num_params].type != HTOOL_PARAM_END; num_params++);
   inv->args = calloc(num_params, sizeof(const char*));
   for (int i = 0; i < argc; i++) {
     if (argv[i][0] != '-') {
@@ -420,9 +418,7 @@ static int fill_global_flags(struct htool_invocation* inv,
 
 static struct htool_invocation global_flags_inv = {};
 
-struct htool_invocation* htool_global_flags(void) {
-  return &global_flags_inv;
-}
+struct htool_invocation* htool_global_flags(void) { return &global_flags_inv; }
 
 int htool_main(const struct htool_param* global_flags,
                const struct htool_cmd* cmds, int argc,

@@ -190,3 +190,26 @@ cc_test(
         ":i2c",
     ],
 )
+
+cc_library(
+    name = "authz_record",
+    hdrs = ["authz_record.h"],
+    srcs = ["authz_record.c"],
+    deps = [
+        "//transports:libhoth_device",
+        ":host_cmd",
+        ":chipinfo",
+    ],
+)
+
+cc_test(
+    name = "authz_record_test",
+    srcs = ["authz_record_test.cc"],
+    deps = [
+        "@googletest//:gtest",
+        "@googletest//:gtest_main",
+        "//transports:libhoth_device",
+        "//protocol/test:libhoth_device_mock",
+        ":authz_record",
+    ],
+)

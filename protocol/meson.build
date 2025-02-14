@@ -8,6 +8,7 @@ protocol_srcs = [
   'reboot.c',
   'chipinfo.c',
   'i2c.c',
+  'authz_record.c',
 ]
 
 incdir = include_directories('..')
