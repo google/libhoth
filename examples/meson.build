@@ -17,8 +17,6 @@ endif
 executable(
   'htool',
   sources: [
-    'authorization_record.h',
-    'authorization_record.c',
     'htool.c',
     'htool_authz_command.c',
     'htool_cmd.c',

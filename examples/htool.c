@@ -28,7 +28,6 @@
 #include <sys/types.h>
 #include <unistd.h>
 
-#include "authorization_record.h"
 #include "host_commands.h"
 #include "htool_authz_command.h"
 #include "htool_cmd.h"
@@ -46,6 +45,7 @@
 #include "htool_target_control.h"
 #include "htool_target_usb.h"
 #include "htool_usb.h"
+#include "protocol/authz_record.h"
 #include "protocol/chipinfo.h"
 #include "protocol/reboot.h"
 #include "protocol/rot_firmware_version.h"
@@ -106,19 +106,17 @@ static int command_authz_record_read(const struct htool_invocation* inv) {
   if (!dev) {
     return -1;
   }
-  struct ec_authz_record_get_request request = {.index = 0};
-  struct ec_authz_record_get_response response = {};
-  int status = hostcmd_exec(
-      dev, EC_CMD_BOARD_SPECIFIC_BASE + EC_PRV_CMD_HOTH_GET_AUTHZ_RECORD,
-      /*version=*/0, &request, sizeof(request), &response, sizeof(response),
-      NULL);
+
+  struct ec_authz_record_get_response response;
+  int status = libhoth_authz_record_read(dev, &response);
   if (status != 0) {
-    return -1;
+    return status;
   }
+
   printf("Index: %d \n", response.index);
   printf("Valid: %d \n", response.valid);
   printf("Record:\n");
-  authorization_record_print_hex_string(&response.record);
+  libhoth_authorization_record_print_hex_string(&response.record);
   return 0;
 }
 
@@ -127,17 +125,8 @@ static int command_authz_record_erase(const struct htool_invocation* inv) {
   if (!dev) {
     return -1;
   }
-  struct ec_authz_record_set_request request = {
-      .index = 0,
-      .erase = 1,
-  };
-  int status = hostcmd_exec(
-      dev, EC_CMD_BOARD_SPECIFIC_BASE + EC_PRV_CMD_HOTH_SET_AUTHZ_RECORD,
-      /*version=*/0, &request, sizeof(request), NULL, 0, NULL);
-  if (status != 0) {
-    return -1;
-  }
-  return 0;
+
+  return libhoth_authz_record_erase(dev);
 }
 
 static int command_authz_record_build(const struct htool_invocation* inv) {
@@ -151,55 +140,14 @@ static int command_authz_record_build(const struct htool_invocation* inv) {
     return -1;
   }
 
-  int status;
-  struct authorization_record record = {
-      .magic = AUTHORIZATION_RECORD_MAGIC,
-      .version = 1,
-      .size = AUTHORIZATION_RECORD_SIZE,
-      .flags = 0,
-  };
-  *(uint32_t*)record.capabilities = caps;
-
-  struct ec_response_chip_info chipinfo_resp;
-  status = libhoth_chipinfo(dev, &chipinfo_resp);
+  struct authorization_record record;
+  int status = libhoth_authz_record_build(dev, caps, &record);
   if (status != 0) {
-    return -1;
+    return status;
   }
-  record.dev_id_0 = chipinfo_resp.hardware_identity & 0xfffffffful;
-  record.dev_id_1 = (chipinfo_resp.hardware_identity >> 32);
-
-  struct ec_authz_record_get_nonce_response nonce_resp;
-  status = hostcmd_exec(
-      dev, EC_CMD_BOARD_SPECIFIC_BASE + EC_PRV_CMD_HOTH_GET_AUTHZ_RECORD_NONCE,
-      /*version=*/0, NULL, 0, &nonce_resp, sizeof(nonce_resp), NULL);
-  if (status != 0) {
-    return -1;
-  }
-  if (nonce_resp.ro_supported_key_id == 0) {
-    fprintf(stderr,
-            "ro_supported_key_id = 0. Please reset the chip and retry\n");
-    return -1;
-  }
-  if (nonce_resp.ro_supported_key_id != nonce_resp.rw_supported_key_id) {
-    fprintf(
-        stderr,
-        "RO and RW supported key_ids do not match: (RO) 0x%x != (RW) 0x%x\n",
-        nonce_resp.ro_supported_key_id, nonce_resp.rw_supported_key_id);
-    return -1;
-  }
-  record.key_id = nonce_resp.ro_supported_key_id;
-  if (sizeof(record.authorization_nonce) !=
-      sizeof(nonce_resp.authorization_nonce)) {
-    fprintf(stderr, "Nonce size does not match. Expecting %ld, got %ld",
-            sizeof(nonce_resp.authorization_nonce),
-            sizeof(record.authorization_nonce));
-    return -1;
-  }
-  memcpy(record.authorization_nonce, nonce_resp.authorization_nonce,
-         sizeof(record.authorization_nonce));
 
   printf("Record:\n");
-  authorization_record_print_hex_string(&record);
+  libhoth_authorization_record_print_hex_string(&record);
   return 0;
 }
 
@@ -214,23 +162,15 @@ static int command_authz_record_set(const struct htool_invocation* inv) {
     return -1;
   }
 
-  struct ec_authz_record_set_request request = {
-      .index = 0,
-      .erase = 0,
-  };
-  int status = authorization_record_from_hex_string(&request.record, record_hex,
-                                                    strlen(record_hex));
+  struct authorization_record record;
+  int status = libhoth_authorization_record_from_hex_string(&record, record_hex,
+                                                            strlen(record_hex));
   if (status != 0) {
     fprintf(stderr, "Error reading authorization record from hex string\n");
     return -1;
   }
-  status = hostcmd_exec(
-      dev, EC_CMD_BOARD_SPECIFIC_BASE + EC_PRV_CMD_HOTH_SET_AUTHZ_RECORD,
-      /*version=*/0, &request, sizeof(request), NULL, 0, NULL);
-  if (status != 0) {
-    return -1;
-  }
-  return 0;
+
+  return libhoth_authz_record_set(dev, &record);
 }
 
 static int command_authz_host_command_build(

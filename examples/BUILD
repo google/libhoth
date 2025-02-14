@@ -4,17 +4,10 @@ cc_library(
     name = "host_commands",
     textual_hdrs = [
         "host_commands.h",
-        "authorization_record.h",
     ],
     deps = [
         "//protocol:host_cmd",
     ],
-)
-
-cc_library(
-    name = "authorization_record",
-    hdrs = ["authorization_record.h"],
-    srcs = ["authorization_record.c"],
 )
 
 cc_library(
@@ -36,8 +29,6 @@ config_setting(
 cc_binary(
     name = "htool",
     srcs = [
-        "authorization_record.h",
-        "authorization_record.c",
         "host_commands.h",
         "htool.c",
         "htool.h",
@@ -78,10 +69,10 @@ cc_binary(
         "htool_dbus.c",
     ],
     deps = [
-        ":authorization_record",
         ":host_commands",
         ":srtm",
         "//:git_version",
+        "//protocol:authz_record",
         "//protocol:host_cmd",
         "//protocol:rot_firmware_version",
         "//protocol:payload_status",
