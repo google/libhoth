@@ -37,7 +37,7 @@
 #include "htool_panic.h"
 #include "htool_payload.h"
 #include "htool_payload_update.h"
-#include "htool_progress.h"
+#include "protocol/progress.h"
 #include "htool_raw_host_command.h"
 #include "htool_spi_proxy.h"
 #include "htool_srtm.h"
@@ -307,8 +307,8 @@ static int command_spi_read(const struct htool_invocation* inv) {
     goto cleanup1;
   }
 
-  struct htool_progress_stderr progress;
-  htool_progress_stderr_init(&progress, "Reading");
+  struct libhoth_progress_stderr progress;
+  libhoth_progress_stderr_init(&progress, "Reading");
 
   uint32_t addr = args.start;
   size_t len_remaining = args.length;
@@ -389,8 +389,8 @@ static int command_spi_update(const struct htool_invocation* inv) {
     goto cleanup2;
   }
 
-  struct htool_progress_stderr progress;
-  htool_progress_stderr_init(&progress, "Erasing/Programming");
+  struct libhoth_progress_stderr progress;
+  libhoth_progress_stderr_init(&progress, "Erasing/Programming");
   status = htool_spi_proxy_update(&spi, args.start, file_data, file_size,
                                   &progress.progress);
   if (status) {
@@ -398,8 +398,8 @@ static int command_spi_update(const struct htool_invocation* inv) {
   }
 
   if (args.verify) {
-    struct htool_progress_stderr progress;
-    htool_progress_stderr_init(&progress, "Verifying");
+    struct libhoth_progress_stderr progress;
+    libhoth_progress_stderr_init(&progress, "Verifying");
     status = htool_spi_proxy_verify(&spi, args.start, file_data, file_size,
                                     &progress.progress);
     if (status) {

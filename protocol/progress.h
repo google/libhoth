@@ -1,4 +1,4 @@
-// Copyright 2022 Google LLC
+// Copyright 2025 Google LLC
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -12,32 +12,33 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef LIBHOTH_EXAMPLES_HTOOL_PROGRESS_H_
-#define LIBHOTH_EXAMPLES_HTOOL_PROGRESS_H_
-
-#include <stdint.h>
-#include <time.h>
+#ifndef _LIBHOTH_PROTOCOL_PROGRESS_H_
+#define _LIBHOTH_PROTOCOL_PROGRESS_H_
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-struct htool_progress {
+#include <stdint.h>
+#include <time.h>
+
+struct libhoth_progress {
   void (*func)(void*, uint64_t numerator, uint64_t denominator);
   void* param;
 };
 
-struct htool_progress_stderr {
-  struct htool_progress progress;
+struct libhoth_progress_stderr {
+  struct libhoth_progress progress;
   struct timespec start_time;
   const char* action_title;
 };
 
-void htool_progress_stderr_init(struct htool_progress_stderr* progress,
+void libhoth_progress_stderr_init(struct libhoth_progress_stderr* progress,
                                 const char* action_title);
+
 
 #ifdef __cplusplus
 }
 #endif
 
-#endif  // LIBHOTH_EXAMPLES_HTOOL_PROGRESS_H_
+#endif 

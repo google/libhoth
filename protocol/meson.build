@@ -9,6 +9,7 @@ protocol_srcs = [
   'chipinfo.c',
   'i2c.c',
   'authz_record.c',
+  'progress.c',
 ]
 
 incdir = include_directories('..')

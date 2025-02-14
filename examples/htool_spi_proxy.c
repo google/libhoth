@@ -20,10 +20,10 @@
 // for MIN()
 #include <sys/param.h>
 
-#include "../transports/libhoth_device.h"
+#include "transports/libhoth_device.h"
 #include "host_commands.h"
 #include "htool.h"
-#include "htool_progress.h"
+#include "protocol/progress.h"
 #include "htool_spi_proxy.h"
 #include "htool_usb.h"
 
@@ -184,7 +184,7 @@ int htool_spi_proxy_read(const struct htool_spi_proxy* spi, uint32_t addr,
 
 int htool_spi_proxy_verify(const struct htool_spi_proxy* spi, uint32_t addr,
                            const void* buf, size_t len,
-                           const struct htool_progress* progress) {
+                           const struct libhoth_progress* progress) {
   uint8_t read_buf[READ_CHUNK_SIZE];
   const uint8_t* cbuf = (const uint8_t*)buf;
   size_t len_remaining = len;
@@ -285,7 +285,7 @@ int htool_spi_proxy_init(struct htool_spi_proxy* spi,
 
 int htool_spi_proxy_update(const struct htool_spi_proxy* spi, uint32_t addr,
                            const void* buf, size_t len,
-                           const struct htool_progress* progress) {
+                           const struct libhoth_progress* progress) {
   const uint32_t SPI_PAGE_SIZE = 256;
 
   // There is only enough space in the buffer for 3 page writes (and associated

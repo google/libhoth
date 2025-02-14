@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "htool_progress.h"
+#include "progress.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -46,12 +46,12 @@ static uint64_t ts_milliseconds(struct timespec ts) {
 }
 
 struct stderr_progress {
-  struct htool_progress progress;
+  struct libhoth_progress progress;
   struct timespec start_time;
   const char* action_title;
 };
 
-static void htool_progress_stderr_func(void* param, uint64_t numerator,
+static void libhoth_progress_stderr_func(void* param, uint64_t numerator,
                                        uint64_t denominator) {
   struct stderr_progress* self = (struct stderr_progress*)param;
   if (isatty(STDERR_FILENO)) {
@@ -73,10 +73,10 @@ static void htool_progress_stderr_func(void* param, uint64_t numerator,
   }
 }
 
-void htool_progress_stderr_init(struct htool_progress_stderr* progress,
+void libhoth_progress_stderr_init(struct libhoth_progress_stderr* progress,
                                 const char* action_title) {
   progress->progress.param = progress;
-  progress->progress.func = htool_progress_stderr_func;
+  progress->progress.func = libhoth_progress_stderr_func;
   progress->start_time = ts_now();
   progress->action_title = action_title;
 }

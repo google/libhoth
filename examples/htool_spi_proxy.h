@@ -22,7 +22,7 @@
 extern "C" {
 #endif
 
-struct htool_progress;
+struct libhoth_progress;
 
 struct htool_spi_proxy {
   struct libhoth_device* dev;
@@ -38,11 +38,11 @@ int htool_spi_proxy_read(const struct htool_spi_proxy* spi, uint32_t addr,
 
 int htool_spi_proxy_verify(const struct htool_spi_proxy* spi, uint32_t addr,
                            const void* buf, size_t len,
-                           const struct htool_progress* progress);
+                           const struct libhoth_progress* progress);
 
 int htool_spi_proxy_update(const struct htool_spi_proxy* spi, uint32_t addr,
                            const void* buf, size_t len,
-                           const struct htool_progress* progress);
+                           const struct libhoth_progress* progress);
 
 #ifdef __cplusplus
 }

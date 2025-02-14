@@ -213,3 +213,10 @@ cc_test(
         ":authz_record",
     ],
 )
+
+cc_library(
+    name = "progress",
+    hdrs = ["progress.h"],
+    srcs = ["progress.c"],
+)
+
