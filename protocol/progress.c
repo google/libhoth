@@ -52,7 +52,7 @@ struct stderr_progress {
 };
 
 static void libhoth_progress_stderr_func(void* param, uint64_t numerator,
-                                       uint64_t denominator) {
+                                         uint64_t denominator) {
   struct stderr_progress* self = (struct stderr_progress*)param;
   if (isatty(STDERR_FILENO)) {
     uint64_t duration_ms =
@@ -74,7 +74,7 @@ static void libhoth_progress_stderr_func(void* param, uint64_t numerator,
 }
 
 void libhoth_progress_stderr_init(struct libhoth_progress_stderr* progress,
-                                const char* action_title) {
+                                  const char* action_title) {
   progress->progress.param = progress;
   progress->progress.func = libhoth_progress_stderr_func;
   progress->start_time = ts_now();

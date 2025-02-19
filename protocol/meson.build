@@ -11,6 +11,7 @@ protocol_srcs = [
   'authz_record.c',
   'progress.c',
   'spi_proxy.c',
+  'payload_info.c',
 ]
 
 incdir = include_directories('..')
