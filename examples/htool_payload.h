@@ -17,11 +17,15 @@
 
 #include <stdint.h>
 
+#include "htool.h"
+#include "htool_cmd.h"
+
 #ifdef __cplusplus
 extern "C" {
 #endif
 
 int htool_payload_status();
+int htool_payload_info(const struct htool_invocation* inv);
 
 #ifdef __cplusplus
 }

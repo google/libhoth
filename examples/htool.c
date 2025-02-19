@@ -764,6 +764,14 @@ static const struct htool_cmd CMDS[] = {
                 {HTOOL_POSITIONAL, .name = "source-file"}, {}},
         .func = htool_payload_update,
     },
+    {
+        .verbs = (const char*[]){"payload", "info", NULL},
+        .desc = "Display payload info for a Titan image.",
+        .params =
+            (const struct htool_param[]){
+                {HTOOL_POSITIONAL, .name = "source-file"}, {}},
+        .func = htool_payload_info,
+    },
     {.verbs = (const char*[]){"flash_spi_info", NULL},
      .desc = "Get SPI NOR flash info.",
      .params = (const struct htool_param[]){{}},

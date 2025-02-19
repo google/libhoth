@@ -14,11 +14,19 @@
 
 #include "htool_payload.h"
 
+#include <errno.h>
+#include <fcntl.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
+#include <sys/mman.h>
+#include <sys/stat.h>
+#include <sys/types.h>
+#include <unistd.h>
 
 #include "host_commands.h"
 #include "htool.h"
+#include "protocol/payload_info.h"
 #include "protocol/payload_status.h"
 
 int htool_payload_status() {
@@ -66,5 +74,71 @@ int htool_payload_status() {
            rs->version_point, rs->version_subpoint);
     printf("  descriptor_offset: 0x%08x\n", rs->descriptor_offset);
   }
+  return 0;
+}
+
+int htool_payload_info(const struct htool_invocation* inv) {
+  struct libhoth_device* dev = htool_libhoth_device();
+  if (!dev) {
+    return -1;
+  }
+
+  const char* image_file;
+  if (htool_get_param_string(inv, "source-file", &image_file) != 0) {
+    return -1;
+  }
+
+  int fd = open(image_file, O_RDONLY, 0);
+  if (fd == -1) {
+    fprintf(stderr, "Error opening file %s: %s\n", image_file, strerror(errno));
+    return -1;
+  }
+  struct stat statbuf;
+  if (fstat(fd, &statbuf)) {
+    fprintf(stderr, "fstat error: %s\n", strerror(errno));
+    goto cleanup2;
+  }
+  if (statbuf.st_size > SIZE_MAX) {
+    fprintf(stderr, "file too large\n");
+    goto cleanup2;
+  }
+
+  uint8_t* image = mmap(NULL, statbuf.st_size, PROT_READ, MAP_PRIVATE, fd, 0);
+  if (image == MAP_FAILED) {
+    fprintf(stderr, "mmap error: %s\n", strerror(errno));
+    goto cleanup2;
+  }
+
+  struct payload_info info;
+  if (!libhoth_payload_info(image, statbuf.st_size, &info)) {
+    fprintf(stderr, "Failed to parse payload image.  Is this a titan image?\n");
+    goto cleanup;
+  }
+
+  printf("Payload Info:\n");
+  printf("  name: %-32s\n", info.image_name);
+  printf("  family: %u\n", info.image_family);
+  printf("  version: %u.%u.%u.%u\n", info.image_version.major,
+         info.image_version.minor, info.image_version.point,
+         info.image_version.subpoint);
+  printf("  type: %u\n", info.image_type);
+  printf("  hash: ");
+  for (int i = 0; i < sizeof(info.image_hash); i++) {
+    printf("%02x", info.image_hash[i]);
+  }
+  printf("\n");
+
+cleanup:
+  if(munmap(image, statbuf.st_size) != 0) {
+    fprintf(stderr, "munmap error: %s\n", strerror(errno));
+    return -1;
+  }
+
+cleanup2:
+  if (close(fd) != 0) {
+    fprintf(stderr, "close error: %s\n", strerror(errno));
+    return -1;
+  }
+
   return 0;
 }

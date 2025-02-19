@@ -71,6 +71,7 @@ cc_binary(
         "//protocol:authz_record",
         "//protocol:host_cmd",
         "//protocol:rot_firmware_version",
+        "//protocol:payload_info",
         "//protocol:payload_status",
         "//protocol:panic",
         "//protocol:payload_update",
