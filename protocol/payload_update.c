@@ -18,21 +18,7 @@
 #include <string.h>
 
 #include "host_cmd.h"
-
-const int64_t TITAN_IMAGE_DESCRIPTOR_MAGIC = 0x5F435344474D495F;
-const int64_t TITAN_IMAGE_DESCRIPTOR_ALIGNMENT = 1 << 16;
-
-static bool find_image_descriptor(uint8_t* image, size_t len) {
-  for (size_t offset = 0; offset + sizeof(int64_t) - 1 < len;
-       offset += TITAN_IMAGE_DESCRIPTOR_ALIGNMENT) {
-    int64_t magic_candidate;
-    memcpy(&magic_candidate, image + offset, sizeof(int64_t));
-    if (magic_candidate == TITAN_IMAGE_DESCRIPTOR_MAGIC) {
-      return true;
-    }
-  }
-  return false;
-}
+#include "payload_info.h"
 
 static int send_payload_update_request_with_command(struct libhoth_device* dev,
                                                     uint8_t command) {
@@ -53,7 +39,7 @@ static int send_payload_update_request_with_command(struct libhoth_device* dev,
 
 enum payload_update_err libhoth_payload_update(struct libhoth_device* dev,
                                                uint8_t* image, size_t size) {
-  if (!find_image_descriptor(image, size)) {
+  if (libhoth_find_image_descriptor(image, size) == NULL) {
     return PAYLOAD_UPDATE_BAD_IMG;
   }
 
