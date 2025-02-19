@@ -85,6 +85,7 @@ cc_library(
     deps = [
         "//transports:libhoth_device",
         ":host_cmd",
+        ":payload_info",
     ],
 )
 
@@ -220,3 +221,21 @@ cc_library(
     srcs = ["progress.c"],
 )
 
+cc_library(
+    name = "payload_info",
+    hdrs = ["payload_info.h"],
+    srcs = ["payload_info.c"],
+)
+
+cc_test(
+    name = "payload_info_test",
+    srcs = ["payload_info_test.cc"],
+    deps = [
+        "@googletest//:gtest",
+        "@googletest//:gtest_main",
+        ":payload_info",
+    ],
+    data = [
+        "//protocol/test:test_data",
+    ],
+)
