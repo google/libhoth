@@ -30,7 +30,6 @@ executable(
     'htool_payload_update.c',
     'htool_raw_host_command.c',
     'htool_spi.c',
-    'htool_spi_proxy.c',
     'htool_statistics.c',
     'htool_target_control.c',
     'htool_target_usb.c',

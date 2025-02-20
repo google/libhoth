@@ -1,4 +1,4 @@
-// Copyright 2022 Google LLC
+// Copyright 2025 Google LLC
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -20,12 +20,8 @@
 // for MIN()
 #include <sys/param.h>
 
-#include "transports/libhoth_device.h"
-#include "host_commands.h"
-#include "htool.h"
-#include "protocol/progress.h"
-#include "htool_spi_proxy.h"
-#include "htool_usb.h"
+#include "host_cmd.h"
+#include "spi_proxy.h"
 
 const uint8_t SPI_OP_PAGE_PROGRAM = 0x02;
 const uint8_t SPI_OP_READ = 0x03;
@@ -153,7 +149,7 @@ static void spi_operation_end_transaction(struct spi_operation* op) {
   spi_operation_read_miso_and_end_transaction(op, NULL, 0);
 }
 
-static int spi_read_chunk(const struct htool_spi_proxy* spi, uint32_t addr,
+static int spi_read_chunk(const struct libhoth_spi_proxy* spi, uint32_t addr,
                           void* buf, size_t len) {
   struct spi_operation op;
   spi_operation_init(&op);
@@ -166,8 +162,8 @@ static int spi_read_chunk(const struct htool_spi_proxy* spi, uint32_t addr,
   return spi_operation_execute(&op, spi->dev);
 }
 
-int htool_spi_proxy_read(const struct htool_spi_proxy* spi, uint32_t addr,
-                         void* buf, size_t len) {
+int libhoth_spi_proxy_read(const struct libhoth_spi_proxy* spi, uint32_t addr,
+                           void* buf, size_t len) {
   uint8_t* cbuf = (uint8_t*)buf;
   while (len > 0) {
     size_t read_len = MIN(len, READ_CHUNK_SIZE);
@@ -182,9 +178,9 @@ int htool_spi_proxy_read(const struct htool_spi_proxy* spi, uint32_t addr,
   return 0;
 }
 
-int htool_spi_proxy_verify(const struct htool_spi_proxy* spi, uint32_t addr,
-                           const void* buf, size_t len,
-                           const struct libhoth_progress* progress) {
+int libhoth_spi_proxy_verify(const struct libhoth_spi_proxy* spi, uint32_t addr,
+                             const void* buf, size_t len,
+                             const struct libhoth_progress* progress) {
   uint8_t read_buf[READ_CHUNK_SIZE];
   const uint8_t* cbuf = (const uint8_t*)buf;
   size_t len_remaining = len;
@@ -219,7 +215,7 @@ int htool_spi_proxy_verify(const struct htool_spi_proxy* spi, uint32_t addr,
 }
 
 static void spi_write_page(struct spi_operation* op,
-                           const struct htool_spi_proxy* spi, uint32_t addr,
+                           const struct libhoth_spi_proxy* spi, uint32_t addr,
                            const uint8_t* buf, size_t len) {
   spi_operation_begin_transaction(op);
   spi_operation_write_mosi(op, &SPI_OP_WRITE_ENABLE,
@@ -238,8 +234,8 @@ static void spi_write_page(struct spi_operation* op,
 }
 
 static void spi_erase_generic(struct spi_operation* op,
-                              const struct htool_spi_proxy* spi, uint32_t addr,
-                              uint8_t opcode) {
+                              const struct libhoth_spi_proxy* spi,
+                              uint32_t addr, uint8_t opcode) {
   spi_operation_begin_transaction(op);
   spi_operation_write_mosi(op, &SPI_OP_WRITE_ENABLE,
                            sizeof(SPI_OP_WRITE_ENABLE));
@@ -254,9 +250,9 @@ static void spi_erase_generic(struct spi_operation* op,
   // SPI_OPERATION host commands
 }
 
-int htool_spi_proxy_init(struct htool_spi_proxy* spi,
-                         struct libhoth_device* dev, bool is_4_byte,
-                         bool enter_exit_4b) {
+int libhoth_spi_proxy_init(struct libhoth_spi_proxy* spi,
+                           struct libhoth_device* dev, bool is_4_byte,
+                           bool enter_exit_4b) {
   spi->dev = dev;
   spi->is_4_byte = is_4_byte;
 
@@ -283,9 +279,9 @@ int htool_spi_proxy_init(struct htool_spi_proxy* spi,
   return status;
 }
 
-int htool_spi_proxy_update(const struct htool_spi_proxy* spi, uint32_t addr,
-                           const void* buf, size_t len,
-                           const struct libhoth_progress* progress) {
+int libhoth_spi_proxy_update(const struct libhoth_spi_proxy* spi, uint32_t addr,
+                             const void* buf, size_t len,
+                             const struct libhoth_progress* progress) {
   const uint32_t SPI_PAGE_SIZE = 256;
 
   // There is only enough space in the buffer for 3 page writes (and associated

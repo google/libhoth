@@ -86,27 +86,6 @@ struct ec_request_reset_target {
 // hard reset when it receives the hardware trigger event.
 #define EC_PRV_CMD_HOTH_ARM_COORDINATED_RESET 0x001A
 
-struct ec_spi_operation_request {
-  // The number of MOSI bytes we're sending
-  uint16_t mosi_len;
-  // The number of MISO bytes we want to receive
-  uint16_t miso_len;
-
-  // Note: The total size of the SPI transaction on the wire is
-  // MAX(mosi_len, miso_len).
-} __attribute__((packed));
-
-// A EC_PRV_CMD_HOTH_SPI_OPERATION request consists of one or more SPI
-// transactions. Each SPI transaction consists of a ec_spi_operation_request
-// header followed by the MOSI bytes (starting with the opcode), and each
-// transaction is laid-out back-to-back with no padding or alignment.
-//
-// The response consists of the first ec_spi_operation_request::miso_len
-// MISO bytes of each SPI transaction, including the dummy MISO bytes sent while
-// the opcode/addr/dummy MOSI bytes are being transmitted. All the MISO bytes
-// are laid-out back-to-back with no header, padding, or alignment.
-#define EC_PRV_CMD_HOTH_SPI_OPERATION 0x0020
-
 #define EC_PRV_CMD_HOTH_CHANNEL_READ 0x0036
 struct ec_channel_read_request {
   uint32_t channel_id;

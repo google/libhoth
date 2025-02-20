@@ -220,3 +220,26 @@ cc_library(
     srcs = ["progress.c"],
 )
 
+cc_library(
+    name = "spi_proxy",
+    hdrs = ["spi_proxy.h"],
+    srcs = ["spi_proxy.c"],
+    deps = [
+        "//transports:libhoth_device",
+        ":progress",
+        ":host_cmd",
+    ],
+)
+
+
+cc_test(
+    name = "spi_proxy_test",
+    srcs = ["spi_proxy_test.cc"],
+    deps = [
+        "@googletest//:gtest",
+        "@googletest//:gtest_main",
+        "//transports:libhoth_device",
+        "//protocol/test:libhoth_device_mock",
+        ":spi_proxy",
+    ],
+)
