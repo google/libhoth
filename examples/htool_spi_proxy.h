@@ -18,16 +18,12 @@
 #include <stddef.h>
 #include <stdint.h>
 
+#include "protocol/spi_proxy.h"
+
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-struct libhoth_progress;
-
-struct htool_spi_proxy {
-  struct libhoth_device* dev;
-  bool is_4_byte;
-};
 
 int htool_spi_proxy_init(struct htool_spi_proxy* spi,
                          struct libhoth_device* dev, bool is_4_byte,
