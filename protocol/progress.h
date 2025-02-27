@@ -34,11 +34,10 @@ struct libhoth_progress_stderr {
 };
 
 void libhoth_progress_stderr_init(struct libhoth_progress_stderr* progress,
-                                const char* action_title);
-
+                                  const char* action_title);
 
 #ifdef __cplusplus
 }
 #endif
 
-#endif 
+#endif
