@@ -28,6 +28,8 @@
 
 // Based on https://chromium.googlesource.com/chromiumos/third_party/cryptoc/+/refs/heads/main/sha256.c
 
+use mutask_subtle::as_mut_bytes;
+
 static K: [u32; 64] = [
     0x428a2f98, 0x71374491, 0xb5c0fbcf, 0xe9b5dba5, 0x3956c25b, 0x59f111f1, 0x923f82a4, 0xab1c5ed5,
     0xd807aa98, 0x12835b01, 0x243185be, 0x550c7dc3, 0x72be5d74, 0x80deb1fe, 0x9bdc06a7, 0xc19bf174,
@@ -65,7 +67,7 @@ impl Sha256 {
 
         let mut src_index = 0;
         while src_index < data.len() {
-            self.block_bytes_mut()[i] = data[src_index];
+            as_mut_bytes(&mut self.block)[i] = data[src_index];
             i += 1;
             src_index += 1;
             if i == 64 {
@@ -75,7 +77,7 @@ impl Sha256 {
         }
     }
 
-    pub const fn finalize(mut self) -> [u8; 32] {
+    pub const fn finalize_words(mut self) -> [u32; 8] {
         let bit_count: u64 = self.count * 8;
 
         // Write byte indicating end of message
@@ -99,17 +101,18 @@ impl Sha256 {
             result[t] = self.state[t].to_be();
             t += 1;
         }
-        unsafe { core::mem::transmute::<[u32; 8], [u8; 32]>(result) }
+        result
     }
-    const fn block_bytes_mut(&mut self) -> &mut [u8; 64] {
-        // Would prefer to use zerocopy, but traits from const aren't possible today.
-        unsafe { core::mem::transmute::<&mut [u32; 16], &mut [u8; 64]>(&mut self.block) }
+
+    pub const fn finalize(self) -> [u8; 32] {
+        zerocopy::transmute!(self.finalize_words())
     }
     const fn pad_remaining_bytes_in_block(&mut self) {
         let bytes_in_block = (self.count as usize) % BLOCK_SIZE_BYTES;
         let mut t = bytes_in_block;
+        let block_bytes = as_mut_bytes(&mut self.block);
         while t < BLOCK_SIZE_BYTES {
-            self.block_bytes_mut()[t] = 0;
+            block_bytes[t] = 0;
             t += 1;
         }
         self.count += (BLOCK_SIZE_BYTES - bytes_in_block) as u64;
