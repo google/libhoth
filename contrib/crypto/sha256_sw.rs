@@ -12,21 +12,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#![no_std]
-
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-//     http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
-
 // Based on https://chromium.googlesource.com/chromiumos/third_party/cryptoc/+/refs/heads/main/sha256.c
+
+#![no_std]
 
 use mutask_subtle::as_mut_bytes;
 
@@ -77,7 +65,33 @@ impl Sha256 {
         }
     }
 
-    pub const fn finalize_words(mut self) -> [u32; 8] {
+    /// Finalize the digest. Returns the little-endian form of the digest as a word array.
+    /// For example, the digest `e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855`
+    /// becomes `[0x7852b855, 0xa495991b, 0x649b934c, 0x27ae41e4, 0x996fb924, 0x9afbf4c8, 0x98fc1c14, 0xe3b0c442]`
+    pub const fn finalize_words_le(mut self) -> [u32; 8] {
+        self.finalize_block();
+        let mut result = [0_u32; 8];
+        let mut t = 0;
+        while t < 8 {
+            result[7 - t] = self.state[t];
+            t += 1;
+        }
+        result
+    }
+
+    /// Finalize the digest. Returns the result in the commonly-used big-endian order.
+    pub const fn finalize(mut self) -> [u8; 32] {
+        self.finalize_block();
+        let mut result = [0_u32; 8];
+        let mut t = 0;
+        while t < 8 {
+            result[t] = self.state[t].to_be();
+            t += 1;
+        }
+        zerocopy::transmute!(result)
+    }
+
+    const fn finalize_block(&mut self) {
         let bit_count: u64 = self.count * 8;
 
         // Write byte indicating end of message
@@ -94,18 +108,6 @@ impl Sha256 {
         self.block[14] = ((bit_count >> 32) as u32).to_be();
         self.block[15] = (bit_count as u32).to_be();
         self.transform();
-
-        let mut result = [0_u32; 8];
-        let mut t = 0;
-        while t < 8 {
-            result[t] = self.state[t].to_be();
-            t += 1;
-        }
-        result
-    }
-
-    pub const fn finalize(self) -> [u8; 32] {
-        zerocopy::transmute!(self.finalize_words())
     }
     const fn pad_remaining_bytes_in_block(&mut self) {
         let bytes_in_block = (self.count as usize) % BLOCK_SIZE_BYTES;
@@ -334,5 +336,17 @@ mod tests {
                 0x36, 0x4a,
             ]
         )
+    }
+    #[test]
+    pub fn test_words_le() {
+        let mut sha = Sha256::new();
+        sha.update(b"");
+        assert_eq!(
+            sha.finalize_words_le(),
+            [
+                0x7852b855, 0xa495991b, 0x649b934c, 0x27ae41e4, 0x996fb924, 0x9afbf4c8, 0x98fc1c14,
+                0xe3b0c442,
+            ]
+        );
     }
 }
