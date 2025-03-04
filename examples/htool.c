@@ -37,7 +37,6 @@
 #include "htool_panic.h"
 #include "htool_payload.h"
 #include "htool_payload_update.h"
-#include "protocol/progress.h"
 #include "htool_raw_host_command.h"
 #include "htool_srtm.h"
 #include "htool_statistics.h"
@@ -46,6 +45,8 @@
 #include "htool_usb.h"
 #include "protocol/authz_record.h"
 #include "protocol/chipinfo.h"
+#include "protocol/controlled_storage.h"
+#include "protocol/progress.h"
 #include "protocol/reboot.h"
 #include "protocol/rot_firmware_version.h"
 #include "protocol/spi_proxy.h"
@@ -392,7 +393,7 @@ static int command_spi_update(const struct htool_invocation* inv) {
   struct libhoth_progress_stderr progress;
   libhoth_progress_stderr_init(&progress, "Erasing/Programming");
   status = libhoth_spi_proxy_update(&spi, args.start, file_data, file_size,
-                                  &progress.progress);
+                                    &progress.progress);
   if (status) {
     goto cleanup2;
   }
@@ -401,7 +402,7 @@ static int command_spi_update(const struct htool_invocation* inv) {
     struct libhoth_progress_stderr progress;
     libhoth_progress_stderr_init(&progress, "Verifying");
     status = libhoth_spi_proxy_verify(&spi, args.start, file_data, file_size,
-                                    &progress.progress);
+                                      &progress.progress);
     if (status) {
       goto cleanup2;
     }
@@ -426,9 +427,9 @@ static int do_target_reset(uint32_t reset_option) {
       .target_id = RESET_TARGET_ID_RSTCTRL0,
       .reset_option = reset_option,
   };
-  return libhoth_hostcmd_exec(dev,
-                      EC_CMD_BOARD_SPECIFIC_BASE + EC_PRV_CMD_HOTH_RESET_TARGET,
-                      0, &req, sizeof(req), NULL, 0, NULL);
+  return libhoth_hostcmd_exec(
+      dev, EC_CMD_BOARD_SPECIFIC_BASE + EC_PRV_CMD_HOTH_RESET_TARGET, 0, &req,
+      sizeof(req), NULL, 0, NULL);
 }
 
 static int command_target_reset_on(const struct htool_invocation* inv) {
@@ -488,8 +489,8 @@ static int command_flash_spi_info(const struct htool_invocation* inv) {
     return -1;
   }
   struct ec_response_flash_spi_info response;
-  int status = libhoth_hostcmd_exec(dev, EC_CMD_FLASH_SPI_INFO, /*version=*/0, NULL, 0,
-                            &response, sizeof(response), NULL);
+  int status = libhoth_hostcmd_exec(dev, EC_CMD_FLASH_SPI_INFO, /*version=*/0,
+                                    NULL, 0, &response, sizeof(response), NULL);
   if (status) {
     return -1;
   }
@@ -560,8 +561,9 @@ static int command_srtm(const struct htool_invocation* inv) {
     return -1;
   }
 
-  return libhoth_hostcmd_exec(dev, EC_CMD_BOARD_SPECIFIC_BASE + EC_PRV_CMD_HOTH_SRTM,
-                      /*version=*/0, &request, sizeof(request), NULL, 0, NULL);
+  return libhoth_hostcmd_exec(
+      dev, EC_CMD_BOARD_SPECIFIC_BASE + EC_PRV_CMD_HOTH_SRTM,
+      /*version=*/0, &request, sizeof(request), NULL, 0, NULL);
 }
 
 struct libhoth_device* htool_libhoth_device(void) {
@@ -620,6 +622,115 @@ int htool_external_usb_host_check_presence(const struct htool_invocation* inv) {
     printf("External USB host: Presence unknown(%u)\n", response.status);
     return -1;
   }
+}
+
+int htool_controlled_storage_write(const struct htool_invocation* inv) {
+  struct libhoth_device* dev = htool_libhoth_device();
+
+  if (!dev) {
+    return -1;
+  }
+
+  uint32_t slot;
+  const char* source_file;
+
+  if (htool_get_param_u32(inv, "slot", &slot) ||
+      htool_get_param_string(inv, "source-file", &source_file)) {
+    return -1;
+  }
+
+  int fd = open(source_file, O_RDONLY, 0);
+  if (fd == -1) {
+    fprintf(stderr, "Error opening file %s: %s\n", source_file,
+            strerror(errno));
+    return -1;
+  }
+  struct stat statbuf;
+  if (fstat(fd, &statbuf)) {
+    fprintf(stderr, "fstat error: %s\n", strerror(errno));
+    goto cleanup;
+  }
+  if (statbuf.st_size > SIZE_MAX) {
+    fprintf(stderr, "file too large\n");
+    goto cleanup;
+  }
+  size_t file_size = statbuf.st_size;
+  uint8_t* file_data = mmap(NULL, file_size, PROT_READ, MAP_PRIVATE, fd, 0);
+
+  if (file_data == NULL) {
+    goto cleanup;
+  }
+
+  int ret = libhoth_controlled_storage_write(dev, slot, file_data, file_size);
+  munmap(file_data, file_size);
+
+cleanup:
+  close(fd);
+  return ret;
+}
+
+int htool_controlled_storage_read(const struct htool_invocation* inv) {
+  struct libhoth_device* dev = htool_libhoth_device();
+
+  if (!dev) {
+    return -1;
+  }
+
+  uint32_t slot;
+
+  if (htool_get_param_u32(inv, "slot", &slot)) {
+    return -1;
+  }
+
+  const char* dest_file;
+  bool has_file = (htool_get_param_string(inv, "dest-file", &dest_file) == 0) &&
+                  strlen(dest_file) > 0;
+
+  struct ec_payload_controlled_storage payload;
+  size_t payload_len;
+  if (libhoth_controlled_storage_read(dev, slot, &payload, &payload_len) != 0) {
+    fprintf(stderr, "Unable to read from controlled storage.\n");
+    return -1;
+  }
+
+  if (has_file) {
+    int fd = open(dest_file, O_WRONLY | O_CREAT | O_TRUNC, 0644);
+    if (fd == -1) {
+      fprintf(stderr, "Error opening file %s: %s\n", dest_file,
+              strerror(errno));
+      return -1;
+    }
+
+    if (write(fd, payload.data, payload_len) != payload_len) {
+      fprintf(stderr, "Failed to write payload to file: %s\n", dest_file);
+      close(fd);
+      return -1;
+    }
+    close(fd);
+  } else {
+    printf("Controlled storage contents:\n  ");
+    for (size_t i = 0; i < payload_len; i++) {
+      printf("%02x", payload.data[i]);
+    }
+    printf("\n");
+  }
+  return 0;
+}
+
+int htool_controlled_storage_delete(const struct htool_invocation* inv) {
+  struct libhoth_device* dev = htool_libhoth_device();
+
+  if (!dev) {
+    return -1;
+  }
+
+  uint32_t slot;
+
+  if (htool_get_param_u32(inv, "slot", &slot)) {
+    return -1;
+  }
+
+  return libhoth_controlled_storage_delete(dev, slot);
 }
 
 static const struct htool_cmd CMDS[] = {
@@ -1046,6 +1157,46 @@ static const struct htool_cmd CMDS[] = {
                  .desc = "Offset to read verify data from"},
                 {}},
         .func = command_jtag_operation_run,
+    },
+    {
+        .verbs = (const char*[]){"storage", "read", NULL},
+        .desc = "Read from the controlled storage",
+        .params = (const struct htool_param[]){{.type = HTOOL_FLAG_VALUE,
+                                                .ch = 's',
+                                                .name = "slot",
+                                                .default_value = "0",
+                                                .desc = "slot"},
+                                               {
+                                                   .type = HTOOL_POSITIONAL,
+                                                   .name = "dest-file",
+                                                   .default_value = "",
+                                               },
+                                               {}},
+        .func = htool_controlled_storage_read,
+    },
+    {
+        .verbs = (const char*[]){"storage", "write", NULL},
+        .desc = "Write to the controlled storage",
+        .params = (const struct htool_param[]){{.type = HTOOL_FLAG_VALUE,
+                                                .ch = 's',
+                                                .name = "slot",
+                                                .default_value = "0",
+                                                .desc = "slot"},
+                                               {.type = HTOOL_POSITIONAL,
+                                                .name = "source-file"},
+                                               {}},
+        .func = htool_controlled_storage_write,
+    },
+    {
+        .verbs = (const char*[]){"storage", "delete", NULL},
+        .desc = "Delete from the controlled storage",
+        .params = (const struct htool_param[]){{.type = HTOOL_FLAG_VALUE,
+                                                .ch = 's',
+                                                .name = "slot",
+                                                .default_value = "0",
+                                                .desc = "slot"},
+                                               {}},
+        .func = htool_controlled_storage_delete,
     },
     {},
 };
