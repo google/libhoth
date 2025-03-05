@@ -51,7 +51,7 @@ static int i2c_detect(struct libhoth_device *dev,
 
   printf("Detected %u devices on bus.\n", response.devices_count);
   if (response.devices_count) {
-    uint8_t device_list[response.devices_count];
+    uint8_t device_list[I2C_DETECT_MAX_DEVICES];
     libhoth_i2c_device_list(response.devices_mask, response.devices_count,
                             device_list);
     for (uint16_t i = 0; i < response.devices_count; i++) {
