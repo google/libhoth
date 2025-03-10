@@ -17,6 +17,8 @@
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
 
+#include <cstdint>
+
 #include "test/libhoth_device_mock.h"
 
 using ::testing::_;
@@ -54,7 +56,7 @@ TEST_F(LibHothTest, i2c_detect_test) {
   EXPECT_EQ(resp.devices_mask[0], ex_resp.devices_mask[0]);
   EXPECT_EQ(resp.devices_mask[1], ex_resp.devices_mask[1]);
 
-  uint8_t device_list[resp.devices_count] = {0};
+  uint8_t device_list[I2C_DETECT_MAX_DEVICES] = {0};
   libhoth_i2c_device_list(resp.devices_mask, resp.devices_count, device_list);
 
   EXPECT_EQ(device_list[0], 5);
@@ -87,6 +89,10 @@ TEST_F(LibHothTest, i2c_transfer_test) {
   struct ec_response_i2c_transfer resp;
   EXPECT_EQ(libhoth_i2c_transfer(&hoth_dev_, &xfer, &resp), LIBHOTH_OK);
 
-  EXPECT_EQ(resp.bus_response, ex_resp.bus_response);
+  // EXPECT_EQ does funny things with its arguments and may cause them to
+  // lose their attributes.  This can cause test failures due to unaligned
+  // access, so we explicitly add casts here.
+  EXPECT_EQ(static_cast<uint16_t>(resp.bus_response),
+            static_cast<uint16_t>(ex_resp.bus_response));
   EXPECT_EQ(resp.read_bytes, ex_resp.read_bytes);
 }
