@@ -212,6 +212,7 @@ cc_test(
         "//transports:libhoth_device",
         "//protocol/test:libhoth_device_mock",
         ":authz_record",
+        ":chipinfo",
     ],
 )
 
