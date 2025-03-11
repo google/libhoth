@@ -89,10 +89,10 @@ TEST_F(LibHothTest, i2c_transfer_test) {
   struct ec_response_i2c_transfer resp;
   EXPECT_EQ(libhoth_i2c_transfer(&hoth_dev_, &xfer, &resp), LIBHOTH_OK);
 
+  EXPECT_EQ(resp.bus_response, ex_resp.bus_response);
   // EXPECT_EQ does funny things with its arguments and may cause them to
   // lose their attributes.  This can cause test failures due to unaligned
   // access, so we explicitly add casts here.
-  EXPECT_EQ(static_cast<uint16_t>(resp.bus_response),
-            static_cast<uint16_t>(ex_resp.bus_response));
-  EXPECT_EQ(resp.read_bytes, ex_resp.read_bytes);
+  EXPECT_EQ(static_cast<uint16_t>(resp.read_bytes),
+            static_cast<uint16_t>(ex_resp.read_bytes));
 }
