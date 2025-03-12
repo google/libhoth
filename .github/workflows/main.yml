@@ -40,6 +40,10 @@ jobs:
         run: |
           bazel build --copt="-Werror" ...
 
+      - name: Build htool with D-Bus
+        run: |
+          bazel build --define dbus_backend=true  //examples:htool
+
       - name: Bazel tests
         run: |
           bazel test ...
