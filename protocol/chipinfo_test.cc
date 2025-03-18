@@ -24,7 +24,7 @@ using ::testing::DoAll;
 using ::testing::Return;
 
 TEST_F(LibHothTest, chipinfo_test) {
-  struct ec_response_chip_info chipinfo_exp;
+  struct ec_response_chip_info chipinfo_exp = {};
 
   chipinfo_exp.hardware_identity = 0xABCD1234;
   chipinfo_exp.hardware_category = 1234;
