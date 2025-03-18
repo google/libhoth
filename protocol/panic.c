@@ -199,7 +199,7 @@ int libhoth_get_panic(struct libhoth_device* dev,
     };
 
     int ret =
-        hostcmd_exec(dev, cmd, 0, &req, sizeof(req), dest, chunk_size, &rlen);
+        libhoth_hostcmd_exec(dev, cmd, 0, &req, sizeof(req), dest, chunk_size, &rlen);
 
     if (ret) {
       return -1;
@@ -222,7 +222,7 @@ int libhoth_clear_persistent_panic_info(struct libhoth_device* dev) {
   const uint16_t cmd =
       EC_CMD_BOARD_SPECIFIC_BASE + EC_PRV_CMD_HOTH_PERSISTENT_PANIC_INFO;
 
-  if (hostcmd_exec(dev, cmd, 0, &req, sizeof(req), NULL, 0, &rlen)) {
+  if (libhoth_hostcmd_exec(dev, cmd, 0, &req, sizeof(req), NULL, 0, &rlen)) {
     return -1;
   }
 

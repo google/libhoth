@@ -193,7 +193,7 @@ static int command_authz_host_command_build(
   }
 
   struct ec_authorized_command_get_nonce_response nonce_resp;
-  status = hostcmd_exec(
+  status = libhoth_hostcmd_exec(
       dev, EC_CMD_BOARD_SPECIFIC_BASE + EC_PRV_CMD_HOTH_GET_AUTHZ_COMMAND_NONCE,
       /*version=*/0, NULL, 0, &nonce_resp, sizeof(nonce_resp), NULL);
   if (status != 0) {
@@ -225,7 +225,7 @@ static int command_authz_host_command_send(const struct htool_invocation* inv) {
     return -1;
   }
 
-  status = hostcmd_exec(
+  status = libhoth_hostcmd_exec(
       dev, EC_CMD_BOARD_SPECIFIC_BASE + EC_PRV_CMD_HOTH_AUTHZ_COMMAND,
       /*version=*/0, &request, sizeof(request), NULL, 0, NULL);
   if (status != 0) {
@@ -426,7 +426,7 @@ static int do_target_reset(uint32_t reset_option) {
       .target_id = RESET_TARGET_ID_RSTCTRL0,
       .reset_option = reset_option,
   };
-  return hostcmd_exec(dev,
+  return libhoth_hostcmd_exec(dev,
                       EC_CMD_BOARD_SPECIFIC_BASE + EC_PRV_CMD_HOTH_RESET_TARGET,
                       0, &req, sizeof(req), NULL, 0, NULL);
 }
@@ -488,7 +488,7 @@ static int command_flash_spi_info(const struct htool_invocation* inv) {
     return -1;
   }
   struct ec_response_flash_spi_info response;
-  int status = hostcmd_exec(dev, EC_CMD_FLASH_SPI_INFO, /*version=*/0, NULL, 0,
+  int status = libhoth_hostcmd_exec(dev, EC_CMD_FLASH_SPI_INFO, /*version=*/0, NULL, 0,
                             &response, sizeof(response), NULL);
   if (status) {
     return -1;
@@ -517,7 +517,7 @@ static int command_arm_coordinated_reset(const struct htool_invocation* inv) {
     return -1;
   }
 
-  return hostcmd_exec(
+  return libhoth_hostcmd_exec(
       dev, EC_CMD_BOARD_SPECIFIC_BASE + EC_PRV_CMD_HOTH_ARM_COORDINATED_RESET,
       /*version=*/0, NULL, 0, NULL, 0, NULL);
 }
@@ -528,7 +528,7 @@ static int command_passthrough_disable(const struct htool_invocation* inv) {
     return -1;
   }
 
-  return hostcmd_exec(
+  return libhoth_hostcmd_exec(
       dev, EC_CMD_BOARD_SPECIFIC_BASE + EC_PRV_CMD_HOTH_SPS_PASSTHROUGH_DISABLE,
       /*version=*/0, NULL, 0, NULL, 0, NULL);
 }
@@ -539,7 +539,7 @@ static int command_passthrough_enable(const struct htool_invocation* inv) {
     return -1;
   }
 
-  return hostcmd_exec(
+  return libhoth_hostcmd_exec(
       dev, EC_CMD_BOARD_SPECIFIC_BASE + EC_PRV_CMD_HOTH_SPS_PASSTHROUGH_ENABLE,
       /*version=*/0, NULL, 0, NULL, 0, NULL);
 }
@@ -560,7 +560,7 @@ static int command_srtm(const struct htool_invocation* inv) {
     return -1;
   }
 
-  return hostcmd_exec(dev, EC_CMD_BOARD_SPECIFIC_BASE + EC_PRV_CMD_HOTH_SRTM,
+  return libhoth_hostcmd_exec(dev, EC_CMD_BOARD_SPECIFIC_BASE + EC_PRV_CMD_HOTH_SRTM,
                       /*version=*/0, &request, sizeof(request), NULL, 0, NULL);
 }
 

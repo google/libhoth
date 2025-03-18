@@ -27,7 +27,7 @@ static int send_payload_update_request_with_command(struct libhoth_device* dev,
   request.offset = 0;
   request.len = 0;
 
-  int ret = hostcmd_exec(
+  int ret = libhoth_hostcmd_exec(
       dev, EC_CMD_BOARD_SPECIFIC_BASE + EC_PRV_CMD_HOTH_PAYLOAD_UPDATE, 0,
       &request, sizeof(request), NULL, 0, NULL);
   if (ret != 0) {
@@ -81,7 +81,7 @@ enum payload_update_err libhoth_payload_update(struct libhoth_device* dev,
     memcpy(buffer, &request, sizeof(request));
     memcpy(buffer + sizeof(request), image + offset, chunk_size);
 
-    int ret = hostcmd_exec(
+    int ret = libhoth_hostcmd_exec(
         dev, EC_CMD_BOARD_SPECIFIC_BASE + EC_PRV_CMD_HOTH_PAYLOAD_UPDATE, 0,
         buffer, sizeof(request) + chunk_size, NULL, 0, NULL);
     if (ret != 0) {
@@ -109,7 +109,7 @@ int libhoth_payload_update_getstatus(
   request.len = 0;
 
   size_t rlen = 0;
-  int ret = hostcmd_exec(
+  int ret = libhoth_hostcmd_exec(
       dev, EC_CMD_BOARD_SPECIFIC_BASE + EC_PRV_CMD_HOTH_PAYLOAD_UPDATE, 0,
       &request, sizeof(request), update_status, sizeof(*update_status), &rlen);
 
