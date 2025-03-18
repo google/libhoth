@@ -111,7 +111,7 @@ int command_raw_host_command(const struct htool_invocation* inv) {
       return rv;
     }
 
-    uint8_t checksum = calculate_ec_command_checksum(&req, sizeof(req),
+    uint8_t checksum = libhoth_calculate_checksum(&req, sizeof(req),
                                                      req_payload, req.data_len);
     if (checksum != 0) {
       fprintf(stderr, "bad request checksum; expected 0, got %d\n", checksum);
@@ -126,7 +126,7 @@ int command_raw_host_command(const struct htool_invocation* inv) {
     uint8_t resp_payload[RESP_BUF_LEN] = {0};
 
     size_t actual_resp_size = 0;
-    rv = hostcmd_exec(dev, req.command, req.command_version, req_payload,
+    rv = libhoth_hostcmd_exec(dev, req.command, req.command_version, req_payload,
                       req.data_len, resp_payload, RESP_BUF_LEN,
                       &actual_resp_size);
     if (rv && rv < HTOOL_ERROR_HOST_COMMAND_START) {
@@ -137,7 +137,7 @@ int command_raw_host_command(const struct htool_invocation* inv) {
     }
 
     resp.data_len = actual_resp_size;
-    resp.checksum = calculate_ec_command_checksum(
+    resp.checksum = libhoth_calculate_checksum(
         &resp, sizeof(resp), resp_payload, actual_resp_size);
 
     rv = fd_write_exact(STDOUT_FILENO, &resp, sizeof(resp));

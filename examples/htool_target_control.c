@@ -39,7 +39,7 @@ int target_control_perform_action(
   };
 
   size_t response_length = 0;
-  int ret = hostcmd_exec(
+  int ret = libhoth_hostcmd_exec(
       dev, EC_CMD_BOARD_SPECIFIC_BASE + EC_PRV_CMD_HOTH_TARGET_CONTROL,
       /*version=*/0, &request, sizeof(request), response, sizeof(*response),
       &response_length);

@@ -53,7 +53,7 @@ static int jtag_read_idcode(struct libhoth_device *dev,
 
   struct ec_response_jtag_read_idcode_operation response;
   size_t response_length = 0;
-  int ret = hostcmd_exec(
+  int ret = libhoth_hostcmd_exec(
       dev, EC_CMD_BOARD_SPECIFIC_BASE + EC_PRV_CMD_HOTH_JTAG_OPERATION,
       /*version=*/0, &request, sizeof(request), &response, sizeof(response),
       &response_length);
@@ -159,7 +159,7 @@ static int jtag_test_bypass(struct libhoth_device *dev,
 
   struct ec_response_jtag_test_bypass_operation response;
   size_t response_len = 0;
-  ret = hostcmd_exec(
+  ret = libhoth_hostcmd_exec(
       dev, EC_CMD_BOARD_SPECIFIC_BASE + EC_PRV_CMD_HOTH_JTAG_OPERATION,
       /*version=*/0, &request, sizeof(request), &response, sizeof(response),
       &response_len);
@@ -215,7 +215,7 @@ static int jtag_program_and_verify_pld(struct libhoth_device *dev,
   };
 
   size_t response_length = 0;
-  int ret = hostcmd_exec(
+  int ret = libhoth_hostcmd_exec(
       dev, EC_CMD_BOARD_SPECIFIC_BASE + EC_PRV_CMD_HOTH_JTAG_OPERATION,
       /*version=*/0, &request, sizeof(request), /*resp_buf=*/NULL,
       /*resp_buf_size=*/0, &response_length);
@@ -259,7 +259,7 @@ static int jtag_verify_pld(struct libhoth_device *dev,
   };
 
   size_t response_length = 0;
-  int ret = hostcmd_exec(
+  int ret = libhoth_hostcmd_exec(
       dev, EC_CMD_BOARD_SPECIFIC_BASE + EC_PRV_CMD_HOTH_JTAG_OPERATION,
       /*version=*/0, &request, sizeof(request), /*resp_buf=*/NULL,
       /*resp_buf_size=*/0, &response_length);

@@ -56,7 +56,7 @@ void hex_dump(FILE* out, const void* buffer, size_t size) {
   }
 }
 
-uint8_t calculate_ec_command_checksum(const void* header, size_t header_size,
+uint8_t libhoth_calculate_checksum(const void* header, size_t header_size,
                                       const void* data, size_t data_size) {
   size_t i;
   uint8_t sum = 0;
@@ -100,7 +100,7 @@ static int populate_ec_request_header(uint16_t command, uint8_t command_version,
   request_header->reserved = 0;
   request_header->data_len = (uint16_t)request_size;
   // Note that we've set `checksum` to zero earlier, so this is deterministic.
-  request_header->checksum = calculate_ec_command_checksum(
+  request_header->checksum = libhoth_calculate_checksum(
       request_header, sizeof(*request_header), request, request_size);
 
   return 0;
@@ -137,7 +137,7 @@ static int validate_ec_response_header(
   }
 
   response_checksum =
-      calculate_ec_command_checksum(response_header, sizeof(*response_header),
+      libhoth_calculate_checksum(response_header, sizeof(*response_header),
                                     response, response_header->data_len);
 
   // Since this checksum includes the `checksum` field in `response_header`, it
@@ -154,7 +154,7 @@ static int validate_ec_response_header(
   return 0;
 }
 
-int hostcmd_exec(struct libhoth_device* dev, uint16_t command, uint8_t version,
+int libhoth_hostcmd_exec(struct libhoth_device* dev, uint16_t command, uint8_t version,
                  const void* req_payload, size_t req_payload_size,
                  void* resp_buf, size_t resp_buf_size, size_t* out_resp_size) {
   struct {

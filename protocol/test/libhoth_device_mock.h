@@ -65,7 +65,7 @@ ACTION_P(CopyResp, response, resp_size) {
 
   std::memcpy(resp.payload_buf, response, resp_size);
 
-  resp.hdr.checksum = calculate_ec_command_checksum(
+  resp.hdr.checksum = libhoth_calculate_checksum(
       &resp.hdr, sizeof(resp.hdr), &resp.payload_buf, resp_size);
 
   std::memcpy(arg1, &resp, full_resp_size);

@@ -44,7 +44,7 @@ static int get_channel_status(struct libhoth_device *dev,
   };
   struct ec_channel_status_response resp;
 
-  int status = hostcmd_exec(
+  int status = libhoth_hostcmd_exec(
       dev, EC_CMD_BOARD_SPECIFIC_BASE + EC_PRV_CMD_HOTH_CHANNEL_STATUS,
       /*version=*/0, &req, sizeof(req), &resp, sizeof(resp), NULL);
   if (status) {
@@ -99,7 +99,7 @@ static int read_console(struct libhoth_device *dev,
                  "unexpected layout");
 
   size_t response_size = 0;
-  int status = hostcmd_exec(
+  int status = libhoth_hostcmd_exec(
       dev, EC_CMD_BOARD_SPECIFIC_BASE + EC_PRV_CMD_HOTH_CHANNEL_READ,
       /*version=*/0, &req, sizeof(req), &resp, sizeof(resp), &response_size);
   if (status != 0) {
@@ -215,7 +215,7 @@ static int write_console(struct libhoth_device *dev,
   req.req.flags |=
       flags.uart_break ? EC_CHANNEL_WRITE_REQUEST_FLAG_SEND_BREAK : 0;
 
-  int status = hostcmd_exec(
+  int status = libhoth_hostcmd_exec(
       dev, EC_CMD_BOARD_SPECIFIC_BASE + EC_PRV_CMD_HOTH_CHANNEL_WRITE,
       /*version=*/1, &req, sizeof(req.req) + numWrite, NULL, 0, NULL);
 
@@ -238,7 +238,7 @@ static int get_uart_config(struct libhoth_device *dev,
   struct ec_channel_uart_config_get_req req = {
       .channel_id = opts->channel_id,
   };
-  return hostcmd_exec(
+  return libhoth_hostcmd_exec(
       dev, EC_CMD_BOARD_SPECIFIC_BASE + EC_PRV_CMD_HOTH_CHANNEL_UART_CONFIG_GET,
       /*version=*/0, &req, sizeof(req), resp, sizeof(*resp), NULL);
 }
@@ -249,7 +249,7 @@ static int set_uart_config(struct libhoth_device *dev,
       .channel_id = opts->channel_id,
       .config = *config,
   };
-  return hostcmd_exec(
+  return libhoth_hostcmd_exec(
       dev, EC_CMD_BOARD_SPECIFIC_BASE + EC_PRV_CMD_HOTH_CHANNEL_UART_CONFIG_SET,
       /*version=*/0, &req, sizeof(req), NULL, 0, NULL);
 }
@@ -372,7 +372,7 @@ int htool_console_run(struct libhoth_device *dev,
 
 int htool_console_snapshot_legacy(struct libhoth_device *dev) {
   size_t response_bytes_written;
-  int status = hostcmd_exec(dev, EC_CMD_CONSOLE_REQUEST, 0, NULL, 0, NULL, 0,
+  int status = libhoth_hostcmd_exec(dev, EC_CMD_CONSOLE_REQUEST, 0, NULL, 0, NULL, 0,
                             &response_bytes_written);
   if (status != LIBHOTH_OK) {
     fprintf(stderr, "EC_CMD_CONSOLE_REQUEST status: %d\n", status);
@@ -384,7 +384,7 @@ int htool_console_snapshot_legacy(struct libhoth_device *dev) {
       MAILBOX_SIZE - sizeof(struct ec_host_response);
   while (true) {
     char buf[MAILBOX_SIZE];
-    status = hostcmd_exec(dev, EC_CMD_CONSOLE_READ, 0, &read_request,
+    status = libhoth_hostcmd_exec(dev, EC_CMD_CONSOLE_READ, 0, &read_request,
                           sizeof(read_request), buf, max_bytes_per_read,
                           &response_bytes_written);
     if (status != LIBHOTH_OK) {

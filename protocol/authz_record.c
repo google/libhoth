@@ -24,7 +24,7 @@ int libhoth_authz_record_erase(struct libhoth_device* dev) {
       .index = 0,
       .erase = 1,
   };
-  return hostcmd_exec(
+  return libhoth_hostcmd_exec(
       dev, EC_CMD_BOARD_SPECIFIC_BASE + EC_PRV_CMD_HOTH_SET_AUTHZ_RECORD,
       /*version=*/0, &request, sizeof(request), NULL, 0, NULL);
 }
@@ -32,7 +32,7 @@ int libhoth_authz_record_erase(struct libhoth_device* dev) {
 int libhoth_authz_record_read(struct libhoth_device* dev,
                               struct ec_authz_record_get_response* resp) {
   struct ec_authz_record_get_request request = {.index = 0};
-  return hostcmd_exec(
+  return libhoth_hostcmd_exec(
       dev, EC_CMD_BOARD_SPECIFIC_BASE + EC_PRV_CMD_HOTH_GET_AUTHZ_RECORD,
       /*version=*/0, &request, sizeof(request), resp, sizeof(*resp), NULL);
 }
@@ -57,7 +57,7 @@ int libhoth_authz_record_build(struct libhoth_device* dev,
   record->dev_id_1 = (chipinfo_resp.hardware_identity >> 32);
 
   struct ec_authz_record_get_nonce_response nonce_resp;
-  status = hostcmd_exec(
+  status = libhoth_hostcmd_exec(
       dev, EC_CMD_BOARD_SPECIFIC_BASE + EC_PRV_CMD_HOTH_GET_AUTHZ_RECORD_NONCE,
       /*version=*/0, NULL, 0, &nonce_resp, sizeof(nonce_resp), NULL);
   if (status != 0) {
@@ -98,7 +98,7 @@ int libhoth_authz_record_set(struct libhoth_device* dev,
 
   memcpy(&request.record, record, sizeof(struct authorization_record));
 
-  return hostcmd_exec(
+  return libhoth_hostcmd_exec(
       dev, EC_CMD_BOARD_SPECIFIC_BASE + EC_PRV_CMD_HOTH_SET_AUTHZ_RECORD,
       /*version=*/0, &request, sizeof(request), NULL, 0, NULL);
 }
