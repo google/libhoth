@@ -51,7 +51,7 @@ TEST_F(LibHothTest, authz_erase_test) {
 }
 
 TEST_F(LibHothTest, authz_read_test) {
-  struct ec_authz_record_get_response resp;
+  struct ec_authz_record_get_response resp = {};
   resp.index = 0;
   resp.valid = 1;
 
@@ -77,7 +77,7 @@ TEST_F(LibHothTest, authz_read_test) {
 }
 
 TEST_F(LibHothTest, authz_build_test) {
-  struct ec_response_chip_info chipinfo;
+  struct ec_response_chip_info chipinfo = {};
   chipinfo.hardware_identity = 0xABCD;
   chipinfo.hardware_identity |= (0x1234UL << 32);
 
@@ -103,7 +103,7 @@ TEST_F(LibHothTest, authz_build_test) {
           DoAll(CopyResp(&nonce_resp, sizeof(nonce_resp)), Return(LIBHOTH_OK)));
 
   uint32_t cap = 123;
-  struct authorization_record record;
+  struct authorization_record record = {};
 
   EXPECT_EQ(libhoth_authz_record_build(&hoth_dev_, cap, &record), LIBHOTH_OK);
   EXPECT_EQ(record.version, 1);
@@ -115,7 +115,7 @@ TEST_F(LibHothTest, authz_build_test) {
 }
 
 TEST_F(LibHothTest, authz_nonce_fail_test) {
-  struct ec_response_chip_info chipinfo;
+  struct ec_response_chip_info chipinfo = {};
   chipinfo.hardware_identity = 0xABCD;
   chipinfo.hardware_identity |= (0x1234UL << 32);
 
