@@ -25,7 +25,7 @@ using ::testing::Return;
 using ::testing::StrEq;
 
 TEST_F(LibHothTest, firmware_version_test) {
-  struct ec_response_get_version exp_ver;
+  struct ec_response_get_version exp_ver = {};
 
   strcpy(exp_ver.version_string_ro, "0.0.343/36e0ecd5 ok");
   strcpy(exp_ver.version_string_rw, "0.6.2024102310/platform ok");

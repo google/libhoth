@@ -25,7 +25,7 @@ using ::testing::Return;
 using ::testing::StrEq;
 
 TEST_F(LibHothTest, statistics_test) {
-  struct ec_response_statistics exp_stat;
+  struct ec_response_statistics exp_stat = {};
 
   exp_stat.valid_words = 0;
   exp_stat.time_since_hoth_boot_us = 100;
@@ -41,7 +41,7 @@ TEST_F(LibHothTest, statistics_test) {
       .WillOnce(
           DoAll(CopyResp(&exp_stat, sizeof(exp_stat)), Return(LIBHOTH_OK)));
 
-  struct ec_response_statistics stat;
+  struct ec_response_statistics stat = {};
   EXPECT_EQ(libhoth_get_statistics(&hoth_dev_, &stat), LIBHOTH_OK);
 
   EXPECT_EQ(exp_stat.valid_words, stat.valid_words);
