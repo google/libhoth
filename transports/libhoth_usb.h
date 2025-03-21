@@ -16,8 +16,10 @@
 #define _LIBHOTH_LIBHOTH_USB_H_
 
 #include <libusb.h>
+#include <stdbool.h>
 #include <stddef.h>
 #include <stdint.h>
+#include <string.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -36,6 +38,12 @@ struct libhoth_usb_device_init_options {
   uint32_t prng_seed;
 };
 
+struct libhoth_usb_loc {
+  uint8_t bus;
+  uint8_t ports[16];
+  int num_ports;
+};
+
 // Note that the options struct only needs to to live for the duration of
 // this function call. It can be destroyed once libhoth_usb_open returns.
 int libhoth_usb_open(const struct libhoth_usb_device_init_options* options,
@@ -46,6 +54,12 @@ int libhoth_usb_close(struct libhoth_device* dev);
 int libhoth_usb_receive_response(struct libhoth_device* dev, void* response,
                                  size_t max_response_size, size_t* actual_size,
                                  int timeout_ms);
+
+bool libhoth_device_is_hoth(const struct libusb_device_descriptor* dev);
+int libhoth_usb_get_device(libusb_context* ctx,
+                           const struct libhoth_usb_loc* usb_loc,
+                           libusb_device** out);
+int libhoth_get_usb_loc(libusb_device* dev, struct libhoth_usb_loc* result);
 
 #ifdef __cplusplus
 }

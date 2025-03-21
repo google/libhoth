@@ -23,13 +23,9 @@
 #include <string.h>
 #include <unistd.h>
 
-#include "../transports/libhoth_usb.h"
 #include "host_commands.h"
 #include "htool_cmd.h"
-
-#define HOTH_VENDOR_ID 0x18d1
-#define HOTH_B_PRODUCT_ID 0x5014
-#define HOTH_D_PRODUCT_ID 0x022a
+#include "transports/libhoth_usb.h"
 
 static int enumerate_devices(
     libusb_context* libusb_ctx,
@@ -45,16 +41,15 @@ static int enumerate_devices(
   }
   for (ssize_t i = 0; i < num_devices; i++) {
     struct libusb_device_descriptor device_descriptor;
-
     int rv = libusb_get_device_descriptor(device[i], &device_descriptor);
     if (rv != LIBUSB_SUCCESS) {
       continue;
     }
-    if (device_descriptor.idVendor != HOTH_VENDOR_ID ||
-        (device_descriptor.idProduct != HOTH_B_PRODUCT_ID &&
-         device_descriptor.idProduct != HOTH_D_PRODUCT_ID)) {
+
+    if (!libhoth_device_is_hoth(&device_descriptor)) {
       continue;
     }
+
     callback(cb_param, device[i], &device_descriptor);
   }
 
@@ -62,28 +57,11 @@ static int enumerate_devices(
   return 0;
 }
 
-struct usb_loc {
-  uint8_t bus;
-  uint8_t ports[16];
-  int num_ports;
-};
-
-static int get_usb_loc(libusb_device* dev, struct usb_loc* result) {
-  result->bus = libusb_get_bus_number(dev);
-  int num_ports =
-      libusb_get_port_numbers(dev, result->ports, sizeof(result->ports));
-  if (num_ports < 0) {
-    return num_ports;
-  }
-  result->num_ports = num_ports;
-  return 0;
-}
-
 static void print_device(void* cb_param, libusb_device* dev,
                          const struct libusb_device_descriptor* descriptor) {
   fprintf(stderr, "  ");
-  struct usb_loc loc;
-  int rv = get_usb_loc(dev, &loc);
+  struct libhoth_usb_loc loc;
+  int rv = libhoth_get_usb_loc(dev, &loc);
   if (rv) {
     fprintf(stderr, " (unable to get usb_loc: %s)", libusb_strerror(rv));
   } else {
@@ -201,7 +179,7 @@ static bool expect_u8(const char** s, uint8_t* result) {
   return true;
 }
 
-static int parse_usb_loc(const char* s, struct usb_loc* loc) {
+static int parse_usb_loc(const char* s, struct libhoth_usb_loc* loc) {
   if (!expect_u8(&s, &loc->bus)) {
     fprintf(stderr, "unable to parse usb_loc: Expected 8-bit bus number\n");
     return -1;
@@ -239,9 +217,9 @@ static int parse_usb_loc(const char* s, struct usb_loc* loc) {
 
 bool filter_by_usb_loc(void* cb_param, libusb_device* dev,
                        const struct libusb_device_descriptor* descriptor) {
-  struct usb_loc* desired_loc = (struct usb_loc*)cb_param;
-  struct usb_loc device_loc;
-  int rv = get_usb_loc(dev, &device_loc);
+  struct libhoth_usb_loc* desired_loc = (struct libhoth_usb_loc*)cb_param;
+  struct libhoth_usb_loc device_loc;
+  int rv = libhoth_get_usb_loc(dev, &device_loc);
   if (rv) {
     return false;
   }
@@ -300,7 +278,7 @@ libusb_device* htool_libusb_device(void) {
   }
 
   if (strlen(usb_loc_str) > 0) {
-    struct usb_loc usb_loc;
+    struct libhoth_usb_loc usb_loc;
     rv = parse_usb_loc(usb_loc_str, &usb_loc);
     if (rv) {
       return NULL;
