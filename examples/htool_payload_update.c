@@ -18,14 +18,12 @@
 #include <fcntl.h>
 #include <stdint.h>
 #include <stdio.h>
-#include <stdlib.h>
 #include <string.h>
 #include <sys/mman.h>
 #include <sys/stat.h>
 #include <sys/types.h>
 #include <unistd.h>
 
-#include "host_commands.h"
 #include "htool.h"
 #include "htool_cmd.h"
 #include "protocol/payload_update.h"
@@ -46,6 +44,9 @@ int htool_payload_update(const struct htool_invocation *inv) {
     fprintf(stderr, "Error opening file %s: %s\n", image_file, strerror(errno));
     return -1;
   }
+
+  int retval = -1;
+
   struct stat statbuf;
   if (fstat(fd, &statbuf)) {
     fprintf(stderr, "fstat error: %s\n", strerror(errno));
@@ -62,11 +63,12 @@ int htool_payload_update(const struct htool_invocation *inv) {
     goto cleanup;
   }
 
-  enum payload_update_err ret =
+  enum payload_update_err payload_update_status =
       libhoth_payload_update(dev, image, statbuf.st_size);
-  switch (ret) {
+  switch (payload_update_status) {
     case PAYLOAD_UPDATE_OK:
       fprintf(stderr, "Payload update finished\n");
+      retval = 0;
       break;
     case PAYLOAD_UPDATE_BAD_IMG:
       fprintf(stderr, "Not a valid Titan image.\n");
@@ -78,13 +80,13 @@ int htool_payload_update(const struct htool_invocation *inv) {
       fprintf(stderr, "Error when flashing.\n");
       break;
     case PAYLOAD_UPDATE_FINALIZE_FAIL:
-      break;
       fprintf(stderr, "Error when finalizing.\n");
+      break;
     default:
       break;
   }
 
-  ret = munmap(image, statbuf.st_size);
+  int ret = munmap(image, statbuf.st_size);
   if (ret != 0) {
     fprintf(stderr, "munmap error: %d\n", ret);
   }
@@ -94,7 +96,7 @@ cleanup:
   if (ret != 0) {
     fprintf(stderr, "close error: %d\n", ret);
   }
-  return -1;
+  return retval;
 }
 
 const char *payload_update_getstatus_valid_string(uint8_t v) {
