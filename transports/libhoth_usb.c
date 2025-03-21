@@ -280,12 +280,15 @@ enum libusb_error transfer_status_to_error(
 }
 
 bool libhoth_device_is_hoth(const struct libusb_device_descriptor* dev) {
-  return dev->idVendor == HOTH_VENDOR_ID &&
+  return dev && dev->idVendor == HOTH_VENDOR_ID &&
          (dev->idProduct == HOTH_B_PRODUCT_ID ||
           dev->idProduct == HOTH_D_PRODUCT_ID);
 }
 
 int libhoth_get_usb_loc(libusb_device* dev, struct libhoth_usb_loc* result) {
+  if (dev == NULL || result == NULL) {
+    return LIBUSB_ERROR_INVALID_PARAM;
+  }
   result->bus = libusb_get_bus_number(dev);
   int num_ports =
       libusb_get_port_numbers(dev, result->ports, sizeof(result->ports));
@@ -299,6 +302,10 @@ int libhoth_get_usb_loc(libusb_device* dev, struct libhoth_usb_loc* result) {
 int libhoth_usb_get_device(libusb_context* ctx,
                            const struct libhoth_usb_loc* usb_loc,
                            libusb_device** out) {
+  if (ctx == NULL || usb_loc == NULL || out == NULL) {
+    return LIBUSB_ERROR_INVALID_PARAM;
+  }
+
   libusb_device** device;
   struct libhoth_usb_loc loc;
   bool found_device = false;

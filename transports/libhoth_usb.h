@@ -38,9 +38,11 @@ struct libhoth_usb_device_init_options {
   uint32_t prng_seed;
 };
 
+#define LIBHOTH_NUM_PORTS 16
+
 struct libhoth_usb_loc {
   uint8_t bus;
-  uint8_t ports[16];
+  uint8_t ports[LIBHOTH_NUM_PORTS];
   int num_ports;
 };
 
