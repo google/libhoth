@@ -20,6 +20,10 @@
 #include "libhoth_device.h"
 #include "libhoth_usb_device.h"
 
+#define HOTH_VENDOR_ID 0x18d1
+#define HOTH_B_PRODUCT_ID 0x5014
+#define HOTH_D_PRODUCT_ID 0x022a
+
 int libhoth_usb_send_request(struct libhoth_device* dev, const void* request,
                              size_t request_size);
 
@@ -273,4 +277,72 @@ enum libusb_error transfer_status_to_error(
     default:
       return LIBUSB_ERROR_OTHER;
   }
+}
+
+bool libhoth_device_is_hoth(const struct libusb_device_descriptor* dev) {
+  return dev && dev->idVendor == HOTH_VENDOR_ID &&
+         (dev->idProduct == HOTH_B_PRODUCT_ID ||
+          dev->idProduct == HOTH_D_PRODUCT_ID);
+}
+
+int libhoth_get_usb_loc(libusb_device* dev, struct libhoth_usb_loc* result) {
+  if (dev == NULL || result == NULL) {
+    return LIBUSB_ERROR_INVALID_PARAM;
+  }
+  result->bus = libusb_get_bus_number(dev);
+  int num_ports =
+      libusb_get_port_numbers(dev, result->ports, sizeof(result->ports));
+  if (num_ports < 0) {
+    return num_ports;
+  }
+  result->num_ports = num_ports;
+  return 0;
+}
+
+int libhoth_usb_get_device(libusb_context* ctx,
+                           const struct libhoth_usb_loc* usb_loc,
+                           libusb_device** out) {
+  if (ctx == NULL || usb_loc == NULL || out == NULL) {
+    return LIBUSB_ERROR_INVALID_PARAM;
+  }
+
+  libusb_device** device;
+  struct libhoth_usb_loc loc;
+  bool found_device = false;
+
+  ssize_t num_devices = libusb_get_device_list(ctx, &device);
+  if (num_devices < 0) {
+    return num_devices;
+  }
+
+  for (ssize_t i = 0; i < num_devices; i++) {
+    int rev = libhoth_get_usb_loc(device[i], &loc);
+    if (rev) {
+      continue;
+    }
+
+    bool loc_matches = (loc.bus == usb_loc->bus) &&
+                       (loc.num_ports == usb_loc->num_ports) &&
+                       (memcmp(loc.ports, usb_loc->ports, loc.num_ports) == 0);
+
+    if (!loc_matches) {
+      continue;
+    }
+
+    struct libusb_device_descriptor device_descriptor;
+    int rv = libusb_get_device_descriptor(device[i], &device_descriptor);
+    if (rv != LIBUSB_SUCCESS) {
+      continue;
+    }
+
+    if (libhoth_device_is_hoth(&device_descriptor)) {
+      libusb_ref_device(device[i]);
+      found_device = true;
+      *out = device[i];
+      break;
+    }
+  }
+
+  libusb_free_device_list(device, /*unref_devices=*/1);
+  return found_device ? LIBHOTH_OK : LIBHOTH_ERR_INTERFACE_NOT_FOUND;
 }
