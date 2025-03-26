@@ -12,6 +12,7 @@ protocol_srcs = [
   'progress.c',
   'spi_proxy.c',
   'payload_info.c',
+  'controlled_storage.c',
 ]
 
 incdir = include_directories('..')
