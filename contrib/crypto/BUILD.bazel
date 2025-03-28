@@ -23,7 +23,7 @@ rust_library(
     visibility = ["//visibility:public"],
     deps = [
         "@crates//:zerocopy",
-        "@mutask//subtle:mutask-subtle",
+        "@mutask//subtle",
     ],
 )
 
