@@ -23,7 +23,7 @@
 extern "C" {
 #endif
 
-#define EC_PRV_CMD_HOTH_PAYLOAD_STATUS 0x0006
+#define HOTH_PRV_CMD_HOTH_PAYLOAD_STATUS 0x0006
 
 struct payload_status_response_header {
   uint8_t version;

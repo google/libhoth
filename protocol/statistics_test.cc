@@ -25,15 +25,15 @@ using ::testing::Return;
 using ::testing::StrEq;
 
 TEST_F(LibHothTest, statistics_test) {
-  struct ec_response_statistics exp_stat = {};
+  struct hoth_response_statistics exp_stat = {};
 
   exp_stat.valid_words = 0;
   exp_stat.time_since_hoth_boot_us = 100;
   exp_stat.scratch_value = 0x1;
 
   EXPECT_CALL(mock_, send(_,
-                          UsesCommand(EC_CMD_BOARD_SPECIFIC_BASE +
-                                      EC_PRV_CMD_HOTH_GET_STATISTICS),
+                          UsesCommand(HOTH_CMD_BOARD_SPECIFIC_BASE +
+                                      HOTH_PRV_CMD_HOTH_GET_STATISTICS),
                           _))
       .WillOnce(Return(LIBHOTH_OK));
 
@@ -41,7 +41,7 @@ TEST_F(LibHothTest, statistics_test) {
       .WillOnce(
           DoAll(CopyResp(&exp_stat, sizeof(exp_stat)), Return(LIBHOTH_OK)));
 
-  struct ec_response_statistics stat = {};
+  struct hoth_response_statistics stat = {};
   EXPECT_EQ(libhoth_get_statistics(&hoth_dev_, &stat), LIBHOTH_OK);
 
   EXPECT_EQ(exp_stat.valid_words, stat.valid_words);

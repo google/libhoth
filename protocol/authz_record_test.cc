@@ -28,8 +28,8 @@ using ::testing::Return;
 
 TEST_F(LibHothTest, authz_erase_test) {
   EXPECT_CALL(mock_, send(_,
-                          UsesCommand(EC_CMD_BOARD_SPECIFIC_BASE +
-                                      EC_PRV_CMD_HOTH_SET_AUTHZ_RECORD),
+                          UsesCommand(HOTH_CMD_BOARD_SPECIFIC_BASE +
+                                      HOTH_PRV_CMD_HOTH_SET_AUTHZ_RECORD),
                           _))
       .WillOnce(Return(LIBHOTH_OK));
 
@@ -40,8 +40,8 @@ TEST_F(LibHothTest, authz_erase_test) {
   EXPECT_EQ(libhoth_authz_record_erase(&hoth_dev_), LIBHOTH_OK);
 
   EXPECT_CALL(mock_, send(_,
-                          UsesCommand(EC_CMD_BOARD_SPECIFIC_BASE +
-                                      EC_PRV_CMD_HOTH_SET_AUTHZ_RECORD),
+                          UsesCommand(HOTH_CMD_BOARD_SPECIFIC_BASE +
+                                      HOTH_PRV_CMD_HOTH_SET_AUTHZ_RECORD),
                           _))
       .WillOnce(Return(LIBHOTH_OK));
 
@@ -51,22 +51,22 @@ TEST_F(LibHothTest, authz_erase_test) {
 }
 
 TEST_F(LibHothTest, authz_read_test) {
-  struct ec_authz_record_get_response resp = {};
+  struct hoth_authz_record_get_response resp = {};
   resp.index = 0;
   resp.valid = 1;
 
   memset(&resp.record, 0xAB, sizeof(resp.record));
 
   EXPECT_CALL(mock_, send(_,
-                          UsesCommand(EC_CMD_BOARD_SPECIFIC_BASE +
-                                      EC_PRV_CMD_HOTH_GET_AUTHZ_RECORD),
+                          UsesCommand(HOTH_CMD_BOARD_SPECIFIC_BASE +
+                                      HOTH_PRV_CMD_HOTH_GET_AUTHZ_RECORD),
                           _))
       .WillOnce(Return(LIBHOTH_OK));
 
   EXPECT_CALL(mock_, receive)
       .WillOnce(DoAll(CopyResp(&resp, sizeof(resp)), Return(LIBHOTH_OK)));
 
-  struct ec_authz_record_get_response act_resp;
+  struct hoth_authz_record_get_response act_resp;
   EXPECT_EQ(libhoth_authz_record_read(&hoth_dev_, &act_resp), LIBHOTH_OK);
   EXPECT_EQ(resp.index, act_resp.index);
   EXPECT_EQ(resp.valid, act_resp.valid);
@@ -77,23 +77,23 @@ TEST_F(LibHothTest, authz_read_test) {
 }
 
 TEST_F(LibHothTest, authz_build_test) {
-  struct ec_response_chip_info chipinfo = {};
+  struct hoth_response_chip_info chipinfo = {};
   chipinfo.hardware_identity = 0xABCD;
   chipinfo.hardware_identity |= (0x1234UL << 32);
 
-  struct ec_authz_record_get_nonce_response nonce_resp = {};
+  struct hoth_authz_record_get_nonce_response nonce_resp = {};
   nonce_resp.ro_supported_key_id = 1;
   nonce_resp.rw_supported_key_id = 1;
 
   EXPECT_CALL(mock_, send(_,
-                          UsesCommand(EC_CMD_BOARD_SPECIFIC_BASE +
-                                      EC_PRV_CMD_HOTH_CHIP_INFO),
+                          UsesCommand(HOTH_CMD_BOARD_SPECIFIC_BASE +
+                                      HOTH_PRV_CMD_HOTH_CHIP_INFO),
                           _))
       .WillOnce(Return(LIBHOTH_OK));
 
   EXPECT_CALL(mock_, send(_,
-                          UsesCommand(EC_CMD_BOARD_SPECIFIC_BASE +
-                                      EC_PRV_CMD_HOTH_GET_AUTHZ_RECORD_NONCE),
+                          UsesCommand(HOTH_CMD_BOARD_SPECIFIC_BASE +
+                                      HOTH_PRV_CMD_HOTH_GET_AUTHZ_RECORD_NONCE),
                           _));
 
   EXPECT_CALL(mock_, receive)
@@ -115,23 +115,23 @@ TEST_F(LibHothTest, authz_build_test) {
 }
 
 TEST_F(LibHothTest, authz_nonce_fail_test) {
-  struct ec_response_chip_info chipinfo = {};
+  struct hoth_response_chip_info chipinfo = {};
   chipinfo.hardware_identity = 0xABCD;
   chipinfo.hardware_identity |= (0x1234UL << 32);
 
-  struct ec_authz_record_get_nonce_response nonce_resp = {};
+  struct hoth_authz_record_get_nonce_response nonce_resp = {};
   nonce_resp.ro_supported_key_id = 0;
   nonce_resp.rw_supported_key_id = 1;
 
   EXPECT_CALL(mock_, send(_,
-                          UsesCommand(EC_CMD_BOARD_SPECIFIC_BASE +
-                                      EC_PRV_CMD_HOTH_CHIP_INFO),
+                          UsesCommand(HOTH_CMD_BOARD_SPECIFIC_BASE +
+                                      HOTH_PRV_CMD_HOTH_CHIP_INFO),
                           _))
       .WillOnce(Return(LIBHOTH_OK));
 
   EXPECT_CALL(mock_, send(_,
-                          UsesCommand(EC_CMD_BOARD_SPECIFIC_BASE +
-                                      EC_PRV_CMD_HOTH_GET_AUTHZ_RECORD_NONCE),
+                          UsesCommand(HOTH_CMD_BOARD_SPECIFIC_BASE +
+                                      HOTH_PRV_CMD_HOTH_GET_AUTHZ_RECORD_NONCE),
                           _));
 
   EXPECT_CALL(mock_, receive)
@@ -148,8 +148,8 @@ TEST_F(LibHothTest, authz_nonce_fail_test) {
 
 TEST_F(LibHothTest, authz_set_test) {
   EXPECT_CALL(mock_, send(_,
-                          UsesCommand(EC_CMD_BOARD_SPECIFIC_BASE +
-                                      EC_PRV_CMD_HOTH_SET_AUTHZ_RECORD),
+                          UsesCommand(HOTH_CMD_BOARD_SPECIFIC_BASE +
+                                      HOTH_PRV_CMD_HOTH_SET_AUTHZ_RECORD),
                           _))
       .WillOnce(Return(LIBHOTH_OK));
 

@@ -38,12 +38,12 @@ static int i2c_detect(struct libhoth_device *dev,
     return -1;
   }
 
-  struct ec_request_i2c_detect request;
+  struct hoth_request_i2c_detect request;
   request.bus_number = (uint8_t)(bus & 0xFF);
   request.start_address = (uint8_t)(start_addr & 0x7F);
   request.end_address = (uint8_t)(end_addr & 0x7F);
 
-  struct ec_response_i2c_detect response;
+  struct hoth_response_i2c_detect response;
   int ret = libhoth_i2c_detect(dev, &request, &response);
   if (ret != 0) {
     return ret;
@@ -81,7 +81,7 @@ static int i2c_read(struct libhoth_device *dev,
     return -1;
   }
 
-  struct ec_request_i2c_transfer request;
+  struct hoth_request_i2c_transfer request;
   request.bus_number = (uint8_t)(bus & 0xFF);
   request.dev_address = (uint8_t)(addr & 0x7F);
   request.size_read = (uint16_t)(length & 0xFFFF);
@@ -95,7 +95,7 @@ static int i2c_read(struct libhoth_device *dev,
     request.arg_bytes[0] = (offset & 0xFF);
   }
 
-  struct ec_response_i2c_transfer response;
+  struct hoth_response_i2c_transfer response;
   int ret = libhoth_i2c_transfer(dev, &request, &response);
   if (ret != 0) {
     return ret;
@@ -140,7 +140,7 @@ static int i2c_write(struct libhoth_device *dev,
     return -1;
   }
 
-  struct ec_request_i2c_transfer request;
+  struct hoth_request_i2c_transfer request;
   request.bus_number = (uint8_t)(bus & 0xFF);
   request.dev_address = (uint8_t)(addr & 0x7F);
   request.speed_khz = (uint16_t)(freq & 0xFFFF);
@@ -166,7 +166,7 @@ static int i2c_write(struct libhoth_device *dev,
   }
   request.size_write = idx;
 
-  struct ec_response_i2c_transfer response;
+  struct hoth_response_i2c_transfer response;
   int ret = libhoth_i2c_transfer(dev, &request, &response);
   if (ret != 0) {
     return ret;
@@ -212,18 +212,18 @@ int htool_i2c_run(const struct htool_invocation *inv) {
 
 // I2C mux control actions to Target control actions mapping
 enum {
-  I2C_MUXCTRL_ACTION_GET = EC_TARGET_CONTROL_ACTION_GET_STATUS,
-  I2C_MUXCTRL_ACTION_SELECT_TARGET = EC_TARGET_CONTROL_ACTION_ENABLE,
-  I2C_MUXCTRL_ACTION_SELECT_HOST = EC_TARGET_CONTROL_ACTION_DISABLE,
+  I2C_MUXCTRL_ACTION_GET = HOTH_TARGET_CONTROL_ACTION_GET_STATUS,
+  I2C_MUXCTRL_ACTION_SELECT_TARGET = HOTH_TARGET_CONTROL_ACTION_ENABLE,
+  I2C_MUXCTRL_ACTION_SELECT_HOST = HOTH_TARGET_CONTROL_ACTION_DISABLE,
 };
 
 // Target control status to I2C mux control status mapping
 static const char *i2c_muxctrl_status_str_map(
-    const enum ec_target_control_status status) {
+    const enum hoth_target_control_status status) {
   switch (status) {
-    case EC_TARGET_CONTROL_STATUS_ENABLED:
+    case HOTH_TARGET_CONTROL_STATUS_ENABLED:
       return "Target";
-    case EC_TARGET_CONTROL_STATUS_DISABLED:
+    case HOTH_TARGET_CONTROL_STATUS_DISABLED:
       return "Host";
     default:
       return "Unknown";
@@ -231,8 +231,8 @@ static const char *i2c_muxctrl_status_str_map(
 }
 
 int htool_i2c_muxctrl_get(const struct htool_invocation *inv) {
-  struct ec_response_target_control response;
-  int ret = target_control_perform_action(EC_TARGET_CONTROL_I2C_MUX,
+  struct hoth_response_target_control response;
+  int ret = target_control_perform_action(HOTH_TARGET_CONTROL_I2C_MUX,
                                           I2C_MUXCTRL_ACTION_GET, &response);
   if (ret != 0) {
     return ret;
@@ -244,21 +244,21 @@ int htool_i2c_muxctrl_get(const struct htool_invocation *inv) {
 }
 
 static int i2c_mux_control_change_select(
-    const enum ec_target_control_action action) {
-  struct ec_response_target_control response;
-  int ret = target_control_perform_action(EC_TARGET_CONTROL_I2C_MUX, action,
+    const enum hoth_target_control_action action) {
+  struct hoth_response_target_control response;
+  int ret = target_control_perform_action(HOTH_TARGET_CONTROL_I2C_MUX, action,
                                           &response);
   if (ret != 0) {
     return ret;
   }
-  const enum ec_target_control_status old_status = response.status;
+  const enum hoth_target_control_status old_status = response.status;
 
-  ret = target_control_perform_action(EC_TARGET_CONTROL_I2C_MUX,
+  ret = target_control_perform_action(HOTH_TARGET_CONTROL_I2C_MUX,
                                       I2C_MUXCTRL_ACTION_GET, &response);
   if (ret != 0) {
     return ret;
   }
-  const enum ec_target_control_status new_status = response.status;
+  const enum hoth_target_control_status new_status = response.status;
 
   printf("I2C Mux control status changed: %s -> %s\n",
          i2c_muxctrl_status_str_map(old_status),

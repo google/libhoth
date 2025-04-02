@@ -15,8 +15,8 @@
 #include "rot_firmware_version.h"
 
 int libhoth_get_rot_fw_version(struct libhoth_device* dev,
-                               struct ec_response_get_version* ver) {
-  return libhoth_hostcmd_exec(dev, EC_CMD_GET_VERSION, /*version=*/0,
+                               struct hoth_response_get_version* ver) {
+  return libhoth_hostcmd_exec(dev, HOTH_CMD_GET_VERSION, /*version=*/0,
                       /*req_payload=*/NULL, /*req_payload_size=*/0, ver,
                       sizeof(*ver), /*out_resp_size=*/NULL);
 }

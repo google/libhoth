@@ -23,18 +23,18 @@
 
 // USB mux control actions to Target control actions mapping
 enum {
-  TARGET_USB_ACTION_GET = EC_TARGET_CONTROL_ACTION_GET_STATUS,
-  TARGET_USB_ACTION_CONNECT_TARGET_TO_HOST = EC_TARGET_CONTROL_ACTION_ENABLE,
+  TARGET_USB_ACTION_GET = HOTH_TARGET_CONTROL_ACTION_GET_STATUS,
+  TARGET_USB_ACTION_CONNECT_TARGET_TO_HOST = HOTH_TARGET_CONTROL_ACTION_ENABLE,
   TARGET_USB_ACTION_CONNECT_TARGET_TO_FRONT_PANEL =
-      EC_TARGET_CONTROL_ACTION_DISABLE,
+      HOTH_TARGET_CONTROL_ACTION_DISABLE,
 };
 
 static const char* target_usb_muxctrl_status_str_map(
-    const enum ec_target_control_status status) {
+    const enum hoth_target_control_status status) {
   switch (status) {
-    case EC_TARGET_CONTROL_STATUS_ENABLED:
+    case HOTH_TARGET_CONTROL_STATUS_ENABLED:
       return "Target connected to host";
-    case EC_TARGET_CONTROL_STATUS_DISABLED:
+    case HOTH_TARGET_CONTROL_STATUS_DISABLED:
       return "Target connected to front panel";
     default:
       return "Unknown";
@@ -42,8 +42,8 @@ static const char* target_usb_muxctrl_status_str_map(
 }
 
 int htool_target_usb_muxctrl_get(const struct htool_invocation* inv) {
-  struct ec_response_target_control response;
-  int ret = target_control_perform_action(EC_TARGET_CONTROL_GENERIC_MUX,
+  struct hoth_response_target_control response;
+  int ret = target_control_perform_action(HOTH_TARGET_CONTROL_GENERIC_MUX,
                                           TARGET_USB_ACTION_GET, &response);
   if (ret != 0) {
     return ret;
@@ -55,22 +55,22 @@ int htool_target_usb_muxctrl_get(const struct htool_invocation* inv) {
 }
 
 int target_usb_mux_control_change_select(
-    const enum ec_target_control_action action) {
-  struct ec_response_target_control response;
+    const enum hoth_target_control_action action) {
+  struct hoth_response_target_control response;
 
-  int ret = target_control_perform_action(EC_TARGET_CONTROL_GENERIC_MUX, action,
-                                          &response);
+  int ret = target_control_perform_action(HOTH_TARGET_CONTROL_GENERIC_MUX,
+                                          action, &response);
   if (ret != 0) {
     return ret;
   }
-  const enum ec_target_control_status old_status = response.status;
+  const enum hoth_target_control_status old_status = response.status;
 
-  ret = target_control_perform_action(EC_TARGET_CONTROL_GENERIC_MUX,
+  ret = target_control_perform_action(HOTH_TARGET_CONTROL_GENERIC_MUX,
                                       TARGET_USB_ACTION_GET, &response);
   if (ret != 0) {
     return ret;
   }
-  const enum ec_target_control_status new_status = response.status;
+  const enum hoth_target_control_status new_status = response.status;
 
   printf("USB Mux control status changed: %s -> %s\n",
          target_usb_muxctrl_status_str_map(old_status),

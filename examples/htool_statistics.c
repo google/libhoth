@@ -25,7 +25,7 @@
 #include "protocol/statistics.h"
 
 #define STATISTIC_OFFSET(field) \
-  (offsetof(struct ec_response_statistics, field) / sizeof(uint32_t))
+  (offsetof(struct hoth_response_statistics, field) / sizeof(uint32_t))
 
 const char* FirmwareUpdateErrorToString(uint16_t reason) {
   switch (reason) {
@@ -184,7 +184,7 @@ int htool_statistics() {
     return -1;
   }
 
-  struct ec_response_statistics stat;
+  struct hoth_response_statistics stat;
   int ret = libhoth_get_statistics(dev, &stat);
   if (ret != 0) {
     fprintf(stderr, "HOTH_STATISTICS error code: %d\n", ret);

@@ -253,25 +253,25 @@ int libhoth_spi_receive_response(struct libhoth_device* dev, void* response,
     return LIBHOTH_ERR_INVALID_PARAMETER;
   }
 
-  if (max_response_size < sizeof(struct ec_host_response)) {
+  if (max_response_size < sizeof(struct hoth_host_response)) {
     return LIBHOTH_ERR_INVALID_PARAMETER;
   }
 
   size_t total_bytes;
   int status;
-  struct ec_host_response host_response;
+  struct hoth_host_response host_response;
   struct libhoth_spi_device* spi_dev =
       (struct libhoth_spi_device*)dev->user_ctx;
 
   // Read Header From Mailbox
   status = spi_nor_read(spi_dev->fd, spi_dev->address_mode_4b,
                         spi_dev->mailbox_address, response,
-                        sizeof(struct ec_host_response));
+                        sizeof(struct hoth_host_response));
   if (status != LIBHOTH_OK) {
     return status;
   }
 
-  total_bytes = sizeof(struct ec_host_response);
+  total_bytes = sizeof(struct hoth_host_response);
   memcpy(&host_response, response, sizeof(host_response));
   if (actual_size) {
     *actual_size = total_bytes;
@@ -325,7 +325,7 @@ int libhoth_spi_send_and_receive_response(struct libhoth_device* dev,
     return LIBHOTH_ERR_INVALID_PARAMETER;
   }
 
-  if (max_response_size < sizeof(struct ec_host_response)) {
+  if (max_response_size < sizeof(struct hoth_host_response)) {
     return LIBHOTH_ERR_INVALID_PARAMETER;
   }
 
@@ -389,10 +389,10 @@ int libhoth_spi_send_and_receive_response(struct libhoth_device* dev,
     rc = LIBHOTH_ERR_FAIL;
   } else {
     if (actual_size) {
-      struct ec_host_response* host_response =
-          (struct ec_host_response*)response;
+      struct hoth_host_response* host_response =
+          (struct hoth_host_response*)response;
       *actual_size =
-          (size_t)host_response->data_len + sizeof(struct ec_host_response);
+          (size_t)host_response->data_len + sizeof(struct hoth_host_response);
     }
   }
 

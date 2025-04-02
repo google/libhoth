@@ -164,7 +164,7 @@ int libhoth_usb_mailbox_receive_response(struct libhoth_usb_device *dev,
   const size_t max_payload_size =
       drvdata->max_packet_size_in - sizeof(struct mailbox_response);
 
-  if (response_size < sizeof(struct ec_host_response)) {
+  if (response_size < sizeof(struct hoth_host_response)) {
     return LIBUSB_ERROR_INVALID_PARAM;
   }
 
@@ -208,8 +208,8 @@ int libhoth_usb_mailbox_receive_response(struct libhoth_usb_device *dev,
     memcpy((uint8_t *)response + offset, &packet[sizeof(response_header)],
            length);
 
-    if (offset == 0 && length >= sizeof(struct ec_host_response)) {
-      struct ec_host_response response_header;
+    if (offset == 0 && length >= sizeof(struct hoth_host_response)) {
+      struct hoth_host_response response_header;
       memcpy(&response_header, response, sizeof(response_header));
       if (response_header.struct_version != 3) {
         return LIBHOTH_ERR_UNSUPPORTED_VERSION;

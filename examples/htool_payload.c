@@ -129,7 +129,7 @@ int htool_payload_info(const struct htool_invocation* inv) {
   printf("\n");
 
 cleanup:
-  if(munmap(image, statbuf.st_size) != 0) {
+  if (munmap(image, statbuf.st_size) != 0) {
     fprintf(stderr, "munmap error: %s\n", strerror(errno));
     return -1;
   }

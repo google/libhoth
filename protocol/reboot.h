@@ -23,18 +23,18 @@ extern "C" {
 
 #include "transports/libhoth_device.h"
 
-#define EC_CMD_REBOOT_EC 0x00D2
+#define HOTH_CMD_REBOOT_EC 0x00D2
 
-enum ec_reboot_cmd {
-  EC_REBOOT_COLD = 4,
+enum hoth_reboot_cmd {
+  HOTH_REBOOT_COLD = 4,
 };
 
-struct ec_params_reboot_ec {
-  // enum ec_reboot_cmd
+struct hoth_params_reboot_ec {
+  // enum hoth_reboot_cmd
   uint8_t cmd;
   // Should be 0
   uint8_t flags;
-} __ec_align1;
+} __hoth_align1;
 
 int libhoth_reboot(struct libhoth_device* dev);
 

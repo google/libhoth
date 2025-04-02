@@ -21,9 +21,10 @@
 extern "C" {
 #endif
 
-int target_control_perform_action(enum ec_target_control_function function,
-                                  enum ec_target_control_action action,
-                                  struct ec_response_target_control* response);
+int target_control_perform_action(
+    enum hoth_target_control_function function,
+    enum hoth_target_control_action action,
+    struct hoth_response_target_control* response);
 
 #ifdef __cplusplus
 }

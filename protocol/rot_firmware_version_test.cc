@@ -25,19 +25,19 @@ using ::testing::Return;
 using ::testing::StrEq;
 
 TEST_F(LibHothTest, firmware_version_test) {
-  struct ec_response_get_version exp_ver = {};
+  struct hoth_response_get_version exp_ver = {};
 
   strcpy(exp_ver.version_string_ro, "0.0.343/36e0ecd5 ok");
   strcpy(exp_ver.version_string_rw, "0.6.2024102310/platform ok");
   exp_ver.current_image = 0;
 
-  EXPECT_CALL(mock_, send(_, UsesCommand(EC_CMD_GET_VERSION), _))
+  EXPECT_CALL(mock_, send(_, UsesCommand(HOTH_CMD_GET_VERSION), _))
       .WillOnce(Return(LIBHOTH_OK));
 
   EXPECT_CALL(mock_, receive)
       .WillOnce(DoAll(CopyResp(&exp_ver, sizeof(exp_ver)), Return(LIBHOTH_OK)));
 
-  struct ec_response_get_version ver;
+  struct hoth_response_get_version ver;
   EXPECT_EQ(libhoth_get_rot_fw_version(&hoth_dev_, &ver), LIBHOTH_OK);
 
   ASSERT_THAT(exp_ver.version_string_ro, StrEq(ver.version_string_ro));

@@ -181,9 +181,9 @@ static int check_expected_response_length(uint16_t length, uint16_t expected) {
 }
 
 int libhoth_get_panic(struct libhoth_device* dev,
-                      struct ec_response_persistent_panic_info* panic_data) {
+                      struct hoth_response_persistent_panic_info* panic_data) {
   const uint16_t cmd =
-      EC_CMD_BOARD_SPECIFIC_BASE + EC_PRV_CMD_HOTH_PERSISTENT_PANIC_INFO;
+      HOTH_CMD_BOARD_SPECIFIC_BASE + HOTH_PRV_CMD_HOTH_PERSISTENT_PANIC_INFO;
   uint8_t* dest = (uint8_t*)panic_data;
 
   // The persistent panic info record is 6KiB long, so we have to retrieve it
@@ -193,7 +193,7 @@ int libhoth_get_panic(struct libhoth_device* dev,
   for (size_t i = 0; i < num_chunks; ++i, dest += chunk_size) {
     size_t rlen;
 
-    struct ec_request_persistent_panic_info req = {
+    struct hoth_request_persistent_panic_info req = {
         .operation = PERSISTENT_PANIC_INFO_GET,
         .index = i,
     };
@@ -216,11 +216,11 @@ int libhoth_get_panic(struct libhoth_device* dev,
 int libhoth_clear_persistent_panic_info(struct libhoth_device* dev) {
   size_t rlen;
 
-  struct ec_request_persistent_panic_info req = {
+  struct hoth_request_persistent_panic_info req = {
       .operation = PERSISTENT_PANIC_INFO_ERASE};
 
   const uint16_t cmd =
-      EC_CMD_BOARD_SPECIFIC_BASE + EC_PRV_CMD_HOTH_PERSISTENT_PANIC_INFO;
+      HOTH_CMD_BOARD_SPECIFIC_BASE + HOTH_PRV_CMD_HOTH_PERSISTENT_PANIC_INFO;
 
   if (libhoth_hostcmd_exec(dev, cmd, 0, &req, sizeof(req), NULL, 0, &rlen)) {
     return -1;
@@ -234,7 +234,7 @@ int libhoth_clear_persistent_panic_info(struct libhoth_device* dev) {
 }
 
 void libhoth_print_panic_info(
-    const struct ec_response_persistent_panic_info* panic) {
+    const struct hoth_response_persistent_panic_info* panic) {
   const struct panic_data* data = (struct panic_data*)panic->panic_record;
 
   if (data->magic != PANIC_DATA_MAGIC) {
@@ -268,7 +268,7 @@ void libhoth_print_panic_info(
 }
 
 char* libhoth_get_panic_console_log(
-    const struct ec_response_persistent_panic_info* pdata) {
+    const struct hoth_response_persistent_panic_info* pdata) {
   char* console = calloc(sizeof(pdata->uart_buf) + 1, sizeof(char));
 
   if (!console) {

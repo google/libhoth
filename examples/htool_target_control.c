@@ -21,9 +21,9 @@
 #include "htool.h"
 
 int target_control_perform_action(
-    const enum ec_target_control_function function,
-    const enum ec_target_control_action action,
-    struct ec_response_target_control* const response) {
+    const enum hoth_target_control_function function,
+    const enum hoth_target_control_action action,
+    struct hoth_response_target_control* const response) {
   if (response == NULL) {
     return -1;
   }
@@ -33,33 +33,33 @@ int target_control_perform_action(
     return -1;
   }
 
-  const struct ec_request_target_control request = {
+  const struct hoth_request_target_control request = {
       .function = function,
       .action = action,
   };
 
   size_t response_length = 0;
   int ret = libhoth_hostcmd_exec(
-      dev, EC_CMD_BOARD_SPECIFIC_BASE + EC_PRV_CMD_HOTH_TARGET_CONTROL,
+      dev, HOTH_CMD_BOARD_SPECIFIC_BASE + HOTH_PRV_CMD_HOTH_TARGET_CONTROL,
       /*version=*/0, &request, sizeof(request), response, sizeof(*response),
       &response_length);
 
   if (ret != 0) {
     fprintf(stderr, "HOTH_TARGET_CONTROL error code: %d\n", ret);
     switch (ret) {
-      case (HTOOL_ERROR_HOST_COMMAND_START + EC_RES_INVALID_COMMAND):
+      case (HTOOL_ERROR_HOST_COMMAND_START + HOTH_RES_INVALID_COMMAND):
         fprintf(stderr,
                 "Command not supported, or requested action is forbidden on "
                 "function. Please confirm if the RoT FW version supports this "
                 "command, and requested action is allowed on the function\n");
         break;
-      case (HTOOL_ERROR_HOST_COMMAND_START + EC_RES_INVALID_PARAM):
+      case (HTOOL_ERROR_HOST_COMMAND_START + HOTH_RES_INVALID_PARAM):
         fprintf(stderr,
                 "Invalid function or action. Please confirm if the RoT "
                 "firmware version supports the given function, and action on "
                 "that function is correct\n");
         break;
-      case (HTOOL_ERROR_HOST_COMMAND_START + EC_RES_ACCESS_DENIED):
+      case (HTOOL_ERROR_HOST_COMMAND_START + HOTH_RES_ACCESS_DENIED):
         fprintf(stderr,
                 "Not authorized to perform requested action on function. "
                 "Please use `authz_host_command` commands to authorize RoT to "

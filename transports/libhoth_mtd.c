@@ -235,7 +235,7 @@ int libhoth_mtd_receive_response(struct libhoth_device* dev, void* response,
 
   size_t total_bytes;
   int status;
-  struct ec_host_response host_response;
+  struct hoth_host_response host_response;
   struct libhoth_mtd_device* mtd_dev =
       (struct libhoth_mtd_device*)dev->user_ctx;
 

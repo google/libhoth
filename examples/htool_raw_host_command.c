@@ -83,7 +83,7 @@ int command_raw_host_command(const struct htool_invocation* inv) {
   }
 
   while (true) {
-    struct ec_host_request req;
+    struct hoth_host_request req;
     int rv = fd_read_exact(STDIN_FILENO, &req, sizeof(req));
     if (rv == -1) {
       // IO error.
@@ -94,8 +94,8 @@ int command_raw_host_command(const struct htool_invocation* inv) {
       return 0;
     }
 
-    uint8_t req_payload[LIBHOTH_MAILBOX_SIZE - sizeof(struct ec_host_request)] =
-        {0};
+    uint8_t req_payload[LIBHOTH_MAILBOX_SIZE -
+                        sizeof(struct hoth_host_request)] = {0};
 
     if (req.data_len > sizeof(req_payload)) {
       fprintf(stderr, "request payload size too large: %d > %ld\n",
@@ -112,13 +112,13 @@ int command_raw_host_command(const struct htool_invocation* inv) {
     }
 
     uint8_t checksum = libhoth_calculate_checksum(&req, sizeof(req),
-                                                     req_payload, req.data_len);
+                                                  req_payload, req.data_len);
     if (checksum != 0) {
       fprintf(stderr, "bad request checksum; expected 0, got %d\n", checksum);
       return -1;
     }
 
-    struct ec_host_response resp = {
+    struct hoth_host_response resp = {
         .struct_version = 3,
     };
 
@@ -126,9 +126,9 @@ int command_raw_host_command(const struct htool_invocation* inv) {
     uint8_t resp_payload[RESP_BUF_LEN] = {0};
 
     size_t actual_resp_size = 0;
-    rv = libhoth_hostcmd_exec(dev, req.command, req.command_version, req_payload,
-                      req.data_len, resp_payload, RESP_BUF_LEN,
-                      &actual_resp_size);
+    rv = libhoth_hostcmd_exec(dev, req.command, req.command_version,
+                              req_payload, req.data_len, resp_payload,
+                              RESP_BUF_LEN, &actual_resp_size);
     if (rv && rv < HTOOL_ERROR_HOST_COMMAND_START) {
       return rv;
     }
@@ -137,8 +137,8 @@ int command_raw_host_command(const struct htool_invocation* inv) {
     }
 
     resp.data_len = actual_resp_size;
-    resp.checksum = libhoth_calculate_checksum(
-        &resp, sizeof(resp), resp_payload, actual_resp_size);
+    resp.checksum = libhoth_calculate_checksum(&resp, sizeof(resp),
+                                               resp_payload, actual_resp_size);
 
     rv = fd_write_exact(STDOUT_FILENO, &resp, sizeof(resp));
     if (rv) {

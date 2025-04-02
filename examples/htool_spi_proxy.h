@@ -24,7 +24,6 @@
 extern "C" {
 #endif
 
-
 int htool_spi_proxy_init(struct htool_spi_proxy* spi,
                          struct libhoth_device* dev, bool is_4_byte,
                          bool enter_exit_4b);

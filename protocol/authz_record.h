@@ -57,9 +57,9 @@ static_assert(AUTHORIZATION_RECORD_SIZE == 464,
               "unexpected authorization_record size");
 
 /* Program authorization records */
-#define EC_PRV_CMD_HOTH_SET_AUTHZ_RECORD 0x0017
+#define HOTH_PRV_CMD_HOTH_SET_AUTHZ_RECORD 0x0017
 
-struct ec_authz_record_set_request {
+struct hoth_authz_record_set_request {
   // Authorization record index to program or erase. Currently only index=0 is
   // supported.
   uint8_t index;
@@ -74,16 +74,16 @@ struct ec_authz_record_set_request {
   struct authorization_record record;
 } __attribute__((packed, aligned(4)));
 
-#define EC_PRV_CMD_HOTH_GET_AUTHZ_RECORD 0x0018
+#define HOTH_PRV_CMD_HOTH_GET_AUTHZ_RECORD 0x0018
 
-struct ec_authz_record_get_request {
+struct hoth_authz_record_get_request {
   // Authorization record index to get. Currently only index=0 is
   // supported.
   uint8_t index;
   uint8_t reserved[3];
 } __attribute__((packed));
 
-struct ec_authz_record_get_response {
+struct hoth_authz_record_get_response {
   // Index of authorization record in the response. This value matches the
   // `index` in the corresponding host command request.
   uint8_t index;
@@ -95,9 +95,9 @@ struct ec_authz_record_get_response {
   struct authorization_record record;
 } __attribute__((packed, aligned(4)));
 
-#define EC_PRV_CMD_HOTH_GET_AUTHZ_RECORD_NONCE 0x0019
+#define HOTH_PRV_CMD_HOTH_GET_AUTHZ_RECORD_NONCE 0x0019
 
-struct ec_authz_record_get_nonce_response {
+struct hoth_authz_record_get_nonce_response {
   uint32_t authorization_nonce[8];
 
   // key_id supported by RO and RW. These key_id's are expected to match one
@@ -109,7 +109,7 @@ struct ec_authz_record_get_nonce_response {
 
 int libhoth_authz_record_erase(struct libhoth_device* dev);
 int libhoth_authz_record_read(struct libhoth_device* dev,
-                              struct ec_authz_record_get_response* resp);
+                              struct hoth_authz_record_get_response* resp);
 int libhoth_authz_record_build(struct libhoth_device* dev,
                                uint32_t capabilities,
                                struct authorization_record* record);

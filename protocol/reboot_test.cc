@@ -24,7 +24,7 @@ using ::testing::DoAll;
 using ::testing::Return;
 
 TEST_F(LibHothTest, reboot_test) {
-  EXPECT_CALL(mock_, send(_, UsesCommand(EC_CMD_REBOOT_EC), _))
+  EXPECT_CALL(mock_, send(_, UsesCommand(HOTH_CMD_REBOOT_EC), _))
       .WillOnce(Return(LIBHOTH_OK));
 
   uint32_t dummy;

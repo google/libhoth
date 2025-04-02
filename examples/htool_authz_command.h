@@ -21,17 +21,17 @@
 extern "C" {
 #endif
 
-struct ec_authorized_command_request;
+struct hoth_authorized_command_request;
 
-struct ec_authorized_command_request authz_command_build_request(
+struct hoth_authorized_command_request authz_command_build_request(
     uint64_t hardware_identity, uint32_t opcode, uint32_t key_info,
     const uint32_t* nonce);
 
 void authz_command_print_request(
-    const struct ec_authorized_command_request* request);
+    const struct hoth_authorized_command_request* request);
 
 int authz_command_hex_to_struct(const char* hexstring,
-                                struct ec_authorized_command_request* out);
+                                struct hoth_authorized_command_request* out);
 
 #ifdef __cplusplus
 }

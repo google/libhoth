@@ -27,7 +27,7 @@
 
 int dump_panic_record_to_file(
     const char* filename,
-    const struct ec_response_persistent_panic_info* panic) {
+    const struct hoth_response_persistent_panic_info* panic) {
   FILE* file = fopen(filename, "wb");
   if (!file) {
     perror("Failed to open file");
@@ -66,7 +66,7 @@ int htool_panic_get_panic(const struct htool_invocation* inv) {
     return libhoth_clear_persistent_panic_info(dev);
   }
 
-  struct ec_response_persistent_panic_info panic;
+  struct hoth_response_persistent_panic_info panic;
   memset(&panic, 0, sizeof(panic));
 
   if (libhoth_get_panic(dev, &panic)) {

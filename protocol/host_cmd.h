@@ -31,73 +31,73 @@ extern "C" {
 #define __aligned(x) __attribute__((aligned(x)))
 #endif
 
-#define __ec_align1 __packed
-#define __ec_align2 __packed __aligned(2)
-#define __ec_align4 __packed __aligned(4)
+#define __hoth_align1 __packed
+#define __hoth_align2 __packed __aligned(2)
+#define __hoth_align4 __packed __aligned(4)
 
 #define HTOOL_ERROR_HOST_COMMAND_START 537200
 
 // NOTE: All PRV commands in this file are offset by
-// EC_CMD_BOARD_SPECIFIC_BASE.
-#define EC_CMD_BOARD_SPECIFIC_BASE 0x3E00
-#define EC_CMD_BOARD_SPECIFIC_LAST 0x3FFF
+// HOTH_CMD_BOARD_SPECIFIC_BASE.
+#define HOTH_CMD_BOARD_SPECIFIC_BASE 0x3E00
+#define HOTH_CMD_BOARD_SPECIFIC_LAST 0x3FFF
 
-enum ec_status {
-  EC_RES_SUCCESS = 0,
-  EC_RES_INVALID_COMMAND = 1,
-  EC_RES_ERROR = 2,
-  EC_RES_INVALID_PARAM = 3,
-  EC_RES_ACCESS_DENIED = 4,
-  EC_RES_INVALID_RESPONSE = 5,
-  EC_RES_INVALID_VERSION = 6,
-  EC_RES_INVALID_CHECKSUM = 7,
-  EC_RES_IN_PROGRESS = 8,
-  EC_RES_UNAVAILABLE = 9,
-  EC_RES_TIMEOUT = 10,
-  EC_RES_OVERFLOW = 11,
-  EC_RES_INVALID_HEADER = 12,
-  EC_RES_REQUEST_TRUNCATED = 13,
-  EC_RES_RESPONSE_TOO_BIG = 14,
-  EC_RES_BUS_ERROR = 15,
-  EC_RES_BUSY = 16,
-  EC_RES_INVALID_HEADER_VERSION = 17,
-  EC_RES_INVALID_HEADER_CRC = 18,
-  EC_RES_INVALID_DATA_CRC = 19,
-  EC_RES_DUP_UNAVAILABLE = 20,
-  EC_RES_MAX = UINT16_MAX
+enum hoth_status {
+  HOTH_RES_SUCCESS = 0,
+  HOTH_RES_INVALID_COMMAND = 1,
+  HOTH_RES_ERROR = 2,
+  HOTH_RES_INVALID_PARAM = 3,
+  HOTH_RES_ACCESS_DENIED = 4,
+  HOTH_RES_INVALID_RESPONSE = 5,
+  HOTH_RES_INVALID_VERSION = 6,
+  HOTH_RES_INVALID_CHECKSUM = 7,
+  HOTH_RES_IN_PROGRESS = 8,
+  HOTH_RES_UNAVAILABLE = 9,
+  HOTH_RES_TIMEOUT = 10,
+  HOTH_RES_OVERFLOW = 11,
+  HOTH_RES_INVALID_HEADER = 12,
+  HOTH_RES_REQUEST_TRUNCATED = 13,
+  HOTH_RES_RESPONSE_TOO_BIG = 14,
+  HOTH_RES_BUS_ERROR = 15,
+  HOTH_RES_BUSY = 16,
+  HOTH_RES_INVALID_HEADER_VERSION = 17,
+  HOTH_RES_INVALID_HEADER_CRC = 18,
+  HOTH_RES_INVALID_DATA_CRC = 19,
+  HOTH_RES_DUP_UNAVAILABLE = 20,
+  HOTH_RES_MAX = UINT16_MAX
 } __packed;
 
-#define EC_HOST_REQUEST_VERSION 3
+#define HOTH_HOST_REQUEST_VERSION 3
 
-struct ec_host_request {
-  // Should be EC_HOST_REQUEST_VERSION
+struct hoth_host_request {
+  // Should be HOTH_HOST_REQUEST_VERSION
   uint8_t struct_version;
   // Checksum of request and data; sum of all bytes including checksum should
   // total to 0.
   uint8_t checksum;
-  // Command to send (EC_CMD_...)
+  // Command to send (HOTH_CMD_...)
   uint16_t command;
   // Command version
   uint8_t command_version;
   uint8_t reserved;
   // Length of data that follows this header
   uint16_t data_len;
-} __ec_align4;
+} __hoth_align4;
 
-#define EC_HOST_RESPONSE_VERSION 3
+#define HOTH_HOST_RESPONSE_VERSION 3
 
-struct ec_host_response {
-  // Should be EC_HOST_RESPONSE_VERSION
+struct hoth_host_response {
+  // Should be HOTH_HOST_RESPONSE_VERSION
   uint8_t struct_version;
   // Checksum of request and data; sum of all bytes including checksum should
   // total to 0.
   uint8_t checksum;
-  // One of the EC_RES_* status codes
+  // One of the HOTH_RES_* status codes
   uint16_t result;
   // Length of data which follows this header.
   uint16_t data_len;
   uint16_t reserved;
-} __ec_align4;
+} __hoth_align4;
 
 int libhoth_hostcmd_exec(struct libhoth_device* dev, uint16_t command,
                          uint8_t version, const void* req_payload,

@@ -19,10 +19,10 @@
 
 #include "host_commands.h"
 
-struct ec_authorized_command_request authz_command_build_request(
+struct hoth_authorized_command_request authz_command_build_request(
     uint64_t hardware_identity, uint32_t opcode, uint32_t key_info,
     const uint32_t* nonce) {
-  struct ec_authorized_command_request request = {
+  struct hoth_authorized_command_request request = {
       .version = AUTHORIZED_COMMAND_VERSION,
       .size = sizeof(request),
       .key_info = key_info,
@@ -35,7 +35,7 @@ struct ec_authorized_command_request authz_command_build_request(
 }
 
 void authz_command_print_request(
-    const struct ec_authorized_command_request* request) {
+    const struct hoth_authorized_command_request* request) {
   const uint8_t* out = (const uint8_t*)request;
   for (int i = 0; i < sizeof(*request); i++) {
     printf("%02x", out[i]);
@@ -56,8 +56,8 @@ static uint8_t parse_nibble(char c) {
   return UINT8_MAX;
 }
 
-int authz_command_hex_to_struct(const char* hexstring,
-                                struct ec_authorized_command_request* request) {
+int authz_command_hex_to_struct(
+    const char* hexstring, struct hoth_authorized_command_request* request) {
   size_t actual_len = strlen(hexstring);
   size_t expected_len = 2 * sizeof(*request);
   if (actual_len != expected_len) {

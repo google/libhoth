@@ -24,14 +24,14 @@ extern "C" {
 #include "transports/libhoth_device.h"
 
 /* Get various statistics */
-#define EC_PRV_CMD_HOTH_GET_STATISTICS 0x000F
+#define HOTH_PRV_CMD_HOTH_GET_STATISTICS 0x000F
 
 struct boot_timing_data {
   uint32_t start_us;
   uint32_t end_us;
 };
 
-struct ec_response_statistics {
+struct hoth_response_statistics {
   /*
    * Number of 32 bit words returned from this command.
    * That's not including the reserved fields.
@@ -130,7 +130,7 @@ struct ec_response_statistics {
 } __attribute__((packed));
 
 int libhoth_get_statistics(struct libhoth_device* dev,
-                           struct ec_response_statistics* stats);
+                           struct hoth_response_statistics* stats);
 
 #ifdef __cplusplus
 }
