@@ -26,7 +26,7 @@ using ::testing::DoAll;
 using ::testing::Return;
 
 TEST_F(LibHothTest, i2c_detect_test) {
-  struct ec_response_i2c_detect ex_resp = {
+  struct hoth_response_i2c_detect ex_resp = {
       .bus_response = 0,
       .devices_count = 3,
   };
@@ -35,20 +35,20 @@ TEST_F(LibHothTest, i2c_detect_test) {
   ex_resp.devices_mask[1] = 0x80;
 
   EXPECT_CALL(mock_, send(_,
-                          UsesCommand(EC_CMD_BOARD_SPECIFIC_BASE +
-                                      EC_PRV_CMD_HOTH_I2C_DETECT),
+                          UsesCommand(HOTH_CMD_BOARD_SPECIFIC_BASE +
+                                      HOTH_PRV_CMD_HOTH_I2C_DETECT),
                           _))
       .WillOnce(Return(LIBHOTH_OK));
 
   EXPECT_CALL(mock_, receive)
       .WillOnce(DoAll(CopyResp(&ex_resp, sizeof(ex_resp)), Return(LIBHOTH_OK)));
 
-  struct ec_request_i2c_detect req = {
+  struct hoth_request_i2c_detect req = {
       .bus_number = 42,
       .start_address = 0,
       .end_address = 0x7F,
   };
-  struct ec_response_i2c_detect resp;
+  struct hoth_response_i2c_detect resp;
   EXPECT_EQ(libhoth_i2c_detect(&hoth_dev_, &req, &resp), LIBHOTH_OK);
 
   EXPECT_EQ(resp.bus_response, ex_resp.bus_response);
@@ -65,28 +65,28 @@ TEST_F(LibHothTest, i2c_detect_test) {
 }
 
 TEST_F(LibHothTest, i2c_transfer_test) {
-  struct ec_response_i2c_transfer ex_resp = {
+  struct hoth_response_i2c_transfer ex_resp = {
       .bus_response = 0,
       .read_bytes = 10,
   };
 
   EXPECT_CALL(mock_, send(_,
-                          UsesCommand(EC_CMD_BOARD_SPECIFIC_BASE +
-                                      EC_PRV_CMD_HOTH_I2C_TRANSFER),
+                          UsesCommand(HOTH_CMD_BOARD_SPECIFIC_BASE +
+                                      HOTH_PRV_CMD_HOTH_I2C_TRANSFER),
                           _))
       .WillOnce(Return(LIBHOTH_OK));
 
   EXPECT_CALL(mock_, receive)
       .WillOnce(DoAll(CopyResp(&ex_resp, sizeof(ex_resp)), Return(LIBHOTH_OK)));
 
-  struct ec_request_i2c_transfer xfer = {
+  struct hoth_request_i2c_transfer xfer = {
       .bus_number = 3,
       .dev_address = 10,
       .size_write = 10,
       .size_read = 10,
   };
 
-  struct ec_response_i2c_transfer resp;
+  struct hoth_response_i2c_transfer resp;
   EXPECT_EQ(libhoth_i2c_transfer(&hoth_dev_, &xfer, &resp), LIBHOTH_OK);
 
   EXPECT_EQ(resp.bus_response, ex_resp.bus_response);

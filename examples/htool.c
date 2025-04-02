@@ -37,7 +37,6 @@
 #include "htool_panic.h"
 #include "htool_payload.h"
 #include "htool_payload_update.h"
-#include "protocol/progress.h"
 #include "htool_raw_host_command.h"
 #include "htool_srtm.h"
 #include "htool_statistics.h"
@@ -46,6 +45,7 @@
 #include "htool_usb.h"
 #include "protocol/authz_record.h"
 #include "protocol/chipinfo.h"
+#include "protocol/progress.h"
 #include "protocol/reboot.h"
 #include "protocol/rot_firmware_version.h"
 #include "protocol/spi_proxy.h"
@@ -70,7 +70,7 @@ static int command_get_version(const struct htool_invocation* inv) {
     return -1;
   }
 
-  struct ec_response_get_version response;
+  struct hoth_response_get_version response;
   int status = libhoth_get_rot_fw_version(dev, &response);
 
   if (status) {
@@ -88,7 +88,7 @@ static int command_show_chipinfo(const struct htool_invocation* inv) {
   if (!dev) {
     return -1;
   }
-  struct ec_response_chip_info response;
+  struct hoth_response_chip_info response;
   int status = libhoth_chipinfo(dev, &response);
   if (status != 0) {
     return -1;
@@ -107,7 +107,7 @@ static int command_authz_record_read(const struct htool_invocation* inv) {
     return -1;
   }
 
-  struct ec_authz_record_get_response response;
+  struct hoth_authz_record_get_response response;
   int status = libhoth_authz_record_read(dev, &response);
   if (status != 0) {
     return status;
@@ -185,23 +185,24 @@ static int command_authz_host_command_build(
     return -1;
   }
 
-  struct ec_response_chip_info chipinfo_resp;
+  struct hoth_response_chip_info chipinfo_resp;
   int status = libhoth_chipinfo(dev, &chipinfo_resp);
   if (status != 0) {
     fprintf(stderr, "Failed to get chip ID. status=%d\n", status);
     return -1;
   }
 
-  struct ec_authorized_command_get_nonce_response nonce_resp;
+  struct hoth_authorized_command_get_nonce_response nonce_resp;
   status = libhoth_hostcmd_exec(
-      dev, EC_CMD_BOARD_SPECIFIC_BASE + EC_PRV_CMD_HOTH_GET_AUTHZ_COMMAND_NONCE,
+      dev,
+      HOTH_CMD_BOARD_SPECIFIC_BASE + HOTH_PRV_CMD_HOTH_GET_AUTHZ_COMMAND_NONCE,
       /*version=*/0, NULL, 0, &nonce_resp, sizeof(nonce_resp), NULL);
   if (status != 0) {
     fprintf(stderr, "Failed to get nonce. status=%d\n", status);
     return -1;
   }
 
-  struct ec_authorized_command_request request = authz_command_build_request(
+  struct hoth_authorized_command_request request = authz_command_build_request(
       chipinfo_resp.hardware_identity, opcode, nonce_resp.supported_key_info,
       nonce_resp.nonce);
   authz_command_print_request(&request);
@@ -219,14 +220,14 @@ static int command_authz_host_command_send(const struct htool_invocation* inv) {
     return -1;
   }
 
-  struct ec_authorized_command_request request;
+  struct hoth_authorized_command_request request;
   int status = authz_command_hex_to_struct(command_hex, &request);
   if (status != 0) {
     return -1;
   }
 
   status = libhoth_hostcmd_exec(
-      dev, EC_CMD_BOARD_SPECIFIC_BASE + EC_PRV_CMD_HOTH_AUTHZ_COMMAND,
+      dev, HOTH_CMD_BOARD_SPECIFIC_BASE + HOTH_PRV_CMD_HOTH_AUTHZ_COMMAND,
       /*version=*/0, &request, sizeof(request), NULL, 0, NULL);
   if (status != 0) {
     return -1;
@@ -392,7 +393,7 @@ static int command_spi_update(const struct htool_invocation* inv) {
   struct libhoth_progress_stderr progress;
   libhoth_progress_stderr_init(&progress, "Erasing/Programming");
   status = libhoth_spi_proxy_update(&spi, args.start, file_data, file_size,
-                                  &progress.progress);
+                                    &progress.progress);
   if (status) {
     goto cleanup2;
   }
@@ -401,7 +402,7 @@ static int command_spi_update(const struct htool_invocation* inv) {
     struct libhoth_progress_stderr progress;
     libhoth_progress_stderr_init(&progress, "Verifying");
     status = libhoth_spi_proxy_verify(&spi, args.start, file_data, file_size,
-                                    &progress.progress);
+                                      &progress.progress);
     if (status) {
       goto cleanup2;
     }
@@ -422,25 +423,25 @@ static int do_target_reset(uint32_t reset_option) {
   if (!dev) {
     return -1;
   }
-  struct ec_request_reset_target req = {
+  struct hoth_request_reset_target req = {
       .target_id = RESET_TARGET_ID_RSTCTRL0,
       .reset_option = reset_option,
   };
-  return libhoth_hostcmd_exec(dev,
-                      EC_CMD_BOARD_SPECIFIC_BASE + EC_PRV_CMD_HOTH_RESET_TARGET,
-                      0, &req, sizeof(req), NULL, 0, NULL);
+  return libhoth_hostcmd_exec(
+      dev, HOTH_CMD_BOARD_SPECIFIC_BASE + HOTH_PRV_CMD_HOTH_RESET_TARGET, 0,
+      &req, sizeof(req), NULL, 0, NULL);
 }
 
 static int command_target_reset_on(const struct htool_invocation* inv) {
-  return do_target_reset(EC_TARGET_RESET_OPTION_SET);
+  return do_target_reset(HOTH_TARGET_RESET_OPTION_SET);
 }
 
 static int command_target_reset_off(const struct htool_invocation* inv) {
-  return do_target_reset(EC_TARGET_RESET_OPTION_RELEASE);
+  return do_target_reset(HOTH_TARGET_RESET_OPTION_RELEASE);
 }
 
 static int command_target_reset_pulse(const struct htool_invocation* inv) {
-  return do_target_reset(EC_TARGET_RESET_OPTION_PULSE);
+  return do_target_reset(HOTH_TARGET_RESET_OPTION_PULSE);
 }
 
 static int command_console(const struct htool_invocation* inv) {
@@ -487,9 +488,9 @@ static int command_flash_spi_info(const struct htool_invocation* inv) {
   if (!dev) {
     return -1;
   }
-  struct ec_response_flash_spi_info response;
-  int status = libhoth_hostcmd_exec(dev, EC_CMD_FLASH_SPI_INFO, /*version=*/0, NULL, 0,
-                            &response, sizeof(response), NULL);
+  struct hoth_response_flash_spi_info response;
+  int status = libhoth_hostcmd_exec(dev, HOTH_CMD_FLASH_SPI_INFO, /*version=*/0,
+                                    NULL, 0, &response, sizeof(response), NULL);
   if (status) {
     return -1;
   }
@@ -518,7 +519,8 @@ static int command_arm_coordinated_reset(const struct htool_invocation* inv) {
   }
 
   return libhoth_hostcmd_exec(
-      dev, EC_CMD_BOARD_SPECIFIC_BASE + EC_PRV_CMD_HOTH_ARM_COORDINATED_RESET,
+      dev,
+      HOTH_CMD_BOARD_SPECIFIC_BASE + HOTH_PRV_CMD_HOTH_ARM_COORDINATED_RESET,
       /*version=*/0, NULL, 0, NULL, 0, NULL);
 }
 
@@ -529,7 +531,8 @@ static int command_passthrough_disable(const struct htool_invocation* inv) {
   }
 
   return libhoth_hostcmd_exec(
-      dev, EC_CMD_BOARD_SPECIFIC_BASE + EC_PRV_CMD_HOTH_SPS_PASSTHROUGH_DISABLE,
+      dev,
+      HOTH_CMD_BOARD_SPECIFIC_BASE + HOTH_PRV_CMD_HOTH_SPS_PASSTHROUGH_DISABLE,
       /*version=*/0, NULL, 0, NULL, 0, NULL);
 }
 
@@ -540,7 +543,8 @@ static int command_passthrough_enable(const struct htool_invocation* inv) {
   }
 
   return libhoth_hostcmd_exec(
-      dev, EC_CMD_BOARD_SPECIFIC_BASE + EC_PRV_CMD_HOTH_SPS_PASSTHROUGH_ENABLE,
+      dev,
+      HOTH_CMD_BOARD_SPECIFIC_BASE + HOTH_PRV_CMD_HOTH_SPS_PASSTHROUGH_ENABLE,
       /*version=*/0, NULL, 0, NULL, 0, NULL);
 }
 
@@ -555,13 +559,14 @@ static int command_srtm(const struct htool_invocation* inv) {
     return -1;
   }
 
-  struct ec_srtm_request request = {0};
+  struct hoth_srtm_request request = {0};
   if (srtm_request_from_hex_measurement(&request, measurement) != 0) {
     return -1;
   }
 
-  return libhoth_hostcmd_exec(dev, EC_CMD_BOARD_SPECIFIC_BASE + EC_PRV_CMD_HOTH_SRTM,
-                      /*version=*/0, &request, sizeof(request), NULL, 0, NULL);
+  return libhoth_hostcmd_exec(
+      dev, HOTH_CMD_BOARD_SPECIFIC_BASE + HOTH_PRV_CMD_HOTH_SRTM,
+      /*version=*/0, &request, sizeof(request), NULL, 0, NULL);
 }
 
 struct libhoth_device* htool_libhoth_device(void) {
@@ -602,18 +607,18 @@ int htool_external_usb_host_check_presence(const struct htool_invocation* inv) {
     return -1;
   }
 
-  struct ec_response_target_control response = {0};
+  struct hoth_response_target_control response = {0};
   const int action_status = target_control_perform_action(
-      EC_TARGET_DETECT_EXTERNAL_USB_HOST_PRESENCE,
-      EC_TARGET_CONTROL_ACTION_GET_STATUS, &response);
+      HOTH_TARGET_DETECT_EXTERNAL_USB_HOST_PRESENCE,
+      HOTH_TARGET_CONTROL_ACTION_GET_STATUS, &response);
   if (action_status != 0) {
     return action_status;
   }
 
-  if (response.status == EC_TARGET_EXTERNAL_USB_HOST_NOT_PRESENT) {
+  if (response.status == HOTH_TARGET_EXTERNAL_USB_HOST_NOT_PRESENT) {
     printf("External USB host: Not Present\n");
     return 0;
-  } else if (response.status == EC_TARGET_EXTERNAL_USB_HOST_PRESENT) {
+  } else if (response.status == HOTH_TARGET_EXTERNAL_USB_HOST_PRESENT) {
     printf("External USB host: Present\n");
     return 0;
   } else {

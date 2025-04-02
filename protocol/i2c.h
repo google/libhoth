@@ -26,11 +26,11 @@ extern "C" {
 /*
  * I2C Detect. This scans for I2C devices on the Hoth's I2C Bus
  */
-#define EC_PRV_CMD_HOTH_I2C_DETECT 0x0045
+#define HOTH_PRV_CMD_HOTH_I2C_DETECT 0x0045
 #define I2C_DETECT_DATA_MAX_SIZE_BYTES (16)  // 128 bits (addresses)
 #define I2C_DETECT_MAX_DEVICES 128
 
-struct ec_request_i2c_detect {
+struct hoth_request_i2c_detect {
   // Which I2C bus to run the scan on
   uint8_t bus_number;
 
@@ -39,7 +39,7 @@ struct ec_request_i2c_detect {
   uint8_t end_address;
 } __attribute__((packed, aligned(4)));
 
-struct ec_response_i2c_detect {
+struct hoth_response_i2c_detect {
   // Non-zero code for error on the i2c bus
   uint8_t bus_response;
 
@@ -51,8 +51,8 @@ struct ec_response_i2c_detect {
 } __attribute__((packed, aligned(4)));
 
 int libhoth_i2c_detect(struct libhoth_device* dev,
-                       struct ec_request_i2c_detect* req,
-                       struct ec_response_i2c_detect* resp);
+                       struct hoth_request_i2c_detect* req,
+                       struct hoth_response_i2c_detect* resp);
 
 // Converts the above devices_mask into a list of devices addresses
 // The first `devices_count` entries of `device_list` will be populated
@@ -64,7 +64,7 @@ void libhoth_i2c_device_list(uint8_t* devices_mask, uint32_t devices_count,
 /*
  * I2C Transfer. This runs an I2C transaction on the Hoth's I2C bus
  */
-#define EC_PRV_CMD_HOTH_I2C_TRANSFER 0x0046
+#define HOTH_PRV_CMD_HOTH_I2C_TRANSFER 0x0046
 #define I2C_TRANSFER_DATA_MAX_SIZE_BYTES (256)
 
 #define I2C_BITS_WRITE (1 << 0)
@@ -72,7 +72,7 @@ void libhoth_i2c_device_list(uint8_t* devices_mask, uint32_t devices_count,
 #define I2C_BITS_NO_START (1 << 2)
 #define I2C_BITS_REPEATED_START (1 << 3)
 
-struct ec_request_i2c_transfer {
+struct hoth_request_i2c_transfer {
   // Which I2C bus to run the transfer on
   uint8_t bus_number;
 
@@ -95,7 +95,7 @@ struct ec_request_i2c_transfer {
   uint8_t arg_bytes[I2C_TRANSFER_DATA_MAX_SIZE_BYTES];
 } __attribute__((packed, aligned(4)));
 
-struct ec_response_i2c_transfer {
+struct hoth_response_i2c_transfer {
   // // Non-zero code for error on the i2c bus
   uint8_t bus_response;
 
@@ -107,8 +107,8 @@ struct ec_response_i2c_transfer {
 } __attribute__((packed, aligned(4)));
 
 int libhoth_i2c_transfer(struct libhoth_device* dev,
-                         struct ec_request_i2c_transfer* req,
-                         struct ec_response_i2c_transfer* resp);
+                         struct hoth_request_i2c_transfer* req,
+                         struct hoth_response_i2c_transfer* resp);
 
 #ifdef __cplusplus
 }

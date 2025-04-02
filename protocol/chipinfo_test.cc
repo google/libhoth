@@ -24,15 +24,15 @@ using ::testing::DoAll;
 using ::testing::Return;
 
 TEST_F(LibHothTest, chipinfo_test) {
-  struct ec_response_chip_info chipinfo_exp = {};
+  struct hoth_response_chip_info chipinfo_exp = {};
 
   chipinfo_exp.hardware_identity = 0xABCD1234;
   chipinfo_exp.hardware_category = 1234;
   chipinfo_exp.info_variant = 2;
 
   EXPECT_CALL(mock_, send(_,
-                          UsesCommand(EC_CMD_BOARD_SPECIFIC_BASE +
-                                      EC_PRV_CMD_HOTH_CHIP_INFO),
+                          UsesCommand(HOTH_CMD_BOARD_SPECIFIC_BASE +
+                                      HOTH_PRV_CMD_HOTH_CHIP_INFO),
                           _))
       .WillOnce(Return(LIBHOTH_OK));
 
@@ -40,7 +40,7 @@ TEST_F(LibHothTest, chipinfo_test) {
       .WillOnce(DoAll(CopyResp(&chipinfo_exp, sizeof(chipinfo_exp)),
                       Return(LIBHOTH_OK)));
 
-  struct ec_response_chip_info chipinfo;
+  struct hoth_response_chip_info chipinfo;
   EXPECT_EQ(libhoth_chipinfo(&hoth_dev_, &chipinfo), LIBHOTH_OK);
 
   EXPECT_EQ(chipinfo_exp.hardware_identity, chipinfo.hardware_identity);

@@ -42,7 +42,7 @@ struct spi_operation_transaction {
 #define MAX_SPI_OP_PAYLOAD_BYTES 1016
 #define OPCODE_AND_ADDRESS_MAX_SIZE 5
 #define READ_CHUNK_SIZE                                                 \
-  (MAX_SPI_OP_PAYLOAD_BYTES - sizeof(struct ec_spi_operation_request) - \
+  (MAX_SPI_OP_PAYLOAD_BYTES - sizeof(struct hoth_spi_operation_request) - \
    OPCODE_AND_ADDRESS_MAX_SIZE)
 
 struct spi_operation {
@@ -65,7 +65,7 @@ static int spi_operation_execute(struct spi_operation* op,
 
   // hexdump(op->buf, op->pos);
   int status = libhoth_hostcmd_exec(
-      dev, EC_CMD_BOARD_SPECIFIC_BASE + EC_PRV_CMD_HOTH_SPI_OPERATION,
+      dev, HOTH_CMD_BOARD_SPECIFIC_BASE + HOTH_PRV_CMD_HOTH_SPI_OPERATION,
       /*version=*/0, op->buf, op->pos, response_buf, sizeof(response_buf),
       &response_len);
   if (status != 0) {
@@ -93,12 +93,12 @@ static int spi_operation_execute(struct spi_operation* op,
 
 static void spi_operation_begin_transaction(struct spi_operation* op) {
   assert(op->num_transactions < MAX_TRANSACTIONS);
-  assert(op->pos + sizeof(struct ec_spi_operation_request) < sizeof(op->buf));
+  assert(op->pos + sizeof(struct hoth_spi_operation_request) < sizeof(op->buf));
 
   op->transactions[op->num_transactions] = (struct spi_operation_transaction){
       .header_offset = op->pos,
   };
-  op->pos += sizeof(struct ec_spi_operation_request);
+  op->pos += sizeof(struct hoth_spi_operation_request);
 }
 
 static void spi_operation_write_mosi(struct spi_operation* op, const void* mosi,
@@ -130,13 +130,13 @@ static void spi_operation_read_miso_and_end_transaction(
   // The number of bytes provided to write to MOSI at the beginning
   // of the transaction
   size_t mosi_len = op->pos - transaction->header_offset -
-                    sizeof(struct ec_spi_operation_request);
+                    sizeof(struct hoth_spi_operation_request);
 
   transaction->skip_miso_nbytes = mosi_len;
   transaction->miso_dest_buf = miso_dest_buf;
   transaction->miso_dest_buf_len = miso_dest_buf_len;
 
-  struct ec_spi_operation_request req = {
+  struct hoth_spi_operation_request req = {
       .mosi_len = mosi_len,
       .miso_len = miso_dest_buf_len > 0 ? (mosi_len + miso_dest_buf_len) : 0,
   };
@@ -269,7 +269,7 @@ int libhoth_spi_proxy_init(struct libhoth_spi_proxy* spi,
   spi_operation_end_transaction(&op);
 
   int status = spi_operation_execute(&op, spi->dev);
-  if (status == HTOOL_ERROR_HOST_COMMAND_START + EC_RES_BUS_ERROR) {
+  if (status == HTOOL_ERROR_HOST_COMMAND_START + HOTH_RES_BUS_ERROR) {
     fprintf(
         stderr,
         "This is likely because the target device is not in reset, and thus it "

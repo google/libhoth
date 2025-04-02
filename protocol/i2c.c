@@ -19,11 +19,11 @@
 #include "host_cmd.h"
 
 int libhoth_i2c_detect(struct libhoth_device* dev,
-                       struct ec_request_i2c_detect* req,
-                       struct ec_response_i2c_detect* resp) {
+                       struct hoth_request_i2c_detect* req,
+                       struct hoth_response_i2c_detect* resp) {
   size_t rLen = 0;
   int ret =
-      libhoth_hostcmd_exec(dev, EC_CMD_BOARD_SPECIFIC_BASE + EC_PRV_CMD_HOTH_I2C_DETECT,
+      libhoth_hostcmd_exec(dev, HOTH_CMD_BOARD_SPECIFIC_BASE + HOTH_PRV_CMD_HOTH_I2C_DETECT,
                    0, req, sizeof(*req), resp, sizeof(*resp), &rLen);
   if (ret != 0) {
     fprintf(stderr, "HOTH_I2C_DETECT error code: %d\n", ret);
@@ -64,11 +64,11 @@ void libhoth_i2c_device_list(uint8_t* devices_mask, uint32_t devices_count,
 }
 
 int libhoth_i2c_transfer(struct libhoth_device* dev,
-                         struct ec_request_i2c_transfer* req,
-                         struct ec_response_i2c_transfer* resp) {
+                         struct hoth_request_i2c_transfer* req,
+                         struct hoth_response_i2c_transfer* resp) {
   size_t rLen = 0;
   int ret = libhoth_hostcmd_exec(
-      dev, EC_CMD_BOARD_SPECIFIC_BASE + EC_PRV_CMD_HOTH_I2C_TRANSFER, 0, req,
+      dev, HOTH_CMD_BOARD_SPECIFIC_BASE + HOTH_PRV_CMD_HOTH_I2C_TRANSFER, 0, req,
       sizeof(*req), resp, sizeof(*resp), &rLen);
   if (ret != 0) {
     fprintf(stderr, "HOTH_I2C_TRANSFER error code: %d\n", ret);

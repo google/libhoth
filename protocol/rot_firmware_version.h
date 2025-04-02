@@ -22,9 +22,9 @@
 extern "C" {
 #endif
 
-#define EC_CMD_GET_VERSION 0x0002
+#define HOTH_CMD_GET_VERSION 0x0002
 
-struct ec_response_get_version {
+struct hoth_response_get_version {
   // Null-terminated RO version string
   char version_string_ro[32];
 
@@ -35,10 +35,10 @@ struct ec_response_get_version {
 
   // One of ec_image
   uint32_t current_image;
-} __ec_align4;
+} __hoth_align4;
 
 int libhoth_get_rot_fw_version(struct libhoth_device* dev,
-                               struct ec_response_get_version* ver);
+                               struct hoth_response_get_version* ver);
 
 #ifdef __cplusplus
 }

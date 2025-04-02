@@ -39,21 +39,21 @@ const char kAnsiRed[] = "\033[31m";
 static int get_channel_status(struct libhoth_device *dev,
                               const struct htool_console_opts *opts,
                               uint32_t *offset) {
-  struct ec_channel_status_request req = {
+  struct hoth_channel_status_request req = {
       .channel_id = opts->channel_id,
   };
-  struct ec_channel_status_response resp;
+  struct hoth_channel_status_response resp;
 
   int status = libhoth_hostcmd_exec(
-      dev, EC_CMD_BOARD_SPECIFIC_BASE + EC_PRV_CMD_HOTH_CHANNEL_STATUS,
+      dev, HOTH_CMD_BOARD_SPECIFIC_BASE + HOTH_PRV_CMD_HOTH_CHANNEL_STATUS,
       /*version=*/0, &req, sizeof(req), &resp, sizeof(resp), NULL);
   if (status) {
-    if (status == HTOOL_ERROR_HOST_COMMAND_START + EC_RES_INVALID_COMMAND) {
+    if (status == HTOOL_ERROR_HOST_COMMAND_START + HOTH_RES_INVALID_COMMAND) {
       fprintf(stderr,
               "This is likely because the running RoT firmware doesn't have "
               "support for channels enabled\n");
     }
-    if (status == HTOOL_ERROR_HOST_COMMAND_START + EC_RES_INVALID_PARAM) {
+    if (status == HTOOL_ERROR_HOST_COMMAND_START + HOTH_RES_INVALID_PARAM) {
       fprintf(stderr,
               "This is likely because the requested channel doesn't exist.\n");
     }
@@ -80,27 +80,27 @@ static int force_write(int fd, const void *buf, size_t count) {
 static int read_console(struct libhoth_device *dev,
                         const struct htool_console_opts *opts,
                         uint32_t *offset) {
-  struct ec_channel_read_request req = {
+  struct hoth_channel_read_request req = {
       .channel_id = opts->channel_id,
       .offset = *offset,
-      .size =
-          HOTH_FIFO_MAX_REQUEST_SIZE - sizeof(struct ec_channel_read_response),
+      .size = HOTH_FIFO_MAX_REQUEST_SIZE -
+              sizeof(struct hoth_channel_read_response),
       .timeout_us = 10000,
   };
 
   struct {
-    struct ec_channel_read_response resp;
+    struct hoth_channel_read_response resp;
     uint8_t buffer[HOTH_FIFO_MAX_REQUEST_SIZE -
-                   sizeof(struct ec_host_response) -
-                   sizeof(struct ec_channel_read_response)];
+                   sizeof(struct hoth_host_response) -
+                   sizeof(struct hoth_channel_read_response)];
   } resp;
-  _Static_assert(sizeof(resp) + sizeof(struct ec_host_response) ==
+  _Static_assert(sizeof(resp) + sizeof(struct hoth_host_response) ==
                      HOTH_FIFO_MAX_REQUEST_SIZE,
                  "unexpected layout");
 
   size_t response_size = 0;
   int status = libhoth_hostcmd_exec(
-      dev, EC_CMD_BOARD_SPECIFIC_BASE + EC_PRV_CMD_HOTH_CHANNEL_READ,
+      dev, HOTH_CMD_BOARD_SPECIFIC_BASE + HOTH_PRV_CMD_HOTH_CHANNEL_READ,
       /*version=*/0, &req, sizeof(req), &resp, sizeof(resp), &response_size);
   if (status != 0) {
     return status;
@@ -193,7 +193,7 @@ static int unescape(char *buf, int in, struct unescape_flags *flags) {
 static int write_console(struct libhoth_device *dev,
                          const struct htool_console_opts *opts, bool *quit) {
   struct {
-    struct ec_channel_write_request_v1 req;
+    struct hoth_channel_write_request_v1 req;
     char buffer[64];
   } req;
 
@@ -211,16 +211,16 @@ static int write_console(struct libhoth_device *dev,
 
   req.req.channel_id = opts->channel_id;
   req.req.flags =
-      opts->force_drive_tx ? EC_CHANNEL_WRITE_REQUEST_FLAG_FORCE_DRIVE_TX : 0;
+      opts->force_drive_tx ? HOTH_CHANNEL_WRITE_REQUEST_FLAG_FORCE_DRIVE_TX : 0;
   req.req.flags |=
-      flags.uart_break ? EC_CHANNEL_WRITE_REQUEST_FLAG_SEND_BREAK : 0;
+      flags.uart_break ? HOTH_CHANNEL_WRITE_REQUEST_FLAG_SEND_BREAK : 0;
 
   int status = libhoth_hostcmd_exec(
-      dev, EC_CMD_BOARD_SPECIFIC_BASE + EC_PRV_CMD_HOTH_CHANNEL_WRITE,
+      dev, HOTH_CMD_BOARD_SPECIFIC_BASE + HOTH_PRV_CMD_HOTH_CHANNEL_WRITE,
       /*version=*/1, &req, sizeof(req.req) + numWrite, NULL, 0, NULL);
 
   if (status != 0) {
-    if (status == HTOOL_ERROR_HOST_COMMAND_START + EC_RES_UNAVAILABLE) {
+    if (status == HTOOL_ERROR_HOST_COMMAND_START + HOTH_RES_UNAVAILABLE) {
       fprintf(stderr,
               "This is likely because the RoT was unable to confirm that no "
               "other device is driving the UART TX net. If you are certain "
@@ -234,23 +234,25 @@ static int write_console(struct libhoth_device *dev,
 
 static int get_uart_config(struct libhoth_device *dev,
                            const struct htool_console_opts *opts,
-                           struct ec_channel_uart_config *resp) {
-  struct ec_channel_uart_config_get_req req = {
+                           struct hoth_channel_uart_config *resp) {
+  struct hoth_channel_uart_config_get_req req = {
       .channel_id = opts->channel_id,
   };
   return libhoth_hostcmd_exec(
-      dev, EC_CMD_BOARD_SPECIFIC_BASE + EC_PRV_CMD_HOTH_CHANNEL_UART_CONFIG_GET,
+      dev,
+      HOTH_CMD_BOARD_SPECIFIC_BASE + HOTH_PRV_CMD_HOTH_CHANNEL_UART_CONFIG_GET,
       /*version=*/0, &req, sizeof(req), resp, sizeof(*resp), NULL);
 }
 static int set_uart_config(struct libhoth_device *dev,
                            const struct htool_console_opts *opts,
-                           struct ec_channel_uart_config *config) {
-  struct ec_channel_uart_config_set_req req = {
+                           struct hoth_channel_uart_config *config) {
+  struct hoth_channel_uart_config_set_req req = {
       .channel_id = opts->channel_id,
       .config = *config,
   };
   return libhoth_hostcmd_exec(
-      dev, EC_CMD_BOARD_SPECIFIC_BASE + EC_PRV_CMD_HOTH_CHANNEL_UART_CONFIG_SET,
+      dev,
+      HOTH_CMD_BOARD_SPECIFIC_BASE + HOTH_PRV_CMD_HOTH_CHANNEL_UART_CONFIG_SET,
       /*version=*/0, &req, sizeof(req), NULL, 0, NULL);
 }
 
@@ -305,7 +307,7 @@ int htool_console_run(struct libhoth_device *dev,
                       const struct htool_console_opts *opts) {
   printf("%sStarting Interactive Console\n", kAnsiRed);
 
-  struct ec_channel_uart_config uart_config = {};
+  struct hoth_channel_uart_config uart_config = {};
   int status = get_uart_config(dev, opts, &uart_config);
   if (status == LIBHOTH_OK) {
     if (opts->baud_rate != 0) {
@@ -372,23 +374,24 @@ int htool_console_run(struct libhoth_device *dev,
 
 int htool_console_snapshot_legacy(struct libhoth_device *dev) {
   size_t response_bytes_written;
-  int status = libhoth_hostcmd_exec(dev, EC_CMD_CONSOLE_REQUEST, 0, NULL, 0, NULL, 0,
-                            &response_bytes_written);
+  int status = libhoth_hostcmd_exec(dev, HOTH_CMD_CONSOLE_REQUEST, 0, NULL, 0,
+                                    NULL, 0, &response_bytes_written);
   if (status != LIBHOTH_OK) {
-    fprintf(stderr, "EC_CMD_CONSOLE_REQUEST status: %d\n", status);
+    fprintf(stderr, "HOTH_CMD_CONSOLE_REQUEST status: %d\n", status);
     return status;
   }
 
-  struct ec_params_console_read_v1 read_request = {.subcmd = CONSOLE_READ_NEXT};
+  struct hoth_params_console_read_v1 read_request = {.subcmd =
+                                                         CONSOLE_READ_NEXT};
   const size_t max_bytes_per_read =
-      MAILBOX_SIZE - sizeof(struct ec_host_response);
+      MAILBOX_SIZE - sizeof(struct hoth_host_response);
   while (true) {
     char buf[MAILBOX_SIZE];
-    status = libhoth_hostcmd_exec(dev, EC_CMD_CONSOLE_READ, 0, &read_request,
-                          sizeof(read_request), buf, max_bytes_per_read,
-                          &response_bytes_written);
+    status = libhoth_hostcmd_exec(dev, HOTH_CMD_CONSOLE_READ, 0, &read_request,
+                                  sizeof(read_request), buf, max_bytes_per_read,
+                                  &response_bytes_written);
     if (status != LIBHOTH_OK) {
-      fprintf(stderr, "EC_CMD_CONSOLE_READ status: %d\n", status);
+      fprintf(stderr, "HOTH_CMD_CONSOLE_READ status: %d\n", status);
       return status;
     }
     fwrite(buf, strnlen(buf, sizeof(buf)), 1, stdout);

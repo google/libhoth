@@ -76,7 +76,7 @@ uint8_t libhoth_calculate_checksum(const void* header, size_t header_size,
 
 static int populate_ec_request_header(uint16_t command, uint8_t command_version,
                                       const void* request, size_t request_size,
-                                      struct ec_host_request* request_header) {
+                                      struct hoth_host_request* request_header) {
   if (!request_header) {
     fprintf(stderr, "Request header argument cannot be NULL\n");
     return -EINVAL;
@@ -93,7 +93,7 @@ static int populate_ec_request_header(uint16_t command, uint8_t command_version,
     return -EINVAL;
   }
 
-  request_header->struct_version = EC_HOST_REQUEST_VERSION;
+  request_header->struct_version = HOTH_HOST_REQUEST_VERSION;
   request_header->checksum = 0;
   request_header->command = command;
   request_header->command_version = command_version;
@@ -107,7 +107,7 @@ static int populate_ec_request_header(uint16_t command, uint8_t command_version,
 }
 
 static int validate_ec_response_header(
-    const struct ec_host_response* response_header, const void* response,
+    const struct hoth_host_response* response_header, const void* response,
     size_t response_size) {
   uint8_t response_checksum;
 
@@ -123,9 +123,9 @@ static int validate_ec_response_header(
     return -EINVAL;
   }
 
-  if (response_header->struct_version != EC_HOST_RESPONSE_VERSION) {
+  if (response_header->struct_version != HOTH_HOST_RESPONSE_VERSION) {
     fprintf(stderr, "Error: unexpected struct_version. Got %u, expected %u\n",
-            response_header->struct_version, EC_HOST_RESPONSE_VERSION);
+            response_header->struct_version, HOTH_HOST_RESPONSE_VERSION);
     return -EINVAL;
   }
 
@@ -158,8 +158,8 @@ int libhoth_hostcmd_exec(struct libhoth_device* dev, uint16_t command, uint8_t v
                  const void* req_payload, size_t req_payload_size,
                  void* resp_buf, size_t resp_buf_size, size_t* out_resp_size) {
   struct {
-    struct ec_host_request hdr;
-    uint8_t payload_buf[LIBHOTH_MAILBOX_SIZE - sizeof(struct ec_host_request)];
+    struct hoth_host_request hdr;
+    uint8_t payload_buf[LIBHOTH_MAILBOX_SIZE - sizeof(struct hoth_host_request)];
   } req;
   if (req_payload_size > sizeof(req.payload_buf)) {
     fprintf(stderr, "req_payload_size too large: %d > %d\n",
@@ -181,8 +181,8 @@ int libhoth_hostcmd_exec(struct libhoth_device* dev, uint16_t command, uint8_t v
     return -1;
   }
   struct {
-    struct ec_host_response hdr;
-    uint8_t payload_buf[LIBHOTH_MAILBOX_SIZE - sizeof(struct ec_host_response)];
+    struct hoth_host_response hdr;
+    uint8_t payload_buf[LIBHOTH_MAILBOX_SIZE - sizeof(struct hoth_host_response)];
   } resp;
   size_t resp_size;
   status = libhoth_receive_response(dev, &resp, sizeof(resp), &resp_size,
@@ -196,12 +196,12 @@ int libhoth_hostcmd_exec(struct libhoth_device* dev, uint16_t command, uint8_t v
     fprintf(stderr, "EC response header invalid: %d\n", status);
     return -1;
   }
-  if (resp.hdr.result != EC_RES_SUCCESS) {
+  if (resp.hdr.result != HOTH_RES_SUCCESS) {
     fprintf(stderr, "EC response contained error: %d\n", resp.hdr.result);
     return HTOOL_ERROR_HOST_COMMAND_START + resp.hdr.result;
   }
 
-  size_t resp_payload_size = resp_size - sizeof(struct ec_host_response);
+  size_t resp_payload_size = resp_size - sizeof(struct hoth_host_response);
   if (out_resp_size) {
     if (resp_payload_size > resp_buf_size) {
       fprintf(

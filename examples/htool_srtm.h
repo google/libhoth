@@ -23,7 +23,7 @@ extern "C" {
 
 // Populates an ec_srtm_request the given measurement data. `measurement` is
 // expected to be a hex string.
-int srtm_request_from_hex_measurement(struct ec_srtm_request* request,
+int srtm_request_from_hex_measurement(struct hoth_srtm_request* request,
                                       const char* measurement);
 
 #ifdef __cplusplus

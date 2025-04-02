@@ -17,9 +17,9 @@
 #include "host_cmd.h"
 
 int libhoth_reboot(struct libhoth_device* dev) {
-  struct ec_params_reboot_ec req = {
-      .cmd = EC_REBOOT_COLD,
+  struct hoth_params_reboot_ec req = {
+      .cmd = HOTH_REBOOT_COLD,
   };
-  return libhoth_hostcmd_exec(dev, EC_CMD_REBOOT_EC, 0, &req, sizeof(req), NULL, 0,
+  return libhoth_hostcmd_exec(dev, HOTH_CMD_REBOOT_EC, 0, &req, sizeof(req), NULL, 0,
                       NULL);
 }

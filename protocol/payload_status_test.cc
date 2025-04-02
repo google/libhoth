@@ -63,8 +63,8 @@ const struct payload_status kDefaultPayloadStatus = {
 
 TEST_F(LibHothTest, payload_status_test) {
   EXPECT_CALL(mock_, send(_,
-                          UsesCommand(EC_CMD_BOARD_SPECIFIC_BASE +
-                                      EC_PRV_CMD_HOTH_PAYLOAD_STATUS),
+                          UsesCommand(HOTH_CMD_BOARD_SPECIFIC_BASE +
+                                      HOTH_PRV_CMD_HOTH_PAYLOAD_STATUS),
                           _))
       .WillOnce(Return(LIBHOTH_OK));
 
@@ -82,8 +82,8 @@ TEST_F(LibHothTest, payload_status_test) {
 
 TEST_F(LibHothTest, payload_status_bad_region_count) {
   EXPECT_CALL(mock_, send(_,
-                          UsesCommand(EC_CMD_BOARD_SPECIFIC_BASE +
-                                      EC_PRV_CMD_HOTH_PAYLOAD_STATUS),
+                          UsesCommand(HOTH_CMD_BOARD_SPECIFIC_BASE +
+                                      HOTH_PRV_CMD_HOTH_PAYLOAD_STATUS),
                           _))
       .WillOnce(Return(LIBHOTH_OK));
 

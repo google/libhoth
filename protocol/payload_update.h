@@ -23,7 +23,7 @@ extern "C" {
 
 #include "transports/libhoth_device.h"
 
-#define EC_PRV_CMD_HOTH_PAYLOAD_UPDATE 0x0005
+#define HOTH_PRV_CMD_HOTH_PAYLOAD_UPDATE 0x0005
 
 #define PAYLOAD_UPDATE_INITIATE 0
 #define PAYLOAD_UPDATE_CONTINUE 1

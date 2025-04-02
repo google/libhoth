@@ -22,7 +22,7 @@ int libhoth_payload_status(struct libhoth_device* dev,
                            struct payload_status* payload_status) {
   size_t rlen = 0;
   int ret = libhoth_hostcmd_exec(
-      dev, EC_CMD_BOARD_SPECIFIC_BASE + EC_PRV_CMD_HOTH_PAYLOAD_STATUS, 0, NULL,
+      dev, HOTH_CMD_BOARD_SPECIFIC_BASE + HOTH_PRV_CMD_HOTH_PAYLOAD_STATUS, 0, NULL,
       0, payload_status, sizeof(*payload_status), &rlen);
 
   if (ret != 0) {

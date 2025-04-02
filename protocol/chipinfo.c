@@ -17,8 +17,8 @@
 #include "host_cmd.h"
 
 int libhoth_chipinfo(struct libhoth_device* dev,
-                     struct ec_response_chip_info* chipinfo) {
+                     struct hoth_response_chip_info* chipinfo) {
   return libhoth_hostcmd_exec(
-      dev, EC_CMD_BOARD_SPECIFIC_BASE + EC_PRV_CMD_HOTH_CHIP_INFO,
+      dev, HOTH_CMD_BOARD_SPECIFIC_BASE + HOTH_PRV_CMD_HOTH_CHIP_INFO,
       /*version=*/0, NULL, 0, chipinfo, sizeof(*chipinfo), NULL);
 }

@@ -24,14 +24,14 @@ extern "C" {
 
 #include "transports/libhoth_device.h"
 
-#define EC_PRV_CMD_HOTH_PERSISTENT_PANIC_INFO 0x0014
+#define HOTH_PRV_CMD_HOTH_PERSISTENT_PANIC_INFO 0x0014
 #define HOTH_PERSISTENT_PANIC_INFO_CHUNK_SIZE 512
 enum persistent_panic_op {
   PERSISTENT_PANIC_INFO_GET = 0,
   PERSISTENT_PANIC_INFO_ERASE = 1,
 };
 
-struct ec_request_persistent_panic_info {
+struct hoth_request_persistent_panic_info {
   /* The operation is one of persistent_panic_op. */
   uint32_t operation;
   /* When the operation is PERSISTENT_PANIC_INFO_GET, the index
@@ -46,7 +46,7 @@ struct persistent_panic_rw_version {
   uint32_t minor;
 } __attribute__((packed));
 
-struct ec_response_persistent_panic_info {
+struct hoth_response_persistent_panic_info {
   uint8_t panic_record[144];
 
   /* The uart_head is the next location in the buffer that console output
@@ -133,14 +133,14 @@ enum panic_arch {
 #define PANIC_DATA_FLAG_OLD_HOSTEVENT (1 << 3)
 
 int libhoth_get_panic(struct libhoth_device* dev,
-                      struct ec_response_persistent_panic_info* panic_data);
+                      struct hoth_response_persistent_panic_info* panic_data);
 int libhoth_clear_persistent_panic_info(struct libhoth_device* dev);
 void libhoth_print_panic_info(
-    const struct ec_response_persistent_panic_info* panic);
+    const struct hoth_response_persistent_panic_info* panic);
 
 /* Internally mallocs, caller must free */
 char* libhoth_get_panic_console_log(
-    const struct ec_response_persistent_panic_info* pdata);
+    const struct hoth_response_persistent_panic_info* pdata);
 
 #ifdef __cplusplus
 }

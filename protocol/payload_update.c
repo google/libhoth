@@ -28,7 +28,7 @@ static int send_payload_update_request_with_command(struct libhoth_device* dev,
   request.len = 0;
 
   int ret = libhoth_hostcmd_exec(
-      dev, EC_CMD_BOARD_SPECIFIC_BASE + EC_PRV_CMD_HOTH_PAYLOAD_UPDATE, 0,
+      dev, HOTH_CMD_BOARD_SPECIFIC_BASE + HOTH_PRV_CMD_HOTH_PAYLOAD_UPDATE, 0,
       &request, sizeof(request), NULL, 0, NULL);
   if (ret != 0) {
     fprintf(stderr, "Error code from hoth: %d\n", ret);
@@ -50,7 +50,7 @@ enum payload_update_err libhoth_payload_update(struct libhoth_device* dev,
   }
 
   const size_t max_chunk_size = LIBHOTH_MAILBOX_SIZE -
-                                sizeof(struct ec_host_request) -
+                                sizeof(struct hoth_host_request) -
                                 sizeof(struct payload_update_packet);
 
   fprintf(stderr, "Flashing the image to hoth.\n");
@@ -82,7 +82,7 @@ enum payload_update_err libhoth_payload_update(struct libhoth_device* dev,
     memcpy(buffer + sizeof(request), image + offset, chunk_size);
 
     int ret = libhoth_hostcmd_exec(
-        dev, EC_CMD_BOARD_SPECIFIC_BASE + EC_PRV_CMD_HOTH_PAYLOAD_UPDATE, 0,
+        dev, HOTH_CMD_BOARD_SPECIFIC_BASE + HOTH_PRV_CMD_HOTH_PAYLOAD_UPDATE, 0,
         buffer, sizeof(request) + chunk_size, NULL, 0, NULL);
     if (ret != 0) {
       fprintf(stderr, "Error code from hoth: %d\n", ret);
@@ -110,7 +110,7 @@ int libhoth_payload_update_getstatus(
 
   size_t rlen = 0;
   int ret = libhoth_hostcmd_exec(
-      dev, EC_CMD_BOARD_SPECIFIC_BASE + EC_PRV_CMD_HOTH_PAYLOAD_UPDATE, 0,
+      dev, HOTH_CMD_BOARD_SPECIFIC_BASE + HOTH_PRV_CMD_HOTH_PAYLOAD_UPDATE, 0,
       &request, sizeof(request), update_status, sizeof(*update_status), &rlen);
 
   if (ret != 0) {

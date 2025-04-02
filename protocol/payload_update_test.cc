@@ -24,7 +24,7 @@ using ::testing::DoAll;
 using ::testing::Return;
 
 constexpr int kCmd =
-    EC_CMD_BOARD_SPECIFIC_BASE + EC_PRV_CMD_HOTH_PAYLOAD_UPDATE;
+    HOTH_CMD_BOARD_SPECIFIC_BASE + HOTH_PRV_CMD_HOTH_PAYLOAD_UPDATE;
 constexpr int64_t kMagic = 0x5F435344474D495F;
 constexpr int64_t kAlign = 1 << 16;
 constexpr int64_t kDummy = 0;

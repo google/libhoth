@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef _LIBHOTH_LIBHOTH_EC_H_
-#define _LIBHOTH_LIBHOTH_EC_H_
+#ifndef _LIBHOTH_LIBHOTH_HOTH_H_
+#define _LIBHOTH_LIBHOTH_HOTH_H_
 
 #include <stdint.h>
 
@@ -21,7 +21,7 @@
 extern "C" {
 #endif
 
-struct ec_host_response {
+struct hoth_host_response {
   uint8_t struct_version;
   uint8_t checksum;
   uint16_t result;
@@ -33,4 +33,4 @@ struct ec_host_response {
 }
 #endif
 
-#endif  // _LIBHOTH_LIBHOTH_EC_H_
+#endif  // _LIBHOTH_LIBHOTH_HOTH_H_

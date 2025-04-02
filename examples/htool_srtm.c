@@ -5,7 +5,7 @@
 
 #include "host_commands.h"
 
-int srtm_request_from_hex_measurement(struct ec_srtm_request *request,
+int srtm_request_from_hex_measurement(struct hoth_srtm_request *request,
                                       const char *measurement) {
   size_t hex_length = strlen(measurement);
   if (hex_length == 0) {

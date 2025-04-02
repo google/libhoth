@@ -43,22 +43,22 @@ class LibHothTest : public testing::Test {
 };
 
 MATCHER_P(UsesCommand, command, "") {
-  ec_host_request* req = (ec_host_request*)arg;
+  struct hoth_host_request* req = (struct hoth_host_request*)arg;
   return req->command == command;
 }
 
 ACTION_P(CopyResp, response, resp_size) {
-  auto full_resp_size = sizeof(ec_host_response) + resp_size;
+  auto full_resp_size = sizeof(struct hoth_host_response) + resp_size;
 
   struct {
-    struct ec_host_response hdr;
-    uint8_t payload_buf[LIBHOTH_MAILBOX_SIZE - sizeof(struct ec_host_response)];
+    struct hoth_host_response hdr;
+    uint8_t payload_buf[LIBHOTH_MAILBOX_SIZE - sizeof(struct hoth_host_response)];
   } resp;
 
   ASSERT_LE(full_resp_size, sizeof(resp));
 
-  resp.hdr.struct_version = EC_HOST_RESPONSE_VERSION;
-  resp.hdr.result = EC_RES_SUCCESS;
+  resp.hdr.struct_version = HOTH_HOST_RESPONSE_VERSION;
+  resp.hdr.result = HOTH_RES_SUCCESS;
   resp.hdr.data_len = resp_size;
   resp.hdr.reserved = 0;
   resp.hdr.checksum = 0;

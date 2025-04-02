@@ -16,8 +16,8 @@
 
 #ifdef DBUS_BACKEND
 
-#include "transports/libhoth_dbus.h"
 #include "htool_cmd.h"
+#include "transports/libhoth_dbus.h"
 
 struct libhoth_device* htool_libhoth_dbus_device(void) {
   static struct libhoth_device* result;

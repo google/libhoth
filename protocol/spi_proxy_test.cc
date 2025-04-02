@@ -28,8 +28,8 @@ using ::testing::Return;
 
 TEST_F(LibHothTest, spi_proxy_init) {
   EXPECT_CALL(mock_, send(_,
-                          UsesCommand(EC_CMD_BOARD_SPECIFIC_BASE +
-                                      EC_PRV_CMD_HOTH_SPI_OPERATION),
+                          UsesCommand(HOTH_CMD_BOARD_SPECIFIC_BASE +
+                                      HOTH_PRV_CMD_HOTH_SPI_OPERATION),
                           _))
       .WillOnce(Return(LIBHOTH_OK));
   uint32_t dummy;

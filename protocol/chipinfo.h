@@ -23,9 +23,9 @@ extern "C" {
 
 #include "transports/libhoth_device.h"
 
-#define EC_PRV_CMD_HOTH_CHIP_INFO 0x0010
+#define HOTH_PRV_CMD_HOTH_CHIP_INFO 0x0010
 
-struct ec_response_chip_info {
+struct hoth_response_chip_info {
   uint64_t hardware_identity;
   uint16_t hardware_category;
   uint16_t reserved0;
@@ -33,7 +33,7 @@ struct ec_response_chip_info {
 } __attribute__((packed, aligned(4)));
 
 int libhoth_chipinfo(struct libhoth_device* dev,
-                     struct ec_response_chip_info* chipinfo);
+                     struct hoth_response_chip_info* chipinfo);
 
 #ifdef __cplusplus
 }

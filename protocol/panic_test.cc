@@ -51,12 +51,12 @@ TEST_F(LibHothTest, panic_data_test) {
 
 TEST_F(LibHothTest, panic_test) {
   EXPECT_CALL(mock_, send(_,
-                          UsesCommand(EC_CMD_BOARD_SPECIFIC_BASE +
-                                      EC_PRV_CMD_HOTH_PERSISTENT_PANIC_INFO),
+                          UsesCommand(HOTH_CMD_BOARD_SPECIFIC_BASE +
+                                      HOTH_PRV_CMD_HOTH_PERSISTENT_PANIC_INFO),
                           _))
       .WillRepeatedly(Return(LIBHOTH_OK));
 
-  struct ec_response_persistent_panic_info exp_panic_record = {
+  struct hoth_response_persistent_panic_info exp_panic_record = {
       .uart_head = 0xFFFFFFFF,
       .uart_tail = 0xFFFFFFFF,
       .persistent_panic_record_version = 0,
@@ -84,7 +84,7 @@ TEST_F(LibHothTest, panic_test) {
     chunk_offset += HOTH_PERSISTENT_PANIC_INFO_CHUNK_SIZE;
   }
 
-  struct ec_response_persistent_panic_info panic_record;
+  struct hoth_response_persistent_panic_info panic_record;
   EXPECT_EQ(libhoth_get_panic(&hoth_dev_, &panic_record), LIBHOTH_OK);
 
   EXPECT_EQ(exp_panic_record.rw_version.epoch, panic_record.rw_version.epoch);
@@ -94,8 +94,8 @@ TEST_F(LibHothTest, panic_test) {
 
 TEST_F(LibHothTest, clear_panic_test) {
   EXPECT_CALL(mock_, send(_,
-                          UsesCommand(EC_CMD_BOARD_SPECIFIC_BASE +
-                                      EC_PRV_CMD_HOTH_PERSISTENT_PANIC_INFO),
+                          UsesCommand(HOTH_CMD_BOARD_SPECIFIC_BASE +
+                                      HOTH_PRV_CMD_HOTH_PERSISTENT_PANIC_INFO),
                           _))
       .WillOnce(Return(LIBHOTH_OK));
 
