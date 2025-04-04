@@ -280,57 +280,6 @@ struct hoth_response_target_control {
   uint16_t status;
 } __attribute__((packed, aligned(4)));
 
-#define HOTH_PRV_CMD_HOTH_JTAG_OPERATION (0x0048)
-// Amount of bytes to send and receive for testing JTAG device in BYPASS mode
-#define HOTH_JTAG_TEST_BYPASS_PATTERN_LEN (64)
-
-enum hoth_jtag_operation {
-  HOTH_JTAG_OP_UNDEFINED = 0,
-  HOTH_JTAG_OP_READ_IDCODE = 1,
-  HOTH_JTAG_OP_TEST_BYPASS = 2,
-  HOTH_JTAG_OP_PROGRAM_AND_VERIFY_PLD = 3,
-  HOTH_JTAG_OP_VERIFY_PLD = 4,
-};
-
-struct hoth_request_jtag_operation {
-  // Integer divisor for JTAG clock. Clock frequency used is ~
-  // `(48/(clk_idiv+1))` MHz.
-  // This can be used to limit the max JTAG peripheral clock frequency - higher
-  // `clk_idiv` => lower the clock frequency.
-  uint16_t clk_idiv;
-  uint8_t operation;  // `enum hoth_jtag_operation`
-  uint8_t reserved0;  // pad to 4-byte boundary
-  // Request data (if present) follows. See `struct
-  // hoth_request_jtag_<op>_operation`
-} __attribute__((packed, aligned(4)));
-
-struct hoth_request_jtag_test_bypass_operation {
-  // Test pattern to send over TDI with `HOTH_JTAG_OP_TEST_BYPASS`
-  uint8_t tdi_pattern[HOTH_JTAG_TEST_BYPASS_PATTERN_LEN];
-};
-
-struct hoth_request_jtag_program_and_verify_pld_operation {
-  // Offset in external flash where data to program and verify PLD is stored
-  uint32_t data_offset;
-} __attribute__((packed, aligned(4)));
-
-struct hoth_request_jtag_verify_pld_operation {
-  // Offset in external flash where data to verify PLD is stored
-  uint32_t data_offset;
-} __attribute__((packed, aligned(4)));
-
-// Separate response structures for each operation. Naming convention: `struct
-// hoth_response_jtag_<op>_operation`
-
-struct hoth_response_jtag_read_idcode_operation {
-  uint32_t idcode;
-} __attribute__((packed, aligned(4)));
-
-struct hoth_response_jtag_test_bypass_operation {
-  // Pattern captured over TDO with `HOTH_JTAG_OP_TEST_BYPASS`
-  uint8_t tdo_pattern[HOTH_JTAG_TEST_BYPASS_PATTERN_LEN];
-} __attribute__((packed, aligned(4)));
-
 #ifdef __cplusplus
 }
 #endif

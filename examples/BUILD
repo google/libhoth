@@ -82,6 +82,7 @@ cc_binary(
         "//protocol:i2c",
         "//protocol:spi_proxy",
         "//protocol:controlled_storage",
+        "//protocol:jtag",
         "//transports:libhoth_device",
         "//transports:libhoth_mtd",
         "//transports:libhoth_spi",
