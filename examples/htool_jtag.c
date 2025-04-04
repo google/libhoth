@@ -23,8 +23,10 @@
 #include "htool.h"
 #include "htool_cmd.h"
 #include "protocol/host_cmd.h"
+#include "protocol/jtag.h"
 
-char JTAG_TEST_BYPASS_PATTERN_DEFAULT_VALUE[] =
+// Used if no data is provided for data to send over TDI
+static char *JTAG_TEST_BYPASS_PATTERN_DEFAULT_VALUE =
     // PRBS9 with '0' bit added at the beginning to make it exactly 64 bytes
     "0x42 0x30 0x9c 0xab 0xd 0xe9 0xb9 0x14 0x2b 0x4f 0xd9 0x25 0xbf 0x26 0xa6 "
     "0x60 0x31 0x94 0x69 0x7f 0x45 0x8e 0xb2 0xcf 0x1f 0x74 0x1a 0xdb 0xb0 "
@@ -46,31 +48,13 @@ static int jtag_read_idcode(struct libhoth_device *dev,
     return -1;
   }
 
-  const struct hoth_request_jtag_operation request = {
-      .clk_idiv = (uint16_t)clk_idiv,
-      .operation = HOTH_JTAG_OP_READ_IDCODE,
-  };
-
-  struct hoth_response_jtag_read_idcode_operation response;
-  size_t response_length = 0;
-  int ret = libhoth_hostcmd_exec(
-      dev, HOTH_CMD_BOARD_SPECIFIC_BASE + HOTH_PRV_CMD_HOTH_JTAG_OPERATION,
-      /*version=*/0, &request, sizeof(request), &response, sizeof(response),
-      &response_length);
-
+  uint32_t idcode = 0;
+  int ret = libhoth_jtag_read_idcode(dev, clk_idiv, &idcode);
   if (ret != 0) {
-    fprintf(stderr, "HOTH_JTAG_OPERATION error code: %d\n", ret);
-    return -1;
+    return ret;
   }
 
-  if (response_length != sizeof(response)) {
-    fprintf(stderr,
-            "HOTH_JTAG_OPERATION expected exactly %zu reseponse bytes, got %zu",
-            sizeof(response), response_length);
-    return -1;
-  }
-
-  printf("IDCODE: 0x%08x\n", response.idcode);
+  printf("IDCODE: 0x%08x\n", idcode);
   return 0;
 }
 
@@ -114,18 +98,18 @@ static int parse_string_param_into_byte_sequence(
 
 static int jtag_test_bypass(struct libhoth_device *dev,
                             const struct htool_invocation *inv) {
-  char *tdi_bytes = NULL;
+  char *tdi_bytes_str = NULL;
   uint32_t clk_idiv;
 
   if (htool_get_param_u32(inv, "clk_idiv", &clk_idiv) ||
-      htool_get_param_string(inv, "tdi_bytes", (const char **)&tdi_bytes)) {
+      htool_get_param_string(inv, "tdi_bytes", (const char **)&tdi_bytes_str)) {
     return -1;
   }
 
-  if (tdi_bytes[0] == '\0') {
+  if (tdi_bytes_str[0] == '\0') {
     // Empty string indicates use default value since no value was provided on
     // command line
-    tdi_bytes = JTAG_TEST_BYPASS_PATTERN_DEFAULT_VALUE;
+    tdi_bytes_str = JTAG_TEST_BYPASS_PATTERN_DEFAULT_VALUE;
   }
 
   if (clk_idiv > UINT16_MAX) {
@@ -134,55 +118,32 @@ static int jtag_test_bypass(struct libhoth_device *dev,
     return -1;
   }
 
-  struct {
-    struct hoth_request_jtag_operation operation;
-    struct hoth_request_jtag_test_bypass_operation params;
-  } __attribute__((packed, aligned(4))) request = {
-      .operation =
-          {
-              .clk_idiv = (uint16_t)clk_idiv,
-              .operation = HOTH_JTAG_OP_TEST_BYPASS,
-          },
-  };
-
+  uint8_t tdi_bytes[HOTH_JTAG_TEST_BYPASS_PATTERN_LEN];
   int ret = parse_string_param_into_byte_sequence(
-      tdi_bytes, request.params.tdi_pattern, HOTH_JTAG_TEST_BYPASS_PATTERN_LEN);
+      tdi_bytes_str, tdi_bytes, HOTH_JTAG_TEST_BYPASS_PATTERN_LEN);
   if (ret != 0) {
     return ret;
   }
 
   printf("TDI: ");
   for (uint8_t i = 0; i < HOTH_JTAG_TEST_BYPASS_PATTERN_LEN; i++) {
-    printf("0x%02x ", request.params.tdi_pattern[i]);
+    printf("0x%02x ", tdi_bytes[i]);
   }
   printf("\n");
 
-  struct hoth_response_jtag_test_bypass_operation response;
-  size_t response_len = 0;
-  ret = libhoth_hostcmd_exec(
-      dev, HOTH_CMD_BOARD_SPECIFIC_BASE + HOTH_PRV_CMD_HOTH_JTAG_OPERATION,
-      /*version=*/0, &request, sizeof(request), &response, sizeof(response),
-      &response_len);
-
+  uint8_t tdo_bytes[HOTH_JTAG_TEST_BYPASS_PATTERN_LEN] = {0};
+  ret = libhoth_jtag_test_bypass(dev, clk_idiv, tdi_bytes, tdo_bytes);
   if (ret != 0) {
-    fprintf(stderr, "HOTH_JTAG_OPERATION error code: %d\n", ret);
-    return -1;
-  }
-
-  if (response_len != sizeof(response)) {
-    fprintf(stderr,
-            "HOTH_JTAG_OPERATION expected exactly %zu response bytes, got %zu",
-            sizeof(response), response_len);
-    return -1;
+    return ret;
   }
 
   bool tdo_matches_tdi = true;
   printf("TDO: ");
   for (uint8_t i = 0; i < HOTH_JTAG_TEST_BYPASS_PATTERN_LEN; i++) {
-    if (response.tdo_pattern[i] != request.params.tdi_pattern[i]) {
+    if (tdo_bytes[i] != tdi_bytes[i]) {
       tdo_matches_tdi = false;
     }
-    printf("0x%02x ", response.tdo_pattern[i]);
+    printf("0x%02x ", tdo_bytes[i]);
   }
   printf("\n");
 
@@ -199,40 +160,7 @@ static int jtag_program_and_verify_pld(struct libhoth_device *dev,
     return -1;
   }
 
-  struct {
-    struct hoth_request_jtag_operation operation;
-    struct hoth_request_jtag_program_and_verify_pld_operation params;
-  } __attribute__((packed, aligned(4))) request = {
-      .operation =
-          {
-              .clk_idiv = (uint16_t)0,  // Not used
-              .operation = HOTH_JTAG_OP_PROGRAM_AND_VERIFY_PLD,
-          },
-      .params =
-          {
-              .data_offset = offset,
-          },
-  };
-
-  size_t response_length = 0;
-  int ret = libhoth_hostcmd_exec(
-      dev, HOTH_CMD_BOARD_SPECIFIC_BASE + HOTH_PRV_CMD_HOTH_JTAG_OPERATION,
-      /*version=*/0, &request, sizeof(request), /*resp_buf=*/NULL,
-      /*resp_buf_size=*/0, &response_length);
-
-  if (ret != 0) {
-    fprintf(stderr, "HOTH_JTAG_OPERATION error code: %d\n", ret);
-    return -1;
-  }
-
-  if (response_length != 0) {
-    fprintf(stderr,
-            "HOTH_JTAG_OPERATION expected exactly %u response bytes, got %zu\n",
-            0, response_length);
-    return -1;
-  }
-
-  return 0;
+  return libhoth_jtag_program_and_verify_pld(dev, offset);
 }
 
 static int jtag_verify_pld(struct libhoth_device *dev,
@@ -243,43 +171,10 @@ static int jtag_verify_pld(struct libhoth_device *dev,
     return -1;
   }
 
-  struct {
-    struct hoth_request_jtag_operation operation;
-    struct hoth_request_jtag_program_and_verify_pld_operation params;
-  } __attribute__((packed, aligned(4))) request = {
-      .operation =
-          {
-              .clk_idiv = (uint16_t)0,  // Not used
-              .operation = HOTH_JTAG_OP_VERIFY_PLD,
-          },
-      .params =
-          {
-              .data_offset = offset,
-          },
-  };
-
-  size_t response_length = 0;
-  int ret = libhoth_hostcmd_exec(
-      dev, HOTH_CMD_BOARD_SPECIFIC_BASE + HOTH_PRV_CMD_HOTH_JTAG_OPERATION,
-      /*version=*/0, &request, sizeof(request), /*resp_buf=*/NULL,
-      /*resp_buf_size=*/0, &response_length);
-
-  if (ret != 0) {
-    fprintf(stderr, "HOTH_JTAG_OPERATION error code: %d\n", ret);
-    return -1;
-  }
-
-  if (response_length != 0) {
-    fprintf(stderr,
-            "HOTH_JTAG_OPERATION expected exactly %u response bytes, got %zu\n",
-            0, response_length);
-    return -1;
-  }
-
-  return 0;
+  return libhoth_jtag_verify_pld(dev, offset);
 }
 
-int command_jtag_operation_run(const struct htool_invocation *inv) {
+int htool_jtag_run(const struct htool_invocation *inv) {
   struct libhoth_device *dev = htool_libhoth_device();
   if (!dev) {
     return -1;

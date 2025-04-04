@@ -1103,7 +1103,7 @@ static const struct htool_cmd CMDS[] = {
                          "sets the max clock rate to `(48/(n+1))` MHz. Default "
                          "value of 47 sets the clock frequency to 1MHz"},
                 {}},
-        .func = command_jtag_operation_run,
+        .func = htool_jtag_run,
     },
     {
         .verbs = (const char*[]){"jtag", JTAG_TEST_BYPASS_CMD_STR, NULL},
@@ -1129,7 +1129,7 @@ static const struct htool_cmd CMDS[] = {
                  .desc = "64 bytes (space separated) to send over TDI "
                          "when the JTAG device is in BYPASS mode"},
                 {}},
-        .func = command_jtag_operation_run,
+        .func = htool_jtag_run,
     },
     {
         .verbs = (const char*[]){"external_usb_host", "check_presence", NULL},
@@ -1151,7 +1151,7 @@ static const struct htool_cmd CMDS[] = {
                  .default_value = "0",
                  .desc = "Offset to read program and verify data from"},
                 {}},
-        .func = command_jtag_operation_run,
+        .func = htool_jtag_run,
     },
     {
         .verbs = (const char*[]){"jtag", JTAG_VERIFY_PLD_CMD_STR, NULL},
@@ -1164,7 +1164,7 @@ static const struct htool_cmd CMDS[] = {
                  .default_value = "0",
                  .desc = "Offset to read verify data from"},
                 {}},
-        .func = command_jtag_operation_run,
+        .func = htool_jtag_run,
     },
     {
         .verbs = (const char*[]){"storage", "read", NULL},

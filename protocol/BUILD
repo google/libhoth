@@ -286,3 +286,25 @@ cc_test(
         ":controlled_storage",
     ],
 )
+
+cc_library(
+    name = "jtag",
+    hdrs = ["jtag.h"],
+    srcs = ["jtag.c"],
+    deps = [
+        "//transports:libhoth_device",
+        ":host_cmd",
+    ],
+)
+
+cc_test(
+    name = "jtag_test",
+    srcs = ["jtag_test.cc"],
+    deps = [
+        "@googletest//:gtest",
+        "@googletest//:gtest_main",
+        "//transports:libhoth_device",
+        "//protocol/test:libhoth_device_mock",
+        ":jtag",
+    ],
+)

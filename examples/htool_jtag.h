@@ -27,7 +27,7 @@ extern "C" {
 // Forward declaration
 struct htool_invocation;
 
-int command_jtag_operation_run(const struct htool_invocation* inv);
+int htool_jtag_run(const struct htool_invocation* inv);
 
 #ifdef __cplusplus
 }
