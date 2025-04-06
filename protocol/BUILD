@@ -263,3 +263,26 @@ cc_test(
         "//protocol/test:test_data",
     ],
 )
+
+cc_library(
+    name = "controlled_storage",
+    hdrs = ["controlled_storage.h"],
+    srcs = ["controlled_storage.c"],
+    deps = [
+        "//transports:libhoth_device",
+        ":progress",
+        ":host_cmd",
+    ],
+)
+
+cc_test(
+    name = "controlled_storage_test",
+    srcs = ["controlled_storage_test.cc"],
+    deps = [
+        "@googletest//:gtest",
+        "@googletest//:gtest_main",
+        "//transports:libhoth_device",
+        "//protocol/test:libhoth_device_mock",
+        ":controlled_storage",
+    ],
+)
