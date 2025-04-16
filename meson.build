@@ -4,6 +4,7 @@ subdir('transports')
 subdir('protocol')
 
 install_headers('transports/libhoth_device.h')
+install_headers('transports/libhoth_spi.h')
 install_headers('transports/libhoth_usb.h')
 install_headers('transports/libhoth_usb_device.h')
 
