@@ -22,7 +22,7 @@ rust_library(
     crate_name = "mutask_sha256_sw",
     visibility = ["//visibility:public"],
     deps = [
-        "@crates_mutask//:zerocopy",
+        "//third_party:zerocopy",
         "@mutask//subtle",
     ],
 )
