@@ -325,7 +325,7 @@ int htool_console_run(struct libhoth_device *dev,
   if (status == LIBHOTH_OK) {
     printf("Using baud-rate %d\n", uart_config.baud_rate);
   }
-  printf("[ Use Ctrl+T-Q to quit ]\n%s", kAnsiReset);
+  printf("[ Use Ctrl+T-Q to quit ]%s\n", kAnsiReset);
 
   // Get the channel write pointer. (any new serial data received after this
   // will be stored at this offset)
