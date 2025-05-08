@@ -32,18 +32,6 @@ enum hoth_image {
   HOTH_IMAGE_RW_B
 };
 
-#define HOTH_CMD_HELLO 0x0001
-
-struct hoth_params_hello {
-  // Pass anything here
-  uint32_t in_data;
-} __hoth_align4;
-
-struct hoth_response_hello {
-  // Output will be in_data + 0x01020304.
-  uint32_t out_data;
-} __hoth_align4;
-
 #define HOTH_CMD_FLASH_SPI_INFO 0x0018
 
 struct hoth_response_flash_spi_info {

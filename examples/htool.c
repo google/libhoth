@@ -46,6 +46,7 @@
 #include "protocol/authz_record.h"
 #include "protocol/chipinfo.h"
 #include "protocol/controlled_storage.h"
+#include "protocol/hello.h"
 #include "protocol/progress.h"
 #include "protocol/reboot.h"
 #include "protocol/rot_firmware_version.h"
@@ -741,6 +742,27 @@ int htool_controlled_storage_delete(const struct htool_invocation* inv) {
   return libhoth_controlled_storage_delete(dev, slot);
 }
 
+static int command_hello(const struct htool_invocation* inv) {
+  struct libhoth_device* dev = htool_libhoth_device();
+  if (!dev) {
+    return -1;
+  }
+
+  uint32_t input = 0;
+  if (htool_get_param_u32(inv, "number", &input)) {
+    return -1;
+  }
+
+  uint32_t output = 0;
+  const int rv = libhoth_hello(dev, input, &output);
+  if (rv) {
+    return rv;
+  }
+
+  printf("output: 0x%08x\n", output);
+  return 0;
+}
+
 static const struct htool_cmd CMDS[] = {
     {
         .verbs = (const char*[]){"usb", "list", NULL},
@@ -1205,6 +1227,19 @@ static const struct htool_cmd CMDS[] = {
                                                 .desc = "slot"},
                                                {}},
         .func = htool_controlled_storage_delete,
+    },
+    {
+        .verbs = (const char*[]){"hello", NULL},
+        .desc = "A test function to send and receive an integer",
+        .params =
+            (const struct htool_param[]){
+                {.type = HTOOL_FLAG_VALUE,
+                 .ch = 'n',
+                 .name = "number",
+                 .default_value = "0",
+                 .desc = "The 32-bit integer to send."},
+                {}},
+        .func = command_hello,
     },
     {},
 };
