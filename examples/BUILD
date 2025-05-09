@@ -83,6 +83,7 @@ cc_binary(
         "//protocol:spi_proxy",
         "//protocol:controlled_storage",
         "//protocol:jtag",
+        "//protocol:hello",
         "//transports:libhoth_device",
         "//transports:libhoth_mtd",
         "//transports:libhoth_spi",

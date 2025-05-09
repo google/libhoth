@@ -308,3 +308,25 @@ cc_test(
         ":jtag",
     ],
 )
+
+cc_library(
+    name = "hello",
+    hdrs = ["hello.h"],
+    srcs = ["hello.c"],
+    deps = [
+        "//transports:libhoth_device",
+        ":host_cmd",
+    ],
+)
+
+cc_test(
+    name = "hello_test",
+    srcs = ["hello_test.cc"],
+    deps = [
+        "@googletest//:gtest",
+        "@googletest//:gtest_main",
+        "//transports:libhoth_device",
+        "//protocol/test:libhoth_device_mock",
+        ":hello",
+    ],
+)

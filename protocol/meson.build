@@ -13,7 +13,8 @@ protocol_srcs = [
   'spi_proxy.c',
   'payload_info.c',
   'controlled_storage.c',
-  'jtag.c'
+  'jtag.c',
+  'hello.c'
 ]
 
 incdir = include_directories('..')
