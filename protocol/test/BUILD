@@ -2,12 +2,12 @@ package(default_visibility = ["//visibility:public"])
 
 cc_library(
     name = "libhoth_device_mock",
-    hdrs = ["libhoth_device_mock.h"],
     srcs = ["libhoth_device_mock.cc"],
+    hdrs = ["libhoth_device_mock.h"],
     deps = [
-        "@googletest//:gtest",
-        "//transports:libhoth_device",
         "//protocol:host_cmd",
+        "//transports:libhoth_device",
+        "@googletest//:gtest",
     ],
 )
 
