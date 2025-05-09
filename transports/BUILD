@@ -2,8 +2,8 @@ package(default_visibility = ["//visibility:public"])
 
 cc_library(
     name = "libhoth_device",
-    hdrs = ["libhoth_device.h"],
     srcs = ["libhoth_device.c"],
+    hdrs = ["libhoth_device.h"],
 )
 
 cc_library(
@@ -38,7 +38,7 @@ cc_library(
     deps = [
         ":libhoth_device",
         ":libhoth_usb_device",
-        "@libusb//:libusb",
+        "@libusb",
     ],
 )
 
@@ -46,11 +46,9 @@ cc_library(
     name = "libhoth_dbus",
     srcs = ["libhoth_dbus.c"],
     hdrs = ["libhoth_dbus.h"],
-    linkopts = ["-lsystemd"],
     defines = ["DBUS_BACKEND"],
-    deps = [
-        ":libhoth_device",
-    ],
+    linkopts = ["-lsystemd"],
+    deps = [":libhoth_device"],
 )
 
 cc_library(
@@ -63,6 +61,6 @@ cc_library(
     deps = [
         ":libhoth_device",
         ":libhoth_ec",
-        "@libusb//:libusb",
+        "@libusb",
     ],
 )
