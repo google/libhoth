@@ -222,9 +222,10 @@ TEST_F(LibHothTest, jtag_program_and_verify_pld_receive_unexpected_length) {
                           _))
       .WillOnce(Return(LIBHOTH_OK));
 
-  uint8_t unused;
+  uint8_t fake_data_response = 0;
   EXPECT_CALL(mock_, receive)
-      .WillOnce(DoAll(CopyResp(&unused, sizeof(unused)), Return(LIBHOTH_OK)));
+      .WillOnce(DoAll(CopyResp(&fake_data_response, sizeof(fake_data_response)),
+                      Return(LIBHOTH_OK)));
 
   uint32_t offset = 0;
   EXPECT_EQ(libhoth_jtag_program_and_verify_pld(&hoth_dev_, offset), -1);
@@ -265,9 +266,10 @@ TEST_F(LibHothTest, jtag_verify_pld_receive_unexpected_length) {
                           _))
       .WillOnce(Return(LIBHOTH_OK));
 
-  uint8_t unused;
+  uint8_t fake_data_response = 0;
   EXPECT_CALL(mock_, receive)
-      .WillOnce(DoAll(CopyResp(&unused, sizeof(unused)), Return(LIBHOTH_OK)));
+      .WillOnce(DoAll(CopyResp(&fake_data_response, sizeof(fake_data_response)),
+                      Return(LIBHOTH_OK)));
 
   uint32_t offset = 0;
   EXPECT_EQ(libhoth_jtag_verify_pld(&hoth_dev_, offset), -1);
