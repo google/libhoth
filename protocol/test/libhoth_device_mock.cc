@@ -1,4 +1,4 @@
-#include "libhoth_device_mock.h"
+#include "protocol/test/libhoth_device_mock.h"
 
 static int send(struct libhoth_device* dev, const void* request,
                 size_t request_size) {

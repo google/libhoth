@@ -19,8 +19,8 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "libhoth_device.h"
-#include "libhoth_usb_device.h"
+#include "transports/libhoth_device.h"
+#include "transports/libhoth_usb_device.h"
 
 #define LIBHOTH_USB_FIFO_REQUEST_ID_SIZE 16
 #define LIBHOTH_USB_FIFO_MAX_REQUEST_SIZE 1024

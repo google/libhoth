@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "libhoth_spi.h"
+#include "transports/libhoth_spi.h"
 
 #include <fcntl.h>
 #include <linux/spi/spidev.h>
@@ -25,8 +25,8 @@
 #include <sys/ioctl.h>
 #include <unistd.h>
 
-#include "libhoth_device.h"
-#include "libhoth_ec.h"
+#include "transports/libhoth_device.h"
+#include "transports/libhoth_ec.h"
 
 struct libhoth_spi_device {
   int fd;

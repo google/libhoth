@@ -12,13 +12,13 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "libhoth_usb.h"
+#include "transports/libhoth_usb.h"
 
 #include <libusb.h>
 #include <stdlib.h>
 
-#include "libhoth_device.h"
-#include "libhoth_usb_device.h"
+#include "transports/libhoth_device.h"
+#include "transports/libhoth_usb_device.h"
 
 #define HOTH_VENDOR_ID 0x18d1
 #define HOTH_B_PRODUCT_ID 0x5014

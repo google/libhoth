@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "libhoth_mtd.h"
+#include "transports/libhoth_mtd.h"
 
 #include <errno.h>
 #include <fcntl.h>
@@ -24,8 +24,8 @@
 #include <sys/ioctl.h>
 #include <unistd.h>
 
-#include "libhoth_device.h"
-#include "libhoth_ec.h"
+#include "transports/libhoth_device.h"
+#include "transports/libhoth_ec.h"
 
 struct libhoth_mtd_device {
   int fd;
