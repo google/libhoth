@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "libhoth_dbus.h"
+#include "transports/libhoth_dbus.h"
 
 #include <stdint.h>
 #include <stdio.h>
@@ -20,7 +20,7 @@
 #include <string.h>
 #include <systemd/sd-bus.h>
 
-#include "libhoth_device.h"
+#include "transports/libhoth_device.h"
 
 #define HOTHD_SERVICE "xyz.openbmc_project.Control.Hoth"
 #define HOTHD_OBJECT "/xyz/openbmc_project/Control/Hoth"
