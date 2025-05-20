@@ -14,7 +14,8 @@ protocol_srcs = [
   'payload_info.c',
   'controlled_storage.c',
   'jtag.c',
-  'hello.c'
+  'hello.c',
+  'key_rotation.c'
 ]
 
 incdir = include_directories('..')
