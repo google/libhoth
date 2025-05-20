@@ -330,3 +330,26 @@ cc_test(
         "@googletest//:gtest_main",
     ],
 )
+
+cc_library(
+    name = "key_rotation",
+    srcs = ["key_rotation.c"],
+    hdrs = ["key_rotation.h"],
+    deps = [
+        ":host_cmd",
+        "//transports:libhoth_device",
+    ],
+)
+
+cc_test(
+    name = "key_rotation_test",
+    srcs = ["key_rotation_test.cc"],
+    deps = [
+        ":host_cmd",
+        ":key_rotation",
+        "//protocol/test:libhoth_device_mock",
+        "//transports:libhoth_device",
+        "@googletest//:gtest",
+        "@googletest//:gtest_main",
+    ],
+)

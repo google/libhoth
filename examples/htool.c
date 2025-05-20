@@ -34,6 +34,7 @@
 #include "htool_console.h"
 #include "htool_i2c.h"
 #include "htool_jtag.h"
+#include "htool_key_rotation.h"
 #include "htool_panic.h"
 #include "htool_payload.h"
 #include "htool_payload_update.h"
@@ -1241,6 +1242,26 @@ static const struct htool_cmd CMDS[] = {
                 {}},
         .func = command_hello,
     },
+    {
+        .verbs = (const char*[]){"key_rotation", "get", "status", NULL},
+        .desc = "Reads info from key rotation record and validation method and "
+                "data.",
+        .params = (const struct htool_param[]){{}},
+        .func = htool_key_rotation_get_status,
+    },
+    {
+        .verbs = (const char*[]){"key_rotation", "get", "version", NULL},
+        .desc = "Gets key rotation header version.",
+        .params = (const struct htool_param[]){{}},
+        .func = htool_key_rotation_get_version,
+    },
+    {
+        .verbs = (const char*[]){"key_rotation", "payload", "status", NULL},
+        .desc = "Gets status regarding payload validation method and "
+                "validation data.",
+        .params = (const struct htool_param[]){{}},
+        .func = htool_key_rotation_payload_status,
+    },
     {},
 };
 
@@ -1284,4 +1305,3 @@ static const struct htool_param GLOBAL_FLAGS[] = {
 int main(int argc, const char* const* argv) {
   return htool_main(GLOBAL_FLAGS, CMDS, argc - 1, &argv[1]);
 }
-
