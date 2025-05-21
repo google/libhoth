@@ -1262,6 +1262,46 @@ static const struct htool_cmd CMDS[] = {
         .params = (const struct htool_param[]){{}},
         .func = htool_key_rotation_payload_status,
     },
+    {
+        .verbs = (const char*[]){"key_rotation", "update", NULL},
+        .desc = "Writes the key rotation record.",
+        .params =
+            (const struct htool_param[]){
+                {HTOOL_POSITIONAL, .name = "source-file"}, {}},
+        .func = htool_key_rotation_update,
+    },
+    {
+        .verbs = (const char*[]){"key_rotation", "read", NULL},
+        .desc = "Read size bytes from key rotation record.",
+        .params =
+            (const struct htool_param[]){
+                {.type = HTOOL_FLAG_VALUE,
+                 .ch = 'o',
+                 .name = "offset",
+                 .default_value = "0",
+                 .desc = "Reads starting from this offset within the record. "
+                         "Default value is 0."},
+
+                {.type = HTOOL_FLAG_VALUE,
+                 .ch = 's',
+                 .name = "size",
+                 .desc = "Size of the data to read."},
+
+                {.type = HTOOL_FLAG_VALUE,
+                 .ch = 'h',
+                 .name = "half",
+                 .default_value = "active",
+                 .desc = "Half of the record to read. - active, staging, a or "
+                         "b. Default value is active."},
+                {.type = HTOOL_FLAG_VALUE,
+                 .ch = 'f',
+                 .name = "output_file",
+                 .default_value = "",
+                 .desc = "Output file to write the data to. Prints by "
+                         "default."},
+                {}},
+        .func = htool_key_rotation_read,
+    },
     {},
 };
 
