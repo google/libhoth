@@ -6,7 +6,7 @@ git_version_h = vcs_tag(
 )
 
 incdir = include_directories('..')
-link_with = [libhoth_transport, libhoth_protocol, ]
+link_with = [libhoth.get_static_lib()]
 c_args = []
 
 if get_option('dbus_backend')
