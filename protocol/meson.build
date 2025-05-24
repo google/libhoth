@@ -19,4 +19,18 @@ protocol_srcs = [
 
 incdir = include_directories('..')
 
-libhoth_protocol = library('hoth_protocols', protocol_srcs, include_directories: incdir, link_with: [libhoth_transport])
+libhoth_protocol = static_library(
+  'hoth_protocols',
+  protocol_srcs,
+  include_directories: incdir,
+  link_with: [libhoth_transport]
+)
+
+libhoth_protocol_headers = []
+foreach s : protocol_srcs
+    base_name = s.split('/')[-1]
+    header_name = base_name.replace('.c', '.h')
+    libhoth_protocol_headers += header_name
+endforeach
+
+install_headers(libhoth_protocol_headers, subdir:'protocol')
