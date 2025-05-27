@@ -35,3 +35,4 @@ foreach s : protocol_srcs
 endforeach
 
 install_headers(libhoth_protocol_headers, subdir:'protocol')
+header_subdirs += 'protocol'

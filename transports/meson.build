@@ -34,3 +34,9 @@ libhoth_transport_headers = [
 ]
 install_headers(libhoth_transport_headers, subdir:'transports')
 
+install_symlink(
+    'libhoth.h',
+    install_dir: get_option('includedir') / 'transports',
+    pointing_to: 'libhoth_device.h',
+)
+header_subdirs += 'transports'
