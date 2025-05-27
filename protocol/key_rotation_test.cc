@@ -32,6 +32,8 @@ using ::testing::Return;
 constexpr int kCmd =
     HOTH_CMD_BOARD_SPECIFIC_BASE + HOTH_PRV_CMD_HAVEN_KEY_ROTATION_OP;
 
+constexpr int kCmdRotPublicKey = 0x59454B50;
+
 const struct hoth_response_key_rotation_record_version kDefaultVersion = {
     .version = 0xa1b2c3d4,
 };
@@ -377,4 +379,78 @@ TEST_F(LibHothTest, key_rotation_update_failure_invalid_response_size) {
       .WillOnce(DoAll(CopyResp(&kDummy, 2), Return(LIBHOTH_OK)));
   EXPECT_EQ(libhoth_key_rotation_update(&hoth_dev_, &data[0], sizeof(data)),
             KEY_ROTATION_ERR);
+}
+
+TEST_F(LibHothTest, key_rotation_read_chunk_type_success) {
+  uint8_t data[KEY_ROTATION_RECORD_READ_CHUNK_TYPE_MAX_SIZE] = {0};
+  fill_with_data(data, KEY_ROTATION_RECORD_READ_CHUNK_TYPE_MAX_SIZE);
+  EXPECT_CALL(mock_, send(_, UsesCommand(kCmd), _))
+      .WillOnce(Return(LIBHOTH_OK));
+  EXPECT_CALL(mock_, receive)
+      .WillOnce(
+          DoAll(CopyResp(&data, KEY_ROTATION_RECORD_READ_CHUNK_TYPE_MAX_SIZE),
+                Return(LIBHOTH_OK)));
+  struct hoth_response_key_rotation_record_read actual_read_response;
+  uint16_t response_size = 0;
+  EXPECT_EQ(libhoth_key_rotation_read_chunk_type(
+                &hoth_dev_, kCmdRotPublicKey, 0, 0,
+                KEY_ROTATION_RECORD_READ_CHUNK_TYPE_MAX_SIZE,
+                &actual_read_response, &response_size),
+            KEY_ROTATION_CMD_SUCCESS);
+  EXPECT_EQ(memcmp(actual_read_response.data, data,
+                   KEY_ROTATION_RECORD_READ_CHUNK_TYPE_MAX_SIZE),
+            0);
+  EXPECT_EQ(response_size, KEY_ROTATION_RECORD_READ_CHUNK_TYPE_MAX_SIZE);
+}
+
+TEST_F(LibHothTest, key_rotation_read_chunk_type_failure_io) {
+  EXPECT_CALL(mock_, send(_, UsesCommand(kCmd), _))
+      .WillOnce(Return(LIBHOTH_OK));
+  EXPECT_CALL(mock_, receive).WillOnce(Return(LIBHOTH_ERR_FAIL));
+  struct hoth_response_key_rotation_record_read actual_read_response;
+  uint16_t response_size = 0;
+  EXPECT_EQ(libhoth_key_rotation_read_chunk_type(
+                &hoth_dev_, kCmdRotPublicKey, 0, 0,
+                KEY_ROTATION_RECORD_READ_CHUNK_TYPE_MAX_SIZE,
+                &actual_read_response, &response_size),
+            KEY_ROTATION_ERR);
+}
+
+TEST_F(LibHothTest, key_rotation_read_chunk_type_failure_invalid_size) {
+  struct hoth_response_key_rotation_record_read actual_read_response;
+  uint16_t response_size = 0;
+  EXPECT_EQ(
+      libhoth_key_rotation_read_chunk_type(
+          &hoth_dev_, kCmdRotPublicKey, 0, 0, KEY_ROTATION_FLASH_AREA_SIZE + 1,
+          &actual_read_response, &response_size),
+      KEY_ROTATION_ERR_INVALID_PARAM);
+}
+
+TEST_F(LibHothTest,
+       key_rotation_read_chunk_type_failure_invalid_response_size) {
+  EXPECT_CALL(mock_, send(_, UsesCommand(kCmd), _))
+      .WillOnce(Return(LIBHOTH_OK));
+  EXPECT_CALL(mock_, receive)
+      .WillOnce(DoAll(CopyResp(&kDummy, 0), Return(LIBHOTH_OK)));
+  struct hoth_response_key_rotation_record_read actual_read_response;
+  uint16_t response_size = 0;
+  EXPECT_EQ(libhoth_key_rotation_read_chunk_type(
+                &hoth_dev_, kCmdRotPublicKey, 0, 0,
+                KEY_ROTATION_RECORD_READ_CHUNK_TYPE_MAX_SIZE,
+                &actual_read_response, &response_size),
+            KEY_ROTATION_ERR_INVALID_RESPONSE_SIZE);
+}
+
+TEST_F(LibHothTest, key_rotation_read_chunk_type_failure_invalid_chunk_offset) {
+  EXPECT_CALL(mock_, send(_, UsesCommand(kCmd), _))
+      .WillOnce(Return(LIBHOTH_OK));
+  EXPECT_CALL(mock_, receive)
+      .WillOnce(DoAll(CopyResp(&kDummy, 0), Return(LIBHOTH_OK)));
+  struct hoth_response_key_rotation_record_read actual_read_response;
+  uint16_t response_size = 0;
+  EXPECT_EQ(libhoth_key_rotation_read_chunk_type(
+                &hoth_dev_, kCmdRotPublicKey,
+                KEY_ROTATION_RECORD_READ_CHUNK_TYPE_MAX_SIZE, 0, 0,
+                &actual_read_response, &response_size),
+            KEY_ROTATION_ERR_INVALID_RESPONSE_SIZE);
 }

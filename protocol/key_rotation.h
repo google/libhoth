@@ -37,11 +37,13 @@ extern "C" {
   (LIBHOTH_MAILBOX_SIZE - sizeof(struct hoth_host_response) - \
    sizeof(struct hoth_request_key_rotation_record) -          \
    sizeof(struct hoth_request_key_rotation_record_read))
-#define KEY_ROTATION_RECORD_READ_CHUNK_TYPE_MAX_SIZE          \
-  (LIBHOTH_MAILBOX_SIZE - sizeof(struct hoth_host_response) - \
-   sizeof(struct hoth_request_key_rotation_record) -          \
-   sizeof(struct hoth_request_key_rotation_record_chunk_type))
+#define KEY_ROTATION_RECORD_READ_CHUNK_TYPE_MAX_SIZE                 \
+  (LIBHOTH_MAILBOX_SIZE - sizeof(struct hoth_host_response) -        \
+   sizeof(struct hoth_request_key_rotation_record) -                 \
+   sizeof(struct hoth_request_key_rotation_record_read_chunk_type) - \
+   sizeof(uint32_t))
 #define KEY_ROTATION_RECORD_SIGNATURE_SIZE 96
+#define STRUCT_CHUNK_SIZE 8
 
 enum key_rotation_err {
   KEY_ROTATION_CMD_SUCCESS = 0,
@@ -140,6 +142,11 @@ enum key_rotation_err libhoth_key_rotation_read(
     struct libhoth_device* dev, uint16_t offset, uint16_t size,
     uint32_t read_half,
     struct hoth_response_key_rotation_record_read* read_response);
+enum key_rotation_err libhoth_key_rotation_read_chunk_type(
+    struct libhoth_device* dev, uint32_t chunk_typecode, uint32_t chunk_index,
+    uint16_t offset, uint16_t size,
+    struct hoth_response_key_rotation_record_read* read_response,
+    uint16_t* response_size);
 #ifdef __cplusplus
 }
 #endif

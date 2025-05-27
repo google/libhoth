@@ -1302,6 +1302,40 @@ static const struct htool_cmd CMDS[] = {
                 {}},
         .func = htool_key_rotation_read,
     },
+    {
+        .verbs = (const char*[]){"key_rotation", "read_chunk", NULL},
+        .desc = "Read chunk of given type from the key rotation record.",
+        .params =
+            (const struct htool_param[]){
+                {.type = HTOOL_FLAG_VALUE,
+                 .ch = 'o',
+                 .name = "offset",
+                 .default_value = "0",
+                 .desc = "Reads starting from this offset within the chunk."},
+                {.type = HTOOL_FLAG_VALUE,
+                 .ch = 's',
+                 .name = "size",
+                 .default_value = "0",
+                 .desc = "Size of the data to read within the chunk. If no "
+                         "size is provided, the entire chunk is read."},
+                {.type = HTOOL_FLAG_VALUE,
+                 .ch = 'i',
+                 .name = "idx",
+                 .default_value = "0",
+                 .desc = "Chunk index to read."},
+                {.type = HTOOL_FLAG_VALUE,
+                 .ch = 't',
+                 .name = "type",
+                 .desc = "Chunk type to read. - pkey, phash, bkey, bash"},
+                {.type = HTOOL_FLAG_VALUE,
+                 .ch = 'f',
+                 .name = "output_file",
+                 .default_value = "",
+                 .desc = "Output file to write the data to. Prints by "
+                         "default."},
+                {}},
+        .func = htool_key_rotation_read_chunk_type,
+    },
     {},
 };
 
