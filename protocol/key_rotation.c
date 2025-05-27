@@ -17,6 +17,7 @@
 #include <stdint.h>
 #include <stdio.h>
 #include <string.h>
+#include <sys/param.h>
 
 #include "protocol/host_cmd.h"
 #include "transports/libhoth_device.h"
@@ -207,45 +208,46 @@ enum key_rotation_err libhoth_key_rotation_update(struct libhoth_device* dev,
 static enum key_rotation_err send_key_rotation_read_helper(
     struct libhoth_device* dev, uint8_t operation, uint16_t offset,
     uint16_t size, const void* request_payload, size_t request_payload_size,
-    uint8_t* response_data, size_t response_data_size) {
+    size_t* response_length, uint8_t* response_data,
+    size_t response_buffer_size) {
   struct hoth_request_variable_length request;
   request.hdr.operation = operation;
   request.hdr.packet_offset = offset;
   request.hdr.packet_size = size;
   if (request_payload != NULL && request_payload_size > 0) {
     if (request_payload_size > sizeof(request.data)) {
-      fprintf(stderr, "Request payload size invalid.\n");
+      fprintf(stderr,
+              "Request packet size larger than request size: %zu Expected less "
+              "than %zu\n",
+              request_payload_size, sizeof(request.data));
       return KEY_ROTATION_ERR_INVALID_PARAM;
     } else if (operation == KEY_ROTATION_RECORD_READ &&
                request_payload_size !=
                    sizeof(struct hoth_request_key_rotation_record_read)) {
-      fprintf(stderr, "Request payload size invalid.\n");
+      fprintf(stderr, "Request payload size invalid: %zu Expected %zu\n",
+              request_payload_size,
+              sizeof(struct hoth_request_key_rotation_record_read));
       return KEY_ROTATION_ERR_INVALID_PARAM;
     }
     if (operation == KEY_ROTATION_RECORD_READ_CHUNK_TYPE &&
         request_payload_size !=
             sizeof(struct hoth_request_key_rotation_record_read_chunk_type)) {
-      fprintf(stderr, "Request payload size invalid.\n");
+      fprintf(stderr, "Request payload size invalid: %zu Expected %zu\n",
+              request_payload_size,
+              sizeof(struct hoth_request_key_rotation_record_read_chunk_type));
       return KEY_ROTATION_ERR_INVALID_PARAM;
     }
     memcpy(request.data, request_payload, request_payload_size);
   }
 
-  size_t rlen = 0;
+  *response_length = 0;
   int ret = libhoth_hostcmd_exec(
       dev, HOTH_CMD_BOARD_SPECIFIC_BASE + HOTH_PRV_CMD_HAVEN_KEY_ROTATION_OP, 0,
       &request, sizeof(request.hdr) + request_payload_size, response_data,
-      response_data_size, &rlen);
+      response_buffer_size, response_length);
   if (ret != 0) {
-    fprintf(stderr, "HOTH_KEY_ROTATION_READ error code: %d\n", ret);
+    fprintf(stderr, "HOTH_KEY_ROTATION_READ error code: %x\n", ret);
     return KEY_ROTATION_ERR;
-  }
-  if (rlen != response_data_size) {
-    fprintf(stderr,
-            "HOTH_KEY_ROTATION_READ expected exactly %ld response "
-            "bytes, got %ld\n",
-            response_data_size, rlen);
-    return KEY_ROTATION_ERR_INVALID_RESPONSE_SIZE;
   }
   return KEY_ROTATION_CMD_SUCCESS;
 }
@@ -255,7 +257,7 @@ enum key_rotation_err libhoth_key_rotation_read(
     uint32_t read_half,
     struct hoth_response_key_rotation_record_read* read_response) {
   if (read_size > KEY_ROTATION_FLASH_AREA_SIZE || read_size == 0) {
-    fprintf(stderr, "Read size invalid.\n");
+    fprintf(stderr, "Read size invalid. Read size: %d\n", read_size);
     return KEY_ROTATION_ERR_INVALID_PARAM;
   }
   uint16_t read_offset = 0;
@@ -265,18 +267,116 @@ enum key_rotation_err libhoth_key_rotation_read(
   };
   uint8_t* response_data = read_response->data;
   while (read_size > 0) {
+    if (read_offset + read_size > KEY_ROTATION_FLASH_AREA_SIZE) {
+      fprintf(
+          stderr,
+          "Read offset + read size invalid. Read offset: %d, read size: %d\n",
+          read_offset, read_size);
+      return KEY_ROTATION_ERR_INVALID_PARAM;
+    }
     uint16_t packet_size = (read_size > KEY_ROTATION_RECORD_READ_MAX_SIZE)
                                ? KEY_ROTATION_RECORD_READ_MAX_SIZE
                                : read_size;
+    size_t response_length = 0;
     enum key_rotation_err err = send_key_rotation_read_helper(
         dev, KEY_ROTATION_RECORD_READ, read_offset + record_offset, packet_size,
-        &request, sizeof(request), response_data, packet_size);
+        &request, sizeof(request), &response_length,
+        &response_data[read_offset], packet_size);
     if (err != KEY_ROTATION_CMD_SUCCESS) {
       return err;
     }
+    if (response_length != packet_size) {
+      fprintf(stderr,
+              "HOTH_KEY_ROTATION_READ expected exactly %d response "
+              "bytes, got %ld\n",
+              packet_size, response_length);
+      return KEY_ROTATION_ERR_INVALID_RESPONSE_SIZE;
+    }
     read_offset += packet_size;
     read_size -= packet_size;
-    response_data += packet_size;
   }
+  return KEY_ROTATION_CMD_SUCCESS;
+}
+
+enum key_rotation_err libhoth_key_rotation_read_chunk_type(
+    struct libhoth_device* dev, uint32_t chunk_typecode, uint32_t chunk_index,
+    uint16_t chunk_offset, uint16_t read_size,
+    struct hoth_response_key_rotation_record_read* read_response,
+    uint16_t* response_size) {
+  if (read_size > KEY_ROTATION_MAX_RECORD_SIZE) {
+    fprintf(stderr, "Read size invalid: %d Read size must be less than %d\n",
+            read_size, KEY_ROTATION_MAX_RECORD_SIZE);
+    return KEY_ROTATION_ERR_INVALID_PARAM;
+  }
+  if (chunk_offset > KEY_ROTATION_MAX_RECORD_SIZE) {
+    fprintf(stderr,
+            "Chunk offset invalid: %d Chunk offset must be less than %d\n",
+            chunk_offset, KEY_ROTATION_MAX_RECORD_SIZE);
+    return KEY_ROTATION_ERR_INVALID_PARAM;
+  }
+  struct hoth_request_key_rotation_record_read_chunk_type request = {
+      .chunk_typecode = chunk_typecode,
+      .chunk_index = chunk_index,
+  };
+  uint16_t read_offset = 0;
+  uint8_t* response = read_response->data;
+  uint16_t chunk_length = 0;
+  do {
+    if (read_offset + read_size > KEY_ROTATION_FLASH_AREA_SIZE) {
+      fprintf(
+          stderr,
+          "Read offset + read size invalid. Read offset: %d, read size: %d\n",
+          read_offset, read_size);
+      return KEY_ROTATION_ERR_INVALID_PARAM;
+    }
+    uint16_t packet_size =
+        (read_size > KEY_ROTATION_RECORD_READ_CHUNK_TYPE_MAX_SIZE)
+            ? KEY_ROTATION_RECORD_READ_CHUNK_TYPE_MAX_SIZE
+            : read_size;
+    size_t response_length = 0;
+    enum key_rotation_err err = send_key_rotation_read_helper(
+        dev, KEY_ROTATION_RECORD_READ_CHUNK_TYPE, read_offset + chunk_offset,
+        packet_size, &request, sizeof(request), &response_length,
+        &response[read_offset],
+        KEY_ROTATION_RECORD_READ_CHUNK_TYPE_MAX_SIZE + sizeof(uint32_t));
+    if (err != KEY_ROTATION_CMD_SUCCESS) {
+      return err;
+    }
+    // The last 4 bytes of the response is the chunk size. This is used to
+    // determine if the read size needs to be adjusted.
+    if (response_length < sizeof(uint32_t)) {
+      fprintf(stderr,
+              "Unexpected host command response size. Expecting "
+              "non-zero; Got %lu\n",
+              response_length);
+      return KEY_ROTATION_ERR_INVALID_RESPONSE_SIZE;
+    }
+    response_length -= sizeof(uint32_t);
+    memcpy(&chunk_length, &response[response_length], sizeof(uint16_t));
+    // If the read size is 0, the chunk size is returned in the last 4 bytes
+    // of the response. This is used to determine the read size for the next
+    // iteration.
+    if (chunk_length < STRUCT_CHUNK_SIZE) {
+      fprintf(stderr,
+              "Chunk length invalid: %d Chunk length must be greater than %d\n",
+              chunk_length, STRUCT_CHUNK_SIZE);
+      return KEY_ROTATION_ERR;
+    }
+    if (read_size == 0) {
+      read_size =
+          chunk_length -
+          chunk_offset;  // This is the total number of bytes to be read.
+      packet_size =
+          MIN(read_size, KEY_ROTATION_RECORD_READ_CHUNK_TYPE_MAX_SIZE);
+    }
+    if (response_length != packet_size) {
+      fprintf(stderr,
+              "Unexpected host command response size. Expecting %u; Got %lu\n",
+              packet_size, response_length);
+    }
+    read_offset += packet_size;
+    read_size -= packet_size;
+  } while (read_size > 0);
+  *response_size = read_offset;
   return KEY_ROTATION_CMD_SUCCESS;
 }

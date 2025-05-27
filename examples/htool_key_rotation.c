@@ -222,7 +222,19 @@ int htool_key_rotation_read(const struct htool_invocation *inv) {
       (output_file != NULL) && (strlen(output_file) > 0);
   int fd = -1;
   if (output_to_file) {
-    fd = open(output_file, O_WRONLY | O_CREAT, 0644);
+    if (access(output_file, F_OK) == 0) {
+      fprintf(stderr,
+              "Warning: File '%s' exists and will be overwritten. Continue? "
+              "(y/N) ",
+              output_file);
+      char confirmation;
+      if (scanf(" %c", &confirmation) != 1 ||
+          (confirmation != 'y' && confirmation != 'Y')) {
+        fprintf(stderr, "Operation cancelled.\n");
+        return -1;
+      }
+    }
+    fd = open(output_file, O_WRONLY | O_CREAT | O_TRUNC, 0644);
     if (fd == -1) {
       fprintf(stderr, "Error opening file %s: %s\n", output_file,
               strerror(errno));
@@ -238,6 +250,112 @@ int htool_key_rotation_read(const struct htool_invocation *inv) {
     if (fd != -1) {
       close(fd);
     }
+    return -1;
+  }
+  if (output_to_file) {
+    if (write(fd, read_response.data, size) != size) {
+      fprintf(stderr, "Error writing to file %s: %s\n", output_file,
+              strerror(errno));
+      close(fd);
+      return -1;
+    }
+    if (close(fd) != 0) {
+      fprintf(stderr, "close error: %s\n", strerror(errno));
+      return -1;
+    }
+  } else {
+    printf("Key rotation record data:\n");
+    for (int i = 0; i < size; i++) {
+      printf("0x%02X ", read_response.data[i]);
+      if ((i + 1) % 16 == 0) {
+        printf("\n");
+      }
+    }
+    printf("\n");
+  }
+  return 0;
+}
+
+static int get_key_rotation_chunk_type(const char *chunk_type_string,
+                                       uint32_t *chunk_typecode) {
+  if (!strcmp(chunk_type_string, "pkey")) {
+    *chunk_typecode = 0x59454B50;
+  } else if (!strcmp(chunk_type_string, "hash")) {
+    *chunk_typecode = 0x48534148;
+  } else if (!strcmp(chunk_type_string, "bkey")) {
+    *chunk_typecode = 0x59454B42;
+  } else if (!strcmp(chunk_type_string, "bash")) {
+    *chunk_typecode = 0x48534142;
+  } else {
+    fprintf(stderr, "Invalid chunk_type value: %s\n", chunk_type_string);
+    return -1;
+  }
+  return 0;
+}
+
+int htool_key_rotation_read_chunk_type(const struct htool_invocation *inv) {
+  struct libhoth_device *dev = htool_libhoth_device();
+  if (!dev) {
+    return -1;
+  }
+  uint32_t offset = 0;
+  uint32_t size = 0;
+  uint32_t chunk_index = 0;
+  const char *chunk_type_string;
+  if (htool_get_param_u32(inv, "offset", &offset) ||
+      htool_get_param_u32(inv, "size", &size) ||
+      htool_get_param_string(inv, "type", &chunk_type_string) ||
+      htool_get_param_u32(inv, "idx", &chunk_index)) {
+    return -1;
+  }
+  uint32_t chunk_typecode = 0;
+  int ret_half =
+      get_key_rotation_chunk_type(chunk_type_string, &chunk_typecode);
+  if (ret_half) {
+    return -1;
+  }
+  const char *output_file = NULL;
+  bool output_to_file =
+      (htool_get_param_string(inv, "output_file", &output_file) == 0) &&
+      (output_file != NULL) && (strlen(output_file) > 0);
+  int fd = -1;
+  if (output_to_file) {
+    if (access(output_file, F_OK) == 0) {
+      fprintf(stderr,
+              "Warning: File '%s' exists and will be overwritten. Continue? "
+              "(y/N) ",
+              output_file);
+      char confirmation;
+      if (scanf(" %c", &confirmation) != 1 ||
+          (confirmation != 'y' && confirmation != 'Y')) {
+        fprintf(stderr, "Operation cancelled.\n");
+        return -1;
+      }
+    }
+    fd = open(output_file, O_WRONLY | O_CREAT | O_TRUNC, 0644);
+    if (fd == -1) {
+      fprintf(stderr, "Error opening file %s: %s\n", output_file,
+              strerror(errno));
+      return -1;
+    }
+  }
+  uint16_t response_size = 0;
+  struct hoth_response_key_rotation_record_read read_response;
+  enum key_rotation_err ret_read = libhoth_key_rotation_read_chunk_type(
+      dev, chunk_typecode, chunk_index, offset, size, &read_response,
+      &response_size);
+  if (ret_read) {
+    fprintf(stderr, "Failed to read chunk from key rotation record\n");
+    return -1;
+  }
+  if (size == 0) {
+    size = response_size;
+  }
+  if (size != response_size) {
+    fprintf(
+        stderr,
+        "Error reading chunk from key rotation record. Expected %u; Got %u\n",
+        size, response_size);
     return -1;
   }
   if (output_to_file) {

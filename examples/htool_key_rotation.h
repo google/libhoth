@@ -27,6 +27,7 @@ int htool_key_rotation_get_status();
 int htool_key_rotation_get_version();
 int htool_key_rotation_payload_status();
 int htool_key_rotation_read(const struct htool_invocation* inv);
+int htool_key_rotation_read_chunk_type(const struct htool_invocation* inv);
 int htool_key_rotation_update(const struct htool_invocation* inv);
 
 #ifdef __cplusplus
