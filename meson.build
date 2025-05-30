@@ -5,15 +5,16 @@ subdir('transports')
 subdir('protocol')
 
 
-libhoth = both_libraries('hoth',
+libhoth = both_libraries(
+    'hoth',
     [],
     objects: [
-        libhoth_transport.extract_all_objects(recursive:false),
-        libhoth_protocol.extract_all_objects(recursive:false),
+        libhoth_transport.extract_all_objects(recursive: false),
+        libhoth_protocol.extract_all_objects(recursive: false),
     ],
     dependencies: [libusb],
     version: meson.project_version(),
-    install: true
+    install: true,
 )
 
 pkg = import('pkgconfig')
@@ -21,6 +22,7 @@ pkg.generate(
     [libhoth],
     name: 'libhoth',
     description: 'Hoth interface library',
-    subdirs: header_subdirs)
+    subdirs: header_subdirs,
+)
 
 subdir('examples')
