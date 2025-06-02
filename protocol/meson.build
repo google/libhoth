@@ -34,5 +34,5 @@ foreach s : protocol_srcs
     libhoth_protocol_headers += header_name
 endforeach
 
-install_headers(libhoth_protocol_headers, subdir: 'protocol')
-header_subdirs += 'protocol'
+install_headers(libhoth_protocol_headers, subdir: 'libhoth/protocol')
+header_subdirs += 'libhoth/protocol'

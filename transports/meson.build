@@ -37,11 +37,11 @@ libhoth_transport_headers = [
     'libhoth_usb.h',
     'libhoth_usb_device.h',
 ]
-install_headers(libhoth_transport_headers, subdir: 'transports')
+install_headers(libhoth_transport_headers, subdir: 'libhoth/transports')
 
 install_symlink(
     'libhoth.h',
-    install_dir: get_option('includedir') / 'transports',
+    install_dir: get_option('includedir') / 'libhoth/transports',
     pointing_to: 'libhoth_device.h',
 )
-header_subdirs += 'transports'
+header_subdirs += 'libhoth/transports'

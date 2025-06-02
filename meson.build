@@ -1,6 +1,6 @@
 project('libhoth', 'c', 'cpp', license: 'Apache-2.0', version: '0.0.0')
 
-header_subdirs = []
+header_subdirs = ['libhoth']
 subdir('transports')
 subdir('protocol')
 
