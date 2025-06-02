@@ -25,6 +25,33 @@ extern "C" {
 #endif
 
 #define HOTH_PRV_CMD_HAVEN_KEY_ROTATION_OP 0x004d
+#define KEY_ROTATION_HASH_DIGEST_SIZE 32
+#define KEY_ROTATION_FLASH_AREA_SIZE 2048
+#define KEY_ROTATION_MAX_RECORD_SIZE \
+  (KEY_ROTATION_FLASH_AREA_SIZE - KEY_ROTATION_HASH_DIGEST_SIZE)
+
+#define KEY_ROTATION_RECORD_WRITE_MAX_SIZE                   \
+  (LIBHOTH_MAILBOX_SIZE - sizeof(struct hoth_host_request) - \
+   sizeof(struct hoth_request_key_rotation_record))
+#define KEY_ROTATION_RECORD_READ_MAX_SIZE                     \
+  (LIBHOTH_MAILBOX_SIZE - sizeof(struct hoth_host_response) - \
+   sizeof(struct hoth_request_key_rotation_record) -          \
+   sizeof(struct hoth_request_key_rotation_record_read))
+#define KEY_ROTATION_RECORD_READ_CHUNK_TYPE_MAX_SIZE          \
+  (LIBHOTH_MAILBOX_SIZE - sizeof(struct hoth_host_response) - \
+   sizeof(struct hoth_request_key_rotation_record) -          \
+   sizeof(struct hoth_request_key_rotation_record_chunk_type))
+#define KEY_ROTATION_RECORD_SIGNATURE_SIZE 96
+
+enum key_rotation_err {
+  KEY_ROTATION_CMD_SUCCESS = 0,
+  KEY_ROTATION_ERR,
+  KEY_ROTATION_ERR_INVALID_PARAM,
+  KEY_ROTATION_ERR_UNIMPLEMENTED,
+  KEY_ROTATION_ERR_INVALID_RESPONSE_SIZE,
+  KEY_ROTATION_INITIATE_FAIL,
+  KEY_ROTATION_COMMIT_FAIL,
+};
 
 enum key_rotation_record_read_half {
   KEY_ROTATION_RECORD_READ_HALF_ACTIVE = 0,
@@ -93,17 +120,26 @@ struct hoth_response_key_rotation_status {
                                   // of cr51 hash
 } __hoth_align4;
 
-int libhoth_key_rotation_initiate(struct libhoth_device* dev);
-int libhoth_key_rotation_get_version(
+struct hoth_response_key_rotation_record_read {
+  uint8_t data[KEY_ROTATION_FLASH_AREA_SIZE];
+} __hoth_align4;
+
+enum key_rotation_err libhoth_key_rotation_get_version(
     struct libhoth_device* dev,
     struct hoth_response_key_rotation_record_version* record_version);
-int libhoth_key_rotation_get_status(
+enum key_rotation_err libhoth_key_rotation_get_status(
     struct libhoth_device* dev,
     struct hoth_response_key_rotation_status* record_status);
-int libhoth_key_rotation_payload_status(
+enum key_rotation_err libhoth_key_rotation_payload_status(
     struct libhoth_device* dev,
     struct hoth_response_key_rotation_payload_status* payload_status);
-
+enum key_rotation_err libhoth_key_rotation_update(struct libhoth_device* dev,
+                                                  const uint8_t* image,
+                                                  size_t size);
+enum key_rotation_err libhoth_key_rotation_read(
+    struct libhoth_device* dev, uint16_t offset, uint16_t size,
+    uint32_t read_half,
+    struct hoth_response_key_rotation_record_read* read_response);
 #ifdef __cplusplus
 }
 #endif
