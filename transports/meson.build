@@ -10,6 +10,7 @@ transport_srcs = [
 incdir = include_directories('..')
 libusb = dependency('libusb-1.0')
 libsystemd = dependency('libsystemd')
+libcap = dependency('libcap')
 
 if get_option('dbus_backend')
     libhoth_dbus = static_library(
@@ -17,9 +18,10 @@ if get_option('dbus_backend')
         'libhoth_dbus.c',
         include_directories: incdir,
         dependencies: [libsystemd],
-        install: true,
     )
-    install_headers(['libhoth_dbus.h'], subdir: 'transports')
+    libhoth_objs += [libhoth_dbus.extract_all_objects(recursive: false)]
+    libhoth_deps += [libsystemd, libcap]
+    install_headers(['libhoth_dbus.h'], subdir: 'libhoth/transports')
 endif
 
 libhoth_transport = static_library(
@@ -28,6 +30,9 @@ libhoth_transport = static_library(
     include_directories: incdir,
     dependencies: [libusb],
 )
+
+libhoth_objs += [libhoth_transport.extract_all_objects(recursive: false)]
+libhoth_deps += [libusb]
 
 libhoth_transport_headers = [
     'libhoth_device.h',

@@ -26,6 +26,7 @@ libhoth_protocol = static_library(
     include_directories: incdir,
     link_with: [libhoth_transport],
 )
+libhoth_objs += [libhoth_protocol.extract_all_objects(recursive: false)]
 
 libhoth_protocol_headers = []
 foreach s : protocol_srcs
