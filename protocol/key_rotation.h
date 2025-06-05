@@ -16,6 +16,7 @@
 #define _LIBHOTH_PROTOCOL_KEY_ROTATION_H_
 
 #include <stdint.h>
+#include <assert.h>
 
 #include "protocol/host_cmd.h"
 #include "transports/libhoth_device.h"
@@ -131,6 +132,22 @@ struct hoth_response_key_rotation_status {
 struct hoth_response_key_rotation_record_read {
   uint8_t data[KEY_ROTATION_FLASH_AREA_SIZE];
 } __hoth_align4;
+
+typedef uint8_t sha256[32];
+struct bios_verifiction_key_fingerprint {
+  uint16_t image_family;
+  uint16_t key_index;
+  uint16_t key_sign_scheme;
+  uint16_t hash_type;
+  sha256 key_fingerprint;  // verification key fignerprint = sha256(n||e)
+};
+static_assert(sizeof(struct bios_verifiction_key_fingerprint) == 40,
+               "bios_verifiction_key_fingerprint size is not 40 bytes!");
+
+struct bios_allowed_hash_list {
+  uint32_t hash_count;
+  sha256 hash_list[];  // only support sha256 hash for bios
+};
 
 enum key_rotation_err libhoth_key_rotation_get_version(
     struct libhoth_device* dev,
