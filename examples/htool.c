@@ -1336,6 +1336,20 @@ static const struct htool_cmd CMDS[] = {
                 {}},
         .func = htool_key_rotation_read_chunk_type,
     },
+    {
+        .verbs = (const char*[]){"key_rotation", "chunk_type_count", NULL},
+        .desc = "Get the number of chunks of a given type in the key rotation "
+                "record.",
+        .params =
+            (const struct htool_param[]){
+                {.type = HTOOL_FLAG_VALUE,
+                 .ch = 't',
+                 .name = "type",
+                 .desc = "Chunk type to get the count for. - pkey, phash, "
+                         "bkey, bash"},
+                {}},
+        .func = htool_key_rotation_chunk_type_count,
+    },
     {},
 };
 

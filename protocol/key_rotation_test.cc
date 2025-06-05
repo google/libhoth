@@ -56,6 +56,7 @@ const struct hoth_response_key_rotation_record_read kDefaultReadResponse = {
     .data = {0x08, 0x09, 0x0a, 0x0b, 0x0c, 0x0d, 0x0e, 0x0f},
 };
 constexpr int64_t kDummy = 0;
+constexpr int kChunkSize = 2;
 unsigned int seed = 0;
 void fill_with_data(uint8_t* data, size_t size) {
   for (size_t i = 0; i < size; ++i) {
@@ -452,5 +453,39 @@ TEST_F(LibHothTest, key_rotation_read_chunk_type_failure_invalid_chunk_offset) {
                 &hoth_dev_, kCmdRotPublicKey,
                 KEY_ROTATION_RECORD_READ_CHUNK_TYPE_MAX_SIZE, 0, 0,
                 &actual_read_response, &response_size),
+            KEY_ROTATION_ERR_INVALID_RESPONSE_SIZE);
+}
+
+TEST_F(LibHothTest, key_rotation_chunk_type_count_success) {
+  EXPECT_CALL(mock_, send(_, UsesCommand(kCmd), _))
+      .WillOnce(Return(LIBHOTH_OK));
+  EXPECT_CALL(mock_, receive)
+      .WillOnce(DoAll(CopyResp(&kChunkSize, 4), Return(LIBHOTH_OK)));
+  uint16_t chunk_count = 0;
+  EXPECT_EQ(libhoth_key_rotation_chunk_type_count(&hoth_dev_, kCmdRotPublicKey,
+                                                  &chunk_count),
+            KEY_ROTATION_CMD_SUCCESS);
+  EXPECT_EQ(chunk_count, 2);
+}
+
+TEST_F(LibHothTest, key_rotation_chunk_type_count_failure_io) {
+  EXPECT_CALL(mock_, send(_, UsesCommand(kCmd), _))
+      .WillOnce(Return(LIBHOTH_OK));
+  EXPECT_CALL(mock_, receive).WillOnce(Return(LIBHOTH_ERR_FAIL));
+  uint16_t chunk_count = 0;
+  EXPECT_EQ(libhoth_key_rotation_chunk_type_count(&hoth_dev_, kCmdRotPublicKey,
+                                                  &chunk_count),
+            KEY_ROTATION_ERR);
+}
+
+TEST_F(LibHothTest,
+       key_rotation_chunk_type_count_failure_invalid_response_size) {
+  EXPECT_CALL(mock_, send(_, UsesCommand(kCmd), _))
+      .WillOnce(Return(LIBHOTH_OK));
+  EXPECT_CALL(mock_, receive)
+      .WillOnce(DoAll(CopyResp(&kDummy, 0), Return(LIBHOTH_OK)));
+  uint16_t chunk_count = 0;
+  EXPECT_EQ(libhoth_key_rotation_chunk_type_count(&hoth_dev_, kCmdRotPublicKey,
+                                                  &chunk_count),
             KEY_ROTATION_ERR_INVALID_RESPONSE_SIZE);
 }
