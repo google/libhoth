@@ -380,3 +380,35 @@ enum key_rotation_err libhoth_key_rotation_read_chunk_type(
   *response_size = read_offset;
   return KEY_ROTATION_CMD_SUCCESS;
 }
+
+enum key_rotation_err libhoth_key_rotation_chunk_type_count(
+    struct libhoth_device* dev, uint32_t chunk_typecode,
+    uint16_t* chunk_count) {
+  struct hoth_request_variable_length request;
+  request.hdr.operation = KEY_ROTATION_RECORD_CHUNK_TYPE_COUNT;
+  request.hdr.packet_offset = 0;
+  request.hdr.packet_size = 0;
+  struct hoth_request_key_rotation_record_chunk_type_count*
+      request_chunk_type_count =
+          (struct hoth_request_key_rotation_record_chunk_type_count*)&(
+              request.data);
+  request_chunk_type_count->chunk_typecode = chunk_typecode;
+  uint32_t response = 0;
+  size_t rlen = 0;
+  int ret = libhoth_hostcmd_exec(
+      dev, HOTH_CMD_BOARD_SPECIFIC_BASE + HOTH_PRV_CMD_HAVEN_KEY_ROTATION_OP, 0,
+      &request, sizeof(request), &response, sizeof(response), &rlen);
+  if (ret != 0) {
+    fprintf(stderr, "HOTH_KEY_ROTATION_CHUNK_TYPE_COUNT error code: %d\n", ret);
+    return KEY_ROTATION_ERR;
+  }
+  if (rlen != sizeof(response)) {
+    fprintf(stderr,
+            "HOTH_KEY_ROTATION_CHUNK_TYPE_COUNT expected exactly %ld response "
+            "bytes, got %ld\n",
+            sizeof(response), rlen);
+    return KEY_ROTATION_ERR_INVALID_RESPONSE_SIZE;
+  }
+  *chunk_count = response;
+  return KEY_ROTATION_CMD_SUCCESS;
+}

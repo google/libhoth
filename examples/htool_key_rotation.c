@@ -381,3 +381,29 @@ int htool_key_rotation_read_chunk_type(const struct htool_invocation *inv) {
   }
   return 0;
 }
+
+int htool_key_rotation_chunk_type_count(const struct htool_invocation *inv) {
+  struct libhoth_device *dev = htool_libhoth_device();
+  if (!dev) {
+    return -1;
+  }
+  const char *chunk_type_string;
+  if (htool_get_param_string(inv, "type", &chunk_type_string)) {
+    return -1;
+  }
+  uint32_t chunk_typecode = 0;
+  int ret_half =
+      get_key_rotation_chunk_type(chunk_type_string, &chunk_typecode);
+  if (ret_half) {
+    return -1;
+  }
+  uint16_t chunk_count = 0;
+  enum key_rotation_err ret_count =
+      libhoth_key_rotation_chunk_type_count(dev, chunk_typecode, &chunk_count);
+  if (ret_count) {
+    fprintf(stderr, "Failed to get chunk type count\n");
+    return -1;
+  }
+  printf("chunk_count: %u\n", chunk_count);
+  return 0;
+}
