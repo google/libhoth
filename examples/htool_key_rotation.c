@@ -279,13 +279,13 @@ int htool_key_rotation_read(const struct htool_invocation *inv) {
 static int get_key_rotation_chunk_type(const char *chunk_type_string,
                                        uint32_t *chunk_typecode) {
   if (!strcmp(chunk_type_string, "pkey")) {
-    *chunk_typecode = 0x59454B50;
+    *chunk_typecode = KEY_ROTATION_CHUNK_TYPE_CODE_PKEY;
   } else if (!strcmp(chunk_type_string, "hash")) {
-    *chunk_typecode = 0x48534148;
+    *chunk_typecode = KEY_ROTATION_CHUNK_TYPE_CODE_HASH;
   } else if (!strcmp(chunk_type_string, "bkey")) {
-    *chunk_typecode = 0x59454B42;
+    *chunk_typecode = KEY_ROTATION_CHUNK_TYPE_CODE_BKEY;
   } else if (!strcmp(chunk_type_string, "bash")) {
-    *chunk_typecode = 0x48534142;
+    *chunk_typecode = KEY_ROTATION_CHUNK_TYPE_CODE_BASH;
   } else {
     fprintf(stderr, "Invalid chunk_type value: %s\n", chunk_type_string);
     return -1;

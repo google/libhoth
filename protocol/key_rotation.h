@@ -84,6 +84,11 @@ enum key_rotation_record_op {
                                               // given chunk_typecode
 };
 
+#define KEY_ROTATION_CHUNK_TYPE_CODE_PKEY (0x59454B50)
+#define KEY_ROTATION_CHUNK_TYPE_CODE_HASH (0x48534148)
+#define KEY_ROTATION_CHUNK_TYPE_CODE_BKEY (0x59454B42)
+#define KEY_ROTATION_CHUNK_TYPE_CODE_BASH (0x48534142)
+
 struct hoth_request_key_rotation_record {
   uint16_t operation;      // enum key_rotation_record_op
   uint16_t packet_offset;  // Chunked read/write offset
