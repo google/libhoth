@@ -34,11 +34,14 @@ struct libhoth_device* htool_libhoth_spi_device(void) {
   const char* spidev_path_str;
   uint32_t mailbox_location;
   bool atomic;
+  uint32_t spidev_speed_hz;
   rv = htool_get_param_string(htool_global_flags(), "spidev_path",
                               &spidev_path_str) ||
        htool_get_param_u32(htool_global_flags(), "mailbox_location",
                            &mailbox_location) ||
-       htool_get_param_bool(htool_global_flags(), "spidev_atomic", &atomic);
+       htool_get_param_bool(htool_global_flags(), "spidev_atomic", &atomic) ||
+       htool_get_param_u32(htool_global_flags(), "spidev_speed_hz",
+                           &spidev_speed_hz);
   if (rv) {
     return NULL;
   }
@@ -52,6 +55,7 @@ struct libhoth_device* htool_libhoth_spi_device(void) {
       .path = spidev_path_str,
       .mailbox = mailbox_location,
       .atomic = atomic,
+      .speed = spidev_speed_hz,
   };
   rv = libhoth_spi_open(&opts, &result);
   if (rv) {
