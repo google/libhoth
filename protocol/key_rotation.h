@@ -138,6 +138,12 @@ struct hoth_response_key_rotation_record_read {
   uint8_t data[KEY_ROTATION_FLASH_AREA_SIZE];
 } __hoth_align4;
 
+struct key_rotation_chunk_header {
+  uint32_t chunk_typecode;
+  uint32_t chunk_data_size;
+  uint8_t chunk_data[];
+};
+
 typedef uint8_t sha256[32];
 struct bios_verifiction_key_fingerprint {
   uint16_t image_family;
