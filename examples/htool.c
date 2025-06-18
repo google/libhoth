@@ -1373,6 +1373,14 @@ static const struct htool_param GLOBAL_FLAGS[] = {
     {HTOOL_FLAG_VALUE, .name = "spidev_speed_hz", .default_value = "0",
      .desc = "Clock speed (in Hz) to use when using spidev transport. Default "
              "behavior (with input 0) is to not change the clock speed"},
+    {HTOOL_FLAG_VALUE, .name = "spidev_device_busy_wait_timeout",
+     .default_value = "1000",
+     .desc = "Maximum duration (in microseconds) to wait when SPI device "
+             "indicates that it is busy"},
+    {HTOOL_FLAG_VALUE, .name = "spidev_device_busy_wait_check_interval",
+     .default_value = "100",
+     .desc = "Interval duration (in microseconds) to wait before checking SPI "
+             "device status again when it indicates that the device is busy"},
     {HTOOL_FLAG_VALUE, .name = "mtddev_path", .default_value = "",
      .desc = "The full MTD path of the RoT mailbox; for example "
              "'/dev/mtd0'. If unspecified, will attempt to detect "
