@@ -60,6 +60,10 @@ int libhoth_spi_close(struct libhoth_device* dev);
 
 enum {
   SPI_NOR_DEVICE_STATUS_WIP_BIT = (1 << 0),
+  SPI_NOR_OPCODE_READ_STATUS = 0x05,
+  SPI_NOR_OPCODE_WRITE_ENABLE = 0x06,
+  SPI_NOR_OPCODE_PAGE_PROGRAM = 0x02,
+  SPI_NOR_OPCODE_SLOW_READ = 0x03,
 };
 
 static int spi_nor_address(uint8_t* buf, uint32_t address,
@@ -102,7 +106,7 @@ static libhoth_status spi_nor_busy_wait(const int fd, uint32_t timeout_us,
   }
   while (true) {
     struct spi_ioc_transfer xfer = {0};
-    tx_buf[0] = 0x05;  // Read Status command
+    tx_buf[0] = SPI_NOR_OPCODE_READ_STATUS;
     xfer.tx_buf = (uint64_t)tx_buf;
     xfer.rx_buf = (uint64_t)rx_buf;
     xfer.len = sizeof(rx_buf);
@@ -148,7 +152,7 @@ static int spi_nor_write(int fd, bool address_mode_4b, unsigned int address,
   struct spi_ioc_transfer xfer[3] = {};
 
   // Write Enable Message
-  wp_buf[0] = 0x06;
+  wp_buf[0] = SPI_NOR_OPCODE_WRITE_ENABLE;
   xfer[0] = (struct spi_ioc_transfer){
       .tx_buf = (unsigned long)wp_buf,
       .len = 1,
@@ -156,7 +160,7 @@ static int spi_nor_write(int fd, bool address_mode_4b, unsigned int address,
   };
 
   // Page Program OPCODE + Mailbox Address
-  rq_buf[0] = 0x02;
+  rq_buf[0] = SPI_NOR_OPCODE_PAGE_PROGRAM;
   int address_len = spi_nor_address(&rq_buf[1], address, address_mode_4b);
   xfer[1] = (struct spi_ioc_transfer){
       .tx_buf = (unsigned long)rq_buf,
@@ -187,7 +191,7 @@ static int spi_nor_read(int fd, bool address_mode_4b, unsigned int address,
   struct spi_ioc_transfer xfer[2] = {};
 
   // Read OPCODE and mailbox address
-  rd_request[0] = 0x03;  // Read
+  rd_request[0] = SPI_NOR_OPCODE_SLOW_READ;
   int address_len = spi_nor_address(&rd_request[1], address, address_mode_4b);
   xfer[0] = (struct spi_ioc_transfer){
       .tx_buf = (unsigned long)rd_request,
@@ -419,7 +423,7 @@ int libhoth_spi_send_and_receive_response(struct libhoth_device* dev,
 
   // Write Enable Message
   uint8_t wp_buf[1];
-  wp_buf[0] = 0x06;
+  wp_buf[0] = SPI_NOR_OPCODE_WRITE_ENABLE;
   xfer[0] = (struct spi_ioc_transfer){
       .tx_buf = (unsigned long)wp_buf,
       .len = 1,
@@ -428,7 +432,7 @@ int libhoth_spi_send_and_receive_response(struct libhoth_device* dev,
 
   // Page Program OPCODE + Mailbox Address
   uint8_t pp_buf[5];
-  pp_buf[0] = 0x02;
+  pp_buf[0] = SPI_NOR_OPCODE_PAGE_PROGRAM;
   int address_len = spi_nor_address(&pp_buf[1], address, address_mode_4b);
   xfer[1] = (struct spi_ioc_transfer){
       .tx_buf = (unsigned long)pp_buf,
@@ -446,7 +450,7 @@ int libhoth_spi_send_and_receive_response(struct libhoth_device* dev,
 
   // Read opcode + Mailbox Address
   uint8_t rd_buf[5];
-  rd_buf[0] = 0x03;  // Read
+  rd_buf[0] = SPI_NOR_OPCODE_SLOW_READ;
   address_len = spi_nor_address(&rd_buf[1], address, address_mode_4b);
   xfer[3] = (struct spi_ioc_transfer){
       .tx_buf = (unsigned long)rd_buf,
