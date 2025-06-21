@@ -361,13 +361,15 @@ int libhoth_spi_receive_response(struct libhoth_device* dev, void* response,
     return LIBHOTH_ERR_RESPONSE_BUFFER_OVERFLOW;
   }
 
-  // Read remainder of data based on header length
-  uint8_t* const data_start = (uint8_t*)response + total_bytes;
-  status = spi_nor_read(spi_dev->fd, spi_dev->address_mode_4b,
-                        spi_dev->mailbox_address + total_bytes, data_start,
-                        host_response.data_len);
-  if (status != LIBHOTH_OK) {
-    return status;
+  if (host_response.data_len > 0) {
+    // Read remainder of data based on header length
+    uint8_t* const data_start = (uint8_t*)response + total_bytes;
+    status = spi_nor_read(spi_dev->fd, spi_dev->address_mode_4b,
+                          spi_dev->mailbox_address + total_bytes, data_start,
+                          host_response.data_len);
+    if (status != LIBHOTH_OK) {
+      return status;
+    }
   }
 
   if (actual_size) {
