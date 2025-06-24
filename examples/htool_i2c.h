@@ -24,7 +24,8 @@ extern "C" {
 #define I2C_WRITE_CMD_STR "write"
 #define I2C_MUXCTRL_CMD_STR "mux_ctrl"
 #define I2C_MUXCTRL_GET_SUBCMD_STR "get"
-#define I2C_MUXCTRL_SELECT_TARGET_SUBCMD_STR "select_target"
+#define I2C_MUXCTRL_SELECT_TARGET_SUBCMD_STR "select_target"  // Deprecated
+#define I2C_MUXCTRL_SELECT_ROT_SUBCMD_STR "select_rot"
 #define I2C_MUXCTRL_SELECT_HOST_SUBCMD_STR "select_host"
 
 // Forward declaration
@@ -34,7 +35,7 @@ int htool_i2c_run(const struct htool_invocation* inv);
 
 int htool_i2c_muxctrl_get(const struct htool_invocation* inv);
 
-int htool_i2c_muxctrl_select_target(const struct htool_invocation* inv);
+int htool_i2c_muxctrl_select_rot(const struct htool_invocation* inv);
 
 int htool_i2c_muxctrl_select_host(const struct htool_invocation* inv);
 
