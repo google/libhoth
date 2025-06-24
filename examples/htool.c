@@ -39,10 +39,10 @@
 #include "htool_payload.h"
 #include "htool_payload_update.h"
 #include "htool_raw_host_command.h"
+#include "htool_rot_usb.h"
 #include "htool_srtm.h"
 #include "htool_statistics.h"
 #include "htool_target_control.h"
-#include "htool_target_usb.h"
 #include "htool_usb.h"
 #include "protocol/authz_record.h"
 #include "protocol/chipinfo.h"
@@ -1068,43 +1068,86 @@ static const struct htool_cmd CMDS[] = {
     {
         .verbs = (const char*[]){"i2c", I2C_MUXCTRL_CMD_STR,
                                  I2C_MUXCTRL_SELECT_TARGET_SUBCMD_STR, NULL},
-        .desc = "Change I2C Mux sel (if present) to select Target",
+        .desc = "(Deprecated) Change I2C Mux sel (if present) to select RoT as "
+                "controller",
         .params = (const struct htool_param[]){{}},
-        .func = htool_i2c_muxctrl_select_target,
+        .func = htool_i2c_muxctrl_select_rot,
+        .deprecation_message =
+            "`select_target` is deprecated. Please use `select_rot` instead",
+    },
+    {
+        .verbs = (const char*[]){"i2c", I2C_MUXCTRL_CMD_STR,
+                                 I2C_MUXCTRL_SELECT_ROT_SUBCMD_STR, NULL},
+        .desc = "Change I2C Mux sel (if present) to select RoT as controller",
+        .params = (const struct htool_param[]){{}},
+        .func = htool_i2c_muxctrl_select_rot,
     },
     {
         .verbs = (const char*[]){"i2c", I2C_MUXCTRL_CMD_STR,
                                  I2C_MUXCTRL_SELECT_HOST_SUBCMD_STR, NULL},
-        .desc = "Change I2C Mux sel (if present) to select Host",
+        .desc = "Change I2C Mux sel (if present) to select Host as controller",
         .params = (const struct htool_param[]){{}},
         .func = htool_i2c_muxctrl_select_host,
     },
     {
-        .verbs = (const char*[]){"target_usb", TARGET_USB_MUXCTRL_CMD_STR,
-                                 TARGET_USB_MUXCTRL_GET_SUBCMD_STR, NULL},
+        .verbs = (const char*[]){"target_usb", ROT_USB_MUXCTRL_CMD_STR,
+                                 ROT_USB_MUXCTRL_GET_SUBCMD_STR, NULL},
+        .desc = "(Deprecated) Get status of USB mux select (if present)",
+        .params = (const struct htool_param[]){{}},
+        .func = htool_rot_usb_muxctrl_get,
+        .deprecation_message =
+            "`target_usb` is deprecated. Please use `rot_usb` instead",
+    },
+    {
+        .verbs =
+            (const char*[]){"target_usb", ROT_USB_MUXCTRL_CMD_STR,
+                            ROT_USB_MUXCTRL_CONNECT_TARGET_TO_HOST_SUBCMD_STR,
+                            NULL},
+        .desc = "(Deprecated) Change USB mux select (if present) so that RoT "
+                "is connected to Host",
+        .params = (const struct htool_param[]){{}},
+        .func = htool_rot_usb_muxctrl_connect_rot_to_host,
+        .deprecation_message =
+            "`target_usb` and `connect_target_to_host` are deprecated. Please "
+            "use `rot_usb` and `connect_rot_to_host` respectively instead",
+    },
+    {
+        .verbs = (const char*[]){"target_usb", ROT_USB_MUXCTRL_CMD_STR,
+                                 ROT_USB_MUXCTRL_CONNECT_TARGET_TO_FRONT_PANEL,
+                                 NULL},
+        .desc = "(Deprecated) Change USB mux select (if present) so that RoT "
+                "is connected to Front panel",
+        .params = (const struct htool_param[]){{}},
+        .func = htool_rot_usb_muxctrl_connect_rot_to_front_panel,
+        .deprecation_message =
+            "`target_usb` and `connect_target_to_front_panel` are deprecated. "
+            "Please use `rot_usb` and `connect_rot_to_front_panel` "
+            "respectively instead",
+    },
+    {
+        .verbs = (const char*[]){"rot_usb", ROT_USB_MUXCTRL_CMD_STR,
+                                 ROT_USB_MUXCTRL_GET_SUBCMD_STR, NULL},
         .desc = "Get status of USB mux select (if present)",
         .params = (const struct htool_param[]){{}},
-        .func = htool_target_usb_muxctrl_get,
+        .func = htool_rot_usb_muxctrl_get,
+    },
+    {
+        .verbs = (const char*[]){"rot_usb", ROT_USB_MUXCTRL_CMD_STR,
+                                 ROT_USB_MUXCTRL_CONNECT_ROT_TO_HOST_SUBCMD_STR,
+                                 NULL},
+        .desc = "Change USB mux select (if present) so that RoT is connected "
+                "to Host",
+        .params = (const struct htool_param[]){{}},
+        .func = htool_rot_usb_muxctrl_connect_rot_to_host,
     },
     {
         .verbs =
-            (const char*[]){
-                "target_usb", TARGET_USB_MUXCTRL_CMD_STR,
-                TARGET_USB_MUXCTRL_CONNECT_TARGET_TO_HOST_SUBCMD_STR, NULL},
-        .desc = "Change USB mux select (if present) so that Target is "
-                "connected to Host",
+            (const char*[]){"rot_usb", ROT_USB_MUXCTRL_CMD_STR,
+                            ROT_USB_MUXCTRL_CONNECT_ROT_TO_FRONT_PANEL, NULL},
+        .desc = "Change USB mux select (if present) so that RoT is connected "
+                "to Front panel",
         .params = (const struct htool_param[]){{}},
-        .func = htool_target_usb_muxctrl_connect_target_to_host,
-    },
-    {
-        .verbs =
-            (const char*[]){"target_usb", TARGET_USB_MUXCTRL_CMD_STR,
-                            TARGET_USB_MUXCTRL_CONNECT_TARGET_TO_FRONT_PANEL,
-                            NULL},
-        .desc = "Change USB mux select (if present) so that Target is "
-                "connected to Front panel",
-        .params = (const struct htool_param[]){{}},
-        .func = htool_target_usb_muxctrl_connect_target_to_front_panel,
+        .func = htool_rot_usb_muxctrl_connect_rot_to_front_panel,
     },
     {
         .verbs = (const char*[]){"raw_host_command", NULL},
@@ -1373,6 +1416,14 @@ static const struct htool_param GLOBAL_FLAGS[] = {
     {HTOOL_FLAG_VALUE, .name = "spidev_speed_hz", .default_value = "0",
      .desc = "Clock speed (in Hz) to use when using spidev transport. Default "
              "behavior (with input 0) is to not change the clock speed"},
+    {HTOOL_FLAG_VALUE, .name = "spidev_device_busy_wait_timeout",
+     .default_value = "1000",
+     .desc = "Maximum duration (in microseconds) to wait when SPI device "
+             "indicates that it is busy"},
+    {HTOOL_FLAG_VALUE, .name = "spidev_device_busy_wait_check_interval",
+     .default_value = "100",
+     .desc = "Interval duration (in microseconds) to wait before checking SPI "
+             "device status again when it indicates that the device is busy"},
     {HTOOL_FLAG_VALUE, .name = "mtddev_path", .default_value = "",
      .desc = "The full MTD path of the RoT mailbox; for example "
              "'/dev/mtd0'. If unspecified, will attempt to detect "

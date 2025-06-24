@@ -98,11 +98,13 @@ static void enumerate_cmds(const struct htool_cmd* cmds) {
   fprintf(stderr,
           "Available subcommands: (append --help to subcommand for details)\n");
   for (size_t i = 0; cmds[i].verbs; i++) {
-    fprintf(stderr, " ");
-    for (size_t j = 0; cmds[i].verbs[j]; j++) {
-      fprintf(stderr, " %s", cmds[i].verbs[j]);
+    if (cmds[i].deprecation_message == NULL) {  // Hide deprecated commands
+      fprintf(stderr, " ");
+      for (size_t j = 0; cmds[i].verbs[j]; j++) {
+        fprintf(stderr, " %s", cmds[i].verbs[j]);
+      }
+      fprintf(stderr, " - %s\n", cmds[i].desc);
     }
-    fprintf(stderr, " - %s\n", cmds[i].desc);
   }
 }
 
@@ -464,6 +466,9 @@ int htool_main(const struct htool_param* global_flags,
   rv = fill_cmd_invocation(&inv, cmd, argc, argv);
   if (rv != 0) {
     return rv;
+  }
+  if (cmd->deprecation_message != NULL) {
+    fprintf(stderr, "[WARNING] %s\n", cmd->deprecation_message);
   }
   rv = cmd->func(&inv);
   free(inv.args);
