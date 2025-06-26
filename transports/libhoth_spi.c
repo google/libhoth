@@ -14,6 +14,7 @@
 
 #include "transports/libhoth_spi.h"
 
+#include <assert.h>
 #include <fcntl.h>
 #include <linux/spi/spidev.h>
 #include <linux/types.h>
@@ -23,6 +24,8 @@
 #include <stdlib.h>
 #include <string.h>
 #include <sys/ioctl.h>
+#include <sys/param.h>
+#include <time.h>
 #include <unistd.h>
 
 #include "transports/libhoth_device.h"
@@ -35,6 +38,8 @@ struct libhoth_spi_device {
 
   void* buffered_request;
   size_t buffered_request_size;
+  uint32_t device_busy_wait_timeout;
+  uint32_t device_busy_wait_check_interval;
 };
 
 int libhoth_spi_send_request(struct libhoth_device* dev, const void* request,
@@ -54,6 +59,15 @@ int libhoth_spi_send_and_receive_response(struct libhoth_device* dev,
 
 int libhoth_spi_close(struct libhoth_device* dev);
 
+enum {
+  SPI_NOR_DEVICE_STATUS_WIP_BIT = (1 << 0),
+  SPI_NOR_OPCODE_READ_STATUS = 0x05,
+  SPI_NOR_OPCODE_WRITE_ENABLE = 0x06,
+  SPI_NOR_OPCODE_PAGE_PROGRAM = 0x02,
+  SPI_NOR_OPCODE_SLOW_READ = 0x03,
+  SPI_NOR_FLASH_PAGE_SIZE = 256,  // in bytes
+};
+
 static int spi_nor_address(uint8_t* buf, uint32_t address,
                            bool address_mode_4b) {
   if (address_mode_4b) {
@@ -70,41 +84,133 @@ static int spi_nor_address(uint8_t* buf, uint32_t address,
   }
 }
 
-static int spi_nor_write(int fd, bool address_mode_4b, unsigned int address,
-                         const void* data, size_t data_len) {
-  if (fd < 0 || !data || !data_len) return LIBHOTH_ERR_INVALID_PARAMETER;
+// Helper function to get current monotonic time in milliseconds
+static int get_monotonic_ms(uint64_t* time_ms) {
+  struct timespec ts;
+  if (clock_gettime(CLOCK_MONOTONIC, &ts) != 0) {
+    perror("clock_gettime failed");
+    return -1;
+  }
+  *time_ms = (((uint64_t)ts.tv_sec * 1000) + ((uint64_t)ts.tv_nsec / 1000000));
+  return 0;
+}
 
+static libhoth_status spi_nor_busy_wait(const int fd, uint32_t timeout_us,
+                                        uint32_t check_interval_us) {
+  uint8_t tx_buf[2];
+  uint8_t rx_buf[2];
+  static_assert(sizeof(tx_buf) == sizeof(rx_buf),
+                "Tx and Rx buffers must have the same size");
+
+  uint64_t start_time_ms;
+  if (get_monotonic_ms(&start_time_ms) != 0) {
+    return LIBHOTH_ERR_FAIL;
+  }
+  while (true) {
+    struct spi_ioc_transfer xfer = {0};
+    tx_buf[0] = SPI_NOR_OPCODE_READ_STATUS;
+    xfer.tx_buf = (uint64_t)tx_buf;
+    xfer.rx_buf = (uint64_t)rx_buf;
+    xfer.len = sizeof(rx_buf);
+    const int status = ioctl(fd, SPI_IOC_MESSAGE(1), xfer);
+    if (status < 0) {
+      return LIBHOTH_ERR_FAIL;
+    }
+
+    static_assert(sizeof(rx_buf) >= 2,
+                  "Rx buffer must have at least 2 entries");
+    const bool is_spi_device_busy = (rx_buf[1] & SPI_NOR_DEVICE_STATUS_WIP_BIT);
+    if (!is_spi_device_busy) {
+      return LIBHOTH_OK;
+    }
+
+    uint64_t current_time_ms;
+    if (get_monotonic_ms(&current_time_ms) != 0) {
+      return LIBHOTH_ERR_FAIL;
+    }
+    uint64_t time_elapsed_ms = 0;
+    if (current_time_ms < start_time_ms) {
+      // Wrap around
+      time_elapsed_ms = (UINT64_MAX - start_time_ms) + current_time_ms;
+    } else {
+      time_elapsed_ms = current_time_ms - start_time_ms;
+    }
+
+    if (time_elapsed_ms > (timeout_us / 1000)) {
+      return LIBHOTH_ERR_TIMEOUT;
+    }
+    usleep(check_interval_us);
+  }
+}
+
+static int spi_nor_write_enable(const int fd) {
   uint8_t wp_buf[1] = {};
-  uint8_t rq_buf[5] = {};
-  struct spi_ioc_transfer xfer[3] = {};
+  struct spi_ioc_transfer xfer[1] = {};
 
   // Write Enable Message
-  wp_buf[0] = 0x06;
+  wp_buf[0] = SPI_NOR_OPCODE_WRITE_ENABLE;
   xfer[0] = (struct spi_ioc_transfer){
       .tx_buf = (unsigned long)wp_buf,
       .len = 1,
-      .cs_change = 1,
   };
 
-  // Page Program OPCODE + Mailbox Address
-  rq_buf[0] = 0x02;
-  int address_len = spi_nor_address(&rq_buf[1], address, address_mode_4b);
-  xfer[1] = (struct spi_ioc_transfer){
-      .tx_buf = (unsigned long)rq_buf,
-      .len = 1 + address_len,
-  };
-
-  // Write Data at mailbox address
-  xfer[2] = (struct spi_ioc_transfer){
-      .tx_buf = (unsigned long)data,
-      .len = data_len,
-  };
-
-  int status = ioctl(fd, SPI_IOC_MESSAGE(3), xfer);
+  int status = ioctl(fd, SPI_IOC_MESSAGE(1), xfer);
   if (status < 0) {
     return LIBHOTH_ERR_FAIL;
   }
+  return LIBHOTH_OK;
+}
 
+static int spi_nor_write(int fd, bool address_mode_4b, unsigned int address,
+                         const void* data, size_t data_len,
+                         uint32_t device_busy_wait_timeout,
+                         uint32_t device_busy_wait_check_interval) {
+  if (fd < 0 || !data || !data_len) return LIBHOTH_ERR_INVALID_PARAMETER;
+
+
+  // Page program operations
+  size_t bytes_sent = 0;
+  while (bytes_sent < data_len) {
+    // Send write enable before each Page program operation
+    int status = spi_nor_write_enable(fd);
+    if (status != LIBHOTH_OK) {
+      return status;
+    }
+
+    struct spi_ioc_transfer xfer[2] = {};
+    uint8_t rq_buf[5] = {};  // 1 for command opcode, 4 (max) for address
+
+    // Page Program OPCODE + Address
+    rq_buf[0] = SPI_NOR_OPCODE_PAGE_PROGRAM;
+    int address_len = spi_nor_address(&rq_buf[1], address, address_mode_4b);
+    xfer[0] = (struct spi_ioc_transfer){
+        .tx_buf = (unsigned long)rq_buf,
+        .len = 1 + address_len,
+        .cs_change = 0,
+    };
+
+    const size_t chunk_send_size =
+        MIN(SPI_NOR_FLASH_PAGE_SIZE, (data_len - bytes_sent));
+    // Write Data at mailbox address
+    xfer[1] = (struct spi_ioc_transfer){
+        .tx_buf = ((unsigned long)(data) + bytes_sent),
+        .len = chunk_send_size,
+    };
+
+    status = ioctl(fd, SPI_IOC_MESSAGE(2), xfer);
+    if (status < 0) {
+      return LIBHOTH_ERR_FAIL;
+    }
+    bytes_sent += chunk_send_size;
+    address += chunk_send_size;
+
+    // Wait for each page program operation to be handled
+    libhoth_status busy_wait_status = spi_nor_busy_wait(
+        fd, device_busy_wait_timeout, device_busy_wait_check_interval);
+    if (busy_wait_status != LIBHOTH_OK) {
+      return busy_wait_status;
+    }
+  }
   return LIBHOTH_OK;
 }
 
@@ -116,7 +222,7 @@ static int spi_nor_read(int fd, bool address_mode_4b, unsigned int address,
   struct spi_ioc_transfer xfer[2] = {};
 
   // Read OPCODE and mailbox address
-  rd_request[0] = 0x03;  // Read
+  rd_request[0] = SPI_NOR_OPCODE_SLOW_READ;
   int address_len = spi_nor_address(&rd_request[1], address, address_mode_4b);
   xfer[0] = (struct spi_ioc_transfer){
       .tx_buf = (unsigned long)rd_request,
@@ -203,6 +309,9 @@ int libhoth_spi_open(const struct libhoth_spi_device_init_options* options,
   spi_dev->fd = fd;
   spi_dev->mailbox_address = options->mailbox;
   spi_dev->address_mode_4b = true;
+  spi_dev->device_busy_wait_timeout = options->device_busy_wait_timeout;
+  spi_dev->device_busy_wait_check_interval =
+      options->device_busy_wait_check_interval;
 
   if (options->atomic) {
     dev->send = libhoth_spi_buffer_request;
@@ -243,7 +352,9 @@ int libhoth_spi_send_request(struct libhoth_device* dev, const void* request,
       (struct libhoth_spi_device*)dev->user_ctx;
 
   return spi_nor_write(spi_dev->fd, spi_dev->address_mode_4b,
-                       spi_dev->mailbox_address, request, request_size);
+                       spi_dev->mailbox_address, request, request_size,
+                       spi_dev->device_busy_wait_timeout,
+                       spi_dev->device_busy_wait_check_interval);
 }
 
 int libhoth_spi_receive_response(struct libhoth_device* dev, void* response,
@@ -281,13 +392,15 @@ int libhoth_spi_receive_response(struct libhoth_device* dev, void* response,
     return LIBHOTH_ERR_RESPONSE_BUFFER_OVERFLOW;
   }
 
-  // Read remainder of data based on header length
-  uint8_t* const data_start = (uint8_t*)response + total_bytes;
-  status = spi_nor_read(spi_dev->fd, spi_dev->address_mode_4b,
-                        spi_dev->mailbox_address + total_bytes, data_start,
-                        host_response.data_len);
-  if (status != LIBHOTH_OK) {
-    return status;
+  if (host_response.data_len > 0) {
+    // Read remainder of data based on header length
+    uint8_t* const data_start = (uint8_t*)response + total_bytes;
+    status = spi_nor_read(spi_dev->fd, spi_dev->address_mode_4b,
+                          spi_dev->mailbox_address + total_bytes, data_start,
+                          host_response.data_len);
+    if (status != LIBHOTH_OK) {
+      return status;
+    }
   }
 
   if (actual_size) {
@@ -343,7 +456,7 @@ int libhoth_spi_send_and_receive_response(struct libhoth_device* dev,
 
   // Write Enable Message
   uint8_t wp_buf[1];
-  wp_buf[0] = 0x06;
+  wp_buf[0] = SPI_NOR_OPCODE_WRITE_ENABLE;
   xfer[0] = (struct spi_ioc_transfer){
       .tx_buf = (unsigned long)wp_buf,
       .len = 1,
@@ -352,7 +465,7 @@ int libhoth_spi_send_and_receive_response(struct libhoth_device* dev,
 
   // Page Program OPCODE + Mailbox Address
   uint8_t pp_buf[5];
-  pp_buf[0] = 0x02;
+  pp_buf[0] = SPI_NOR_OPCODE_PAGE_PROGRAM;
   int address_len = spi_nor_address(&pp_buf[1], address, address_mode_4b);
   xfer[1] = (struct spi_ioc_transfer){
       .tx_buf = (unsigned long)pp_buf,
@@ -370,7 +483,7 @@ int libhoth_spi_send_and_receive_response(struct libhoth_device* dev,
 
   // Read opcode + Mailbox Address
   uint8_t rd_buf[5];
-  rd_buf[0] = 0x03;  // Read
+  rd_buf[0] = SPI_NOR_OPCODE_SLOW_READ;
   address_len = spi_nor_address(&rd_buf[1], address, address_mode_4b);
   xfer[3] = (struct spi_ioc_transfer){
       .tx_buf = (unsigned long)rd_buf,

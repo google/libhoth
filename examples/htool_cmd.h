@@ -51,6 +51,7 @@ struct htool_cmd {
   const char* desc;
   const struct htool_param* params;
   int (*func)(const struct htool_invocation*);
+  const char* deprecation_message;
 };
 
 struct htool_invocation {
