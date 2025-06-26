@@ -16,6 +16,7 @@
 #define _LIBHOTH_LIBHOTH_SPI_H_
 
 #include <stddef.h>
+#include <stdint.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -32,6 +33,8 @@ struct libhoth_spi_device_init_options {
   int mode;
   int speed;
   int atomic;
+  uint32_t device_busy_wait_timeout;
+  uint32_t device_busy_wait_check_interval;
 };
 
 // Note that the options struct only needs to to live for the duration of

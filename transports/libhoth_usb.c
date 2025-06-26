@@ -23,6 +23,7 @@
 #define HOTH_VENDOR_ID 0x18d1
 #define HOTH_B_PRODUCT_ID 0x5014
 #define HOTH_D_PRODUCT_ID 0x022a
+#define HOTH_E_PRODUCT_ID 0x023b
 
 int libhoth_usb_send_request(struct libhoth_device* dev, const void* request,
                              size_t request_size);
@@ -282,7 +283,8 @@ enum libusb_error transfer_status_to_error(
 bool libhoth_device_is_hoth(const struct libusb_device_descriptor* dev) {
   return dev && dev->idVendor == HOTH_VENDOR_ID &&
          (dev->idProduct == HOTH_B_PRODUCT_ID ||
-          dev->idProduct == HOTH_D_PRODUCT_ID);
+          dev->idProduct == HOTH_D_PRODUCT_ID ||
+          dev->idProduct == HOTH_E_PRODUCT_ID);
 }
 
 int libhoth_get_usb_loc(libusb_device* dev, struct libhoth_usb_loc* result) {

@@ -35,13 +35,21 @@ struct libhoth_device* htool_libhoth_spi_device(void) {
   uint32_t mailbox_location;
   bool atomic;
   uint32_t spidev_speed_hz;
+  uint32_t spidev_device_busy_wait_timeout;
+  uint32_t spidev_device_busy_wait_check_interval;
   rv = htool_get_param_string(htool_global_flags(), "spidev_path",
                               &spidev_path_str) ||
        htool_get_param_u32(htool_global_flags(), "mailbox_location",
                            &mailbox_location) ||
        htool_get_param_bool(htool_global_flags(), "spidev_atomic", &atomic) ||
        htool_get_param_u32(htool_global_flags(), "spidev_speed_hz",
-                           &spidev_speed_hz);
+                           &spidev_speed_hz) ||
+       htool_get_param_u32(htool_global_flags(),
+                           "spidev_device_busy_wait_timeout",
+                           &spidev_device_busy_wait_timeout) ||
+       htool_get_param_u32(htool_global_flags(),
+                           "spidev_device_busy_wait_check_interval",
+                           &spidev_device_busy_wait_check_interval);
   if (rv) {
     return NULL;
   }
@@ -56,6 +64,8 @@ struct libhoth_device* htool_libhoth_spi_device(void) {
       .mailbox = mailbox_location,
       .atomic = atomic,
       .speed = spidev_speed_hz,
+      .device_busy_wait_timeout = spidev_device_busy_wait_timeout,
+      .device_busy_wait_check_interval = spidev_device_busy_wait_check_interval,
   };
   rv = libhoth_spi_open(&opts, &result);
   if (rv) {
