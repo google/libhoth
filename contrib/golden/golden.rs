@@ -35,13 +35,14 @@ macro_rules! assert_eq_golden {
         $crate::assert_eq_golden_impl(
             $data,
             include_str!($golden_file),
+            std::path::Path::new(file!()),
             std::path::Path::new($golden_file),
         )
     };
 }
 
 #[track_caller]
-pub fn assert_eq_golden_impl(actual: &str, expected: &str, path: &Path) {
+pub fn assert_eq_golden_impl(actual: &str, expected: &str, src_path: &Path, path: &Path) {
     if actual == expected {
         return;
     }
@@ -66,7 +67,12 @@ pub fn assert_eq_golden_impl(actual: &str, expected: &str, path: &Path) {
         let Ok(manifest_dir) = std::env::var("CARGO_MANIFEST_DIR") else {
             panic!("CARGO_MANIFEST_DIR env-var is not set; unable to update golden");
         };
-        let full_path = Path::new(&oldpwd).join(manifest_dir).join(path);
+        let crate_dir = Path::new(&oldpwd).join(manifest_dir);
+        let src_dir = match src_path.parent() {
+            Some(src_dir) => Path::new(&oldpwd).join(src_dir),
+            None => crate_dir,
+        };
+        let full_path = src_dir.join(path);
 
         println!("Updating golden-data at path {full_path:?}");
         std::fs::write(full_path, actual).unwrap();
