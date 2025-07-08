@@ -21,11 +21,12 @@
 #include "host_cmd.h"
 #include "transports/libhoth_device.h"
 
-int libhoth_jtag_read_idcode(struct libhoth_device* dev, uint16_t clk_idiv,
-                             uint32_t* idcode) {
+int libhoth_jtag_read_idcode(struct libhoth_device* dev, uint8_t interface_id,
+                             uint16_t clk_idiv, uint32_t* idcode) {
   const struct hoth_request_jtag_operation request = {
       .clk_idiv = clk_idiv,
       .operation = HOTH_JTAG_OP_READ_IDCODE,
+      .interface_id = interface_id,
   };
   struct hoth_response_jtag_read_idcode_operation response;
 
@@ -52,7 +53,7 @@ int libhoth_jtag_read_idcode(struct libhoth_device* dev, uint16_t clk_idiv,
 }
 
 int libhoth_jtag_test_bypass(
-    struct libhoth_device* dev, uint16_t clk_idiv,
+    struct libhoth_device* dev, uint8_t interface_id, uint16_t clk_idiv,
     const uint8_t tdi_bytes[HOTH_JTAG_TEST_BYPASS_PATTERN_LEN],
     uint8_t tdo_bytes[HOTH_JTAG_TEST_BYPASS_PATTERN_LEN]) {
   struct {
@@ -63,6 +64,7 @@ int libhoth_jtag_test_bypass(
           {
               .clk_idiv = clk_idiv,
               .operation = HOTH_JTAG_OP_TEST_BYPASS,
+              .interface_id = interface_id,
           },
   };
 
@@ -93,7 +95,7 @@ int libhoth_jtag_test_bypass(
 }
 
 int libhoth_jtag_program_and_verify_pld(struct libhoth_device* dev,
-                                        uint32_t offset) {
+                                        uint8_t interface_id, uint32_t offset) {
   struct {
     struct hoth_request_jtag_operation operation;
     struct hoth_request_jtag_program_and_verify_pld_operation params;
@@ -102,6 +104,7 @@ int libhoth_jtag_program_and_verify_pld(struct libhoth_device* dev,
           {
               .clk_idiv = 0,  // Not used
               .operation = HOTH_JTAG_OP_PROGRAM_AND_VERIFY_PLD,
+              .interface_id = interface_id,
           },
       .params =
           {
@@ -130,7 +133,8 @@ int libhoth_jtag_program_and_verify_pld(struct libhoth_device* dev,
   return 0;
 }
 
-int libhoth_jtag_verify_pld(struct libhoth_device* dev, uint32_t offset) {
+int libhoth_jtag_verify_pld(struct libhoth_device* dev, uint8_t interface_id,
+                            uint32_t offset) {
   struct {
     struct hoth_request_jtag_operation operation;
     struct hoth_request_jtag_program_and_verify_pld_operation params;
@@ -139,6 +143,7 @@ int libhoth_jtag_verify_pld(struct libhoth_device* dev, uint32_t offset) {
           {
               .clk_idiv = (uint16_t)0,  // Not used
               .operation = HOTH_JTAG_OP_VERIFY_PLD,
+              .interface_id = interface_id,
           },
       .params =
           {

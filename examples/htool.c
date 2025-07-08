@@ -1162,6 +1162,12 @@ static const struct htool_cmd CMDS[] = {
         .params =
             (const struct htool_param[]){
                 {.type = HTOOL_FLAG_VALUE,
+                 .ch = 'i',
+                 .name = "jtag_interface_id",
+                 .default_value = "0",
+                 .desc = "JTAG interface ID (0/1) to send the host command "
+                         "to."},
+                {.type = HTOOL_FLAG_VALUE,
                  .ch = 'd',
                  .name = "clk_idiv",
                  .default_value = "47",
@@ -1177,6 +1183,12 @@ static const struct htool_cmd CMDS[] = {
                 "Assumes only a single device in chain",
         .params =
             (const struct htool_param[]){
+                {.type = HTOOL_FLAG_VALUE,
+                 .ch = 'i',
+                 .name = "jtag_interface_id",
+                 .default_value = "0",
+                 .desc = "JTAG interface ID (0/1) to send the host command "
+                         "to."},
                 {.type = HTOOL_FLAG_VALUE,
                  .ch = 'd',
                  .name = "clk_idiv",
@@ -1212,6 +1224,12 @@ static const struct htool_cmd CMDS[] = {
         .params =
             (const struct htool_param[]){
                 {.type = HTOOL_FLAG_VALUE,
+                 .ch = 'i',
+                 .name = "jtag_interface_id",
+                 .default_value = "0",
+                 .desc = "JTAG interface ID (0/1) to send the host command "
+                         "to."},
+                {.type = HTOOL_FLAG_VALUE,
                  .ch = 'o',
                  .name = "offset",
                  .default_value = "0",
@@ -1224,6 +1242,12 @@ static const struct htool_cmd CMDS[] = {
         .desc = "Verify a PLD over JTAG. Assumes only a single device in chain",
         .params =
             (const struct htool_param[]){
+                {.type = HTOOL_FLAG_VALUE,
+                 .ch = 'i',
+                 .name = "jtag_interface_id",
+                 .default_value = "0",
+                 .desc = "JTAG interface ID (0/1) to send the host command "
+                         "to."},
                 {.type = HTOOL_FLAG_VALUE,
                  .ch = 'o',
                  .name = "offset",
