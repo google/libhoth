@@ -49,8 +49,8 @@ struct hoth_request_jtag_operation {
   // This can be used to limit the max JTAG peripheral clock frequency - higher
   // `clk_idiv` => lower the clock frequency.
   uint16_t clk_idiv;
-  uint8_t operation;  // `enum hoth_jtag_operation`
-  uint8_t reserved0;  // pad to 4-byte boundary
+  uint8_t operation;     // `enum hoth_jtag_operation`
+  uint8_t interface_id;  // The JTAG interface ID to send command to
   // Request data (if present) follows. See `struct
   // hoth_request_jtag_<op>_operation`
 } __attribute__((packed, aligned(4)));
@@ -83,19 +83,19 @@ struct hoth_response_jtag_test_bypass_operation {
   uint8_t tdo_pattern[HOTH_JTAG_TEST_BYPASS_PATTERN_LEN];
 } __attribute__((packed, aligned(4)));
 
-int libhoth_jtag_read_idcode(struct libhoth_device* dev, uint16_t clk_idiv,
-                             uint32_t* idcode);
-
+int libhoth_jtag_read_idcode(struct libhoth_device* dev, uint8_t interface_id,
+                             uint16_t clk_idiv, uint32_t* idcode);
 
 int libhoth_jtag_test_bypass(
-    struct libhoth_device* dev,
-    uint16_t clk_idiv,
+    struct libhoth_device* dev, uint8_t interface_id, uint16_t clk_idiv,
     const uint8_t tdi_bytes[HOTH_JTAG_TEST_BYPASS_PATTERN_LEN],
     uint8_t tdo_bytes[HOTH_JTAG_TEST_BYPASS_PATTERN_LEN]);
 
-int libhoth_jtag_program_and_verify_pld(struct libhoth_device* dev, uint32_t offset);
+int libhoth_jtag_program_and_verify_pld(struct libhoth_device* dev,
+                                        uint8_t interface_id, uint32_t offset);
 
-int libhoth_jtag_verify_pld(struct libhoth_device* dev, uint32_t offset);
+int libhoth_jtag_verify_pld(struct libhoth_device* dev, uint8_t interface_id,
+                            uint32_t offset);
 
 #ifdef __cplusplus
 }
