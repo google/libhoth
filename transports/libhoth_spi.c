@@ -23,6 +23,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <sys/file.h>
 #include <sys/ioctl.h>
 #include <sys/param.h>
 #include <time.h>
@@ -263,9 +264,28 @@ int libhoth_spi_open(const struct libhoth_spi_device_init_options* options,
   struct libhoth_device* dev = NULL;
   struct libhoth_spi_device* spi_dev = NULL;
 
-  fd = open(options->path, O_RDWR);
+  fd = open(options->path, O_RDWR | O_CLOEXEC);
   if (fd < 0) {
     status = LIBHOTH_ERR_INTERFACE_NOT_FOUND;
+    goto err_out;
+  }
+
+  // Try to take an exclusive advisory lock without blocking. The current
+  // implementation of operations on spidev device splits transactions into
+  // multiple `ioctl` calls out of necessity. But this may lead to conditions
+  // where multiple processes (all using the same spidev device at the same
+  // time) can interfere with transactions on the spidev device. This lock is
+  // meant to prevent such situations assuming that all processes using this
+  // spidev device check for this advisory lock.
+  //
+  // This lock is intentionally not released explicitly. `man 2 flock` mentions
+  // that if the file descriptor is duplicated (for eg. using `fork`), unlocking
+  // **any** of the file descriptors would release the lock. Without explicitly
+  // releasing the lock, the lock will be automatically released when **all**
+  // the duplicated file descriptors are closed.
+  if (flock(fd, LOCK_EX | LOCK_NB) != 0) {
+    // Maybe some other process has the lock?
+    status = LIBHOTH_ERR_INTERFACE_BUSY;
     goto err_out;
   }
 
