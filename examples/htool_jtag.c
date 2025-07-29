@@ -25,8 +25,9 @@
 #include "protocol/host_cmd.h"
 #include "protocol/jtag.h"
 
-// Used if no data is provided for data to send over TDI
-static char *JTAG_TEST_BYPASS_PATTERN_DEFAULT_VALUE =
+// Used if no data is provided for data to send over TDI. This needs to be
+// modifiable for use with `strtok_r` later
+static char JTAG_TEST_BYPASS_PATTERN_DEFAULT_VALUE[] =
     // PRBS9 with '0' bit added at the beginning to make it exactly 64 bytes
     "0x42 0x30 0x9c 0xab 0xd 0xe9 0xb9 0x14 0x2b 0x4f 0xd9 0x25 0xbf 0x26 0xa6 "
     "0x60 0x31 0x94 0x69 0x7f 0x45 0x8e 0xb2 0xcf 0x1f 0x74 0x1a 0xdb 0xb0 "
