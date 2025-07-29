@@ -14,14 +14,18 @@
 
 #include "payload_update.h"
 
+#include <cstdint>
+
+#include "command_version.h"
+#include "test/libhoth_device_mock.h"
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
 
-#include "test/libhoth_device_mock.h"
-
 using ::testing::_;
 using ::testing::DoAll;
+using ::testing::InSequence;
 using ::testing::Return;
+using ::testing::Sequence;
 
 constexpr int kCmd =
     HOTH_CMD_BOARD_SPECIFIC_BASE + HOTH_PRV_CMD_HOTH_PAYLOAD_UPDATE;
@@ -40,16 +44,68 @@ TEST_F(LibHothTest, payload_update_bad_image_test) {
 }
 
 TEST_F(LibHothTest, payload_update_test) {
-  EXPECT_CALL(mock_, send(_, UsesCommand(kCmd), _))
-      .WillRepeatedly(Return(LIBHOTH_OK));
+  {
+    Sequence s_send, s_receive;
 
-  EXPECT_CALL(mock_, receive)
-      .WillRepeatedly(DoAll(CopyResp(&kDummy, 0), Return(LIBHOTH_OK)));
+    EXPECT_CALL(mock_, send(_, UsesCommand(kCmd), _))
+        .InSequence(s_send)
+        .WillRepeatedly(Return(LIBHOTH_OK));
+    EXPECT_CALL(mock_, receive)
+        .InSequence(s_receive)
+        .WillRepeatedly(DoAll(CopyResp(&kDummy, 0), Return(LIBHOTH_OK)));
+
+    static constexpr uint32_t kVersionMask = 0x3;
+    EXPECT_CALL(mock_, send(_, UsesCommand(HOTH_CMD_GET_CMD_VERSIONS), _))
+        .InSequence(s_send, s_receive)
+        .WillOnce(Return(LIBHOTH_OK));
+    EXPECT_CALL(mock_, receive)
+        .InSequence(s_send, s_receive)
+        .WillOnce(DoAll(CopyResp(&kVersionMask, sizeof(kVersionMask)),
+                        Return(LIBHOTH_OK)));
+
+    static constexpr uint8_t kPldNeedsReinitialization = 1;
+    EXPECT_CALL(mock_, send(_, UsesCommandWithVersion(kCmd, 1), _))
+        .InSequence(s_send, s_receive)
+        .WillOnce(Return(LIBHOTH_OK));
+    EXPECT_CALL(mock_, receive)
+        .InSequence(s_send, s_receive)
+        .WillOnce(DoAll(CopyResp(&kPldNeedsReinitialization,
+                                 sizeof(kPldNeedsReinitialization)),
+                        Return(LIBHOTH_OK)));
+  }
 
   std::unique_ptr<uint8_t[]> buffer = std::make_unique<uint8_t[]>(2 * kAlign);
   std::memcpy(buffer.get() + kAlign, &kMagic, sizeof(kMagic));
 
   EXPECT_EQ(libhoth_payload_update(&hoth_dev_, buffer.get(), 2 * kAlign),
+            PAYLOAD_UPDATE_OK);
+}
+
+TEST_F(LibHothTest, payload_update_command_version_unsupported) {
+  {
+    InSequence s;
+
+    EXPECT_CALL(mock_, send(_, UsesCommand(kCmd), _))
+        .WillOnce(Return(LIBHOTH_OK))
+        .WillOnce(Return(LIBHOTH_OK));
+    EXPECT_CALL(mock_, send(_, UsesCommand(HOTH_CMD_GET_CMD_VERSIONS), _))
+        .WillOnce(Return(LIBHOTH_OK));
+    EXPECT_CALL(mock_, send(_, UsesCommandWithVersion(kCmd, 0), _))
+        .WillOnce(Return(LIBHOTH_OK));
+  }
+
+  static constexpr uint32_t kVersionMask = 0x1;
+  EXPECT_CALL(mock_, receive)
+      .WillOnce(DoAll(CopyResp(&kDummy, 0), Return(LIBHOTH_OK)))
+      .WillOnce(DoAll(CopyResp(&kDummy, 0), Return(LIBHOTH_OK)))
+      .WillOnce(DoAll(CopyResp(&kVersionMask, sizeof(kVersionMask)),
+                      Return(LIBHOTH_OK)))
+      .WillOnce(DoAll(CopyResp(&kDummy, 0), Return(LIBHOTH_OK)));
+
+  uint8_t buffer[100] = {0};
+  std::memcpy(buffer, &kMagic, sizeof(kMagic));
+
+  EXPECT_EQ(libhoth_payload_update(&hoth_dev_, buffer, sizeof(buffer)),
             PAYLOAD_UPDATE_OK);
 }
 
@@ -79,12 +135,48 @@ TEST_F(LibHothTest, payload_update_flash_fail) {
             PAYLOAD_UPDATE_FLASH_FAIL);
 }
 
-TEST_F(LibHothTest, payload_update_finalize_fail) {
-  EXPECT_CALL(mock_, send(_, UsesCommand(kCmd), _))
-      .WillRepeatedly(Return(LIBHOTH_OK));
+TEST_F(LibHothTest, payload_update_command_version_fail) {
+  {
+    InSequence s;
+
+    EXPECT_CALL(mock_, send(_, UsesCommand(kCmd), _))
+        .WillOnce(Return(LIBHOTH_OK))
+        .WillOnce(Return(LIBHOTH_OK));
+    EXPECT_CALL(mock_, send(_, UsesCommand(HOTH_CMD_GET_CMD_VERSIONS), _))
+        .WillOnce(Return(LIBHOTH_OK));
+  }
+
   EXPECT_CALL(mock_, receive)
       .WillOnce(DoAll(CopyResp(&kDummy, 0), Return(LIBHOTH_OK)))
       .WillOnce(DoAll(CopyResp(&kDummy, 0), Return(LIBHOTH_OK)))
+      .WillOnce(DoAll(CopyResp(&kDummy, 0), Return(-1)));
+
+  uint8_t buffer[100] = {0};
+  std::memcpy(buffer, &kMagic, sizeof(kMagic));
+
+  EXPECT_EQ(libhoth_payload_update(&hoth_dev_, buffer, sizeof(buffer)),
+            PAYLOAD_UPDATE_FINALIZE_FAIL);
+}
+
+TEST_F(LibHothTest, payload_update_finalize_fail) {
+  {
+    InSequence s;
+
+    EXPECT_CALL(mock_, send(_, UsesCommand(kCmd), _))
+        .WillOnce(Return(LIBHOTH_OK))
+        .WillOnce(Return(LIBHOTH_OK));
+    EXPECT_CALL(mock_, send(_, UsesCommand(HOTH_CMD_GET_CMD_VERSIONS), _))
+        .WillOnce(Return(LIBHOTH_OK));
+    EXPECT_CALL(mock_, send(_, UsesCommand(kCmd), _))
+        .WillOnce(Return(LIBHOTH_OK));
+  }
+
+  static constexpr uint32_t kVersionMask = 0x1;
+  EXPECT_CALL(mock_, receive)
+      .WillOnce(DoAll(CopyResp(&kDummy, 0), Return(LIBHOTH_OK)))
+      .WillOnce(DoAll(CopyResp(&kDummy, 0), Return(LIBHOTH_OK)))
+      .WillOnce(DoAll(CopyResp(&kVersionMask, sizeof(kVersionMask)),
+                      Return(LIBHOTH_OK)))
       .WillOnce(DoAll(CopyResp(&kDummy, 0), Return(-1)));
 
   uint8_t buffer[100] = {0};

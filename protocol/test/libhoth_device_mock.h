@@ -47,6 +47,11 @@ MATCHER_P(UsesCommand, command, "") {
   return req->command == command;
 }
 
+MATCHER_P2(UsesCommandWithVersion, command, version, "") {
+  struct hoth_host_request* req = (struct hoth_host_request*)arg;
+  return req->command == command && req->command_version == version;
+}
+
 ACTION_P(CopyResp, response, resp_size) {
   auto full_resp_size = sizeof(struct hoth_host_response) + resp_size;
 
