@@ -17,6 +17,7 @@ protocol_srcs = [
     'hello.c',
     'key_rotation.c',
     'secure_boot.c',
+    'command_version.c',
 ]
 
 incdir = include_directories('..')
