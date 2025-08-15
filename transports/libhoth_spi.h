@@ -41,6 +41,7 @@ struct libhoth_spi_device_init_options {
 // this function call. It can be destroyed once libhoth_spi_open returns.
 int libhoth_spi_open(const struct libhoth_spi_device_init_options* options,
                      struct libhoth_device** out);
+int libhoth_tpm_spi_probe(struct libhoth_device* dev);
 
 #ifdef __cplusplus
 }

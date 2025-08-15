@@ -29,8 +29,11 @@
 #include <time.h>
 #include <unistd.h>
 
+#include "libhoth_spi.h"
 #include "transports/libhoth_device.h"
 #include "transports/libhoth_ec.h"
+
+#define DID_VID_ADDR 0xD40F00
 
 struct libhoth_spi_device {
   int fd;
@@ -533,6 +536,42 @@ int libhoth_spi_send_and_receive_response(struct libhoth_device* dev,
   spi_dev->buffered_request_size = 0;
 
   return rc;
+}
+
+int libhoth_tpm_spi_probe(struct libhoth_device* dev) {
+  struct libhoth_spi_device* spi_dev =
+      (struct libhoth_spi_device*)dev->user_ctx;
+
+  const uint32_t addr = DID_VID_ADDR;
+  uint8_t tx_buf[4] = {0};
+  uint8_t rx_buf[5] = {0};
+
+  tx_buf[0] = 0x83;  // Read 4 bytes
+  tx_buf[1] = (uint8_t)(addr >> 16);
+  tx_buf[2] = (uint8_t)(addr >> 8);
+  tx_buf[3] = (uint8_t)(addr >> 0);
+
+  struct spi_ioc_transfer xfer[2] = {0};
+
+  xfer[0].tx_buf = (uint64_t)tx_buf;
+  xfer[0].len = sizeof(tx_buf);
+
+  xfer[1].rx_buf = (uint64_t)rx_buf;
+  xfer[1].len = sizeof(rx_buf);
+
+  const int status = ioctl(spi_dev->fd, SPI_IOC_MESSAGE(2), xfer);
+  if (status < 0) {
+    printf("Failed to read DID_VID: %x\n", status);
+    return -1;
+  }
+
+  uint16_t did = (uint16_t)rx_buf[4] << 8 | rx_buf[3];
+  uint16_t vid = (uint16_t)rx_buf[2] << 8 | rx_buf[1];
+
+  printf("DID: 0x%x\n", did);
+  printf("VID: 0x%x\n", vid);
+
+  return LIBHOTH_OK;
 }
 
 int libhoth_spi_close(struct libhoth_device* dev) {
