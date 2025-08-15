@@ -55,6 +55,7 @@
 #include "protocol/rot_firmware_version.h"
 #include "protocol/spi_proxy.h"
 #include "transports/libhoth_device.h"
+#include "transports/libhoth_spi.h"
 
 static int command_usb_list(const struct htool_invocation* inv) {
   return htool_usb_print_devices();
@@ -604,6 +605,15 @@ struct libhoth_device* htool_libhoth_device(void) {
   }
 
   return result;
+}
+
+int htool_tpm_spi_probe(const struct htool_invocation* inv) {
+  struct libhoth_device* dev = htool_libhoth_spi_device();
+  if (!dev) {
+    return -1;
+  }
+
+  return libhoth_tpm_spi_probe(dev);
 }
 
 int htool_external_usb_host_check_presence(const struct htool_invocation* inv) {
@@ -1457,6 +1467,13 @@ static const struct htool_cmd CMDS[] = {
         .desc = "Retrieve the Info from firmware",
         .func = htool_info,
         .params = (const struct htool_param[]){{}},
+    },
+    {
+        .verbs = (const char*[]){"tpm_spi", "probe", NULL},
+        .desc =
+            "Probe the TPM_SPI interface (DID/VID) over a spidev interface",
+        .params = (const struct htool_param[]){{}},
+        .func = htool_tpm_spi_probe,
     },
     {},
 };
