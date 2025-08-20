@@ -489,3 +489,91 @@ TEST_F(LibHothTest,
                                                   &chunk_count),
             KEY_ROTATION_ERR_INVALID_RESPONSE_SIZE);
 }
+
+TEST_F(LibHothTest, key_rotation_erase_record_success) {
+  EXPECT_CALL(mock_, send(_, UsesCommand(kCmd), _))
+      .WillOnce(Return(LIBHOTH_OK));
+  EXPECT_CALL(mock_, receive)
+      .WillOnce(DoAll(CopyResp(&kDummy, 0), Return(LIBHOTH_OK)));
+  EXPECT_EQ(libhoth_key_rotation_erase_record(&hoth_dev_),
+            KEY_ROTATION_CMD_SUCCESS);
+}
+
+TEST_F(LibHothTest, key_rotation_erase_record_failure_io) {
+  EXPECT_CALL(mock_, send(_, UsesCommand(kCmd), _))
+      .WillOnce(Return(LIBHOTH_OK));
+  EXPECT_CALL(mock_, receive).WillOnce(Return(LIBHOTH_ERR_FAIL));
+  EXPECT_EQ(libhoth_key_rotation_erase_record(&hoth_dev_), KEY_ROTATION_ERR);
+}
+
+TEST_F(LibHothTest, key_rotation_erase_record_failure_invalid_response_size) {
+  EXPECT_CALL(mock_, send(_, UsesCommand(kCmd), _))
+      .WillOnce(Return(LIBHOTH_OK));
+  EXPECT_CALL(mock_, receive)
+      .WillOnce(DoAll(CopyResp(&kDummy, 1), Return(LIBHOTH_OK)));
+  EXPECT_EQ(libhoth_key_rotation_erase_record(&hoth_dev_), KEY_ROTATION_ERR);
+}
+
+TEST_F(LibHothTest, key_rotation_set_mauv_success) {
+  EXPECT_CALL(mock_, send(_, UsesCommand(kCmd), _))
+      .WillOnce(Return(LIBHOTH_OK));
+  EXPECT_CALL(mock_, receive)
+      .WillOnce(DoAll(CopyResp(&kDummy, 0), Return(LIBHOTH_OK)));
+  EXPECT_EQ(libhoth_key_rotation_set_mauv(&hoth_dev_, 0x12345678),
+            KEY_ROTATION_CMD_SUCCESS);
+}
+
+TEST_F(LibHothTest, key_rotation_set_mauv_failure_io) {
+  EXPECT_CALL(mock_, send(_, UsesCommand(kCmd), _))
+      .WillOnce(Return(LIBHOTH_OK));
+  EXPECT_CALL(mock_, receive).WillOnce(Return(LIBHOTH_ERR_FAIL));
+  EXPECT_EQ(libhoth_key_rotation_set_mauv(&hoth_dev_, 0x12345678),
+            KEY_ROTATION_ERR);
+}
+
+TEST_F(LibHothTest, key_rotation_set_mauv_failure_invalid_response_size) {
+  EXPECT_CALL(mock_, send(_, UsesCommand(kCmd), _))
+      .WillOnce(Return(LIBHOTH_OK));
+  EXPECT_CALL(mock_, receive)
+      .WillOnce(DoAll(CopyResp(&kDummy, 1), Return(LIBHOTH_OK)));
+  EXPECT_EQ(libhoth_key_rotation_set_mauv(&hoth_dev_, 0x12345678),
+            KEY_ROTATION_ERR);
+}
+
+TEST_F(LibHothTest, key_rotation_get_mauv_success) {
+  const struct hoth_response_key_rotation_mauv kDefaultMauv = {
+      .mauv = 0x12345678,
+  };
+  EXPECT_CALL(mock_, send(_, UsesCommand(kCmd), _))
+      .WillOnce(Return(LIBHOTH_OK));
+  EXPECT_CALL(mock_, receive)
+      .WillOnce(DoAll(CopyResp(&kDefaultMauv, sizeof(kDefaultMauv)),
+                      Return(LIBHOTH_OK)));
+  struct hoth_response_key_rotation_mauv actual_response;
+  EXPECT_EQ(libhoth_key_rotation_get_mauv(&hoth_dev_, &actual_response),
+            KEY_ROTATION_CMD_SUCCESS);
+  EXPECT_EQ(actual_response.mauv, kDefaultMauv.mauv);
+}
+
+TEST_F(LibHothTest, key_rotation_get_mauv_failure_io) {
+  EXPECT_CALL(mock_, send(_, UsesCommand(kCmd), _))
+      .WillOnce(Return(LIBHOTH_OK));
+  EXPECT_CALL(mock_, receive).WillOnce(Return(LIBHOTH_ERR_FAIL));
+  struct hoth_response_key_rotation_mauv actual_response;
+  EXPECT_EQ(libhoth_key_rotation_get_mauv(&hoth_dev_, &actual_response),
+            KEY_ROTATION_ERR);
+}
+
+TEST_F(LibHothTest, key_rotation_get_mauv_failure_invalid_response_size) {
+  const struct hoth_response_key_rotation_mauv kDefaultMauv = {
+      .mauv = 0x12345678,
+  };
+  EXPECT_CALL(mock_, send(_, UsesCommand(kCmd), _))
+      .WillOnce(Return(LIBHOTH_OK));
+  EXPECT_CALL(mock_, receive)
+      .WillOnce(DoAll(CopyResp(&kDefaultMauv, sizeof(kDefaultMauv) - 1),
+                      Return(LIBHOTH_OK)));
+  struct hoth_response_key_rotation_mauv actual_response;
+  EXPECT_EQ(libhoth_key_rotation_get_mauv(&hoth_dev_, &actual_response),
+            KEY_ROTATION_ERR_INVALID_RESPONSE_SIZE);
+}

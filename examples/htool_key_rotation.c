@@ -407,3 +407,50 @@ int htool_key_rotation_chunk_type_count(const struct htool_invocation *inv) {
   printf("chunk_count: %u\n", chunk_count);
   return 0;
 }
+
+int htool_key_rotation_erase_record(const struct htool_invocation *inv) {
+  struct libhoth_device *dev = htool_libhoth_device();
+  if (!dev) {
+    return -1;
+  }
+  enum key_rotation_err ret = libhoth_key_rotation_erase_record(dev);
+  if (ret) {
+    fprintf(stderr, "Failed to erase key rotation record\n");
+    return -1;
+  }
+  printf("Key rotation record erased successfully\n");
+  return 0;
+}
+
+int htool_key_rotation_set_mauv(const struct htool_invocation *inv) {
+  struct libhoth_device *dev = htool_libhoth_device();
+  if (!dev) {
+    return -1;
+  }
+  uint32_t mauv;
+  if (htool_get_param_u32(inv, "mauv", &mauv)) {
+    return -1;
+  }
+  enum key_rotation_err ret = libhoth_key_rotation_set_mauv(dev, mauv);
+  if (ret) {
+    fprintf(stderr, "Failed to set key rotation MAUV\n");
+    return -1;
+  }
+  printf("Key rotation MAUV set successfully\n");
+  return 0;
+}
+
+int htool_key_rotation_get_mauv(const struct htool_invocation *inv) {
+  struct libhoth_device *dev = htool_libhoth_device();
+  if (!dev) {
+    return -1;
+  }
+  struct hoth_response_key_rotation_mauv mauv;
+  enum key_rotation_err ret = libhoth_key_rotation_get_mauv(dev, &mauv);
+  if (ret) {
+    fprintf(stderr, "Failed to get key rotation MAUV\n");
+    return -1;
+  }
+  printf("Key rotation MAUV: %u\n", mauv.mauv);
+  return 0;
+}

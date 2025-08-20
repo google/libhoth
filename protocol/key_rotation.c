@@ -412,3 +412,68 @@ enum key_rotation_err libhoth_key_rotation_chunk_type_count(
   *chunk_count = response;
   return KEY_ROTATION_CMD_SUCCESS;
 }
+
+enum key_rotation_err libhoth_key_rotation_erase_record(
+    struct libhoth_device* dev) {
+  return send_key_rotation_request(dev, KEY_ROTATION_RECORD_ERASE_RECORD);
+}
+
+enum key_rotation_err libhoth_key_rotation_set_mauv(struct libhoth_device* dev,
+                                                    uint32_t mauv) {
+  struct hoth_request_variable_length request;
+  request.hdr.operation = KEY_ROTATION_RECORD_SET_MAUV;
+  request.hdr.packet_offset = 0;
+  request.hdr.packet_size = 0;
+  struct hoth_request_key_rotation_record_set_mauv* request_set_mauv =
+      (struct hoth_request_key_rotation_record_set_mauv*)&(request.data);
+  request_set_mauv->mauv = mauv;
+  size_t rlen = 0;
+  int ret = libhoth_hostcmd_exec(
+      dev, HOTH_CMD_BOARD_SPECIFIC_BASE + HOTH_PRV_CMD_HAVEN_KEY_ROTATION_OP, 0,
+      &request,
+      sizeof(request.hdr) +
+          sizeof(struct hoth_request_key_rotation_record_set_mauv),
+      NULL, 0, &rlen);
+  if (ret != 0) {
+    fprintf(stderr, "HOTH_KEY_ROTATION_SET_MAUV error code: %d\n", ret);
+    return KEY_ROTATION_ERR;
+  }
+  if (rlen != 0) {
+    fprintf(stderr,
+            "HOTH_KEY_ROTATION_SET_MAUV expected exactly %d response "
+            "bytes, got %ld\n",
+            0, rlen);
+    return KEY_ROTATION_ERR_INVALID_RESPONSE_SIZE;
+  }
+  return KEY_ROTATION_CMD_SUCCESS;
+}
+
+enum key_rotation_err libhoth_key_rotation_get_mauv(
+    struct libhoth_device* dev, struct hoth_response_key_rotation_mauv* mauv) {
+  const struct hoth_request_key_rotation_record request = {
+      .operation = KEY_ROTATION_RECORD_GET_MAUV,
+      .packet_offset = 0,
+      .packet_size = 0,
+      .reserved = 0,
+  };
+
+  size_t rlen = 0;
+  int ret = libhoth_hostcmd_exec(
+      dev, HOTH_CMD_BOARD_SPECIFIC_BASE + HOTH_PRV_CMD_HAVEN_KEY_ROTATION_OP, 0,
+      &request, sizeof(request), mauv, sizeof(*mauv), &rlen);
+
+  if (ret != 0) {
+    fprintf(stderr, "HOTH_KEY_ROTATION_GET_MAUV error code: %d\n", ret);
+    return KEY_ROTATION_ERR;
+  }
+
+  if (rlen != sizeof(*mauv)) {
+    fprintf(stderr,
+            "HOTH_KEY_ROTATION_GET_MAUV expected exactly %ld response "
+            "bytes, got %ld\n",
+            sizeof(*mauv), rlen);
+    return KEY_ROTATION_ERR_INVALID_RESPONSE_SIZE;
+  }
+
+  return KEY_ROTATION_CMD_SUCCESS;
+}

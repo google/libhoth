@@ -30,6 +30,9 @@ int htool_key_rotation_read(const struct htool_invocation* inv);
 int htool_key_rotation_read_chunk_type(const struct htool_invocation* inv);
 int htool_key_rotation_update(const struct htool_invocation* inv);
 int htool_key_rotation_chunk_type_count(const struct htool_invocation* inv);
+int htool_key_rotation_erase_record(const struct htool_invocation* inv);
+int htool_key_rotation_set_mauv(const struct htool_invocation* inv);
+int htool_key_rotation_get_mauv(const struct htool_invocation* inv);
 
 #ifdef __cplusplus
 }
