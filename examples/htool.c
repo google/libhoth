@@ -1417,6 +1417,27 @@ static const struct htool_cmd CMDS[] = {
                 {}},
         .func = htool_key_rotation_chunk_type_count,
     },
+    {
+        .verbs = (const char*[]){"key_rotation", "erase", "record", NULL},
+        .desc = "Erase the key rotation record from both halves of the flash "
+                "if the mauv allows",
+        .params = (const struct htool_param[]){{}},
+        .func = htool_key_rotation_erase_record,
+    },
+    {
+        .verbs = (const char*[]){"key_rotation", "set", "mauv", NULL},
+        .desc = "Set Key Rotation Record MAUV",
+        .params =
+            (const struct htool_param[]){
+                {HTOOL_FLAG_VALUE, 'm', "mauv", .desc = "MAUV to set"}, {}},
+        .func = htool_key_rotation_set_mauv,
+    },
+    {
+        .verbs = (const char*[]){"key_rotation", "get", "mauv", NULL},
+        .desc = "Get Key Rotation Record MAUV",
+        .params = (const struct htool_param[]){{}},
+        .func = htool_key_rotation_get_mauv,
+    },
     {},
 };
 
