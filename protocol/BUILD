@@ -356,3 +356,26 @@ cc_test(
         "@googletest//:gtest_main",
     ],
 )
+
+cc_library(
+    name = "secure_boot",
+    srcs = ["secure_boot.c"],
+    hdrs = ["secure_boot.h"],
+    deps = [
+        ":host_cmd",
+        "//transports:libhoth_device",
+    ],
+)
+
+cc_test(
+    name = "secure_boot_test",
+    srcs = ["secure_boot_test.cc"],
+    deps = [
+        ":host_cmd",
+        ":secure_boot",
+        "//protocol/test:libhoth_device_mock",
+        "//transports:libhoth_device",
+        "@googletest//:gtest",
+        "@googletest//:gtest_main",
+    ],
+)
