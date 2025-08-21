@@ -15,7 +15,7 @@
 #ifndef LIBHOTH_EXAMPLES_HTOOL_SECURE_BOOT_H_
 #define LIBHOTH_EXAMPLES_HTOOL_SECURE_BOOT_H_
 
-#include "htool_cmd.h"
+#include "examples/htool_cmd.h"
 
 #ifdef __cplusplus
 extern "C" {
