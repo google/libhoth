@@ -40,6 +40,7 @@
 #include "htool_payload_update.h"
 #include "htool_raw_host_command.h"
 #include "htool_rot_usb.h"
+#include "htool_secure_boot.h"
 #include "htool_srtm.h"
 #include "htool_statistics.h"
 #include "htool_target_control.h"
@@ -1437,6 +1438,18 @@ static const struct htool_cmd CMDS[] = {
         .desc = "Get Key Rotation Record MAUV",
         .params = (const struct htool_param[]){{}},
         .func = htool_key_rotation_get_mauv,
+    },
+    {
+        .verbs = (const char*[]){"secure_boot", "get_enforcement", NULL},
+        .desc = "Get the current state of target secure boot enforcement.",
+        .params = (const struct htool_param[]){{}},
+        .func = htool_secure_boot_get_enforcement,
+    },
+    {
+        .verbs = (const char*[]){"secure_boot", "enable_enforcement", NULL},
+        .desc = "Enable secure boot enforcement.",
+        .params = (const struct htool_param[]){{}},
+        .func = htool_secure_boot_enable_enforcement,
     },
     {},
 };
