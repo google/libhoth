@@ -39,6 +39,8 @@ executable(
         'htool_secure_boot.c',
         'htool_srtm.h',
         'htool_srtm.c',
+        'htool_security_version.h',
+        'htool_security_version.c',
         git_version_h,
     ],
     dependencies: [libusb],
