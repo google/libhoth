@@ -70,6 +70,13 @@ cc_binary(
         "htool_update_failure_reasons.h",
         "htool_usb.c",
         "htool_usb.h",
+        "htool_macros.h",
+        "htool_security_version.c",
+        "htool_security_version.h",
+        "htool_security_v2.c",
+        "htool_security_v2.h",
+        "htool_security_info.c",
+        "htool_security_info.h",
     ],
     deps = [
         ":host_commands",
