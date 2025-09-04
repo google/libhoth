@@ -41,6 +41,7 @@
 #include "htool_raw_host_command.h"
 #include "htool_rot_usb.h"
 #include "htool_secure_boot.h"
+#include "htool_security_info.h"
 #include "htool_srtm.h"
 #include "htool_statistics.h"
 #include "htool_target_control.h"
@@ -1450,6 +1451,12 @@ static const struct htool_cmd CMDS[] = {
         .desc = "Enable secure boot enforcement.",
         .params = (const struct htool_param[]){{}},
         .func = htool_secure_boot_enable_enforcement,
+    },
+    {
+        .verbs = (const char*[]){"security", "info", NULL},
+        .desc = "Retrieve the Info from firmware",
+        .func = htool_info,
+        .params = (const struct htool_param[]){{}},
     },
     {},
 };
