@@ -48,6 +48,37 @@ struct hoth_response_flash_spi_info {
   uint8_t sr1, sr2;
 } __hoth_align1;
 
+#define HOTH_CMD_BOARD_SPECIFIC_BASE 0x3E00
+
+// NOTE: All further commands in this file are offset by
+// HOTH_CMD_BOARD_SPECIFIC_BASE.
+
+/**
+ * The identifier for the SecurityV2 host command. All SecurityV2 commands are
+ * handled by a single host command handler. Specific SecurityV2 commands are
+ * identified by the "major_command" and "minor_command" fields of a command's
+ * request header.
+ */
+#define HOTH_PRV_CMD_HOTH_SECURITY_V2 0x0003
+
+/* Reports on whether a command is allowed to run given the current host command
+ * filtering that the firmware is using.
+ */
+#define HOTH_PRV_CMD_HOTH_IS_HOST_COMMAND_SUPPORTED 0x0011
+
+/**
+ * The identifier for the SecurityV3 host command. All SecurityV3 commands are
+ * handled by a single host command handler.
+ */
+#define HOTH_PRV_CMD_HOTH_SECURITY_V3 0x0033
+
+
+/**
+ * Macro to retrieve the final address of a command, which is the sum of the
+ * base address and the added command.
+ */
+#define HOTH_BASE_CMD(cmd) (HOTH_CMD_BOARD_SPECIFIC_BASE + (cmd))
+
 /* Options and request struct for HOTH_PRV_CMD_HOTH_RESET_TARGET */
 enum hoth_target_reset_option {
   HOTH_TARGET_RESET_OPTION_RELEASE = 0,  // Release target from reset
