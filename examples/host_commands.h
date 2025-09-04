@@ -79,6 +79,69 @@ struct hoth_response_flash_spi_info {
  */
 #define HOTH_BASE_CMD(cmd) (HOTH_CMD_BOARD_SPECIFIC_BASE + (cmd))
 
+/**
+ * The request header structure for security v2 commands
+ */
+struct hoth_security_v2_request_header {
+  /* The major and minor command codes that identify a specific SecurityV2
+   * command. */
+  uint8_t major_command;
+  uint8_t minor_command;
+
+  /* The number of parameters that follow the header in the request. */
+  uint16_t param_count;
+} __attribute__((packed));
+
+/**
+ * The response header structure for a security v2 command
+ */
+struct hoth_security_v2_response_header {
+  /* The number of parameters that follow the header in the response. */
+  uint16_t param_count;
+
+  /* Reserved value, set to 0; used for 32-bit alignment. */
+  uint16_t reserved;
+} __attribute__((packed));
+
+
+
+/**
+ * The parameter structure for security v2 commands
+ *
+ * Parameters follow request/response headers and are 32-bit aligned.
+ */
+struct hoth_security_v2_parameter {
+  /* The number of bytes in the parameter's value. */
+  uint16_t size;
+
+  /* Reserved value, set to 0; used for 32-bit alignment. */
+  uint16_t reserved;
+
+  /* The bytes representing the value of the parameter should immediately follow
+   * this struct. */
+} __attribute__((packed));
+
+/**
+ * The size of the parameter being passed in a security v2 command
+ */
+#define HOTH_SECURITY_V2_PARAM_OVERHEAD \
+  (sizeof(struct hoth_security_v2_parameter))
+
+/**
+ * The size of the request for a security v2 command
+ */
+#define HOTH_SECURITY_V2_REQUEST_SIZE(param_count)  \
+  (sizeof(struct hoth_security_v2_request_header) + \
+   (param_count) * HOTH_SECURITY_V2_PARAM_OVERHEAD)
+
+/**
+ * The size of the response for a security v2 command
+ */
+#define HOTH_SECURITY_V2_RESPONSE_SIZE(param_count)  \
+  (sizeof(struct hoth_security_v2_response_header) + \
+   (param_count) * HOTH_SECURITY_V2_PARAM_OVERHEAD)
+
+
 /* Options and request struct for HOTH_PRV_CMD_HOTH_RESET_TARGET */
 enum hoth_target_reset_option {
   HOTH_TARGET_RESET_OPTION_RELEASE = 0,  // Release target from reset
