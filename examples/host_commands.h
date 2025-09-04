@@ -141,6 +141,11 @@ struct hoth_security_v2_parameter {
   (sizeof(struct hoth_security_v2_response_header) + \
    (param_count) * HOTH_SECURITY_V2_PARAM_OVERHEAD)
 
+/**
+ * The identifier for the getting the major version of the SecurityV2 Info
+ * command.
+ */
+#define HOTH_PRV_CMD_HOTH_SECURITY_V2_INFO_MAJOR_COMMAND 0x0003
 
 /* Options and request struct for HOTH_PRV_CMD_HOTH_RESET_TARGET */
 enum hoth_target_reset_option {
