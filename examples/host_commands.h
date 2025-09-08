@@ -327,6 +327,16 @@ enum hoth_target_control_action {
   // Changes the status of the given function to "Enabled". Returns the previous
   // enabled/disabled status of the given function.
   HOTH_TARGET_CONTROL_ACTION_ENABLE = 2,
+
+  // Recommended to be used for `HOTH_TARGET_CONTROL_SBS_MUX` function
+  HOTH_TARGET_CONTROL_ACTION_SBS_MUX_CONNECT_TARGET_TO_SPI_FLASH_0 =
+      HOTH_TARGET_CONTROL_ACTION_DISABLE,
+  HOTH_TARGET_CONTROL_ACTION_SBS_MUX_CONNECT_TARGET_TO_SPI_FLASH_1 =
+      HOTH_TARGET_CONTROL_ACTION_ENABLE,
+  HOTH_TARGET_CONTROL_ACTION_SBS_MUX_CONNECT_FLASH_TO_ROT =
+      HOTH_TARGET_CONTROL_ACTION_DISABLE,
+  HOTH_TARGET_CONTROL_ACTION_SBS_MUX_CONNECT_FLASH_TO_TARGET =
+      HOTH_TARGET_CONTROL_ACTION_ENABLE,
 };
 
 enum hoth_target_control_function {
@@ -339,6 +349,7 @@ enum hoth_target_control_function {
   // Allow checking whether external USB host is connected to system in which
   // RoT is present
   HOTH_TARGET_DETECT_EXTERNAL_USB_HOST_PRESENCE = 4,
+  HOTH_TARGET_CONTROL_SBS_MUX = 5,
   HOTH_TARGET_CONTROL_FUNCTION_MAX,
 };
 
@@ -351,6 +362,12 @@ enum hoth_target_control_status {
   HOTH_TARGET_EXTERNAL_USB_HOST_NOT_PRESENT =
       HOTH_TARGET_CONTROL_STATUS_DISABLED,
   HOTH_TARGET_EXTERNAL_USB_HOST_PRESENT = HOTH_TARGET_CONTROL_STATUS_ENABLED,
+
+  // Recommended to be used for `HOTH_TARGET_CONTROL_SBS_MUX` function
+  HOTH_TARGET_CONTROL_SBS_MUX_TARGET_CONNECTED_TO_SPI_FLASH_0 =
+      HOTH_TARGET_CONTROL_STATUS_DISABLED,
+  HOTH_TARGET_CONTROL_SBS_MUX_TARGET_CONNECTED_TO_SPI_FLASH_1 =
+      HOTH_TARGET_CONTROL_STATUS_ENABLED,
 };
 
 struct hoth_request_target_control {
