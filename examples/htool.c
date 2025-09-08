@@ -45,6 +45,7 @@
 #include "htool_srtm.h"
 #include "htool_statistics.h"
 #include "htool_target_control.h"
+#include "htool_sbs.h"
 #include "htool_usb.h"
 #include "protocol/authz_record.h"
 #include "protocol/chipinfo.h"
@@ -1020,6 +1021,40 @@ static const struct htool_cmd CMDS[] = {
                          "hexidecimal string of 128 bytes or less."},
                 {}},
         .func = command_srtm,
+    },
+    {
+        .verbs = (const char*[]){"sbs", SBS_GET_CMD_STR, NULL},
+        .desc = "Get status of SBS mux select",
+        .params = (const struct htool_param[]){{}},
+        .func = htool_sbs_run,
+    },
+    {
+        .verbs = (const char*[]){"sbs", SBS_CONNECT_FLASH_TO_ROT_CMD_STR, NULL},
+        .desc = "Set mux to connect flash to RoT (SBS Single)",
+        .params = (const struct htool_param[]){{}},
+        .func = htool_sbs_run,
+    },
+    {
+        .verbs = (const char*[]){"sbs", SBS_CONNECT_FLASH_TO_TARGET_CMD_STR, NULL},
+        .desc = "Set mux to connect flash to target (SBS Single)",
+        .params = (const struct htool_param[]){{}},
+        .func = htool_sbs_run,
+    },
+    {
+        .verbs = (const char*[]){"sbs",
+                                 SBS_CONNECT_TARGET_TO_SPI_FLASH_0_CMD_STR,
+                                 NULL},
+        .desc = "Set mux select pin to connect target to spi flash 1 (SBS Dual)",
+        .params = (const struct htool_param[]){{}},
+        .func = htool_sbs_run,
+    },
+    {
+        .verbs = (const char*[]){"sbs",
+                                 SBS_CONNECT_TARGET_TO_SPI_FLASH_1_CMD_STR,
+                                 NULL},
+        .desc = "Set mux select to connect target to spi flash 2 (SBS Dual)",
+        .params = (const struct htool_param[]){{}},
+        .func = htool_sbs_run,
     },
     {
         .verbs = (const char*[]){"i2c", I2C_DETECT_CMD_STR, NULL},
