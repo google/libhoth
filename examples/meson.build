@@ -34,6 +34,7 @@ executable(
         'htool_spi.c',
         'htool_statistics.c',
         'htool_target_control.c',
+        'htool_sbs.c',
         'htool_usb.c',
         'htool_secure_boot.h',
         'htool_secure_boot.c',
