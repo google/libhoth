@@ -28,9 +28,80 @@
 
 #include "htool.h"
 #include "htool_cmd.h"
+#include "protocol/host_cmd.h"
 #include "protocol/key_rotation.h"
 
-static const char *get_validation_method_string(uint32_t validation_method) {
+static const char* get_error_code_string(enum key_rotation_err err) {
+  if (err < KEY_ROTATION_ERR_HOTH_BASE) {
+    switch (err) {
+      case KEY_ROTATION_CMD_SUCCESS:
+        return "Success";
+      case KEY_ROTATION_INTERNAL_ERR:
+        return "Internal Error";
+      case KEY_ROTATION_ERR_INVALID_PARAM:
+        return "Invalid Parameter";
+      case KEY_ROTATION_ERR_INVALID_RESPONSE_SIZE:
+        return "Invalid Response Size";
+      case KEY_ROTATION_INITIATE_FAIL:
+        return "Key Rotation Record Initiate Failed";
+      case KEY_ROTATION_COMMIT_FAIL:
+        return "Key Rotation Record Commit Failed";
+      case KEY_ROTATION_ROOT_OF_TRUST_UNAVAILABLE:
+        return "Root of Trust Unavailable";
+      default:
+        return "Unknown";
+    }
+  }
+  int ret = err - KEY_ROTATION_ERR_HOTH_BASE;
+  switch (ret) {
+    case HOTH_RES_SUCCESS:
+      return "Success";
+    case HOTH_RES_INVALID_COMMAND:
+      return "Key Rotation Feature Not Supported";
+    case HOTH_RES_ERROR:
+      return "Hoth Error";
+    case HOTH_RES_INVALID_PARAM:
+      return "Invalid Parameter";
+    case HOTH_RES_ACCESS_DENIED:
+      return "Access Denied";
+    case HOTH_RES_INVALID_RESPONSE:
+      return "Invalid Response";
+    case HOTH_RES_INVALID_VERSION:
+      return "Invalid Version";
+    case HOTH_RES_INVALID_CHECKSUM:
+      return "Invalid Checksum";
+    case HOTH_RES_IN_PROGRESS:
+      return "In Progress";
+    case HOTH_RES_UNAVAILABLE:
+      return "Unavailable";
+    case HOTH_RES_TIMEOUT:
+      return "Timeout";
+    case HOTH_RES_OVERFLOW:
+      return "Overflow";
+    case HOTH_RES_INVALID_HEADER:
+      return "Invalid Header";
+    case HOTH_RES_REQUEST_TRUNCATED:
+      return "Request Truncated";
+    case HOTH_RES_RESPONSE_TOO_BIG:
+      return "Response Too Big";
+    case HOTH_RES_BUS_ERROR:
+      return "Bus Error";
+    case HOTH_RES_BUSY:
+      return "Busy";
+    case HOTH_RES_INVALID_HEADER_VERSION:
+      return "Invalid Header Version";
+    case HOTH_RES_INVALID_HEADER_CRC:
+      return "Invalid Header CRC";
+    case HOTH_RES_INVALID_DATA_CRC:
+      return "Invalid Data CRC";
+    case HOTH_RES_DUP_UNAVAILABLE:
+      return "Duplicate Request Unavailable";
+    default:
+      return "Unknown";
+  }
+}
+
+static const char* get_validation_method_string(uint32_t validation_method) {
   switch (validation_method) {
     case 1:
       return "Embedded Key";
@@ -46,11 +117,14 @@ static const char *get_validation_method_string(uint32_t validation_method) {
 int htool_key_rotation_get_status(void) {
   struct libhoth_device *dev = htool_libhoth_device();
   if (!dev) {
+    fprintf(stderr, "Failed to get libhoth device\n");
     return -1;
   }
   struct hoth_response_key_rotation_status status;
   enum key_rotation_err ret = libhoth_key_rotation_get_status(dev, &status);
   if (ret) {
+    fprintf(stderr, "HOTH_KEY_ROTATION_GET_STATUS error: %s\n",
+            get_error_code_string(ret));
     fprintf(stderr, "Failed to get key rotation status\n");
     return -1;
   }
@@ -68,11 +142,14 @@ int htool_key_rotation_get_status(void) {
 int htool_key_rotation_get_version(void) {
   struct libhoth_device *dev = htool_libhoth_device();
   if (!dev) {
+    fprintf(stderr, "Failed to get libhoth device\n");
     return -1;
   }
   struct hoth_response_key_rotation_record_version version;
   enum key_rotation_err ret = libhoth_key_rotation_get_version(dev, &version);
   if (ret) {
+    fprintf(stderr, "HOTH_KEY_ROTATION_GET_VERSION error: %s\n",
+            get_error_code_string(ret));
     fprintf(stderr, "Failed to get key rotation version\n");
     return -1;
   }
@@ -132,6 +209,7 @@ cleanup:
 int htool_key_rotation_update(const struct htool_invocation *inv) {
   struct libhoth_device *dev = htool_libhoth_device();
   if (!dev) {
+    fprintf(stderr, "Failed to get libhoth device\n");
     return -1;
   }
   const char *image_file;
@@ -148,6 +226,8 @@ int htool_key_rotation_update(const struct htool_invocation *inv) {
 
   enum key_rotation_err key_ret = libhoth_key_rotation_update(dev, image, size);
   if (key_ret) {
+    fprintf(stderr, "HOTH_KEY_ROTATION_UPDATE error: %s\n",
+            get_error_code_string(key_ret));
     fprintf(stderr, "Failed to update key rotation record\n");
     result = key_ret;
   }
@@ -164,12 +244,15 @@ int htool_key_rotation_update(const struct htool_invocation *inv) {
 int htool_key_rotation_payload_status() {
   struct libhoth_device *dev = htool_libhoth_device();
   if (!dev) {
+    fprintf(stderr, "Failed to get libhoth device\n");
     return -1;
   }
   struct hoth_response_key_rotation_payload_status payload_status;
   enum key_rotation_err ret =
       libhoth_key_rotation_payload_status(dev, &payload_status);
   if (ret) {
+    fprintf(stderr, "HOTH_KEY_ROTATION_PAYLOAD_STATUS error: %s\n",
+            get_error_code_string(ret));
     fprintf(stderr, "Failed to get key rotation payload status\n");
     return -1;
   }
@@ -201,6 +284,7 @@ static int get_key_rotation_read_half(const char *read_half,
 int htool_key_rotation_read(const struct htool_invocation *inv) {
   struct libhoth_device *dev = htool_libhoth_device();
   if (!dev) {
+    fprintf(stderr, "Failed to get libhoth device\n");
     return -1;
   }
   uint32_t offset = 0;
@@ -246,6 +330,8 @@ int htool_key_rotation_read(const struct htool_invocation *inv) {
   enum key_rotation_err ret_read =
       libhoth_key_rotation_read(dev, offset, size, read_half, &read_response);
   if (ret_read) {
+    fprintf(stderr, "HOTH_KEY_ROTATION_READ error: %s\n",
+            get_error_code_string(ret_read));
     fprintf(stderr, "Failed to read key rotation record\n");
     if (fd != -1) {
       close(fd);
@@ -296,6 +382,7 @@ static int get_key_rotation_chunk_type(const char *chunk_type_string,
 int htool_key_rotation_read_chunk_type(const struct htool_invocation *inv) {
   struct libhoth_device *dev = htool_libhoth_device();
   if (!dev) {
+    fprintf(stderr, "Failed to get libhoth device\n");
     return -1;
   }
   uint32_t offset = 0;
@@ -345,6 +432,8 @@ int htool_key_rotation_read_chunk_type(const struct htool_invocation *inv) {
       dev, chunk_typecode, chunk_index, offset, size, &read_response,
       &response_size);
   if (ret_read) {
+    fprintf(stderr, "HOTH_KEY_ROTATION_READ_CHUNK_TYPE error: %s\n",
+            get_error_code_string(ret_read));
     fprintf(stderr, "Failed to read chunk from key rotation record\n");
     return -1;
   }
@@ -385,6 +474,7 @@ int htool_key_rotation_read_chunk_type(const struct htool_invocation *inv) {
 int htool_key_rotation_chunk_type_count(const struct htool_invocation *inv) {
   struct libhoth_device *dev = htool_libhoth_device();
   if (!dev) {
+    fprintf(stderr, "Failed to get libhoth device\n");
     return -1;
   }
   const char *chunk_type_string;
@@ -401,6 +491,8 @@ int htool_key_rotation_chunk_type_count(const struct htool_invocation *inv) {
   enum key_rotation_err ret_count =
       libhoth_key_rotation_chunk_type_count(dev, chunk_typecode, &chunk_count);
   if (ret_count) {
+    fprintf(stderr, "HOTH_KEY_ROTATION_CHUNK_TYPE_COUNT error: %s\n",
+            get_error_code_string(ret_count));
     fprintf(stderr, "Failed to get chunk type count\n");
     return -1;
   }

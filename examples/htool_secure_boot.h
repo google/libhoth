@@ -15,7 +15,11 @@
 #ifndef LIBHOTH_EXAMPLES_HTOOL_SECURE_BOOT_H_
 #define LIBHOTH_EXAMPLES_HTOOL_SECURE_BOOT_H_
 
+<<<<<<< HEAD
 #include "examples/htool_cmd.h"
+=======
+#include "htool_cmd.h"
+>>>>>>> b127e59 (Improve key rotation error reporting in htool.)
 
 #ifdef __cplusplus
 extern "C" {
