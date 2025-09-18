@@ -40,6 +40,7 @@
 #include "htool_payload_update.h"
 #include "htool_raw_host_command.h"
 #include "htool_rot_usb.h"
+#include "htool_secure_boot.h"
 #include "htool_srtm.h"
 #include "htool_statistics.h"
 #include "htool_target_control.h"
@@ -1162,6 +1163,12 @@ static const struct htool_cmd CMDS[] = {
         .params =
             (const struct htool_param[]){
                 {.type = HTOOL_FLAG_VALUE,
+                 .ch = 'i',
+                 .name = "jtag_interface_id",
+                 .default_value = "0",
+                 .desc = "JTAG interface ID (0/1) to send the host command "
+                         "to."},
+                {.type = HTOOL_FLAG_VALUE,
                  .ch = 'd',
                  .name = "clk_idiv",
                  .default_value = "47",
@@ -1177,6 +1184,12 @@ static const struct htool_cmd CMDS[] = {
                 "Assumes only a single device in chain",
         .params =
             (const struct htool_param[]){
+                {.type = HTOOL_FLAG_VALUE,
+                 .ch = 'i',
+                 .name = "jtag_interface_id",
+                 .default_value = "0",
+                 .desc = "JTAG interface ID (0/1) to send the host command "
+                         "to."},
                 {.type = HTOOL_FLAG_VALUE,
                  .ch = 'd',
                  .name = "clk_idiv",
@@ -1212,6 +1225,12 @@ static const struct htool_cmd CMDS[] = {
         .params =
             (const struct htool_param[]){
                 {.type = HTOOL_FLAG_VALUE,
+                 .ch = 'i',
+                 .name = "jtag_interface_id",
+                 .default_value = "0",
+                 .desc = "JTAG interface ID (0/1) to send the host command "
+                         "to."},
+                {.type = HTOOL_FLAG_VALUE,
                  .ch = 'o',
                  .name = "offset",
                  .default_value = "0",
@@ -1224,6 +1243,12 @@ static const struct htool_cmd CMDS[] = {
         .desc = "Verify a PLD over JTAG. Assumes only a single device in chain",
         .params =
             (const struct htool_param[]){
+                {.type = HTOOL_FLAG_VALUE,
+                 .ch = 'i',
+                 .name = "jtag_interface_id",
+                 .default_value = "0",
+                 .desc = "JTAG interface ID (0/1) to send the host command "
+                         "to."},
                 {.type = HTOOL_FLAG_VALUE,
                  .ch = 'o',
                  .name = "offset",
@@ -1392,6 +1417,39 @@ static const struct htool_cmd CMDS[] = {
                          "bkey, bash"},
                 {}},
         .func = htool_key_rotation_chunk_type_count,
+    },
+    {
+        .verbs = (const char*[]){"key_rotation", "erase", "record", NULL},
+        .desc = "Erase the key rotation record from both halves of the flash "
+                "if the mauv allows",
+        .params = (const struct htool_param[]){{}},
+        .func = htool_key_rotation_erase_record,
+    },
+    {
+        .verbs = (const char*[]){"key_rotation", "set", "mauv", NULL},
+        .desc = "Set Key Rotation Record MAUV",
+        .params =
+            (const struct htool_param[]){
+                {HTOOL_FLAG_VALUE, 'm', "mauv", .desc = "MAUV to set"}, {}},
+        .func = htool_key_rotation_set_mauv,
+    },
+    {
+        .verbs = (const char*[]){"key_rotation", "get", "mauv", NULL},
+        .desc = "Get Key Rotation Record MAUV",
+        .params = (const struct htool_param[]){{}},
+        .func = htool_key_rotation_get_mauv,
+    },
+    {
+        .verbs = (const char*[]){"secure_boot", "get_enforcement", NULL},
+        .desc = "Get the current state of target secure boot enforcement.",
+        .params = (const struct htool_param[]){{}},
+        .func = htool_secure_boot_get_enforcement,
+    },
+    {
+        .verbs = (const char*[]){"secure_boot", "enable_enforcement", NULL},
+        .desc = "Enable secure boot enforcement.",
+        .params = (const struct htool_param[]){{}},
+        .func = htool_secure_boot_enable_enforcement,
     },
     {},
 };

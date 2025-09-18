@@ -1,3 +1,6 @@
+load("@rules_cc//cc:cc_library.bzl", "cc_library")
+load("@rules_cc//cc:cc_test.bzl", "cc_test")
+
 package(default_visibility = ["//visibility:public"])
 
 cc_library(
@@ -83,6 +86,7 @@ cc_library(
     srcs = ["payload_update.c"],
     hdrs = ["payload_update.h"],
     deps = [
+        ":command_version",
         ":host_cmd",
         ":payload_info",
         "//transports:libhoth_device",
@@ -96,9 +100,9 @@ cc_test(
         "//protocol/test:test_data",
     ],
     deps = [
+        ":command_version",
         ":payload_update",
         "//protocol/test:libhoth_device_mock",
-        "//transports:libhoth_device",
         "@googletest//:gtest",
         "@googletest//:gtest_main",
     ],
@@ -141,6 +145,28 @@ cc_test(
     srcs = ["reboot_test.cc"],
     deps = [
         ":reboot",
+        "//protocol/test:libhoth_device_mock",
+        "//transports:libhoth_device",
+        "@googletest//:gtest",
+        "@googletest//:gtest_main",
+    ],
+)
+
+cc_library(
+    name = "command_version",
+    srcs = ["command_version.c"],
+    hdrs = ["command_version.h"],
+    deps = [
+        ":host_cmd",
+        "//transports:libhoth_device",
+    ],
+)
+
+cc_test(
+    name = "command_version_test",
+    srcs = ["command_version_test.cc"],
+    deps = [
+        ":command_version",
         "//protocol/test:libhoth_device_mock",
         "//transports:libhoth_device",
         "@googletest//:gtest",
@@ -347,6 +373,29 @@ cc_test(
     deps = [
         ":host_cmd",
         ":key_rotation",
+        "//protocol/test:libhoth_device_mock",
+        "//transports:libhoth_device",
+        "@googletest//:gtest",
+        "@googletest//:gtest_main",
+    ],
+)
+
+cc_library(
+    name = "secure_boot",
+    srcs = ["secure_boot.c"],
+    hdrs = ["secure_boot.h"],
+    deps = [
+        ":host_cmd",
+        "//transports:libhoth_device",
+    ],
+)
+
+cc_test(
+    name = "secure_boot_test",
+    srcs = ["secure_boot_test.cc"],
+    deps = [
+        ":host_cmd",
+        ":secure_boot",
         "//protocol/test:libhoth_device_mock",
         "//transports:libhoth_device",
         "@googletest//:gtest",

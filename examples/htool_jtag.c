@@ -25,8 +25,9 @@
 #include "protocol/host_cmd.h"
 #include "protocol/jtag.h"
 
-// Used if no data is provided for data to send over TDI
-static char *JTAG_TEST_BYPASS_PATTERN_DEFAULT_VALUE =
+// Used if no data is provided for data to send over TDI. This needs to be
+// modifiable for use with `strtok_r` later
+static char JTAG_TEST_BYPASS_PATTERN_DEFAULT_VALUE[] =
     // PRBS9 with '0' bit added at the beginning to make it exactly 64 bytes
     "0x42 0x30 0x9c 0xab 0xd 0xe9 0xb9 0x14 0x2b 0x4f 0xd9 0x25 0xbf 0x26 0xa6 "
     "0x60 0x31 0x94 0x69 0x7f 0x45 0x8e 0xb2 0xcf 0x1f 0x74 0x1a 0xdb 0xb0 "
@@ -37,19 +38,27 @@ static char *JTAG_TEST_BYPASS_PATTERN_DEFAULT_VALUE =
 static int jtag_read_idcode(struct libhoth_device *dev,
                             const struct htool_invocation *inv) {
   uint32_t clk_idiv;
+  uint32_t interface_id;
 
   if (htool_get_param_u32(inv, "clk_idiv", &clk_idiv)) {
     return -1;
   }
-
   if (clk_idiv > UINT16_MAX) {
     fprintf(stderr, "Clock divisor value too large. Expected <= %u\n",
             UINT16_MAX);
     return -1;
   }
 
+  if (htool_get_param_u32(inv, "jtag_interface_id", &interface_id)) {
+    return -1;
+  }
+  if (interface_id > UINT8_MAX) {
+    fprintf(stderr, "Jtag ID value too large. Expected <= %u\n", UINT8_MAX);
+    return -1;
+  }
+
   uint32_t idcode = 0;
-  int ret = libhoth_jtag_read_idcode(dev, clk_idiv, &idcode);
+  int ret = libhoth_jtag_read_idcode(dev, interface_id, clk_idiv, &idcode);
   if (ret != 0) {
     return ret;
   }
@@ -100,6 +109,7 @@ static int jtag_test_bypass(struct libhoth_device *dev,
                             const struct htool_invocation *inv) {
   char *tdi_bytes_str = NULL;
   uint32_t clk_idiv;
+  uint32_t interface_id;
 
   if (htool_get_param_u32(inv, "clk_idiv", &clk_idiv) ||
       htool_get_param_string(inv, "tdi_bytes", (const char **)&tdi_bytes_str)) {
@@ -118,6 +128,14 @@ static int jtag_test_bypass(struct libhoth_device *dev,
     return -1;
   }
 
+  if (htool_get_param_u32(inv, "jtag_interface_id", &interface_id)) {
+    return -1;
+  }
+  if (interface_id > UINT8_MAX) {
+    fprintf(stderr, "Jtag ID value too large. Expected <= %u\n", UINT8_MAX);
+    return -1;
+  }
+
   uint8_t tdi_bytes[HOTH_JTAG_TEST_BYPASS_PATTERN_LEN];
   int ret = parse_string_param_into_byte_sequence(
       tdi_bytes_str, tdi_bytes, HOTH_JTAG_TEST_BYPASS_PATTERN_LEN);
@@ -132,7 +150,8 @@ static int jtag_test_bypass(struct libhoth_device *dev,
   printf("\n");
 
   uint8_t tdo_bytes[HOTH_JTAG_TEST_BYPASS_PATTERN_LEN] = {0};
-  ret = libhoth_jtag_test_bypass(dev, clk_idiv, tdi_bytes, tdo_bytes);
+  ret = libhoth_jtag_test_bypass(dev, interface_id, clk_idiv, tdi_bytes,
+                                 tdo_bytes);
   if (ret != 0) {
     return ret;
   }
@@ -155,23 +174,41 @@ static int jtag_test_bypass(struct libhoth_device *dev,
 static int jtag_program_and_verify_pld(struct libhoth_device *dev,
                                        const struct htool_invocation *inv) {
   uint32_t offset;
+  uint32_t interface_id;
 
   if (htool_get_param_u32(inv, "offset", &offset)) {
     return -1;
   }
 
-  return libhoth_jtag_program_and_verify_pld(dev, offset);
+  if (htool_get_param_u32(inv, "jtag_interface_id", &interface_id)) {
+    return -1;
+  }
+  if (interface_id > UINT8_MAX) {
+    fprintf(stderr, "Jtag ID value too large. Expected <= %u\n", UINT8_MAX);
+    return -1;
+  }
+
+  return libhoth_jtag_program_and_verify_pld(dev, interface_id, offset);
 }
 
 static int jtag_verify_pld(struct libhoth_device *dev,
                            const struct htool_invocation *inv) {
   uint32_t offset;
+  uint32_t interface_id;
 
   if (htool_get_param_u32(inv, "offset", &offset)) {
     return -1;
   }
 
-  return libhoth_jtag_verify_pld(dev, offset);
+  if (htool_get_param_u32(inv, "jtag_interface_id", &interface_id)) {
+    return -1;
+  }
+  if (interface_id > UINT8_MAX) {
+    fprintf(stderr, "Jtag ID value too large. Expected <= %u\n", UINT8_MAX);
+    return -1;
+  }
+
+  return libhoth_jtag_verify_pld(dev, interface_id, offset);
 }
 
 int htool_jtag_run(const struct htool_invocation *inv) {

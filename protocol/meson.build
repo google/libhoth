@@ -16,6 +16,7 @@ protocol_srcs = [
     'jtag.c',
     'hello.c',
     'key_rotation.c',
+    'secure_boot.c',
 ]
 
 incdir = include_directories('..')

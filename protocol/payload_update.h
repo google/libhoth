@@ -63,6 +63,13 @@ struct payload_update_packet {
   /* payload data immediately follows */
 } __attribute__((packed));
 
+struct payload_update_finalize_response_v1 {
+  // Non-zero if configuration currently running on PLD needs to be
+  // re-initialized (reloaded from internal configuration flash)
+  // Zero otherwise
+  uint8_t pld_needs_reinitialization;
+} __attribute__((packed));
+
 enum payload_update_err libhoth_payload_update(struct libhoth_device* dev,
                                                uint8_t* image, size_t len);
 int libhoth_payload_update_getstatus(

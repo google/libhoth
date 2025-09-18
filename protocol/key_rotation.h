@@ -15,8 +15,8 @@
 #ifndef _LIBHOTH_PROTOCOL_KEY_ROTATION_H_
 #define _LIBHOTH_PROTOCOL_KEY_ROTATION_H_
 
-#include <stdint.h>
 #include <assert.h>
+#include <stdint.h>
 
 #include "protocol/host_cmd.h"
 #include "transports/libhoth_device.h"
@@ -48,12 +48,13 @@ extern "C" {
 
 enum key_rotation_err {
   KEY_ROTATION_CMD_SUCCESS = 0,
-  KEY_ROTATION_ERR,
+  KEY_ROTATION_INTERNAL_ERR,
   KEY_ROTATION_ERR_INVALID_PARAM,
-  KEY_ROTATION_ERR_UNIMPLEMENTED,
   KEY_ROTATION_ERR_INVALID_RESPONSE_SIZE,
   KEY_ROTATION_INITIATE_FAIL,
   KEY_ROTATION_COMMIT_FAIL,
+  KEY_ROTATION_ROOT_OF_TRUST_UNAVAILABLE,
+  KEY_ROTATION_ERR_HOTH_BASE = 1000,
 };
 
 enum key_rotation_record_read_half {
@@ -79,9 +80,14 @@ enum key_rotation_record_op {
       6,  // Gets the ith chunk of given chunk_typecode and returns the
           // chunk_size starting from the chunk_offset (chunk_index,
           // chunk_offset, chunk_typecode, chunk_size)
-  KEY_ROTATION_RECORD_PAYLOAD_STATUS = 7,  // Get validation method and data
+  KEY_ROTATION_RECORD_PAYLOAD_STATUS = 7,    // Get validation method and data
   KEY_ROTATION_RECORD_CHUNK_TYPE_COUNT = 8,  // Get the number of chunks of a
-                                              // given chunk_typecode
+                                             // given chunk_typecode
+  KEY_ROTATION_RECORD_ERASE_RECORD = 9,  // Erase the key rotation record from
+                                         // both halves of the flash if the mauv
+                                         // allows
+  KEY_ROTATION_RECORD_SET_MAUV = 10,     // Set Key Rotation Record MAUV
+  KEY_ROTATION_RECORD_GET_MAUV = 11,     // Get Key Rotation Record MAUV
 };
 
 #define KEY_ROTATION_CHUNK_TYPE_CODE_PKEY (0x59454B50)
@@ -109,6 +115,10 @@ struct hoth_request_key_rotation_record_chunk_type_count {
   uint32_t chunk_typecode;  // enum key_rotation_typecode
 } __hoth_align4;
 
+struct hoth_request_key_rotation_record_set_mauv {
+  uint32_t mauv;
+} __hoth_align4;
+
 struct hoth_response_key_rotation_record_version {
   uint32_t version;
 } __hoth_align4;
@@ -132,6 +142,10 @@ struct hoth_response_key_rotation_status {
                                  // key used to validate the payload
   uint32_t validation_hash_data;  // If validation method is hash, first 32 bits
                                   // of cr51 hash
+} __hoth_align4;
+
+struct hoth_response_key_rotation_mauv {
+  uint32_t mauv;
 } __hoth_align4;
 
 struct hoth_response_key_rotation_record_read {
@@ -184,6 +198,12 @@ enum key_rotation_err libhoth_key_rotation_read_chunk_type(
 enum key_rotation_err libhoth_key_rotation_chunk_type_count(
     struct libhoth_device* dev, uint32_t chunk_typecode,
     uint16_t* chunk_count);
+enum key_rotation_err libhoth_key_rotation_erase_record(
+    struct libhoth_device* dev);
+enum key_rotation_err libhoth_key_rotation_set_mauv(struct libhoth_device* dev,
+                                                    uint32_t mauv);
+enum key_rotation_err libhoth_key_rotation_get_mauv(
+    struct libhoth_device* dev, struct hoth_response_key_rotation_mauv* mauv);
 #ifdef __cplusplus
 }
 #endif
