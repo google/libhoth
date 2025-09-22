@@ -27,6 +27,39 @@ struct hoth_request_variable_length {
   uint8_t data[KEY_ROTATION_RECORD_WRITE_MAX_SIZE];
 } __hoth_align4;
 
+int get_command_version(struct libhoth_device* dev, uint16_t command,
+                        uint8_t* version) {
+  fprintf(stderr, "HOTH_GET_CMD_VERSIONS\n");
+  size_t rlen = 0;
+  int ret = libhoth_hostcmd_exec(
+      dev, HOTH_CMD_BOARD_SPECIFIC_BASE + HOTH_PRV_CMD_HAVEN_GET_CMD_VERSIONS,
+      0, &command, sizeof(command), NULL, 0, &rlen);
+  if (ret != 0) {
+    return ret;
+  }
+  if (rlen != 0) {
+    fprintf(stderr,
+            "HOTH_GET_CMD_VERSIONS expected exactly %d response "
+            "bytes, got %ld\n",
+            0, rlen);
+    return ret;
+  }
+  *version = rlen;
+  return 0;
+}
+
+enum key_rotation_err get_key_rotation_error(int ret) {
+  fprintf(stderr, "HTOOL_ERROR_HOST_COMMAND return code: %d\n", ret);
+  int result = ret - HTOOL_ERROR_HOST_COMMAND_START;
+  if (result < 0) {
+    return KEY_ROTATION_ROOT_OF_TRUST_UNAVAILABLE;
+  }
+  if (result == HOTH_RES_SUCCESS) {
+    return KEY_ROTATION_CMD_SUCCESS;
+  }
+  return KEY_ROTATION_ERR_HOTH_BASE + result;
+}
+
 static enum key_rotation_err send_key_rotation_request(
     struct libhoth_device* dev, uint16_t command) {
   const struct hoth_request_key_rotation_record request = {
@@ -40,9 +73,7 @@ static enum key_rotation_err send_key_rotation_request(
       dev, HOTH_CMD_BOARD_SPECIFIC_BASE + HOTH_PRV_CMD_HAVEN_KEY_ROTATION_OP, 0,
       &request, sizeof(request), NULL, 0, &rlen);
   if (ret != 0) {
-    fprintf(stderr, "HOTH_KEY_ROTATION_COMMAND %d error code: %d\n", command,
-            ret);
-    return KEY_ROTATION_ERR;
+    return get_key_rotation_error(ret);
   }
   if (rlen != 0) {
     fprintf(stderr,
@@ -71,8 +102,7 @@ enum key_rotation_err libhoth_key_rotation_get_version(
       &rlen);
 
   if (ret != 0) {
-    fprintf(stderr, "HOTH_KEY_ROTATION_GET_VERSION error code: %d\n", ret);
-    return KEY_ROTATION_ERR;
+    return get_key_rotation_error(ret);
   }
 
   if (rlen != sizeof(*record_version)) {
@@ -89,6 +119,12 @@ enum key_rotation_err libhoth_key_rotation_get_version(
 enum key_rotation_err libhoth_key_rotation_get_status(
     struct libhoth_device* dev,
     struct hoth_response_key_rotation_status* record_status) {
+  uint8_t version = 0;
+  if (get_command_version(dev, HOTH_PRV_CMD_HAVEN_KEY_ROTATION_OP, &version) !=
+      0) {
+    fprintf(stderr, "Failed to get command version.\n");
+    return KEY_ROTATION_ROOT_OF_TRUST_UNAVAILABLE;
+  }
   const struct hoth_request_key_rotation_record request = {
       .operation = KEY_ROTATION_RECORD_GET_STATUS,
       .packet_offset = 0,
@@ -102,8 +138,7 @@ enum key_rotation_err libhoth_key_rotation_get_status(
       &request, sizeof(request), record_status, sizeof(*record_status), &rlen);
 
   if (ret != 0) {
-    fprintf(stderr, "HOTH_KEY_ROTATION_GET_STATUS error code: %d\n", ret);
-    return KEY_ROTATION_ERR;
+    return get_key_rotation_error(ret);
   }
 
   if (rlen != sizeof(*record_status)) {
@@ -134,8 +169,7 @@ enum key_rotation_err libhoth_key_rotation_payload_status(
       &rlen);
 
   if (ret != 0) {
-    fprintf(stderr, "HOTH_KEY_ROTATION_PAYLOAD_STATUS error code: %d\n", ret);
-    return KEY_ROTATION_ERR;
+    return get_key_rotation_error(ret);
   }
 
   if (rlen != sizeof(*payload_status)) {
@@ -184,8 +218,7 @@ enum key_rotation_err libhoth_key_rotation_update(struct libhoth_device* dev,
         0, &request, sizeof(request.hdr) + request.hdr.packet_size, NULL, 0,
         &response_length);
     if (ret != 0) {
-      fprintf(stderr, "Error code from hoth: %d\n", ret);
-      return KEY_ROTATION_ERR;
+      return get_key_rotation_error(ret);
     }
     if (response_length != 0) {
       fprintf(stderr, "Expected exactly %d response bytes, got %ld\n", 0,
@@ -246,8 +279,7 @@ static enum key_rotation_err send_key_rotation_read_helper(
       &request, sizeof(request.hdr) + request_payload_size, response_data,
       response_buffer_size, response_length);
   if (ret != 0) {
-    fprintf(stderr, "HOTH_KEY_ROTATION_READ error code: %x\n", ret);
-    return KEY_ROTATION_ERR;
+    return get_key_rotation_error(ret);
   }
   return KEY_ROTATION_CMD_SUCCESS;
 }
@@ -360,7 +392,7 @@ enum key_rotation_err libhoth_key_rotation_read_chunk_type(
       fprintf(stderr,
               "Chunk length invalid: %d Chunk length must be greater than %d\n",
               chunk_length, STRUCT_CHUNK_SIZE);
-      return KEY_ROTATION_ERR;
+      return KEY_ROTATION_INTERNAL_ERR;
     }
     if (read_size == 0) {
       read_size =
@@ -399,8 +431,7 @@ enum key_rotation_err libhoth_key_rotation_chunk_type_count(
       dev, HOTH_CMD_BOARD_SPECIFIC_BASE + HOTH_PRV_CMD_HAVEN_KEY_ROTATION_OP, 0,
       &request, sizeof(request), &response, sizeof(response), &rlen);
   if (ret != 0) {
-    fprintf(stderr, "HOTH_KEY_ROTATION_CHUNK_TYPE_COUNT error code: %d\n", ret);
-    return KEY_ROTATION_ERR;
+    return get_key_rotation_error(ret);
   }
   if (rlen != sizeof(response)) {
     fprintf(stderr,

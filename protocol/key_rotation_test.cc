@@ -86,7 +86,7 @@ TEST_F(LibHothTest, key_rotation_get_version_failure_io) {
 
   struct hoth_response_key_rotation_record_version actual_response;
   EXPECT_EQ(libhoth_key_rotation_get_version(&hoth_dev_, &actual_response),
-            KEY_ROTATION_ERR);
+            KEY_ROTATION_ROOT_OF_TRUST_UNAVAILABLE);
 }
 
 TEST_F(LibHothTest, key_rotation_get_version_failure_wrong_size) {
@@ -132,7 +132,7 @@ TEST_F(LibHothTest, key_rotation_get_status_failure_io) {
 
   struct hoth_response_key_rotation_status actual_status;
   EXPECT_EQ(libhoth_key_rotation_get_status(&hoth_dev_, &actual_status),
-            KEY_ROTATION_ERR);
+            KEY_ROTATION_ROOT_OF_TRUST_UNAVAILABLE);
 }
 
 TEST_F(LibHothTest, key_rotation_get_status_failure_wrong_size) {
@@ -178,7 +178,7 @@ TEST_F(LibHothTest, key_rotation_payload_status_failure_io) {
   struct hoth_response_key_rotation_payload_status actual_payload_status;
   EXPECT_EQ(
       libhoth_key_rotation_payload_status(&hoth_dev_, &actual_payload_status),
-      KEY_ROTATION_ERR);
+      KEY_ROTATION_ROOT_OF_TRUST_UNAVAILABLE);
 }
 
 TEST_F(LibHothTest, key_rotation_payload_status_failure_wrong_size) {
@@ -281,7 +281,7 @@ TEST_F(LibHothTest, key_rotation_read_failure_io) {
   EXPECT_EQ(libhoth_key_rotation_read(&hoth_dev_, 0, 8,
                                       KEY_ROTATION_RECORD_READ_HALF_ACTIVE,
                                       &actual_read_response),
-            KEY_ROTATION_ERR);
+            KEY_ROTATION_ROOT_OF_TRUST_UNAVAILABLE);
 }
 
 TEST_F(LibHothTest, key_rotation_read_failure_wrong_size) {
@@ -333,7 +333,7 @@ TEST_F(LibHothTest, key_rotation_update_failure) {
       .WillOnce(DoAll(CopyResp(&kDummy, 0), Return(LIBHOTH_OK)))
       .WillOnce(DoAll(CopyResp(&kDummy, 0), Return(-1)));
   EXPECT_EQ(libhoth_key_rotation_update(&hoth_dev_, &data[0], sizeof(data)),
-            KEY_ROTATION_ERR);
+            KEY_ROTATION_ROOT_OF_TRUST_UNAVAILABLE);
 }
 
 TEST_F(LibHothTest, key_rotation_update_initiate_failure) {
@@ -373,13 +373,15 @@ TEST_F(LibHothTest, key_rotation_update_failure_invalid_size_too_small) {
 
 TEST_F(LibHothTest, key_rotation_update_failure_invalid_response_size) {
   uint8_t data[100] = {0};
+  struct hoth_host_response success_header = {.result = HOTH_RES_SUCCESS};
+
   EXPECT_CALL(mock_, send(_, UsesCommand(kCmd), _))
       .WillRepeatedly(Return(LIBHOTH_OK));
   EXPECT_CALL(mock_, receive)
-      .WillOnce(DoAll(CopyResp(&kDummy, 0), Return(LIBHOTH_OK)))
-      .WillOnce(DoAll(CopyResp(&kDummy, 2), Return(LIBHOTH_OK)));
+      .WillOnce(DoAll(CopyResp(&success_header, sizeof(success_header)),
+                      Return(LIBHOTH_OK)));
   EXPECT_EQ(libhoth_key_rotation_update(&hoth_dev_, &data[0], sizeof(data)),
-            KEY_ROTATION_ERR);
+            KEY_ROTATION_INITIATE_FAIL);
 }
 
 TEST_F(LibHothTest, key_rotation_read_chunk_type_success) {
@@ -414,7 +416,7 @@ TEST_F(LibHothTest, key_rotation_read_chunk_type_failure_io) {
                 &hoth_dev_, kCmdRotPublicKey, 0, 0,
                 KEY_ROTATION_RECORD_READ_CHUNK_TYPE_MAX_SIZE,
                 &actual_read_response, &response_size),
-            KEY_ROTATION_ERR);
+            KEY_ROTATION_ROOT_OF_TRUST_UNAVAILABLE);
 }
 
 TEST_F(LibHothTest, key_rotation_read_chunk_type_failure_invalid_size) {
@@ -475,7 +477,7 @@ TEST_F(LibHothTest, key_rotation_chunk_type_count_failure_io) {
   uint16_t chunk_count = 0;
   EXPECT_EQ(libhoth_key_rotation_chunk_type_count(&hoth_dev_, kCmdRotPublicKey,
                                                   &chunk_count),
-            KEY_ROTATION_ERR);
+            KEY_ROTATION_ROOT_OF_TRUST_UNAVAILABLE);
 }
 
 TEST_F(LibHothTest,

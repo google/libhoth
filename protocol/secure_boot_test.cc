@@ -14,12 +14,13 @@
 
 #include "protocol/secure_boot.h"
 
-#include <gmock/gmock.h>
-#include <gtest/gtest.h>
-
 #include <cstdint>
 
 #include "test/libhoth_device_mock.h"
+#include <gmock/gmock.h>
+#include <gtest/gtest.h>
+#include "protocol/host_cmd.h"
+#include "transports/libhoth_device.h"
 
 namespace {
 

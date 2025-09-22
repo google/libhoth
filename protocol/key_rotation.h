@@ -15,8 +15,8 @@
 #ifndef _LIBHOTH_PROTOCOL_KEY_ROTATION_H_
 #define _LIBHOTH_PROTOCOL_KEY_ROTATION_H_
 
-#include <stdint.h>
 #include <assert.h>
+#include <stdint.h>
 
 #include "protocol/host_cmd.h"
 #include "transports/libhoth_device.h"
@@ -26,6 +26,8 @@ extern "C" {
 #endif
 
 #define HOTH_PRV_CMD_HAVEN_KEY_ROTATION_OP 0x004d
+#define HOTH_PRV_CMD_HAVEN_GET_CMD_VERSIONS 0x0008
+
 #define KEY_ROTATION_HASH_DIGEST_SIZE 32
 #define KEY_ROTATION_FLASH_AREA_SIZE 2048
 #define KEY_ROTATION_MAX_RECORD_SIZE \
@@ -48,12 +50,13 @@ extern "C" {
 
 enum key_rotation_err {
   KEY_ROTATION_CMD_SUCCESS = 0,
-  KEY_ROTATION_ERR,
+  KEY_ROTATION_INTERNAL_ERR,
   KEY_ROTATION_ERR_INVALID_PARAM,
-  KEY_ROTATION_ERR_UNIMPLEMENTED,
   KEY_ROTATION_ERR_INVALID_RESPONSE_SIZE,
   KEY_ROTATION_INITIATE_FAIL,
   KEY_ROTATION_COMMIT_FAIL,
+  KEY_ROTATION_ROOT_OF_TRUST_UNAVAILABLE,
+  KEY_ROTATION_ERR_HOTH_BASE = 1000,
 };
 
 enum key_rotation_record_read_half {
