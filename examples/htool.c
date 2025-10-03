@@ -44,6 +44,7 @@
 #include "htool_sbs_dual.h"
 #include "htool_sbs_single.h"
 #include "htool_secure_boot.h"
+#include "htool_security_certificates.h"
 #include "htool_security_info.h"
 #include "htool_srtm.h"
 #include "htool_statistics.h"
@@ -1541,6 +1542,61 @@ static const struct htool_cmd CMDS[] = {
                 {HTOOL_FLAG_VALUE, .name="output", .default_value="",
                  .desc="The signed cert file."},
                  {}},
+    },
+    {
+        .verbs = (const char*[]){"security", "get_alias_key_v0_cert", NULL},
+        .desc = "Get the Alias Key V0 Cert",
+        .func = htool_get_alias_key_v0_cert,
+        .params =
+            (const struct htool_param[]){
+                {HTOOL_FLAG_VALUE, .name = "output", .default_value = "",
+                 .desc = "The Alias Key Certificate"},
+                {}},
+    },
+    {
+        .verbs = (const char*[]){"security", "get_alias_key_v1_cert", NULL},
+        .desc = "Get the Alias Key V1 Cert",
+        .func = htool_get_alias_key_v1_cert,
+        .params =
+            (const struct htool_param[]){
+                {HTOOL_FLAG_VALUE, .name = "output", .default_value = "",
+                 .desc = "The Alias Key Certificate"},
+                {}},
+    },
+
+    {
+        .verbs = (const char*[]){"security", "get_device_id_cert", NULL},
+        .desc = "Get the Device ID Cert",
+        .func = htool_get_device_id_cert,
+        .params =
+            (const struct htool_param[]){
+                {HTOOL_FLAG_VALUE, .name = "cert_output", .default_value = "",
+                 .desc = "The Device ID Certificate"},
+                {HTOOL_FLAG_VALUE, .name = "endorsement_cert_output",
+                 .default_value = "",
+                 .desc = "The Endorsement Device ID Certificate"},
+                {}},
+    },
+    {
+        .verbs = (const char*[]){"security", "get_attestation_pub_cert", NULL},
+        .desc = "Get the Attestation Public Cert",
+        .func = htool_get_attestation_pub_cert,
+        .params =
+            (const struct htool_param[]){
+                {HTOOL_FLAG_VALUE, .name = "output", .default_value = "",
+                 .desc = "The Public Certificate"},
+                {}},
+    },
+    {
+        .verbs = (const char*[]){"security", "get_signed_attestation_pub_cert",
+                                 NULL},
+        .desc = "Get the Signed Attestation Public Cert",
+        .func = htool_get_signed_attestation_pub_cert,
+        .params =
+            (const struct htool_param[]){
+                {HTOOL_FLAG_VALUE, .name = "output", .default_value = "",
+                 .desc = "The Signed Attestation Public Certificate"},
+                {}},
     },
     {},
 };

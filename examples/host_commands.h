@@ -139,6 +139,32 @@ struct hoth_security_v2_parameter {
    (param_count) * HOTH_SECURITY_V2_PARAM_OVERHEAD)
 
 /**
+ * The command needed to get any certificates from the device.
+ */
+#define HOTH_PRV_CMD_HOTH_SECURITY_V2_GET_CERTIFICATES_MAJOR_COMMAND 1
+
+/**
+ * The command to get the alias key certificate from the device.
+ */
+#define HOTH_PRV_CMD_HOTH_SECURITY_V2_GET_ALIAS_KEY_MINOR_COMMAND 20
+
+/**
+ * The command to get the device id certificates from the device.
+ */
+#define HOTH_PRV_CMD_HOTH_SECURITY_V2_GET_DEVICE_ID_MINOR_COMMAND 19
+
+/**
+ * The command to get the attestation public certificate from the device.
+ */
+#define HOTH_PRV_CMD_HOTH_SECURITY_V2_GET_ATTESTATION_PUB_CERT_MINOR_COMMAND 4
+
+/**
+ * The command to get the signed attestation public certificates ferom the device.
+ */
+#define HOTH_PRV_CMD_HOTH_SECURITY_V2_GET_SIGNED_ATTESTATION_PUB_CERT_MINOR_COMMAND \
+  25
+
+/**
  * The identifier for the getting the major version of the SecurityV2 Info
  * command.
  */
