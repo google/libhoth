@@ -39,6 +39,11 @@ struct security_v2_param {
 #define SECURITY_V2_BUFFER_PARAM(storage) \
   (&(struct security_v2_buffer){.data = (storage), .size = sizeof((storage))})
 
+// Convenience macro for initializing a buffer from allocated storage. Intended
+// for passing as a parameter to htool_exec_security_v2_cmd.
+#define SECURITY_V2_BUFFER_PARAM_WITH_VARIABLE_SIZE(storage, storage_size) \
+  (&(struct security_v2_buffer){.data = (storage), .size = (storage_size)})
+
 // Executes a SECURITY_V2 host command with `major.minor` command code. The
 // request/response buffers serve as backing storage for the command, and the
 // request/response params represent data that will be copied to/from the
