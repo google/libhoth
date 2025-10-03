@@ -73,6 +73,53 @@ cc_library(
     ],
 )
 
+cc_library(
+    name = "htool_security_v2",
+    srcs = ["htool_security_v2.c"],
+    hdrs = ["htool_security_v2.h"],
+    deps = [
+        ":host_commands",
+        ":htool_header",
+        "//protocol:host_cmd",
+        "//transports:libhoth_device",
+    ],
+)
+
+cc_library(
+    name = "htool_security_v2_defs",
+    hdrs = ["htool_security_v2_defs.h"],
+)
+
+cc_library(
+    name = "htool_security_certificates",
+    srcs = ["htool_security_certificates.c"],
+    hdrs = ["htool_security_certificates.h"],
+    deps = [
+        ":host_commands",
+        ":htool_cmd",
+        ":htool_header",
+        ":htool_macros",
+        ":htool_security_v2",
+        ":htool_security_v2_defs",
+        ":htool_security_version",
+        "//protocol:host_cmd",
+    ],
+)
+
+cc_test(
+    name = "htool_security_certificates_test",
+    srcs = ["htool_security_certificates_test.cc"],
+    deps = [
+        ":htool_security_certificates",
+        ":htool_security_v2",
+        ":htool_security_version",
+        "//examples/test:test_util",
+        "//protocol/test:libhoth_device_mock",
+        "@googletest//:gtest",
+        "@googletest//:gtest_main",
+    ],
+)
+
 cc_binary(
     name = "htool",
     srcs = [
@@ -127,6 +174,9 @@ cc_binary(
         "htool_usb.h",
         "htool_provisioning.c",
         "htool_provisioning.h",
+        "htool_security_certificates.c",
+        "htool_security_certificates.h",
+        "htool_security_v2_defs.h",
     ],
     deps = [
         ":host_commands",
