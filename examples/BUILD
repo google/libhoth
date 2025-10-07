@@ -1,5 +1,6 @@
 load("@rules_cc//cc:cc_binary.bzl", "cc_binary")
 load("@rules_cc//cc:cc_library.bzl", "cc_library")
+load("@rules_cc//cc:cc_test.bzl", "cc_test")
 
 package(default_visibility = ["//visibility:public"])
 
@@ -79,6 +80,8 @@ cc_binary(
         "htool_security_v2.h",
         "htool_security_info.c",
         "htool_security_info.h",
+	    "htool_provisioning.c",
+	    "htool_provisioning.h",
     ],
     deps = [
         ":host_commands",
@@ -111,4 +114,62 @@ cc_binary(
         ":dbus_backend": ["//transports:libhoth_dbus"],
         "//conditions:default": [],
     }),
+)
+
+cc_library(
+    name = "htool_cmd",
+    srcs = ["htool_cmd.c"],
+    hdrs = ["htool_cmd.h"],
+    deps = ["//:git_version"],
+)
+
+cc_library(
+    name = "htool_macros",
+    hdrs = ["htool_macros.h"],
+)
+
+cc_library(
+    name = "htool_provisioning",
+    srcs = ["htool_provisioning.c"],
+    hdrs = ["htool_provisioning.h"],
+    deps = [
+        ":host_commands",
+        ":htool_cmd",
+        ":htool_header",
+        ":htool_macros",
+        ":htool_security_version",
+        "//protocol:host_cmd",
+        "//transports:libhoth_device",
+    ],
+)
+
+cc_library(
+    name = "htool_header",
+    hdrs = ["htool.h"],
+)
+
+cc_library(
+    name = "htool_security_version",
+    srcs = ["htool_security_version.c"],
+    hdrs = ["htool_security_version.h"],
+    deps = [
+        ":host_commands",
+        ":htool_header",
+        "//protocol:host_cmd",
+    ],
+)
+
+cc_test(
+    name = "htool_provisioning_test",
+    srcs = ["htool_provisioning_test.cc"],
+    deps = [
+        ":htool_cmd",
+        ":htool_provisioning",
+        ":htool_security_version",
+        "//protocol:host_cmd",
+        "//protocol/test:libhoth_device_mock",
+        "//transports:libhoth_device",
+        "@googletest//:gtest",
+        "@googletest//:gtest_main",
+    ],
 )
