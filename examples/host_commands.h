@@ -395,4 +395,7 @@ struct hoth_response_target_control {
 }
 #endif
 
+// Host Command for Provisioning Commands
+#define HOTH_PRV_CMD_HOTH_PROVISIONING_LOG 0x0040
+
 #endif  // LIBHOTH_EXAMPLES_HOST_COMMANDS_H_

@@ -1,3 +1,4 @@
+
 git_version_h = vcs_tag(
     command: ['git', 'describe', '--always', '--dirty', '--abbrev=40'],
     input: 'git_version.h.in',
@@ -48,6 +49,8 @@ executable(
         'htool_macros.h',
         'htool_security_info.h',
         'htool_security_info.c',
+        'htool_provisioning.h',
+        'htool_provisioning.c',
         git_version_h,
     ],
     dependencies: [libusb],
@@ -56,3 +59,46 @@ executable(
     c_args: c_args,
     install: true,
 )
+
+
+gtest_dep = dependency('gtest', main: true, disabler: true, required: false)
+gmock_dep = dependency('gmock', main: true, disabler: true, required: false)
+
+if gtest_dep.found() and gmock_dep.found()
+    test(
+        'htool_provisioning_test_asan',
+        executable(
+            'htool_provisioning_test_asan_exe',
+            sources: [
+                'test/test_util.h',
+                'test/test_util.cc',
+                'htool_provisioning.c',
+                'htool_provisioning_test.cc',
+                '../protocol/test/libhoth_device_mock.cc',
+            ],
+            include_directories: incdir,
+            link_with: [libhoth.get_static_lib()], 
+            dependencies: [gtest_dep, gmock_dep],
+            c_args: ['-fsanitize=address'],
+            cpp_args: ['-fsanitize=address'],
+            link_args: ['-fsanitize=address'],
+        ),
+    )
+    test(
+        'htool_provisioning_test',
+        executable(
+            'htool_provisioning_test_exe',
+            sources: [
+                'test/test_util.h',
+                'test/test_util.cc',
+                'htool_provisioning.c',
+                'htool_provisioning_test.cc',
+                '../protocol/test/libhoth_device_mock.cc',
+            ],
+            include_directories: incdir,
+            link_with: [libhoth.get_static_lib()], 
+            dependencies: [gtest_dep, gmock_dep],
+        ),
+    )
+
+endif

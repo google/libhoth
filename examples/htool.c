@@ -38,6 +38,7 @@
 #include "htool_panic.h"
 #include "htool_payload.h"
 #include "htool_payload_update.h"
+#include "htool_provisioning.h"
 #include "htool_raw_host_command.h"
 #include "htool_rot_usb.h"
 #include "htool_sbs_dual.h"
@@ -1519,6 +1520,27 @@ static const struct htool_cmd CMDS[] = {
         .desc = "Probe the TPM_SPI interface (DID/VID) over a spidev interface",
         .params = (const struct htool_param[]){{}},
         .func = htool_tpm_spi_probe,
+    },
+    {
+        .verbs = (const char*[]){"provisioning", "read", NULL},
+        .desc = "Get Provisioning Log",
+        .func = htool_get_provisioning_log,
+        .params =
+            (const struct htool_param[]){
+                {HTOOL_FLAG_VALUE, .name = "output", .default_value="",
+                 .desc = "The output file which will contain the provisioning log."},
+                 {}},
+    },
+    {
+        .verbs = (const char*[]){"provisioning", "validate_and_sign", NULL},
+        .desc = "Validate and Sign the provisioning log",
+        .func = htool_validate_and_sign,
+        .params = (const struct htool_param[]){
+                {HTOOL_FLAG_VALUE, .name="perso_blob", .default_value="",
+                 .desc="The perso blob file."},
+                {HTOOL_FLAG_VALUE, .name="output", .default_value="",
+                 .desc="The signed cert file."},
+                 {}},
     },
     {},
 };
