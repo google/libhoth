@@ -1,1 +1,5 @@
 build --stamp --workspace_status_command '$(pwd)/print_git_commit.sh'
+build:asan --copt=-fsanitize=address --linkopt=-fsanitize=address
+build:msan --copt=-fsanitize=memory --linkopt=-fsanitize=memory
+build:clang --action_env=CC=/usr/lib/llvm-19/bin/clang --action_env=CXX=/usr/lib/llvm-19/bin/clang++
+test:clang --action_env=CC=/usr/lib/llvm-19/bin/clang --action_env=CXX=/usr/lib/llvm-19/bin/clang++
