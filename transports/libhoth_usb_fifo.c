@@ -99,7 +99,10 @@ int libhoth_usb_fifo_open(struct libhoth_usb_device *dev,
                           uint32_t prng_seed) {
   int status = LIBHOTH_OK;
   if (dev == NULL || descriptor == NULL ||
-      dev->info.type != LIBHOTH_USB_INTERFACE_TYPE_FIFO) {
+      dev->info.type != LIBHOTH_USB_INTERFACE_TYPE_FIFO ||
+      // XORShift PRNG must be seeded with non-zero value, otherwise it will
+      // produce a stream of only zeroes
+      (prng_seed == 0)) {
     return LIBUSB_ERROR_INVALID_PARAM;
   }
   const struct libusb_interface *interface_settings =

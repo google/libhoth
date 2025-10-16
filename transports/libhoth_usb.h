@@ -34,7 +34,7 @@ struct libhoth_usb_device_init_options {
   // context.
   libusb_context* usb_ctx;
   // Seed value to use for Pseudo-random number generator for communicating with
-  // RoT over USB FIFO interface
+  // RoT over USB FIFO interface. Must be non-zero
   uint32_t prng_seed;
 };
 

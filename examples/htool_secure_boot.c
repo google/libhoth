@@ -12,13 +12,13 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "examples/htool_secure_boot.h"
+#include "htool_secure_boot.h"
 
 #include <stdint.h>
 #include <stdio.h>
 
 #include "examples/htool.h"
-#include "examples/htool_cmd.h"
+#include "htool_cmd.h"
 #include "protocol/secure_boot.h"
 
 int htool_secure_boot_get_enforcement(const struct htool_invocation* inv) {
