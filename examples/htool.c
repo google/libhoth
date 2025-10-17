@@ -40,12 +40,13 @@
 #include "htool_payload_update.h"
 #include "htool_raw_host_command.h"
 #include "htool_rot_usb.h"
+#include "htool_sbs_dual.h"
+#include "htool_sbs_single.h"
 #include "htool_secure_boot.h"
 #include "htool_security_info.h"
 #include "htool_srtm.h"
 #include "htool_statistics.h"
 #include "htool_target_control.h"
-#include "htool_sbs.h"
 #include "htool_usb.h"
 #include "protocol/authz_record.h"
 #include "protocol/chipinfo.h"
@@ -1023,38 +1024,48 @@ static const struct htool_cmd CMDS[] = {
         .func = command_srtm,
     },
     {
-        .verbs = (const char*[]){"sbs", SBS_GET_CMD_STR, NULL},
+        .verbs = (const char*[]){"sbs_single", SBS_SINGLE_GET_CMD_STR, NULL},
         .desc = "Get status of SBS mux select",
         .params = (const struct htool_param[]){{}},
-        .func = htool_sbs_run,
+        .func = htool_sbs_single_run,
     },
     {
-        .verbs = (const char*[]){"sbs", SBS_CONNECT_FLASH_TO_ROT_CMD_STR, NULL},
-        .desc = "Set mux to connect flash to RoT (SBS Single)",
+        .verbs = (const char*[]){"sbs_single",
+                                 SBS_SINGLE_CONNECT_FLASH_TO_ROT_CMD_STR, NULL},
+        .desc = "Set mux to connect flash to RoT",
         .params = (const struct htool_param[]){{}},
-        .func = htool_sbs_run,
+        .func = htool_sbs_single_run,
     },
     {
-        .verbs = (const char*[]){"sbs", SBS_CONNECT_FLASH_TO_TARGET_CMD_STR, NULL},
-        .desc = "Set mux to connect flash to target (SBS Single)",
+        .verbs =
+            (const char*[]){"sbs_single",
+                            SBS_SINGLE_CONNECT_FLASH_TO_TARGET_CMD_STR, NULL},
+        .desc = "Set mux to connect flash to target",
         .params = (const struct htool_param[]){{}},
-        .func = htool_sbs_run,
+        .func = htool_sbs_single_run,
     },
     {
-        .verbs = (const char*[]){"sbs",
-                                 SBS_CONNECT_TARGET_TO_SPI_FLASH_0_CMD_STR,
+        .verbs = (const char*[]){"sbs_dual", SBS_DUAL_GET_CMD_STR, NULL},
+        .desc = "Get status of SBS mux select",
+        .params = (const struct htool_param[]){{}},
+        .func = htool_sbs_dual_run,
+    },
+    {
+        .verbs = (const char*[]){"sbs_dual",
+                                 SBS_DUAL_CONNECT_TARGET_TO_SPI_FLASH_0_CMD_STR,
                                  NULL},
-        .desc = "Set mux select pin to connect target to spi flash 1 (SBS Dual)",
+        .desc =
+            "Set mux select pin to connect target to spi flash 1 (SBS Dual)",
         .params = (const struct htool_param[]){{}},
-        .func = htool_sbs_run,
+        .func = htool_sbs_dual_run,
     },
     {
-        .verbs = (const char*[]){"sbs",
-                                 SBS_CONNECT_TARGET_TO_SPI_FLASH_1_CMD_STR,
+        .verbs = (const char*[]){"sbs_dual",
+                                 SBS_DUAL_CONNECT_TARGET_TO_SPI_FLASH_1_CMD_STR,
                                  NULL},
         .desc = "Set mux select to connect target to spi flash 2 (SBS Dual)",
         .params = (const struct htool_param[]){{}},
-        .func = htool_sbs_run,
+        .func = htool_sbs_dual_run,
     },
     {
         .verbs = (const char*[]){"i2c", I2C_DETECT_CMD_STR, NULL},
@@ -1505,8 +1516,7 @@ static const struct htool_cmd CMDS[] = {
     },
     {
         .verbs = (const char*[]){"tpm_spi", "probe", NULL},
-        .desc =
-            "Probe the TPM_SPI interface (DID/VID) over a spidev interface",
+        .desc = "Probe the TPM_SPI interface (DID/VID) over a spidev interface",
         .params = (const struct htool_param[]){{}},
         .func = htool_tpm_spi_probe,
     },
