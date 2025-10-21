@@ -12,6 +12,18 @@ cc_library(
     ],
 )
 
+cc_test(
+    name = "host_cmd_test",
+    srcs = ["host_cmd_test.cc"],
+    deps = [
+        ":host_cmd",
+        "//protocol/test:libhoth_device_mock",
+        "//transports:libhoth_device",
+        "@googletest//:gtest",
+        "@googletest//:gtest_main",
+    ],
+)
+
 cc_library(
     name = "rot_firmware_version",
     srcs = ["rot_firmware_version.c"],

@@ -77,4 +77,10 @@ ACTION_P(CopyResp, response, resp_size) {
   *arg3 = full_resp_size;
 }
 
+ACTION_P(CopyRespRaw, response, resp_size) {
+  ASSERT_LE(resp_size, arg2);
+  std::memcpy(arg1, response, resp_size);
+  *arg3 = resp_size;
+}
+
 #endif  // _LIBHOTH_PROTOCOL_TEST_LIBHOTH_DEVICE_MOCK_H_
