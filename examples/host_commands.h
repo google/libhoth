@@ -72,7 +72,6 @@ struct hoth_response_flash_spi_info {
  */
 #define HOTH_PRV_CMD_HOTH_SECURITY_V3 0x0033
 
-
 /**
  * Macro to retrieve the final address of a command, which is the sum of the
  * base address and the added command.
@@ -102,8 +101,6 @@ struct hoth_security_v2_response_header {
   /* Reserved value, set to 0; used for 32-bit alignment. */
   uint16_t reserved;
 } __attribute__((packed));
-
-
 
 /**
  * The parameter structure for security v2 commands
@@ -157,12 +154,13 @@ enum hoth_target_reset_option {
 #define RESET_TARGET_ID_RSTCTRL0 0
 struct hoth_request_reset_target {
   uint32_t target_id;
-  uint8_t reset_option;  // "reset_option" must be one of hoth_target_reset_option
-                         // Side-by-Side (Hammurabi and Chopper) only support
-                         // RESET_PULSE. For backward compatibility, if
-                         // HOTH_PRV_CMD_HOTH_RESET_TARGET is sent without a
-                         // request param, it defaults to RESET_PULSE. Viperlite
-                         // and Diorite only support RESET_SET and RESET_RELEASE
+  // "reset_option" must be one of hoth_target_reset_option
+  // Side-by-Side (Hammurabi and Chopper) only support
+  // RESET_PULSE. For backward compatibility, if
+  // HOTH_PRV_CMD_HOTH_RESET_TARGET is sent without a
+  // request param, it defaults to RESET_PULSE. Viperlite
+  // and Diorite only support RESET_SET and RESET_RELEASE
+  uint8_t reset_option;
   uint8_t reserved[12];
 } __attribute__((packed));
 
@@ -328,14 +326,16 @@ enum hoth_target_control_action {
   // enabled/disabled status of the given function.
   HOTH_TARGET_CONTROL_ACTION_ENABLE = 2,
 
-  // Recommended to be used for `HOTH_TARGET_CONTROL_SBS_MUX` function
-  HOTH_TARGET_CONTROL_ACTION_SBS_MUX_CONNECT_TARGET_TO_SPI_FLASH_0 =
+  // Recommended to be used for `HOTH_TARGET_CONTROL_SBS_MUX_SINGLE` function
+  HOTH_TARGET_CONTROL_ACTION_SBS_MUX_SINGLE_CONNECT_FLASH_TO_ROT =
       HOTH_TARGET_CONTROL_ACTION_DISABLE,
-  HOTH_TARGET_CONTROL_ACTION_SBS_MUX_CONNECT_TARGET_TO_SPI_FLASH_1 =
+  HOTH_TARGET_CONTROL_ACTION_SBS_MUX_SINGLE_CONNECT_FLASH_TO_TARGET =
       HOTH_TARGET_CONTROL_ACTION_ENABLE,
-  HOTH_TARGET_CONTROL_ACTION_SBS_MUX_CONNECT_FLASH_TO_ROT =
+
+  // Recommended to be used for `HOTH_TARGET_CONTROL_SBS_MUX_DUAL` function
+  HOTH_TARGET_CONTROL_ACTION_SBS_MUX_DUAL_CONNECT_TARGET_TO_SPI_FLASH_0 =
       HOTH_TARGET_CONTROL_ACTION_DISABLE,
-  HOTH_TARGET_CONTROL_ACTION_SBS_MUX_CONNECT_FLASH_TO_TARGET =
+  HOTH_TARGET_CONTROL_ACTION_SBS_MUX_DUAL_CONNECT_TARGET_TO_SPI_FLASH_1 =
       HOTH_TARGET_CONTROL_ACTION_ENABLE,
 };
 
@@ -349,7 +349,8 @@ enum hoth_target_control_function {
   // Allow checking whether external USB host is connected to system in which
   // RoT is present
   HOTH_TARGET_DETECT_EXTERNAL_USB_HOST_PRESENCE = 4,
-  HOTH_TARGET_CONTROL_SBS_MUX = 5,
+  HOTH_TARGET_CONTROL_SBS_MUX_SINGLE = 5,
+  HOTH_TARGET_CONTROL_SBS_MUX_DUAL = 6,
   HOTH_TARGET_CONTROL_FUNCTION_MAX,
 };
 
@@ -363,10 +364,16 @@ enum hoth_target_control_status {
       HOTH_TARGET_CONTROL_STATUS_DISABLED,
   HOTH_TARGET_EXTERNAL_USB_HOST_PRESENT = HOTH_TARGET_CONTROL_STATUS_ENABLED,
 
-  // Recommended to be used for `HOTH_TARGET_CONTROL_SBS_MUX` function
-  HOTH_TARGET_CONTROL_SBS_MUX_TARGET_CONNECTED_TO_SPI_FLASH_0 =
+  // Recommended to be used for `HOTH_TARGET_CONTROL_SBS_MUX_SINGLE` function
+  HOTH_TARGET_CONTROL_SBS_SINGLE_MUX_CONNECTED_FLASH_TO_ROT =
       HOTH_TARGET_CONTROL_STATUS_DISABLED,
-  HOTH_TARGET_CONTROL_SBS_MUX_TARGET_CONNECTED_TO_SPI_FLASH_1 =
+  HOTH_TARGET_CONTROL_SBS_SINGLE_MUX_CONNECTED_FLASH_TO_TARGET =
+      HOTH_TARGET_CONTROL_STATUS_ENABLED,
+
+  // Recommended to be used for `HOTH_TARGET_CONTROL_SBS_MUX_DUAL` function
+  HOTH_TARGET_CONTROL_SBS_MUX_DUAL_TARGET_CONNECTED_TO_SPI_FLASH_0 =
+      HOTH_TARGET_CONTROL_STATUS_DISABLED,
+  HOTH_TARGET_CONTROL_SBS_MUX_DUAL_TARGET_CONNECTED_TO_SPI_FLASH_1 =
       HOTH_TARGET_CONTROL_STATUS_ENABLED,
 };
 
