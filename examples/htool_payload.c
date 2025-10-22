@@ -31,6 +31,9 @@
 
 int htool_payload_status() {
   struct libhoth_device* dev = htool_libhoth_device();
+
+  // Check that we got a valid device.
+  // If not, return a -1 to indicate failure.
   if (!dev) {
     return -1;
   }
