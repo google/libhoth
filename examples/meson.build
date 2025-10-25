@@ -51,6 +51,9 @@ executable(
         'htool_security_info.c',
         'htool_provisioning.h',
         'htool_provisioning.c',
+        'htool_security_v2_defs.h',
+        'htool_security_certificates.h',
+        'htool_security_certificates.c',
         git_version_h,
     ],
     dependencies: [libusb],
@@ -97,6 +100,44 @@ if gtest_dep.found() and gmock_dep.found()
             ],
             include_directories: incdir,
             link_with: [libhoth.get_static_lib()], 
+            dependencies: [gtest_dep, gmock_dep],
+        ),
+    )
+
+    test(
+        'htool_security_certificates_test_asan',
+        executable(
+            'htool_security_certificates_test_asan_exe',
+            sources: [
+                'test/test_util.h',
+                'test/test_util.cc',
+                'htool_security_certificates.c',
+                'htool_security_certificates_test.cc',
+                '../protocol/test/libhoth_device_mock.cc',
+            ],
+            include_directories: incdir,
+            link_with: [libhoth.get_static_lib()],
+            dependencies: [gtest_dep, gmock_dep],
+            c_args: ['-fsanitize=address'],
+            cpp_args: ['-fsanitize=address'],
+            link_args: ['-fsanitize=address'],
+
+        ),
+    )
+
+    test(
+        'htool_security_certificates_test',
+        executable(
+            'htool_security_certificates_test_exe',
+            sources: [
+                'test/test_util.h',
+                'test/test_util.cc',
+                'htool_security_certificates.c',
+                'htool_security_certificates_test.cc',
+                '../protocol/test/libhoth_device_mock.cc',
+            ],
+            include_directories: incdir,
+            link_with: [libhoth.get_static_lib()],
             dependencies: [gtest_dep, gmock_dep],
         ),
     )
