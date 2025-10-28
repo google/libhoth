@@ -32,6 +32,7 @@
 #include "htool_authz_command.h"
 #include "htool_cmd.h"
 #include "htool_console.h"
+#include "htool_dfu.h"
 #include "htool_i2c.h"
 #include "htool_jtag.h"
 #include "htool_key_rotation.h"
@@ -928,6 +929,18 @@ static const struct htool_cmd CMDS[] = {
             (const struct htool_param[]){
                 {HTOOL_POSITIONAL, .name = "source-file"}, {}},
         .func = htool_payload_info,
+    },
+    {
+        .verbs = (const char*[]){"dfu", "update", NULL},
+        .desc = "Directly install a PIE-RoT fwupdate.",
+        .params =
+            (const struct htool_param[]){
+                {HTOOL_POSITIONAL, .name = "fwupdate-file",
+                 .desc = "A .fwupdate file compatible with this device."},
+                {HTOOL_FLAG_VALUE, .name = "reset",
+                 .desc = "warm, cold, or none", .default_value = "warm"},
+                {}},
+        .func = htool_dfu_update,
     },
     {.verbs = (const char*[]){"flash_spi_info", NULL},
      .desc = "Get SPI NOR flash info.",
