@@ -414,3 +414,13 @@ cc_test(
         "@googletest//:gtest_main",
     ],
 )
+
+cc_library(
+    name = "dfu_hostcmd",
+    srcs = ["dfu_hostcmd.c"],
+    hdrs = ["dfu_hostcmd.h"],
+    deps = [
+        ":host_cmd",
+        "//transports:libhoth_device",
+    ],
+)
