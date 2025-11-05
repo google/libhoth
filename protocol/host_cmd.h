@@ -69,6 +69,8 @@ enum hoth_status {
 
 #define HOTH_HOST_REQUEST_VERSION 3
 
+#define HOTH_CMD_TIMEOUT_MS_DEFAULT 180000  // 180 seconds
+
 struct hoth_host_request {
   // Should be HOTH_HOST_REQUEST_VERSION
   uint8_t struct_version;
