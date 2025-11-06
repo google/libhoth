@@ -112,3 +112,29 @@ TEST(PayloadInfotest, descriptor_clipping) {
 
   (void)munmap(image, statbuf.st_size);
 }
+
+TEST(PayloadInfotest, payload_info_non_SHA256_hash_type) {
+  int fd = open(kTestData, O_RDONLY, 0);
+  ASSERT_NE(fd, -1);
+
+  struct stat statbuf;
+  ASSERT_EQ(fstat(fd, &statbuf), 0);
+
+  uint8_t *image = reinterpret_cast<uint8_t *>(
+      mmap(NULL, statbuf.st_size, PROT_READ | PROT_WRITE, MAP_PRIVATE, fd, 0));
+  ASSERT_NE(image, nullptr);
+
+  const struct image_descriptor *descr =
+      libhoth_find_image_descriptor(image, statbuf.st_size);
+
+  ASSERT_NE(descr, nullptr);
+
+  // Clobber the hash type to something other than SHA256 to fail since
+  // we only support SHA256
+  const_cast<image_descriptor *>(descr)->hash_type = HASH_SHA2_224;
+
+  struct payload_info info;
+  EXPECT_FALSE(libhoth_payload_info(image, statbuf.st_size, &info));
+
+  (void)munmap(image, statbuf.st_size);
+}
