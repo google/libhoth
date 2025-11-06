@@ -14,9 +14,9 @@
 #ifndef LIBHOTH_EXAMPLES_HTOOL_PROVISIONING_H_
 #define LIBHOTH_EXAMPLES_HTOOL_PROVISIONING_H_
 
-#include <openssl/sha.h>
 #include <stdbool.h>
 #include <stdint.h>
+#include <stddef.h>
 
 #ifdef __cplusplus
 extern "C" {
