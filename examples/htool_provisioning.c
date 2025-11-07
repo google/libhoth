@@ -11,7 +11,6 @@
 #include "host_commands.h"
 #include "htool.h"
 #include "htool_cmd.h"
-#include "htool_macros.h"
 #include "htool_security_version.h"
 #include "protocol/host_cmd.h"
 

@@ -1,7 +1,10 @@
 #include "examples/test/test_util.h"
 
+#include <cstddef>
+#include <ios>
 #include <iomanip>
 #include <sstream>
+#include <string>
 
 HtoolInvocationMock* g_htool_invocation_mock = nullptr;
 
