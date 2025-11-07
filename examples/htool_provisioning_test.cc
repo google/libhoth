@@ -28,14 +28,16 @@
 #include <vector>
 
 #include "examples/test/test_util.h"
+#include "protocol/host_cmd.h"
+#include "host_commands.h"
 #include "htool_security_version.h"
 #include "protocol/test/libhoth_device_mock.h"
+#include "transports/libhoth_device.h"
 
 using ::testing::_;
 using ::testing::DoAll;
 using ::testing::Return;
 using ::testing::SetArgPointee;
-using ::testing::SetArrayArgument;
 
 static HtoolInvocationMock* g_htool_invocation_mock = nullptr;
 
@@ -61,37 +63,46 @@ libhoth_security_version htool_get_security_version(
 class HtoolProvisioningTest : public LibHothTest {
  protected:
   void SetUp() override {
-    tmp_dir = nullptr;
+    tmp_dir_path_.clear();
     mock_dev = &hoth_dev_;
     g_htool_invocation_mock = &invocation_mock_;
-    const char* build_root = std::getenv("MESON_BUILD_ROOT");
-    if (build_root == nullptr) {
-      build_root = ".";  // Fallback to current directory
+    // To support multiple build systems, check for TEST_TMPDIR (used by
+    // Bazel) first, then MESON_BUILD_ROOT (used by Meson). If neither is
+    // set, default to the current directory.
+    std::string build_root;
+    const char* test_tmpdir = std::getenv("TEST_TMPDIR");
+    const char* meson_root = std::getenv("MESON_BUILD_ROOT");
+
+    if (test_tmpdir != nullptr) {
+      build_root = test_tmpdir;
+    } else if (meson_root != nullptr) {
+      build_root = meson_root;
+    } else {
+      build_root = ".";
     }
-    std::string template_str =
-        std::string(build_root) + "/htool_provisioning_test_dir.XXXXXX";
-    char* temp_dir_template = strdup(template_str.c_str());
-    tmp_dir = mkdtemp(temp_dir_template);
-    ASSERT_NE(tmp_dir, nullptr) << "mkdtemp failed: " << strerror(errno);
+    std::string tmpl = build_root + "/htool_provisioning_test_dir.XXXXXX";
+    ASSERT_NE(mkdtemp(&tmpl[0]), nullptr)
+        << "mkdtemp failed: " << strerror(errno);
+    tmp_dir_path_ = tmpl;
+
   }
 
   void TearDown() override {
     g_htool_invocation_mock = nullptr;
     mock_dev = nullptr;
-    if (tmp_dir != nullptr) {
-      std::filesystem::remove_all(tmp_dir);
-      free(tmp_dir);
+    if (!tmp_dir_path_.empty()) {
+      std::filesystem::remove_all(tmp_dir_path_);
     }
   }
 
   HtoolInvocationMock invocation_mock_;
-  char* tmp_dir;
+  std::string tmp_dir_path_;
 };
 
 TEST_F(HtoolProvisioningTest, GetProvisioningLogSuccess) {
   struct htool_invocation inv{};
   std::string tmp_output_file =
-      std::string(tmp_dir) + "/provisioning_log.GetProvisioningLogSuccess.bin";
+      tmp_dir_path_ + "/provisioning_log.GetProvisioningLogSuccess.bin";
   EXPECT_CALL(invocation_mock_, GetParamString("output", _))
       .WillOnce(DoAll(SetArgPointee<1>(tmp_output_file.c_str()), Return(0)));
 
@@ -211,8 +222,8 @@ TEST_F(HtoolProvisioningTest, GetProvisioningLogSuccess) {
 TEST_F(HtoolProvisioningTest, GetProvisioningLogUnexpectedResponseSize) {
   struct htool_invocation inv{};
   std::string tmp_output_file =
-      std::string(tmp_dir) +
-      "/provisioning_log.GetProvisioningLogUnexpectedResponseSize.bin";
+    tmp_dir_path_ +
+    "/provisioning_log.GetProvisioningLogUnexpectedResponseSize.bin";
   EXPECT_CALL(invocation_mock_, GetParamString("output", _))
       .WillOnce(DoAll(SetArgPointee<1>(tmp_output_file.c_str()), Return(0)));
 
@@ -257,7 +268,7 @@ TEST_F(HtoolProvisioningTest, GetProvisioningLogUnexpectedResponseSize) {
 TEST_F(HtoolProvisioningTest, GetProvisioningLogUnexpectedErrorFromDevice) {
   struct htool_invocation inv{};
   std::string tmp_output_file =
-      std::string(tmp_dir) +
+      tmp_dir_path_ +
       "/provisioning_log.GetProvisioningLogUnexpectedErrorFromDevice.bin";
   EXPECT_CALL(invocation_mock_, GetParamString("output", _))
       .WillOnce(DoAll(SetArgPointee<1>(tmp_output_file.c_str()), Return(0)));
@@ -370,7 +381,7 @@ TEST_F(HtoolProvisioningTest, GetProvisioningLogOutputFileNotAbleToBeOpened) {
 TEST_F(HtoolProvisioningTest, GetProvisioningLogResponseTooLarge) {
   struct htool_invocation inv{};
   std::string tmp_output_file =
-      std::string(tmp_dir) +
+      tmp_dir_path_ +
       "/provisioning_log.GetProvisioningLogResponseTooLarge.bin";
   EXPECT_CALL(invocation_mock_, GetParamString("output", _))
       .WillOnce(DoAll(SetArgPointee<1>(tmp_output_file.c_str()), Return(0)));
@@ -435,9 +446,9 @@ TEST_F(HtoolProvisioningTest, GetProvisioningLogResponseTooLarge) {
 TEST_F(HtoolProvisioningTest, ValidateAndSignSuccess) {
   struct htool_invocation inv{};
   std::string tmp_perso_blob_file =
-      std::string(tmp_dir) + "/perso_blob.ValidateAndSignSuccess.bin";
+      tmp_dir_path_ + "/perso_blob.ValidateAndSignSuccess.bin";
   std::string tmp_output_file =
-      std::string(tmp_dir) + "/signed_log.ValidateAndSignSuccess.bin";
+      tmp_dir_path_ + "/signed_log.ValidateAndSignSuccess.bin";
   EXPECT_CALL(invocation_mock_, GetParamString("perso_blob", _))
       .WillOnce(
           DoAll(SetArgPointee<1>(tmp_perso_blob_file.c_str()), Return(0)));
@@ -513,10 +524,10 @@ TEST_F(HtoolProvisioningTest, ValidateAndSignSuccess) {
 TEST_F(HtoolProvisioningTest, ValidateAndSignUnexpectedErrorFromDevice) {
   struct htool_invocation inv{};
   std::string tmp_perso_blob_file =
-      std::string(tmp_dir) +
+      tmp_dir_path_ +
       "/perso_blob.ValidateAndSignUnexpectedErrorFromDevice.bin";
   std::string tmp_output_file =
-      std::string(tmp_dir) +
+      tmp_dir_path_ +
       "/signed_log.ValidateAndSignUnexpectedErrorFromDevice.bin";
   EXPECT_CALL(invocation_mock_, GetParamString("perso_blob", _))
       .WillOnce(
@@ -556,7 +567,7 @@ TEST_F(HtoolProvisioningTest, ValidateAndSignUnexpectedErrorFromDevice) {
 TEST_F(HtoolProvisioningTest, ValidateAndSignNoOutputFile) {
   struct htool_invocation inv{};
   std::string tmp_perso_blob_file =
-      std::string(tmp_dir) + "/perso_blob.ValidateAndSignNoOutputFile.bin";
+      tmp_dir_path_ + "/perso_blob.ValidateAndSignNoOutputFile.bin";
   std::string tmp_output_file = "signed_log.ValidateAndSignNoOutputFile.bin";
   EXPECT_CALL(invocation_mock_, GetParamString("perso_blob", _))
       .WillOnce(
@@ -588,7 +599,7 @@ TEST_F(HtoolProvisioningTest, ValidateAndSignNoOutputFile) {
 TEST_F(HtoolProvisioningTest, ValidateAndSignOutputFileNotAbleToBeOpened) {
   struct htool_invocation inv{};
   std::string tmp_perso_blob_file =
-      std::string(tmp_dir) +
+      tmp_dir_path_ +
       "/perso_blob.ValidateAndSignOutputFileNotAbleToBeOpened.bin";
   std::string tmp_output_file = "/path/to/nonexistant/file";
   EXPECT_CALL(invocation_mock_, GetParamString("perso_blob", _))
@@ -621,10 +632,10 @@ TEST_F(HtoolProvisioningTest, ValidateAndSignOutputFileNotAbleToBeOpened) {
 TEST_F(HtoolProvisioningTest, ValidateAndSignPersoBlobFileEmpty) {
   struct htool_invocation inv{};
   std::string tmp_perso_blob_file =
-      std::string(tmp_dir) +
+      tmp_dir_path_ +
       "/perso_blob.ValidateAndSignPersoBlobFileEmpty.bin";
   std::string tmp_output_file =
-      std::string(tmp_dir) +
+      tmp_dir_path_ +
       "/signed_log.ValidateAndSignPersoBlobFileEmpty.bin";
   EXPECT_CALL(invocation_mock_, GetParamString("perso_blob", _))
       .WillOnce(
@@ -655,10 +666,10 @@ TEST_F(HtoolProvisioningTest, ValidateAndSignPersoBlobFileEmpty) {
 TEST_F(HtoolProvisioningTest, ValidateAndSignPersoBlobFileDoesNotExist) {
   struct htool_invocation inv{};
   std::string tmp_perso_blob_file =
-      std::string(tmp_dir) +
+      tmp_dir_path_ +
       "/perso_blob.ValidateAndSignPersoBlobFileDoesNotExist.bin";
   std::string tmp_output_file =
-      std::string(tmp_dir) +
+      tmp_dir_path_ +
       "/signed_log.ValidateAndSignPersoBlobFileDoesNotExist.bin";
   EXPECT_CALL(invocation_mock_, GetParamString("perso_blob", _))
       .WillOnce(
@@ -681,9 +692,9 @@ TEST_F(HtoolProvisioningTest, ValidateAndSignPersoBlobFileDoesNotExist) {
 TEST_F(HtoolProvisioningTest, ValidateAndSignTooLargeResponse) {
   struct htool_invocation inv{};
   std::string tmp_perso_blob_file =
-      std::string(tmp_dir) + "/perso_blob.ValidateAndSignTooLargeResponse.bin";
+      tmp_dir_path_ + "/perso_blob.ValidateAndSignTooLargeResponse.bin";
   std::string tmp_output_file =
-      std::string(tmp_dir) + "/signed_log.ValidateAndSignTooLargeResponse.bin";
+      tmp_dir_path_ + "/signed_log.ValidateAndSignTooLargeResponse.bin";
   EXPECT_CALL(invocation_mock_, GetParamString("perso_blob", _))
       .WillOnce(
           DoAll(SetArgPointee<1>(tmp_perso_blob_file.c_str()), Return(0)));

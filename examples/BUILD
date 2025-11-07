@@ -166,6 +166,7 @@ cc_test(
     srcs = ["htool_provisioning_test.cc"],
     deps = [
         ":htool_cmd",
+        ":host_commands",
         ":htool_provisioning",
         ":htool_security_version",
         "//protocol:host_cmd",
