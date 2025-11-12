@@ -78,6 +78,9 @@ struct hoth_response_flash_spi_info {
  */
 #define HOTH_BASE_CMD(cmd) (HOTH_CMD_BOARD_SPECIFIC_BASE + (cmd))
 
+/* The major command identifier for the Provisioning Log read host command. */
+#define HOTH_PRV_CMD_HOTH_PROVISIONING_LOG 0x0040
+
 /**
  * The request header structure for security v2 commands
  */
@@ -163,6 +166,28 @@ struct hoth_security_v2_parameter {
  */
 #define HOTH_PRV_CMD_HOTH_SECURITY_V2_GET_SIGNED_ATTESTATION_PUB_CERT_MINOR_COMMAND \
   25
+
+/**
+ * The command to get token information from the device.
+ */
+#define HOTH_PRV_CMD_HOTH_SECURITY_V2_TOKENS_MAJOR_COMMAND 5
+
+/**
+ * The command to get the amount of loaded token sets.
+ */
+#define HOTH_PRV_CMD_HOTH_SECURITY_V2_GET_TOKEN_SET_COUNT_MINOR_COMMAND 6
+
+/**
+ * The command to get the loaded token at a given set index.
+ */
+#define HOTH_PRV_CMD_HOTH_SECURITY_V2_GET_TOKENS_IN_SET_MINOR_COMMAND 8
+
+
+/**
+ * The command to get the token info at a given set index.
+ */
+#define HOTH_PRV_CMD_HOTH_SECURITY_V2_GET_TOKEN_SET_INFO_MINOR_COMMAND 7
+
 
 /**
  * The identifier for the getting the major version of the SecurityV2 Info
