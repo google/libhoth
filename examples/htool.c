@@ -46,6 +46,7 @@
 #include "htool_secure_boot.h"
 #include "htool_security_certificates.h"
 #include "htool_security_info.h"
+#include "htool_security_tokens.h"
 #include "htool_srtm.h"
 #include "htool_statistics.h"
 #include "htool_target_control.h"
@@ -1596,6 +1597,50 @@ static const struct htool_cmd CMDS[] = {
             (const struct htool_param[]){
                 {HTOOL_FLAG_VALUE, .name = "output", .default_value = "",
                  .desc = "The Signed Attestation Public Certificate"},
+                {}},
+    },
+    {
+        .verbs = (const char*[]){"tokens", "get_token_set_count", NULL},
+        .desc = "Get the Token Set Count",
+        .func = htool_get_token_set_count,
+        .params =
+            (const struct htool_param[]){
+                {HTOOL_FLAG_VALUE, .name = "num_ids_output", .default_value = "",
+                 .desc = "The number of token sets"},
+                {HTOOL_FLAG_VALUE, .name = "boot_nonce_output", .default_value = "",
+                 .desc = "The file contianing the boot_nonce."},
+                {HTOOL_FLAG_VALUE, .name = "signature_output", .default_value = "",
+                 .desc = "The file contianing the detached challengeresponse signature."},
+                {}},
+    },
+    {
+        .verbs = (const char*[]){"tokens", "get_tokens_in_set", NULL},
+        .desc = "Gets the Tokens in the Set",
+        .func = htool_get_tokens_in_set,
+        .params =
+            (const struct htool_param[]){
+                {HTOOL_FLAG_VALUE, .name = "token_output", .default_value = "",
+                 .desc = "The file contianing the Tokens"},
+                {HTOOL_FLAG_VALUE, .name = "set_index",
+                 .default_value = "0",
+                 .desc = "The index of the Token Set being queried"},
+                {HTOOL_FLAG_VALUE, .name = "boot_nonce_output", .default_value = "",
+                 .desc = "The file contianing the boot_nonce."},
+                {HTOOL_FLAG_VALUE, .name = "signature_output", .default_value = "",
+                 .desc = "The file contianing the detached challengeresponse signature."},
+                {}},
+    },
+    {
+        .verbs = (const char*[]){"tokens", "get_token_set_info", NULL},
+        .desc = "Gets the Token Set Info",
+        .func = htool_get_token_set_info,
+        .params =
+            (const struct htool_param[]){
+                {HTOOL_FLAG_VALUE, .name = "token_set_info", .default_value = "",
+                 .desc = "The Token Set Info"},
+                {HTOOL_FLAG_VALUE, .name = "set_index",
+                 .default_value = "0",
+                 .desc = "The index of the Token Set being queried"},
                 {}},
     },
     {},
