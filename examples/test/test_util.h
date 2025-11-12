@@ -131,5 +131,16 @@ MATCHER_P5(IsSecurityV2Command, expected_major, expected_minor,
   return true;
 }
 
+ACTION_P(SetHostCmdResponse, response_data) {
+  // Corresponds to hostcmd_exec(dev, command, version, request, request_size,
+  //                            response, response_size, bytes_read)
+  void* response_buffer = arg5;
+  size_t response_size = arg6;
+  size_t* bytes_read = arg7;
+
+  ASSERT_LE(response_data.size(), response_size);
+  memcpy(response_buffer, response_data.data(), response_data.size());
+  *bytes_read = response_data.size();
+}
 
 #endif  // LIBHOTH_EXAMPLES_TEST_TEST_UTIL_H_

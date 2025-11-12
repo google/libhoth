@@ -120,6 +120,20 @@ cc_test(
     ],
 )
 
+cc_test(
+    name = "htool_security_v2_test",
+    srcs = ["htool_security_v2_test.cc"],
+    deps = [
+        ":host_commands",
+        ":htool_security_v2",
+        ":htool_security_version",
+        "//examples/test:test_util",
+        "//protocol/test:libhoth_device_mock",
+        "@googletest//:gtest",
+        "@googletest//:gtest_main",
+    ],
+)
+
 cc_binary(
     name = "htool",
     srcs = [
