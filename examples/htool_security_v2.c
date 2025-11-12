@@ -130,3 +130,146 @@ int htool_exec_security_v2_cmd(struct libhoth_device* dev, uint8_t major,
 
   return 0;
 }
+
+static int read_security_v2_serialized_header(struct security_v2_buffer* buffer,
+                                              const struct security_v2_serialized_response_hdr** header) {
+  const struct security_v2_serialized_response_hdr* response_header;
+
+  if (!buffer || !header) {
+    fprintf(stderr, "Arguments cannot be NULL");
+    return -1;
+  }
+
+  // Read the response's header.
+  int status = consume_bytes(buffer, sizeof(struct security_v2_serialized_response_hdr), (uint8_t**)&response_header);
+  if (status != 0 || !response_header) {
+    fprintf(stderr, "Failed to initialize response, cannot read header.");
+    return -1;
+  }
+
+  if (response_header->reserved != 0) {
+    fprintf(stderr, "Reserved field non-zero.");
+    return -1;
+  }
+
+  *header = response_header;
+
+  return 0;
+}
+
+static int validate_param_padding(struct security_v2_buffer* buffer,
+                                  const struct security_v2_serialized_param* param) {
+  const uint8_t* padding;
+  size_t param_padding_size = padding_size(param->size);
+  int i;
+
+  if (param_padding_size == 0) {
+    // No padding check necessary.
+    return 0;
+  }
+
+  // If the parameter value's length requires padding, we need
+  // to read the padding bytes and ensure they are all zero.
+  int status = consume_bytes(buffer, param_padding_size, (uint8_t**)&padding);
+
+  if (status != 0 || !padding) {
+    fprintf(stderr,
+        "Failed to validate param padding, could not read padding data.\n");
+    return -1;
+  }
+
+  for (i = 0; i < param_padding_size; ++i) {
+    if (padding[i] != 0) {
+      fprintf(stderr, "Failed to validate param padding, padding is non-zero.\n");
+      return -1;
+    }
+  }
+
+  return 0;
+}
+
+static int read_security_v2_serialized_params(struct security_v2_buffer* buffer,
+                                              const struct security_v2_serialized_param** param) {
+  const uint8_t* value;
+  if (!buffer || !param) {
+    fprintf(stderr,
+        "Failed to read response param, arguments cannot be NULL.\n");
+    return -1;
+  }
+
+  // Read the parameter's header.
+  int status = consume_bytes(buffer, sizeof(**param), (uint8_t**)param);
+  if (status != 0 || !*param) {
+    fprintf(stderr, "Failed to read response param header.\n");
+    return -1;
+  }
+
+  if ((*param)->reserved != 0) {
+    fprintf(stderr, "Reserved field non-zero.\n");
+    return -1;
+  }
+
+  // Read the parameter's value.
+  status = consume_bytes(buffer, (*param)->size, (uint8_t**)&value);
+  if (status != 0 || !value) {
+    fprintf(stderr, "Failed to read response param data.\n");
+    return -1;
+  }
+
+  status = validate_param_padding(buffer, *param);
+  if (status != 0) {
+    return status;
+  }
+
+  return 0;
+}
+
+int htool_exec_security_v2_serialized_cmd(struct libhoth_device* dev, uint8_t major,
+                                          uint8_t minor, uint16_t base_command,
+                                          struct security_v2_buffer* request_buffer,
+                                          const struct security_v2_param* request_params,
+                                          uint16_t request_param_count,
+                                          struct security_v2_buffer* response_buffer,
+                                          const struct security_v2_serialized_param** response_params[],
+                                          uint16_t response_param_count) {
+  int status = 0;
+  const struct security_v2_serialized_response_hdr* response_hdr;
+  status = htool_exec_security_v2_cmd(
+      dev, major, minor, base_command, request_buffer, request_params,
+      request_param_count, response_buffer, /*response_params=*/NULL,
+      /*response_param_count=*/0);
+  if (status != 0) {
+    return -1;
+  }
+
+  status = read_security_v2_serialized_header(response_buffer, &response_hdr);
+  if (status != 0) {
+    return -1;
+  }
+
+  if (response_hdr->param_count != response_param_count) {
+    fprintf(stderr, "Expected a %u response params, Got %u\n",
+            response_param_count, response_hdr->param_count);
+    return -1;
+  }
+
+  for (int i = 0; i < response_param_count; ++i) {
+    status = read_security_v2_serialized_params(response_buffer, response_params[i]);
+    if (status != 0) {
+      return status;
+    }
+  }
+  return status;
+}
+
+int copy_param(const struct security_v2_serialized_param* param, void* output, size_t output_size) {
+  if (param->size != output_size) {
+    fprintf(stderr,
+        "Parameter is too large (%u bytes) to fit in "
+        "the output buffer (%lu bytes)\n", param->size, output_size);
+    return -1;
+  }
+
+  memcpy(output, param->value, output_size);
+  return 0;
+}

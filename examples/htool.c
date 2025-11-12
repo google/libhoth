@@ -46,6 +46,7 @@
 #include "htool_secure_boot.h"
 #include "htool_security_certificates.h"
 #include "htool_security_info.h"
+#include "htool_security_tokens.h"
 #include "htool_srtm.h"
 #include "htool_statistics.h"
 #include "htool_target_control.h"
@@ -1588,6 +1589,32 @@ static const struct htool_cmd CMDS[] = {
             (const struct htool_param[]){
                 {HTOOL_FLAG_VALUE, .name = "output", .default_value = "",
                  .desc = "The Signed Attestation Public Certificate"},
+                {}},
+    },
+    {
+        .verbs = (const char*[]){"security", "attestation", NULL},
+        .desc = "Fetch attestation information, including tokens and certificates.",
+        .func = htool_fetch_attestation,
+        .params =
+            (const struct htool_param[]){
+                {HTOOL_FLAG_VALUE, .name = "token_output", .default_value = "",
+                 .desc = "The base filename for the output token binary data."},
+                {HTOOL_FLAG_VALUE, .name = "token_set_info", .default_value = "",
+                 .desc = "The base filename for the token set info binary data."},
+                {HTOOL_FLAG_VALUE, .name = "token_boot_nonce_output", .default_value = "",
+                 .desc = "The base filename for the boot nonce binary data."},
+                {HTOOL_FLAG_VALUE, .name = "token_signature_output", .default_value = "",
+                 .desc = "The base filename for the signature binary data."},
+                {HTOOL_FLAG_VALUE, .name = "token_count_boot_nonce_output", .default_value = "",
+                 .desc = "The base filename for the boot nonce binary data."},
+                {HTOOL_FLAG_VALUE, .name = "token_count_signature_output", .default_value = "",
+                 .desc = "The base filename for the signature binary data."},
+                {HTOOL_FLAG_VALUE, .name = "token_count_output", .default_value = "",
+                 .desc = "The filename that will contain the token count."},
+                {HTOOL_FLAG_VALUE, .name = "attestation_file", .default_value = "",
+                 .desc = "The filename that will contain the entire attestation as one binary file."
+                        " The attestation_output flag is optional." 
+                        " If the attestation_output flag is provided the other output files are not required."},
                 {}},
     },
     {},
