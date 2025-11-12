@@ -142,4 +142,42 @@ if gtest_dep.found() and gmock_dep.found()
         ),
     )
 
+    test(
+        'htool_security_v2_test_asan',
+        executable(
+            'htool_security_v2_test_asan_exe',
+            sources: [
+                'test/test_util.h',
+                'test/test_util.cc',
+                'htool_security_v2.h',
+                'htool_security_v2.c',
+                'htool_security_v2_test.cc',
+                '../protocol/test/libhoth_device_mock.cc',
+            ],
+            include_directories: incdir,
+            link_with: [libhoth.get_static_lib()],
+            dependencies: [gtest_dep, gmock_dep],
+            c_args: ['-fsanitize=address'],
+            cpp_args: ['-fsanitize=address'],
+            link_args: ['-fsanitize=address'],
+        ),
+    )
+    test(
+        'htool_security_v2_test',
+        executable(
+            'htool_security_v2_test_exe',
+            sources: [
+                'test/test_util.h',
+                'test/test_util.cc',
+                'htool_security_v2.h',
+                'htool_security_v2.c',
+                'htool_security_v2_test.cc',
+                '../protocol/test/libhoth_device_mock.cc',
+            ],
+            include_directories: incdir,
+            link_with: [libhoth.get_static_lib()],
+            dependencies: [gtest_dep, gmock_dep],
+        ),
+    )
+
 endif

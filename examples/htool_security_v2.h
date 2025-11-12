@@ -57,6 +57,12 @@ int htool_exec_security_v2_cmd(struct libhoth_device* dev, uint8_t major,
                                struct security_v2_param* response_params,
                                uint16_t response_param_count);
 
+// Returns the necessary padding given the size
+static inline size_t padding_size(uint16_t size) {
+  size_t align = size % sizeof(uint32_t);
+  return align == 0 ? 0 : sizeof(uint32_t) - align;
+}
+
 #ifdef __cplusplus
 }
 #endif

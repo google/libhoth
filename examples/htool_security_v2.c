@@ -24,10 +24,8 @@ static int consume_bytes(struct security_v2_buffer* buffer, uint16_t bytes,
   return 0;
 }
 
-static inline size_t padding_size(uint16_t size) {
-  size_t align = size % sizeof(uint32_t);
-  return align == 0 ? 0 : sizeof(uint32_t) - align;
-}
+
+
 int htool_exec_security_v2_cmd(struct libhoth_device* dev, uint8_t major,
                                uint8_t minor, uint16_t base_command,
                                struct security_v2_buffer* request_buffer,
@@ -67,18 +65,21 @@ int htool_exec_security_v2_cmd(struct libhoth_device* dev, uint8_t major,
       return status;
     }
     memcpy(request_param_value, request_params[i].data,
-           response_params[i].size);
+           request_params[i].size);
   }
 
+  // May need to remove bytes_read and replace it with Null in libhoth_hostcmd_exec
+  size_t bytes_read;
   status = libhoth_hostcmd_exec(dev, base_command, 0, request_buffer->data,
                                 request_buffer->size, response_buffer->data,
-                                response_buffer->size, NULL);
+                                response_buffer->size, &bytes_read);
   if (status != 0) {
     // htool_exec_hostcmd logs to stderr, don't repeat here.
     return status;
   }
+  response_buffer->size = (uint16_t)bytes_read;
 
-  // Short circuit if there are no output params
+  // Return 0 as there are no other actions needed under this case.
   if (response_param_count == 0) {
     return 0;
   }
