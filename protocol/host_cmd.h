@@ -106,6 +106,8 @@ int libhoth_hostcmd_exec(struct libhoth_device* dev, uint16_t command,
                          size_t req_payload_size, void* resp_buf,
                          size_t resp_buf_size, size_t* out_resp_size);
 
+uint32_t libhoth_generate_pseudorandom_u32(uint32_t *seed);
+
 uint8_t libhoth_calculate_checksum(const void* header, size_t header_size,
                                    const void* data, size_t data_size);
 

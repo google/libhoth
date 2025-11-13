@@ -56,6 +56,17 @@ void hex_dump(FILE* out, const void* buffer, size_t size) {
   }
 }
 
+// 32-bits XOR shift algorithm from "Xorshift RNGs" by George Marsaglia
+uint32_t libhoth_generate_pseudorandom_u32(uint32_t *seed) {
+  *seed ^= (*seed << 13);
+  // The paper seems to have a typo in the algorithm presented on Pg 4, missing
+  // the ^ operation for second assignment. Pg 3 shows 8 shift operations that
+  // can serve as basis for xorshift. All of them have ^= operation.
+  *seed ^= (*seed >> 17);
+  *seed ^= (*seed << 5);
+  return *seed;
+}
+
 uint8_t libhoth_calculate_checksum(const void* header, size_t header_size,
                                       const void* data, size_t data_size) {
   size_t i;
