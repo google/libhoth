@@ -1056,7 +1056,7 @@ static const struct htool_cmd CMDS[] = {
                                  SBS_DUAL_CONNECT_TARGET_TO_SPI_FLASH_0_CMD_STR,
                                  NULL},
         .desc =
-            "Set mux select pin to connect target to spi flash 1 (SBS Dual)",
+            "Set mux select pin to connect target to spi flash 0 (SBS Dual)",
         .params = (const struct htool_param[]){{}},
         .func = htool_sbs_dual_run,
     },
@@ -1064,7 +1064,7 @@ static const struct htool_cmd CMDS[] = {
         .verbs = (const char*[]){"sbs_dual",
                                  SBS_DUAL_CONNECT_TARGET_TO_SPI_FLASH_1_CMD_STR,
                                  NULL},
-        .desc = "Set mux select to connect target to spi flash 2 (SBS Dual)",
+        .desc = "Set mux select pin to connect target to spi flash 1 (SBS Dual)",
         .params = (const struct htool_param[]){{}},
         .func = htool_sbs_dual_run,
     },
