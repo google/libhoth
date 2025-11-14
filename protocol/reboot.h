@@ -21,6 +21,7 @@ extern "C" {
 
 #include <stdint.h>
 
+#include "host_cmd.h"
 #include "transports/libhoth_device.h"
 
 #define HOTH_CMD_REBOOT_EC 0x00D2
