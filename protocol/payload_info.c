@@ -55,8 +55,11 @@ bool libhoth_payload_info(const uint8_t* image, size_t len,
   payload_info->image_version.subpoint = descr->image_subpoint;
   payload_info->image_type = descr->image_type;
 
+  // Any hash type other than SHA256 is treated as no hash and fail the retrieval.
+  // HW doesnt have support for other hash types.
   if (descr->hash_type != HASH_SHA2_256) {
     memset(payload_info->image_hash, 0, sizeof(payload_info->image_hash));
+    return false;
   } else {
     uint32_t region_size = descr->region_count * sizeof(struct image_region);
     struct hash_sha256* hash =
