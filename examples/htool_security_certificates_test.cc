@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "examples/htool_security_certificates.h"
+#include "htool_security_certificates.h"
 
 #include <errno.h>
 #include <gmock/gmock.h>

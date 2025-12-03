@@ -17,9 +17,9 @@
 
 #include "examples/host_commands.h"
 #include "examples/htool.h"
-#include "examples/htool_cmd.h"
-#include "examples/htool_security_v2.h"
-#include "examples/htool_security_version.h"
+#include "htool_cmd.h"
+#include "htool_security_v2.h"
+#include "htool_security_version.h"
 #include "protocol/host_cmd.h"
 #include "protocol/test/libhoth_device_mock.h"
 #include "transports/libhoth_device.h"

@@ -17,6 +17,7 @@
 #include <ctype.h>
 #include <errno.h>
 #include <libusb.h>
+#include <fnmatch.h>
 #include <stdbool.h>
 #include <stddef.h>
 #include <stdint.h>
@@ -75,6 +76,7 @@ static void print_device(void* cb_param, libusb_device* dev,
   }
 
   libusb_device_handle* dev_handle;
+  char sys_path[256];
   rv = libusb_open(dev, &dev_handle);
   if (rv != LIBUSB_SUCCESS) {
     fprintf(stderr, " (unable to open device: %s)", libusb_strerror(rv));
@@ -95,6 +97,12 @@ static void print_device(void* cb_param, libusb_device* dev,
 cleanup2:
   libusb_close(dev_handle);
 cleanup:
+  rv = libhoth_get_usb_sys_path(dev, sys_path, sizeof(sys_path));
+  if (rv != LIBUSB_SUCCESS) {
+    fprintf(stderr, " (unable to get sys path: %s)", libusb_strerror(rv));
+  } else {
+    fprintf(stderr, " %s", sys_path);
+  }
   fprintf(stderr, "\n");
 }
 
@@ -256,6 +264,20 @@ bool filter_by_usb_product_substr(
   return strstr(product_name, usb_product_substr) != NULL;
 }
 
+static bool filter_by_usb_path_glob(
+    void* cb_param, libusb_device* dev,
+    const struct libusb_device_descriptor* descriptor) {
+  const char* glob_pattern = (const char*)cb_param;
+  char sys_path[256];
+  int rv = libhoth_get_usb_sys_path(dev, sys_path, sizeof(sys_path));
+  if (rv != LIBUSB_SUCCESS) {
+    fprintf(stderr, "libhoth_get_usb_sys_path failed: %s\n",
+            libusb_strerror(rv));
+    return false;
+  }
+  return fnmatch(glob_pattern, sys_path, 0) == 0;
+}
+
 bool filter_allow_all(void* cb_param, libusb_device* dev,
                       const struct libusb_device_descriptor* descriptor) {
   return true;
@@ -272,10 +294,13 @@ libusb_device* htool_libusb_device(void) {
   }
   const char* usb_loc_str;
   const char* usb_product_substr;
+  const char* usb_path_glob_str;
   int rv =
       htool_get_param_string(htool_global_flags(), "usb_loc", &usb_loc_str) ||
       htool_get_param_string(htool_global_flags(), "usb_product",
-                             &usb_product_substr);
+                             &usb_product_substr) ||
+      htool_get_param_string(htool_global_flags(), "usb_path",
+                             &usb_path_glob_str);
   if (rv) {
     return NULL;
   }
@@ -291,6 +316,10 @@ libusb_device* htool_libusb_device(void) {
   if (strlen(usb_product_substr) > 0) {
     return select_device(ctx, filter_by_usb_product_substr,
                          (void*)usb_product_substr);
+  }
+  if (strlen(usb_path_glob_str) > 0) {
+    return select_device(ctx, filter_by_usb_path_glob,
+                         (void*)usb_path_glob_str);
   }
   return select_device(ctx, filter_allow_all, NULL);
 }

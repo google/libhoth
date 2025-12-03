@@ -1677,6 +1677,8 @@ static const struct htool_param GLOBAL_FLAGS[] = {
              "'1s', '1500ms')."},
     {HTOOL_FLAG_VALUE, .name = "usb_retry_delay", .default_value = "50ms",
      .desc = "Delay between USB open retries (e.g., '50ms', '10000us')."},
+    {HTOOL_FLAG_VALUE, .name = "usb_path", .default_value = "",
+     .desc = "Glob pattern for matching the USB device path."},
     {HTOOL_FLAG_BOOL, .name = "version", .default_value = "false",
      .desc = "Print htool version."},
     {}};

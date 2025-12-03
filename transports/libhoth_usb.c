@@ -15,7 +15,12 @@
 #include "transports/libhoth_usb.h"
 
 #include <libusb.h>
+#include <limits.h>
+#include <stdint.h>
+#include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
+#include <unistd.h>
 
 #include "transports/libhoth_device.h"
 #include "transports/libhoth_usb_device.h"
@@ -348,3 +353,40 @@ int libhoth_usb_get_device(libusb_context* ctx,
   libusb_free_device_list(device, /*unref_devices=*/1);
   return found_device ? LIBHOTH_OK : LIBHOTH_ERR_INTERFACE_NOT_FOUND;
 }
+
+int libhoth_get_usb_sys_path(libusb_device* dev, char* path, size_t path_len) {
+  struct libhoth_usb_loc loc;
+  char bus_port_path[PATH_MAX];
+  int ret;
+
+  if (dev == NULL || path == NULL || path_len == 0) {
+    return LIBUSB_ERROR_INVALID_PARAM;
+  }
+
+  ret = libhoth_get_usb_loc(dev, &loc);
+  if (ret) {
+    return ret;
+  }
+
+  ret = snprintf(bus_port_path, sizeof(bus_port_path), "/sys/bus/usb/devices/%d-%d",
+                 loc.bus, loc.ports[0]);
+  if (ret < 0 || (size_t)ret >= sizeof(bus_port_path)) {
+    return LIBUSB_ERROR_OVERFLOW;
+  }
+
+  for (int i = 1; i < loc.num_ports; i++) {
+    size_t current_len = strlen(bus_port_path);
+    ret = snprintf(bus_port_path + current_len, sizeof(bus_port_path) - current_len,
+                   ".%d", loc.ports[i]);
+    if (ret < 0 || current_len + (size_t)ret >= sizeof(bus_port_path)) {
+      return LIBUSB_ERROR_OVERFLOW;
+    }
+  }
+
+  if (realpath(bus_port_path, path) == NULL) {
+    return LIBUSB_ERROR_OTHER;
+  }
+
+  return LIBUSB_SUCCESS;
+}
+
