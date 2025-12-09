@@ -18,6 +18,7 @@ protocol_srcs = [
     'key_rotation.c',
     'secure_boot.c',
     'command_version.c',
+    'dfu_hostcmd.c',
 ]
 
 incdir = include_directories('..')
