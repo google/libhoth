@@ -42,8 +42,8 @@ const uint8_t SPI_OP_READ = 0x03;
 #define SPI_TEST_DATA_LEN_64K (65536)
 #define SPI_TEST_ADDR_ALIGNED (0x20000)
 
-// The chunk size includes the hoth_spi_operation_request header to represent the full SPI operation payload
-#define SPI_TEST_DEFAULT_CHUNK_SIZE (sizeof(struct hoth_spi_operation_request) + SPI_TEST_DEFAULT_SIZE)
+// The SPI response payload length calculation
+#define SPI_TEST_RESP_PAYLOAD_LEN (LIBHOTH_MAILBOX_SIZE - sizeof(struct hoth_host_response))
 // Replicating the offset calculation for spi operation request MISO data offset
 #define SPI_TEST_OP_REQ_MISO_OFFSET (sizeof(struct hoth_spi_operation_request)) + sizeof(SPI_OP_READ)
 
@@ -69,9 +69,9 @@ TEST_F(LibHothTest, spi_proxy_init) {
 TEST_F(LibHothTest, spi_proxy_verify) {
   //Create a buffer that matches a mock location that lives within
   //the external SPI flash and set to all zeros.
-  std::vector<uint8_t> buffer(SPI_TEST_DEFAULT_CHUNK_SIZE, 0);
+  std::vector<uint8_t> buffer(SPI_TEST_RESP_PAYLOAD_LEN, 0);
 
-  std::vector<uint8_t> mock_resp_buffer(SPI_TEST_DEFAULT_CHUNK_SIZE, 0);
+  std::vector<uint8_t> mock_resp_buffer(SPI_TEST_RESP_PAYLOAD_LEN, 0);
 
   // Populate the mock response buffer with expected data
   for(unsigned int i = 0; i < SPI_TEST_MOSI_LEN; i++) {
@@ -86,7 +86,7 @@ TEST_F(LibHothTest, spi_proxy_verify) {
       .WillRepeatedly(Return(LIBHOTH_OK));
 
   EXPECT_CALL(mock_, receive)
-      .WillRepeatedly(DoAll(CopyResp(&buffer[0], SPI_TEST_DEFAULT_CHUNK_SIZE + 1), Return(LIBHOTH_OK)));
+      .WillRepeatedly(DoAll(CopyResp(&buffer[0], SPI_TEST_RESP_PAYLOAD_LEN), Return(LIBHOTH_OK)));
 
   struct libhoth_spi_proxy spi = {};
   spi.dev = &hoth_dev_;
@@ -102,9 +102,9 @@ TEST_F(LibHothTest, spi_proxy_verify) {
 TEST_F(LibHothTest, spi_proxy_fail_verify) {
   //Create a buffer that matches a mock location that lives within
   //the external SPI flash and set to all zeros.
-  std::vector<uint8_t> buffer(SPI_TEST_DEFAULT_CHUNK_SIZE, 0);
+  std::vector<uint8_t> buffer(SPI_TEST_RESP_PAYLOAD_LEN, 0);
 
-  std::vector<uint8_t> mock_resp_buffer(SPI_TEST_DEFAULT_CHUNK_SIZE, 0);
+  std::vector<uint8_t> mock_resp_buffer(SPI_TEST_RESP_PAYLOAD_LEN, 0);
 
   // Populate the mock response buffer with expected data
   for(unsigned int i = 0; i < SPI_TEST_MOSI_LEN; i++) {
@@ -118,7 +118,7 @@ TEST_F(LibHothTest, spi_proxy_fail_verify) {
       .WillRepeatedly(Return(LIBHOTH_OK));
 
   EXPECT_CALL(mock_, receive)
-      .WillRepeatedly(DoAll(CopyResp(&buffer[0], SPI_TEST_DEFAULT_CHUNK_SIZE + 1), Return(LIBHOTH_OK)));
+      .WillRepeatedly(DoAll(CopyResp(&buffer[0], SPI_TEST_RESP_PAYLOAD_LEN), Return(LIBHOTH_OK)));
 
   struct libhoth_spi_proxy spi = {};
   spi.dev = &hoth_dev_;
