@@ -240,6 +240,7 @@ cc_binary(
         "//protocol:i2c",
         "//protocol:jtag",
         "//protocol:key_rotation",
+        "//protocol:opentitan_version",
         "//protocol:panic",
         "//protocol:payload_info",
         "//protocol:payload_status",

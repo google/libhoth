@@ -1,4 +1,5 @@
 protocol_srcs = [
+    'opentitan_version.c',
     'host_cmd.c',
     'rot_firmware_version.c',
     'payload_status.c',
