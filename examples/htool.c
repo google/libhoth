@@ -1689,5 +1689,7 @@ static const struct htool_param GLOBAL_FLAGS[] = {
     {}};
 
 int main(int argc, const char* const* argv) {
-  return htool_main(GLOBAL_FLAGS, CMDS, argc - 1, &argv[1]);
+  int ret = htool_main(GLOBAL_FLAGS, CMDS, argc - 1, &argv[1]);
+  printf("=== dev htool ===\n");
+  return ret;
 }
