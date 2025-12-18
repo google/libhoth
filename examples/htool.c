@@ -68,12 +68,17 @@ static int command_usb_list(const struct htool_invocation* inv) {
 }
 
 static int command_reboot(const struct htool_invocation* inv) {
+  bool warm = false;
+  if (htool_get_param_bool(inv, "warm", &warm)) {
+    return -1;
+  }
+
   struct libhoth_device* dev = htool_libhoth_device();
   if (!dev) {
     return -1;
   }
 
-  return libhoth_reboot(dev);
+  return libhoth_reboot(dev, warm ? HOTH_REBOOT_WARM : HOTH_REBOOT_COLD);
 }
 
 static int command_get_version(const struct htool_invocation* inv) {
@@ -793,7 +798,9 @@ static const struct htool_cmd CMDS[] = {
         .verbs = (const char*[]){"reboot", NULL},
         .alias = (const char*[]){"ec_reboot", NULL},
         .desc = "Reboot the RoT.",
-        .params = (const struct htool_param[]){{}},
+        .params = (const struct htool_param[]){{HTOOL_FLAG_BOOL, 'w', "warm",
+                                                "false", .desc = "warm reboot"},
+                                               {}},
         .func = command_reboot,
     },
     {

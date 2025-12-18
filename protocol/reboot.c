@@ -16,10 +16,10 @@
 
 #include "host_cmd.h"
 
-int libhoth_reboot(struct libhoth_device* dev) {
+int libhoth_reboot(struct libhoth_device* dev, enum hoth_reboot_cmd cmd) {
   struct hoth_params_reboot_ec req = {
-      .cmd = HOTH_REBOOT_COLD,
+      .cmd = cmd,
   };
-  return libhoth_hostcmd_exec(dev, HOTH_CMD_REBOOT_EC, 0, &req, sizeof(req), NULL, 0,
-                      NULL);
+  return libhoth_hostcmd_exec(dev, HOTH_CMD_REBOOT_EC, 0, &req, sizeof(req),
+                              NULL, 0, NULL);
 }
