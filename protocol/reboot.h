@@ -28,6 +28,7 @@ extern "C" {
 
 enum hoth_reboot_cmd {
   HOTH_REBOOT_COLD = 4,
+  HOTH_REBOOT_WARM = 8,
 };
 
 struct hoth_params_reboot_ec {
@@ -37,7 +38,7 @@ struct hoth_params_reboot_ec {
   uint8_t flags;
 } __hoth_align1;
 
-int libhoth_reboot(struct libhoth_device* dev);
+int libhoth_reboot(struct libhoth_device* dev, enum hoth_reboot_cmd cmd);
 
 #ifdef __cplusplus
 }

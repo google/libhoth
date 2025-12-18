@@ -31,5 +31,5 @@ TEST_F(LibHothTest, reboot_test) {
   EXPECT_CALL(mock_, receive)
       .WillOnce(DoAll(CopyResp(&dummy, 0), Return(LIBHOTH_OK)));
 
-  EXPECT_EQ(libhoth_reboot(&hoth_dev_), LIBHOTH_OK);
+  EXPECT_EQ(libhoth_reboot(&hoth_dev_, HOTH_REBOOT_COLD), LIBHOTH_OK);
 }
