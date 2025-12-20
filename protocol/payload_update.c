@@ -18,6 +18,7 @@
 #include <stdint.h>
 #include <string.h>
 
+#include "progress.h"
 #include "command_version.h"
 #include "host_cmd.h"
 #include "payload_info.h"
@@ -42,8 +43,7 @@ static int send_payload_update_request_with_command(struct libhoth_device* dev,
 
 static int libhoth_payload_update_finalize(
   struct libhoth_device* dev, uint8_t* pld_needs_reinitialization) {
-  fprintf(stderr, "Finalize...\n");
-  fprintf(stderr, "Using payload update version 0\n");
+  fprintf(stderr, "Using FINALIZE payload update version 0\n");
   if (pld_needs_reinitialization != NULL) {
     *pld_needs_reinitialization = 0;
   }
@@ -52,23 +52,41 @@ static int libhoth_payload_update_finalize(
 }
 
 enum payload_update_err libhoth_payload_update(struct libhoth_device* dev,
-                                               uint8_t* image, size_t size) {
+                                               uint8_t* image, size_t size, bool skip_erase) {
   if (libhoth_find_image_descriptor(image, size) == NULL) {
     return PAYLOAD_UPDATE_BAD_IMG;
   }
 
-  fprintf(stderr, "Initiating payload update protocol with libhoth.\n");
-  if (send_payload_update_request_with_command(dev, PAYLOAD_UPDATE_INITIATE) !=
-      0) {
-    return PAYLOAD_UPDATE_INITIATE_FAIL;
+  if (!skip_erase) {
+    struct libhoth_progress_stderr erase_progress;
+    libhoth_progress_stderr_init(&erase_progress, "Erase staging by sending 64KiB ERASEs");
+    const size_t erase_chunk = 64 * 1024;
+    for (size_t offset = 0; offset + erase_chunk <= size; offset += erase_chunk) {
+      struct payload_update_packet request;
+      request.type = PAYLOAD_UPDATE_ERASE;
+      request.offset = offset;
+      request.len = erase_chunk;
+
+      int ret = libhoth_hostcmd_exec(
+        dev, HOTH_CMD_BOARD_SPECIFIC_BASE + HOTH_PRV_CMD_HOTH_PAYLOAD_UPDATE, 0,
+        &request, sizeof(request), NULL, 0, NULL);
+      if (ret != 0) {
+        fprintf(stderr, "(erase) Error code from hoth: %d\n", ret);
+        return -1;
+      }
+      erase_progress.progress.func(erase_progress.progress.param, offset, size);
+    }
   }
 
   const size_t max_chunk_size = LIBHOTH_MAILBOX_SIZE -
                                 sizeof(struct hoth_host_request) -
                                 sizeof(struct payload_update_packet);
 
-  fprintf(stderr, "Flashing the image to hoth.\n");
+  struct libhoth_progress_stderr program_progress;
+  libhoth_progress_stderr_init(&program_progress, "Programming staging by sending CONTINUEs");
   for (size_t offset = 0; offset < size; ++offset) {
+    program_progress.progress.func(program_progress.progress.param, offset, size);
+
     if (image[offset] == 0xFF) {
       continue;
     }

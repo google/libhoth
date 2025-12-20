@@ -39,7 +39,7 @@ TEST_F(LibHothTest, payload_update_bad_image_test) {
 
   uint8_t bad_buffer[100] = {0};
 
-  EXPECT_EQ(libhoth_payload_update(&hoth_dev_, bad_buffer, sizeof(bad_buffer)),
+  EXPECT_EQ(libhoth_payload_update(&hoth_dev_, bad_buffer, sizeof(bad_buffer), false),
             PAYLOAD_UPDATE_BAD_IMG);
 }
 
@@ -77,7 +77,7 @@ TEST_F(LibHothTest, payload_update_test) {
   std::unique_ptr<uint8_t[]> buffer = std::make_unique<uint8_t[]>(2 * kAlign);
   std::memcpy(buffer.get() + kAlign, &kMagic, sizeof(kMagic));
 
-  EXPECT_EQ(libhoth_payload_update(&hoth_dev_, buffer.get(), 2 * kAlign),
+  EXPECT_EQ(libhoth_payload_update(&hoth_dev_, buffer.get(), 2 * kAlign, false),
             PAYLOAD_UPDATE_OK);
 }
 
@@ -105,7 +105,7 @@ TEST_F(LibHothTest, payload_update_command_version_unsupported) {
   uint8_t buffer[100] = {0};
   std::memcpy(buffer, &kMagic, sizeof(kMagic));
 
-  EXPECT_EQ(libhoth_payload_update(&hoth_dev_, buffer, sizeof(buffer)),
+  EXPECT_EQ(libhoth_payload_update(&hoth_dev_, buffer, sizeof(buffer), false),
             PAYLOAD_UPDATE_OK);
 }
 
@@ -117,7 +117,7 @@ TEST_F(LibHothTest, payload_update_initiate_fail) {
   uint8_t buffer[100] = {0};
   std::memcpy(buffer, &kMagic, sizeof(kMagic));
 
-  EXPECT_EQ(libhoth_payload_update(&hoth_dev_, buffer, sizeof(buffer)),
+  EXPECT_EQ(libhoth_payload_update(&hoth_dev_, buffer, sizeof(buffer), false),
             PAYLOAD_UPDATE_INITIATE_FAIL);
 }
 
@@ -131,7 +131,7 @@ TEST_F(LibHothTest, payload_update_flash_fail) {
   uint8_t buffer[100] = {0};
   std::memcpy(buffer, &kMagic, sizeof(kMagic));
 
-  EXPECT_EQ(libhoth_payload_update(&hoth_dev_, buffer, sizeof(buffer)),
+  EXPECT_EQ(libhoth_payload_update(&hoth_dev_, buffer, sizeof(buffer), false),
             PAYLOAD_UPDATE_FLASH_FAIL);
 }
 
@@ -154,7 +154,7 @@ TEST_F(LibHothTest, payload_update_command_version_fail) {
   uint8_t buffer[100] = {0};
   std::memcpy(buffer, &kMagic, sizeof(kMagic));
 
-  EXPECT_EQ(libhoth_payload_update(&hoth_dev_, buffer, sizeof(buffer)),
+  EXPECT_EQ(libhoth_payload_update(&hoth_dev_, buffer, sizeof(buffer), false),
             PAYLOAD_UPDATE_FINALIZE_FAIL);
 }
 
@@ -182,7 +182,7 @@ TEST_F(LibHothTest, payload_update_finalize_fail) {
   uint8_t buffer[100] = {0};
   std::memcpy(buffer, &kMagic, sizeof(kMagic));
 
-  EXPECT_EQ(libhoth_payload_update(&hoth_dev_, buffer, sizeof(buffer)),
+  EXPECT_EQ(libhoth_payload_update(&hoth_dev_, buffer, sizeof(buffer), false),
             PAYLOAD_UPDATE_FINALIZE_FAIL);
 }
 

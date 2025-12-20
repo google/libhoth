@@ -20,6 +20,7 @@ extern "C" {
 #endif
 
 #include <stdint.h>
+#include <stdbool.h>
 
 #include "transports/libhoth_device.h"
 
@@ -71,7 +72,7 @@ struct payload_update_finalize_response_v1 {
 } __attribute__((packed));
 
 enum payload_update_err libhoth_payload_update(struct libhoth_device* dev,
-                                               uint8_t* image, size_t len);
+                                               uint8_t* image, size_t len, bool skip_erase);
 int libhoth_payload_update_getstatus(
     struct libhoth_device* dev, struct payload_update_status* update_status);
 

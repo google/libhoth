@@ -39,6 +39,11 @@ int htool_payload_update(const struct htool_invocation *inv) {
     return -1;
   }
 
+  bool skip_erase;
+  if (htool_get_param_bool(inv, "skip_erase", &skip_erase)) {
+    return -1;
+  }
+
   int fd = open(image_file, O_RDONLY, 0);
   if (fd == -1) {
     fprintf(stderr, "Error opening file %s: %s\n", image_file, strerror(errno));
@@ -64,7 +69,7 @@ int htool_payload_update(const struct htool_invocation *inv) {
   }
 
   enum payload_update_err payload_update_status =
-      libhoth_payload_update(dev, image, statbuf.st_size);
+      libhoth_payload_update(dev, image, statbuf.st_size, skip_erase);
   switch (payload_update_status) {
     case PAYLOAD_UPDATE_OK:
       fprintf(stderr, "Payload update finished\n");

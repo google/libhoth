@@ -101,6 +101,7 @@ cc_library(
         ":command_version",
         ":host_cmd",
         ":payload_info",
+        ":progress",
         "//transports:libhoth_device",
     ],
 )
