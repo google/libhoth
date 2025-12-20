@@ -41,43 +41,14 @@ static int send_payload_update_request_with_command(struct libhoth_device* dev,
 }
 
 static int libhoth_payload_update_finalize(
-    struct libhoth_device* dev, uint8_t* pld_needs_reinitialization) {
-  uint32_t version_mask = 0;
-  int status = libhoth_get_command_versions(
-      dev, HOTH_CMD_BOARD_SPECIFIC_BASE + HOTH_PRV_CMD_HOTH_PAYLOAD_UPDATE,
-      &version_mask);
-  // Command version check in not supported or version 1 is not supported,
-  // default to version 0.
-  if (status == HTOOL_ERROR_HOST_COMMAND_START + HOTH_RES_INVALID_COMMAND ||
-      (status == 0 && (version_mask & 0x2) == 0)) {
-    fprintf(stderr, "Using payload update version 0\n");
-    if (pld_needs_reinitialization != NULL) {
-      *pld_needs_reinitialization = 0;
-    }
-    return send_payload_update_request_with_command(dev,
-                                                    PAYLOAD_UPDATE_FINALIZE);
-  } else if (status != 0) {
-    fprintf(stderr,
-            "Checking supported command version got unexpected error: %d\n",
-            status);
-    return status;
-  }
-  fprintf(stderr, "Using payload update version 1\n");
-  struct payload_update_packet request = {
-      .type = PAYLOAD_UPDATE_FINALIZE,
-  };
-  struct payload_update_finalize_response_v1 response = {0};
-  status = libhoth_hostcmd_exec(
-      dev, HOTH_CMD_BOARD_SPECIFIC_BASE + HOTH_PRV_CMD_HOTH_PAYLOAD_UPDATE,
-      /*version=*/1, &request, sizeof(request), &response, sizeof(response),
-      NULL);
-  if (status != 0) {
-    return status;
-  }
+  struct libhoth_device* dev, uint8_t* pld_needs_reinitialization) {
+  fprintf(stderr, "Finalize...\n");
+  fprintf(stderr, "Using payload update version 0\n");
   if (pld_needs_reinitialization != NULL) {
-    *pld_needs_reinitialization = response.pld_needs_reinitialization;
+    *pld_needs_reinitialization = 0;
   }
-  return 0;
+  return send_payload_update_request_with_command(dev,
+                                                  PAYLOAD_UPDATE_FINALIZE);
 }
 
 enum payload_update_err libhoth_payload_update(struct libhoth_device* dev,
