@@ -59,6 +59,7 @@
 #include "protocol/progress.h"
 #include "protocol/reboot.h"
 #include "protocol/rot_firmware_version.h"
+#include "protocol/opentitan_version.h"
 #include "protocol/spi_proxy.h"
 #include "transports/libhoth_device.h"
 #include "transports/libhoth_spi.h"
@@ -787,6 +788,59 @@ static int command_hello(const struct htool_invocation* inv) {
   return 0;
 }
 
+static int command_opentitan_version(const struct htool_invocation* inv) {
+  struct libhoth_device* dev = htool_libhoth_device();
+  if (!dev) {
+    return -1;
+  }
+
+  struct opentitan_get_version_resp output;
+  const int rv = libhoth_opentitan_version(dev, &output);
+  if (rv) {
+    return rv;
+  }
+
+  printf("OpenTitan Version:\n");
+  printf("Current Boot Slot: %s\n", bootslot_str(output.primary_bl0_slot));
+  printf("Boot Slot A: rom_ext version %d.%d\n", output.rom_ext.slots[0].major,
+         output.rom_ext.slots[0].minor);
+  printf("Boot Slot A: rom_ext security version %d\n", output.rom_ext.slots[0].security_version);
+  printf("Boot Slot B: rom_ext version %d.%d\n", output.rom_ext.slots[1].major,
+         output.rom_ext.slots[1].minor);
+  printf("Boot Slot B: rom_ext security version %d\n", output.rom_ext.slots[1].security_version);
+
+  printf("Boot Slot A: rom_ext measurements\n");
+  for(int i = 0; i < OPENTITAN_VERSION_HASH_SIZE; i++) {
+    printf("[0x%08x] ", output.rom_ext.slots[0].measurement[i]);
+  }
+  printf("\n");
+  printf("Boot Slot B: rom_ext measurements\n");
+  for(int i = 0; i < OPENTITAN_VERSION_HASH_SIZE; i++) {
+    printf("[0x%08x] ", output.rom_ext.slots[1].measurement[i]);
+  }
+  printf("\n");
+
+  printf("Boot Slot A: APP version %d.%d\n", output.app.slots[0].major,
+         output.app.slots[0].minor);
+  printf("Boot Slot A: APP security version %d\n", output.app.slots[0].security_version);
+  printf("Boot Slot B: APP version %d.%d\n", output.app.slots[1].major,
+         output.app.slots[1].minor);
+  printf("Boot Slot B: APP security version %d\n", output.app.slots[1].security_version);
+
+  printf("Boot Slot A: APP measurements\n");
+  for(int i = 0; i < OPENTITAN_VERSION_HASH_SIZE; i++) {
+    printf("[0x%08x] ", output.app.slots[0].measurement[i]);
+  }
+  printf("\n");
+  printf("Boot Slot B: APP measurements\n");
+  for(int i = 0; i < OPENTITAN_VERSION_HASH_SIZE; i++) {
+    printf("[0x%08x] ", output.app.slots[1].measurement[i]);
+  }
+  printf("\n");
+
+  return 0;
+}
+
 static const struct htool_cmd CMDS[] = {
     {
         .verbs = (const char*[]){"usb", "list", NULL},
@@ -1389,6 +1443,12 @@ static const struct htool_cmd CMDS[] = {
                  .desc = "The 32-bit integer to send."},
                 {}},
         .func = command_hello,
+    },
+    {
+        .verbs = (const char*[]){"opentitan_version", NULL},
+        .desc = "Get OpenTitan version",
+        .params = (const struct htool_param[]){{}},
+        .func = command_opentitan_version,
     },
     {
         .verbs = (const char*[]){"key_rotation", "get", "status", NULL},

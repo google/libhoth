@@ -370,6 +370,16 @@ cc_test(
 )
 
 cc_library(
+    name = "opentitan_version",
+    deps = [
+        ":host_cmd",
+        "//transports:libhoth_device",
+    ],
+    srcs = ["opentitan_version.c"],
+    hdrs = ["opentitan_version.h"],
+)
+
+cc_library(
     name = "key_rotation",
     srcs = ["key_rotation.c"],
     hdrs = ["key_rotation.h"],
