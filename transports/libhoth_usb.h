@@ -63,6 +63,10 @@ int libhoth_usb_get_device(libusb_context* ctx,
                            libusb_device** out);
 int libhoth_get_usb_loc(libusb_device* dev, struct libhoth_usb_loc* result);
 
+// Returns the sysfs path for the given libusb_device.
+// Returns LIBUSB_SUCCESS on success, or a libusb error code on failure.
+int libhoth_get_usb_sys_path(libusb_device* dev, char* path, size_t path_len);
+
 #ifdef __cplusplus
 }
 #endif
