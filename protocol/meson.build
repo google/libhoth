@@ -20,6 +20,7 @@ protocol_srcs = [
     'secure_boot.c',
     'command_version.c',
     'dfu_hostcmd.c',
+    'dfu_check.c',
 ]
 
 incdir = include_directories('..')

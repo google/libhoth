@@ -1005,6 +1005,16 @@ static const struct htool_cmd CMDS[] = {
                 {}},
         .func = htool_dfu_update,
     },
+    {
+        .verbs = (const char*[]){"dfu", "check", NULL},
+        .desc = "Check that the device is running firmware matching a fwupdate bundle.",
+        .params =
+            (const struct htool_param[]){
+                {HTOOL_POSITIONAL, .name = "fwupdate-file",
+                 .desc = "A .fwupdate file compatible with this device."},
+                {}},
+        .func = htool_dfu_check,
+    },
     {.verbs = (const char*[]){"flash_spi_info", NULL},
      .desc = "Get SPI NOR flash info.",
      .params = (const struct htool_param[]){{}},

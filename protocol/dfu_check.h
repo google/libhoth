@@ -12,22 +12,20 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef LIBHOTH_EXAMPLES_HTOOL_DFU_H_
-#define LIBHOTH_EXAMPLES_HTOOL_DFU_H_
+#ifndef LIBHOTH_EXAMPLES_HTOOL_DFU_CHECK_H_
+#define LIBHOTH_EXAMPLES_HTOOL_DFU_CHECK_H_
 
+#include <stdint.h>
+#include <stddef.h>
 #include "protocol/opentitan_version.h"
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-struct htool_invocation;
-
-int htool_dfu_update(const struct htool_invocation* inv);
-int htool_dfu_check(const struct htool_invocation* inv);
-
+int libhoth_dfu_check(const uint8_t* image, size_t image_size, struct opentitan_get_version_resp * resp);
 #ifdef __cplusplus
 }
 #endif
 
-#endif  // LIBHOTH_EXAMPLES_HTOOL_DFU_H_
+#endif  // LIBHOTH_EXAMPLES_HTOOL_DFU_CHECKH_
