@@ -90,3 +90,70 @@ cleanup:
   }
   return retval;
 }
+
+int htool_dfu_check(const struct htool_invocation* inv) {
+  struct libhoth_device* dev = htool_libhoth_device();
+  if (!dev) {
+    return -1;
+  }
+
+  struct opentitan_get_version_resp resp = {0};
+  uint32_t complete_flags = 0;
+  const char* reset_arg;
+
+  const char* fwupdate_file;
+  if (htool_get_param_string(inv, "fwupdate-file", &fwupdate_file)) {
+    return -1;
+  }
+
+  int fd = open(fwupdate_file, O_RDONLY, 0);
+  if (fd == -1) {
+    fprintf(stderr, "Error opening file %s: %s\n", fwupdate_file,
+            strerror(errno));
+    return -1;
+  }
+
+  int retval = -1;
+
+  struct stat statbuf;
+  if (fstat(fd, &statbuf)) {
+    fprintf(stderr, "fstat error: %s\n", strerror(errno));
+    goto cleanup;
+  }
+  if (statbuf.st_size > SIZE_MAX) {
+    fprintf(stderr, "file too large\n");
+    goto cleanup;
+  }
+
+  uint8_t* image = mmap(NULL, statbuf.st_size, PROT_READ, MAP_PRIVATE, fd, 0);
+  if (image == MAP_FAILED) {
+    fprintf(stderr, "mmap error: %s\n", strerror(errno));
+    goto cleanup;
+  }
+
+  if (libhoth_opentitan_version(dev, &resp) != 0) {
+    fprintf(stderr, "Failed to get current version\n");
+    goto cleanup2;
+  }
+
+  if (libhoth_dfu_check(dev, image, statbuf.st_size, &resp) != 0) {
+    fprintf(stderr, "DFU check failed.\n");
+    goto cleanup2;
+  }
+
+  retval = 0;
+
+  int ret;
+cleanup2:
+  ret = munmap(image, statbuf.st_size);
+  if (ret != 0) {
+    fprintf(stderr, "munmap error: %d\n", ret);
+  }
+
+cleanup:
+  ret = close(fd);
+  if (ret != 0) {
+    fprintf(stderr, "close error: %d\n", ret);
+  }
+  return retval;
+}
