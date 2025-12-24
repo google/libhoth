@@ -788,6 +788,15 @@ static int command_hello(const struct htool_invocation* inv) {
   return 0;
 }
 
+static void print_ot_version(const char* prefix, struct opentitan_image_version* ver) {
+  printf("%s: %d.%d, sv=%d\n", prefix, ver->major, ver->minor, ver->security_version);
+  printf("  measurement=");
+  for(int i = 0; i < OPENTITAN_VERSION_HASH_SIZE; i++) {
+    printf("[0x%08x] ", ver->measurement[i]);
+  }
+  printf("\n");
+}
+
 static int command_opentitan_version(const struct htool_invocation* inv) {
   struct libhoth_device* dev = htool_libhoth_device();
   if (!dev) {
@@ -800,43 +809,23 @@ static int command_opentitan_version(const struct htool_invocation* inv) {
     return rv;
   }
 
-  printf("OpenTitan Version:\n");
-  printf("Current Boot Slot: %s\n", bootslot_str(output.primary_bl0_slot));
-  printf("Boot Slot A: rom_ext version %d.%d\n", output.rom_ext.slots[0].major,
-         output.rom_ext.slots[0].minor);
-  printf("Boot Slot A: rom_ext security version %d\n", output.rom_ext.slots[0].security_version);
-  printf("Boot Slot B: rom_ext version %d.%d\n", output.rom_ext.slots[1].major,
-         output.rom_ext.slots[1].minor);
-  printf("Boot Slot B: rom_ext security version %d\n", output.rom_ext.slots[1].security_version);
+  printf("primary bl0 slot: %s\n", bootslot_str(output.primary_bl0_slot));
+  print_ot_version("ROM_EXT Slot A", &output.rom_ext.slots[0]);
+  print_ot_version("ROM_EXT Slot B", &output.rom_ext.slots[1]);
+  print_ot_version("App Slot A", &output.app.slots[0]);
+  print_ot_version("App Slot B", &output.app.slots[1]);
 
-  printf("Boot Slot A: rom_ext measurements\n");
-  for(int i = 0; i < OPENTITAN_VERSION_HASH_SIZE; i++) {
-    printf("[0x%08x] ", output.rom_ext.slots[0].measurement[i]);
-  }
-  printf("\n");
-  printf("Boot Slot B: rom_ext measurements\n");
-  for(int i = 0; i < OPENTITAN_VERSION_HASH_SIZE; i++) {
-    printf("[0x%08x] ", output.rom_ext.slots[1].measurement[i]);
-  }
-  printf("\n");
+  struct opentitan_image_version* curr_romext =
+    (output.rom_ext.booted_slot == kOpentitanBootSlotA) ? &output.rom_ext.slots[0] : &output.rom_ext.slots[1];
+  struct opentitan_image_version* curr_app =
+    (output.app.booted_slot == kOpentitanBootSlotA) ? &output.app.slots[0] : &output.app.slots[1];
 
-  printf("Boot Slot A: APP version %d.%d\n", output.app.slots[0].major,
-         output.app.slots[0].minor);
-  printf("Boot Slot A: APP security version %d\n", output.app.slots[0].security_version);
-  printf("Boot Slot B: APP version %d.%d\n", output.app.slots[1].major,
-         output.app.slots[1].minor);
-  printf("Boot Slot B: APP security version %d\n", output.app.slots[1].security_version);
-
-  printf("Boot Slot A: APP measurements\n");
-  for(int i = 0; i < OPENTITAN_VERSION_HASH_SIZE; i++) {
-    printf("[0x%08x] ", output.app.slots[0].measurement[i]);
-  }
-  printf("\n");
-  printf("Boot Slot B: APP measurements\n");
-  for(int i = 0; i < OPENTITAN_VERSION_HASH_SIZE; i++) {
-    printf("[0x%08x] ", output.app.slots[1].measurement[i]);
-  }
-  printf("\n");
+  printf("Booted out of: App=slot %s, ROMEXT=slot %s\n",
+         bootslot_str(output.app.booted_slot),
+         bootslot_str(output.rom_ext.booted_slot));
+  printf("Currently running: %d.%d/%d.%d\n",
+         curr_app->major, curr_app->minor,
+         curr_romext->major, curr_romext->minor);
 
   return 0;
 }

@@ -32,17 +32,17 @@ int libhoth_opentitan_version(struct libhoth_device * dev,
   return rv;
 }
 
-char * bootslot_str(enum opentitan_boot_slot input) {
+const char * bootslot_str(enum opentitan_boot_slot input) {
 
   // Primary BL0 slot values are hardcoded in pie_rot
   // Boot slotA: 0x5f5f4141
   // Boot slotB: 0x42425f5f)
   if (input == kOpentitanBootSlotA) {
-    return "Boot slot A";
+    return "A";
   } else if (input == kOpentitanBootSlotB) {
-    return "Boot slot B";
+    return "B";
   } else {
-    return "Unknown boot slot";
+    return "Unknown";
   }
 
 }
