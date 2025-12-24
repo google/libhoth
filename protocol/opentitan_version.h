@@ -91,7 +91,7 @@ static_assert(sizeof(struct opentitan_get_version_resp) == 344, "");
 int libhoth_opentitan_version(struct libhoth_device *device,
                               struct opentitan_get_version_resp *response);
 
-char *bootslot_str(enum opentitan_boot_slot input);
+const char *bootslot_str(enum opentitan_boot_slot input);
 
 #ifdef __cplusplus
 }
