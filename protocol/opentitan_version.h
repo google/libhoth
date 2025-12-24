@@ -106,8 +106,9 @@ int libhoth_extract_ot_bundle(const uint8_t* image,
 bool libhoth_ot_version_eq(const struct opentitan_image_version * a,
                           const struct opentitan_image_version * b);
 
-char *bootslot_str(enum opentitan_boot_slot input);
-
+void libhoth_print_ot_version(const char* prefix, const struct opentitan_image_version* ver);
+void libhoth_print_ot_version_resp(const struct opentitan_get_version_resp* ver);
+const char *bootslot_str(enum opentitan_boot_slot input);
 int bootslot_int(enum opentitan_boot_slot input);
 
 #ifdef __cplusplus

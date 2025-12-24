@@ -78,17 +78,45 @@ bool libhoth_ot_version_eq(const struct opentitan_image_version * a,
 
 }
 
-char * bootslot_str(enum opentitan_boot_slot input) {
+void libhoth_print_ot_version(const char* prefix, const struct opentitan_image_version* ver) {
+  printf("%s: %d.%d, sv=%d\n", prefix, ver->major, ver->minor, ver->security_version);
+  printf("  measurement=");
+  for(int i = 0; i < OPENTITAN_VERSION_HASH_SIZE; i++) {
+    printf("[0x%08x] ", ver->measurement[i]);
+  }
+  printf("\n");
+}
 
+void libhoth_print_ot_version_resp(const struct opentitan_get_version_resp* ver) {
+  printf("primary bl0 slot: %s\n", bootslot_str(ver->primary_bl0_slot));
+  libhoth_print_ot_version("ROM_EXT Slot A", &ver->rom_ext.slots[0]);
+  libhoth_print_ot_version("ROM_EXT Slot B", &ver->rom_ext.slots[1]);
+  libhoth_print_ot_version("App Slot A", &ver->app.slots[0]);
+  libhoth_print_ot_version("App Slot B", &ver->app.slots[1]);
+
+  const struct opentitan_image_version* curr_romext =
+    (ver->rom_ext.booted_slot == kOpentitanBootSlotA) ? &ver->rom_ext.slots[0] : &ver->rom_ext.slots[1];
+  const struct opentitan_image_version* curr_app =
+    (ver->app.booted_slot == kOpentitanBootSlotA) ? &ver->app.slots[0] : &ver->app.slots[1];
+
+  printf("Booted out of: App=slot %s, ROMEXT=slot %s\n",
+         bootslot_str(ver->app.booted_slot),
+         bootslot_str(ver->rom_ext.booted_slot));
+  printf("Currently running: %d.%d/%d.%d\n",
+         curr_app->major, curr_app->minor,
+         curr_romext->major, curr_romext->minor);
+}
+
+const char * bootslot_str(enum opentitan_boot_slot input) {
   // Primary BL0 slot values are hardcoded in pie_rot
   // Boot slotA: 0x5f5f4141
   // Boot slotB: 0x42425f5f)
   if (input == kOpentitanBootSlotA) {
-    return "Boot slot A";
+    return "A";
   } else if (input == kOpentitanBootSlotB) {
-    return "Boot slot B";
+    return "B";
   } else {
-    return "Unknown boot slot";
+    return "Unknown";
   }
 }
 
