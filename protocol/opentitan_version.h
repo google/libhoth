@@ -17,6 +17,7 @@
 
 #include <stdint.h>
 #include <assert.h>
+#include <stdbool.h>
 
 #include "host_cmd.h"
 #include "transports/libhoth_device.h"
@@ -29,6 +30,13 @@ extern "C" {
 
 #define OPENTITAN_VERSION_HASH_SIZE 8
 #define OPENTITAN_NUM_SLOTS 2
+
+#define OPENTITAN_OFFSET_HEADER_DATA 36
+#define OPENTITAN_OFFSET_APP_FW 65536
+#define OPENTITAN_OFFSET_VERSION_MAJOR 836
+#define OPENTITAN_OFFSET_VERSION_MINOR 840
+#define OPENTITAN_OFFSET_VERSION_SECURITY 844
+#define OPENTITAN_OFFSET_TIMESTAMP 848
 
 typedef uint32_t opentitan_boot_slot_t;
 
@@ -91,7 +99,16 @@ static_assert(sizeof(struct opentitan_get_version_resp) == 344, "");
 int libhoth_opentitan_version(struct libhoth_device *device,
                               struct opentitan_get_version_resp *response);
 
+int libhoth_extract_ot_bundle(const uint8_t* image,
+                              struct opentitan_image_version * rom_ext,
+                              struct opentitan_image_version * app);
+
+bool libhoth_ot_version_eq(const struct opentitan_image_version * a,
+                          const struct opentitan_image_version * b);
+
 char *bootslot_str(enum opentitan_boot_slot input);
+
+int bootslot_int(enum opentitan_boot_slot input);
 
 #ifdef __cplusplus
 }

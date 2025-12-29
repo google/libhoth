@@ -15,6 +15,8 @@
 #ifndef LIBHOTH_EXAMPLES_HTOOL_DFU_H_
 #define LIBHOTH_EXAMPLES_HTOOL_DFU_H_
 
+#include "protocol/opentitan_version.h"
+
 #ifdef __cplusplus
 extern "C" {
 #endif
