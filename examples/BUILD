@@ -235,6 +235,7 @@ cc_binary(
         "//protocol:chipinfo",
         "//protocol:controlled_storage",
         "//protocol:dfu_hostcmd",
+        "//protocol:dfu_check",
         "//protocol:hello",
         "//protocol:host_cmd",
         "//protocol:i2c",

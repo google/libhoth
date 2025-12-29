@@ -434,3 +434,14 @@ cc_library(
         "//transports:libhoth_device",
     ],
 )
+
+cc_library(
+    name = "dfu_check",
+    srcs = ["dfu_check.c"],
+    hdrs = ["dfu_check.h",
+            "opentitan_version.h"],
+    deps = [
+        ":host_cmd",
+        "//transports:libhoth_device",
+    ],
+)
