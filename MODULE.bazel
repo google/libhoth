@@ -18,5 +18,10 @@ git_repository(
     shallow_since = "1649581036 +0200",
 )
 
+bazel_dep(name = "platforms", version = "0.0.10")
+register_toolchains(
+    "//toolchain:cc_toolchain_for_linux_arm"
+)
+
 bazel_dep(name = "googletest", version = "1.15.2")
 bazel_dep(name = "rules_cc", version = "0.1.4")

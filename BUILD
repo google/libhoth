@@ -14,3 +14,11 @@ genrule(
     stamp = 1,
     tools = [":print_version_header.sh"],
 )
+
+platform(
+    name = "izumi_gbmc",
+    constraint_values = [
+        "@platforms//os:linux",
+        "@platforms//cpu:armv7",
+    ],
+)
