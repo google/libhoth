@@ -46,6 +46,7 @@ struct libhoth_device {
   int (*close)(struct libhoth_device *dev);
   int (*claim)(struct libhoth_device *dev);
   int (*release)(struct libhoth_device *dev);
+  int (*reconnect)(struct libhoth_device *dev);
 
   void *user_ctx;
 };
@@ -68,6 +69,8 @@ int libhoth_send_request(struct libhoth_device *dev, const void *request,
 int libhoth_receive_response(struct libhoth_device *dev, void *response,
                              size_t max_response_size, size_t *actual_size,
                              int timeout_ms);
+
+int libhoth_device_reconnect(struct libhoth_device *dev);
 
 int libhoth_device_close(struct libhoth_device *dev);
 

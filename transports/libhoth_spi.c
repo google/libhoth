@@ -256,6 +256,12 @@ static int libhoth_spi_release(struct libhoth_device* dev) {
   return LIBHOTH_OK;
 }
 
+static int libhoth_spi_reconnect(struct libhoth_device* dev) {
+  // TODO: A correct implementation
+  usleep(1000 * 1000);
+  return 0;
+}
+
 int libhoth_spi_open(const struct libhoth_spi_device_init_options* options,
                      struct libhoth_device** out) {
   if (out == NULL || options == NULL || options->path == NULL) {
@@ -345,6 +351,7 @@ int libhoth_spi_open(const struct libhoth_spi_device_init_options* options,
   dev->close = libhoth_spi_close;
   dev->claim = libhoth_spi_claim;
   dev->release = libhoth_spi_release;
+  dev->reconnect = libhoth_spi_reconnect;
   dev->user_ctx = spi_dev;
 
   *out = dev;

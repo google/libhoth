@@ -15,8 +15,13 @@
 #include "transports/libhoth_usb.h"
 
 #include <libusb.h>
+#include <stdio.h>
 #include <stdlib.h>
+#include <unistd.h>
 
+#include "libhoth_device.h"
+#include "libhoth_usb.h"
+#include "protocol/util.h"
 #include "transports/libhoth_device.h"
 #include "transports/libhoth_usb_device.h"
 
@@ -81,6 +86,56 @@ static int libhoth_usb_claim(struct libhoth_device* dev) {
 static int libhoth_usb_release(struct libhoth_device* dev) {
   struct libhoth_usb_device* usb_dev = dev->user_ctx;
   return libusb_release_interface(usb_dev->handle, usb_dev->info.interface_id);
+}
+
+static int libhoth_usb_reconnect(struct libhoth_device* dev) {
+  struct libhoth_usb_device* usb_dev = dev->user_ctx;
+  libusb_context* usb_ctx = usb_dev->ctx;
+
+  struct libusb_device* libusb_dev = libusb_get_device(usb_dev->handle);
+
+  struct libhoth_usb_loc usb_loc;
+  usb_loc.bus = libusb_get_bus_number(libusb_dev);
+  usb_loc.num_ports = libusb_get_port_numbers(
+      libusb_dev, (uint8_t*)&usb_loc.ports, LIBHOTH_NUM_PORTS);
+  if (usb_loc.num_ports == LIBUSB_ERROR_OVERFLOW) {
+    fprintf(stderr, "Failed to list port numbers when reconnecting. (%s)\n",
+            libusb_strerror(LIBUSB_ERROR_OVERFLOW));
+    return LIBUSB_ERROR_OVERFLOW;
+  }
+
+  libhoth_usb_close(dev);
+  libusb_handle_events_completed(usb_ctx, NULL);
+
+  uint64_t start_time_ms = libhoth_get_monotonic_ms();
+
+  while (1) {
+    int ret = libhoth_usb_get_device(usb_ctx, &usb_loc, &libusb_dev);
+    if (ret == 0) {
+      // Found the device
+      break;
+    }
+
+    uint64_t current_time_ms = libhoth_get_monotonic_ms();
+    if (current_time_ms - start_time_ms >= (60 * 1000)) {
+      // 60s timeout
+      fprintf(
+          stderr,
+          "libhoth_usb_open timed out while reconnecting (error: %d (%s))\n",
+          ret, libusb_strerror(ret));
+      return ret;  // Timeout
+    }
+
+    // 100ms delay
+    usleep(100 * 1000);
+  }
+
+  struct libhoth_usb_device_init_options opts;
+  opts.usb_ctx = usb_ctx;
+  opts.usb_device = libusb_dev;
+  opts.prng_seed = libhoth_prng_seed();
+
+  return libhoth_usb_open(&opts, &dev);
 }
 
 int libhoth_usb_open(const struct libhoth_usb_device_init_options* options,
@@ -162,6 +217,7 @@ int libhoth_usb_open(const struct libhoth_usb_device_init_options* options,
   dev->close = libhoth_usb_close;
   dev->claim = libhoth_usb_claim;
   dev->release = libhoth_usb_release;
+  dev->reconnect = libhoth_usb_reconnect;
   dev->user_ctx = usb_dev;
 
   *out = dev;
