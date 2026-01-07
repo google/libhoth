@@ -252,6 +252,7 @@ cc_binary(
         "//protocol:secure_boot",
         "//protocol:spi_proxy",
         "//protocol:statistics",
+        "//protocol:util",
         "//transports:libhoth_device",
         "//transports:libhoth_mtd",
         "//transports:libhoth_spi",

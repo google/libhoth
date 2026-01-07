@@ -29,6 +29,7 @@
 #include "host_commands.h"
 #include "htool_cmd.h"
 #include "transports/libhoth_usb.h"
+#include "protocol/util.h"
 
 static int enumerate_devices(
     libusb_context* libusb_ctx,
@@ -295,17 +296,6 @@ libusb_device* htool_libusb_device(void) {
   return select_device(ctx, filter_allow_all, NULL);
 }
 
-// Helper function to get current monotonic time in milliseconds
-static uint64_t get_monotonic_ms() {
-    struct timespec ts;
-    if (clock_gettime(CLOCK_MONOTONIC, &ts) != 0) {
-        perror("clock_gettime failed");
-        // Return 0 or a value indicating error, relying on caller checks
-        return 0;
-    }
-    return (uint64_t)ts.tv_sec * 1000 + (uint64_t)ts.tv_nsec / 1000000;
-}
-
 // Helper function to parse time string with units (s, ms, us) into microseconds
 // Returns -1 on error.
 static int64_t parse_time_string_us(const char* time_str) {
@@ -384,25 +374,13 @@ struct libhoth_device* htool_libhoth_usb_device(void) {
   // Convert duration to milliseconds for comparison with monotonic time helper
   uint64_t retry_duration_ms = (uint64_t)retry_duration_us / 1000;
 
-  struct timespec monotonic_time;
-  // `clock_gettime` function is guaranteed by POSIX standard on compliant
-  // systems. But it may have implementation defined resolution. So xor with PID
-  // as well
-  if (clock_gettime(CLOCK_MONOTONIC, &monotonic_time) != 0) {
-    fprintf(stderr, "Could not get clock time to generate PRNG seed\n");
-    return NULL;
-  }
-  uint32_t prng_seed =
-      monotonic_time.tv_sec ^ monotonic_time.tv_nsec ^ getpid();
+  uint32_t prng_seed = libhoth_prng_seed();
 
   struct libhoth_usb_device_init_options opts = {
       .usb_device = usb_dev, .usb_ctx = ctx, .prng_seed = prng_seed};
 
   int rv = LIBUSB_ERROR_BUSY; // Initialize rv to trigger the loop
-  uint64_t start_time_ms = get_monotonic_ms();
-  if (start_time_ms == 0 && errno != 0) { // Check if get_monotonic_ms failed
-      return NULL;
-  }
+  uint64_t start_time_ms = libhoth_get_monotonic_ms();
   uint64_t current_time_ms;
 
   while (rv == LIBUSB_ERROR_BUSY) {
@@ -417,10 +395,8 @@ struct libhoth_device* htool_libhoth_usb_device(void) {
       }
 
       // Check elapsed time
-      current_time_ms = get_monotonic_ms();
-       if (current_time_ms == 0 && errno != 0) {
-           return NULL;
-       }
+      current_time_ms = libhoth_get_monotonic_ms();
+
       // Handle potential timer wrap-around or error from get_monotonic_ms
       if (current_time_ms < start_time_ms) {
           fprintf(stderr, "Monotonic clock error detected during retry loop.\n");
