@@ -457,3 +457,9 @@ cc_library(
         "//transports:libhoth_device",
     ],
 )
+
+cc_library(
+    name = "util",
+    srcs = ["util.c"],
+    hdrs = ["util.h"],
+)
