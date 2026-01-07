@@ -83,6 +83,5 @@ int libhoth_dfu_update(struct libhoth_device* dev, const uint8_t* image,
   }
 
   // TODO: Wait for chip to come back and confirm version
-
-  return 0;
+  return libhoth_device_reconnect(dev);
 }

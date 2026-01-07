@@ -16,6 +16,8 @@
 
 #include <stdlib.h>
 
+#include "libhoth_device.h"
+
 int libhoth_send_request(struct libhoth_device* dev, const void* request,
                          size_t request_size) {
   if (dev == NULL) {
@@ -32,6 +34,18 @@ int libhoth_receive_response(struct libhoth_device* dev, void* response,
   }
   return dev->receive(dev, response, max_response_size, actual_size,
                       timeout_ms);
+}
+
+int libhoth_device_reconnect(struct libhoth_device* dev) {
+  if (dev == NULL) {
+    return LIBHOTH_ERR_INVALID_PARAMETER;
+  }
+
+  if (dev->reconnect == NULL) {
+    return LIBHOTH_ERR_UNSUPPORTED_VERSION;
+  }
+
+  return dev->reconnect(dev);
 }
 
 int libhoth_device_close(struct libhoth_device* dev) {
