@@ -132,18 +132,21 @@ struct libhoth_htool_console_opts {
   uint32_t yield_ms;
 };
 
+void libhoth_print_erot_console(struct libhoth_device* const dev);
+
 int libhoth_get_channel_status(struct libhoth_device *dev,
                               const struct libhoth_htool_console_opts *opts,
                               uint32_t *offset);
 
 int libhoth_read_console(struct libhoth_device *dev,
+                        int fd,
                         uint32_t channel_id,
                         uint32_t *offset);
                         
 int libhoth_write_console(struct libhoth_device *dev,
-                         uint32_t channel_id,
-                         bool force_drive_tx, 
-                         bool *quit);
+                          uint32_t channel_id,
+                          bool force_drive_tx, 
+                          bool *quit);
 
 int libhoth_get_uart_config(struct libhoth_device *dev,
                            const struct libhoth_htool_console_opts *opts,
