@@ -1,3 +1,16 @@
+// Copyright 2026 Google LLC
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//      http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
 
 #include "htool_dfu.h"
 
@@ -176,27 +189,27 @@ int htool_dfu_check(const struct htool_invocation* inv) {
 
   struct stat statbuf;
   if (fstat(fd, &statbuf)) {
-    fprintf(stderr, "fstat error: %s\n", strerror(errno));
+    fprintf(stderr, "error: fstat error: %s\n", strerror(errno));
     goto cleanup;
   }
   if (statbuf.st_size > SIZE_MAX) {
-    fprintf(stderr, "file too large\n");
+    fprintf(stderr, "error: file too large \n");
     goto cleanup;
   }
 
   uint8_t* image = mmap(NULL, statbuf.st_size, PROT_READ, MAP_PRIVATE, fd, 0);
   if (image == MAP_FAILED) {
-    fprintf(stderr, "mmap error: %s\n", strerror(errno));
+    fprintf(stderr, "error: mmap error: %s\n", strerror(errno));
     goto cleanup;
   }
 
   if (libhoth_opentitan_version(dev, &resp) != 0) {
-    fprintf(stderr, "Failed to get current version\n");
+    fprintf(stderr, "error: Failed to get current version\n");
     goto cleanup2;
   }
 
-  if (libhoth_dfu_check(image, statbuf.st_size, &resp) != 0) {
-    fprintf(stderr, "DFU check failed.\n");
+  if (libhoth_dfu_check(dev, image, statbuf.st_size, &resp) != 0) {
+    fprintf(stderr, "error: DFU check failed.\n");
     goto cleanup2;
   }
 
@@ -206,13 +219,13 @@ int htool_dfu_check(const struct htool_invocation* inv) {
 cleanup2:
   ret = munmap(image, statbuf.st_size);
   if (ret != 0) {
-    fprintf(stderr, "munmap error: %d\n", ret);
+    fprintf(stderr, "error: munmap error: %d\n", ret);
   }
 
 cleanup:
   ret = close(fd);
   if (ret != 0) {
-    fprintf(stderr, "close error: %d\n", ret);
+    fprintf(stderr, "error: close error: %d\n", ret);
   }
   return retval;
 }

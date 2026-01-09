@@ -18,6 +18,37 @@
 #include <unistd.h>
 #include <fcntl.h>
 
+void libhoth_print_erot_console(struct libhoth_device* const dev){
+
+  uint32_t current_offset = 0;
+
+  // Init the opts and set it to EROT channel
+  struct libhoth_htool_console_opts opts = {0};
+  opts.channel_id = EROT_CHANNEL_ID;
+
+  int status = libhoth_get_channel_status(dev, &opts, &current_offset);
+  if (status != LIBHOTH_OK) {
+    fprintf(stderr, "libhoth_get_channel_status() failed: %d\n", status);
+    return;
+  }
+
+  // Start reading at the earliest history the eRoT has in its buffer (since the
+  // buffer is much smaller than 2GB).
+  uint32_t offset = current_offset - 0x80000000;
+
+  while (true) {
+    status = libhoth_read_console(dev, STDOUT_FILENO, opts.channel_id, &offset);
+    if (status != LIBHOTH_OK) {
+      break;
+    }
+    // Extra check in case UINT32_MAX wrap-around. 
+    if (!(offset < current_offset || offset - current_offset > 0x80000000)) {
+      break;
+    }
+  }
+
+}
+
 int libhoth_get_channel_status(struct libhoth_device *dev,
                               const struct libhoth_htool_console_opts *opts,
                               uint32_t *offset) {
@@ -47,6 +78,7 @@ int libhoth_get_channel_status(struct libhoth_device *dev,
 }
 
 int libhoth_read_console(struct libhoth_device *dev,
+                        int fd,
                         uint32_t channel_id,
                         uint32_t *offset) {
 
@@ -78,7 +110,7 @@ int libhoth_read_console(struct libhoth_device *dev,
 
   int len = response_size - sizeof(resp.resp);
   if (len > 0) {
-    if (libhoth_force_write(STDOUT_FILENO, resp.buffer, len) != 0) {
+    if (libhoth_force_write(fd, resp.buffer, len) != 0) {
       perror("Unable to write console output");
       return -1;
     }

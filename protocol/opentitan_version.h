@@ -21,6 +21,7 @@
 
 #include "host_cmd.h"
 #include "transports/libhoth_device.h"
+#include "protocol/console.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -97,7 +98,7 @@ static_assert(offsetof(struct opentitan_get_version_resp, owner_config) == 296, 
 static_assert(sizeof(struct opentitan_get_version_resp) == 344, "");  
 
 int libhoth_opentitan_version(struct libhoth_device *device,
-                              struct opentitan_get_version_resp *response);
+                              struct opentitan_get_version_resp *response);                             
 
 int libhoth_extract_ot_bundle(const uint8_t* image,
                               struct opentitan_image_version * rom_ext,
