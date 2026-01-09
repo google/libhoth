@@ -54,6 +54,7 @@ enum payload_update_err {
   PAYLOAD_UPDATE_INITIATE_FAIL,
   PAYLOAD_UPDATE_FLASH_FAIL,
   PAYLOAD_UPDATE_FINALIZE_FAIL,
+  PAYLOAD_UPDATE_READ_FAIL,
 };
 
 struct payload_update_packet {
@@ -74,6 +75,7 @@ enum payload_update_err libhoth_payload_update(struct libhoth_device* dev,
                                                uint8_t* image, size_t len);
 int libhoth_payload_update_getstatus(
     struct libhoth_device* dev, struct payload_update_status* update_status);
+enum payload_update_err libhoth_payload_update_read_chunk(struct libhoth_device* dev, int fd, size_t len, size_t offset);
 
 #ifdef __cplusplus
 }

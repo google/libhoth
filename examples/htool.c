@@ -937,6 +937,17 @@ static const struct htool_cmd CMDS[] = {
         .func = htool_payload_update,
     },
     {
+        .verbs = (const char*[]){"payload", "read", NULL},
+        .desc = "Read content of staging flash for Titan images.",
+        .params =
+            (const struct htool_param[]){
+                {HTOOL_POSITIONAL, .name = "dest-file"},
+                {HTOOL_FLAG_VALUE, 's', "start", "0", .desc = "start address"},
+                {HTOOL_FLAG_VALUE, 'n', "length", "0", .desc = "length of payload read"},
+                {}},
+        .func = htool_payload_read,
+    },
+    {
         .verbs = (const char*[]){"payload", "info", NULL},
         .desc = "Display payload info for a Titan image.",
         .params =

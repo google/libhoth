@@ -17,11 +17,13 @@
 #include <stdbool.h>
 #include <stdint.h>
 #include <string.h>
+#include <unistd.h>
 
 #include "command_version.h"
 #include "host_cmd.h"
 #include "payload_info.h"
 #include "transports/libhoth_device.h"
+#include "util.h"
 
 static int send_payload_update_request_with_command(struct libhoth_device* dev,
                                                     uint8_t command) {
@@ -173,4 +175,44 @@ int libhoth_payload_update_getstatus(
   }
 
   return 0;
+}
+
+enum payload_update_err libhoth_payload_update_read_chunk(
+    struct libhoth_device* dev, int fd, size_t len, size_t offset) {
+  const size_t max_chunk_size = LIBHOTH_MAILBOX_SIZE -
+                                sizeof(struct hoth_host_response);
+  uint8_t buffer[LIBHOTH_MAILBOX_SIZE];
+
+  struct payload_update_packet pkt;
+
+  pkt.type = PAYLOAD_UPDATE_READ;
+
+  while (len > 0) {
+    size_t chunk_size = (len < max_chunk_size) ? len : max_chunk_size;
+
+    pkt.offset = offset;
+    pkt.len = chunk_size;
+
+    int ret = libhoth_hostcmd_exec(
+        dev, HOTH_CMD_BOARD_SPECIFIC_BASE + HOTH_PRV_CMD_HOTH_PAYLOAD_UPDATE, 0,
+        &pkt, sizeof(pkt), &buffer, chunk_size, NULL);
+
+    if (ret != 0) {
+      fprintf(stderr, "Payload read failed, err code: %d\n", ret);
+      return PAYLOAD_UPDATE_READ_FAIL;
+    }
+
+    ret = libhoth_force_write(fd, buffer, chunk_size);
+    if (ret != 0) {
+      fprintf(stderr,
+              "Failed to write payload during payload read, err code: %d\n",
+              ret);
+      return PAYLOAD_UPDATE_READ_FAIL;
+    }
+
+    len -= chunk_size;
+    offset += chunk_size;
+  }
+
+  return PAYLOAD_UPDATE_OK;
 }
