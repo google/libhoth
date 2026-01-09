@@ -14,6 +14,7 @@
 
 #include "util.h"
 
+#include <errno.h>
 #include <time.h>
 #include <unistd.h>
 #include <stdlib.h>
@@ -49,7 +50,7 @@ int libhoth_force_write(int fd, const void *buf, size_t count) {
   while (count > 0) {
     ssize_t bytes_written = write(fd, cbuf, count);
     if (bytes_written < 0) {
-      return -1;
+      return errno;
     }
     cbuf += bytes_written;
     count -= bytes_written;

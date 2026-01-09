@@ -28,13 +28,13 @@
 #include "htool_cmd.h"
 #include "protocol/payload_update.h"
 
-int htool_payload_update(const struct htool_invocation *inv) {
-  struct libhoth_device *dev = htool_libhoth_device();
+int htool_payload_update(const struct htool_invocation* inv) {
+  struct libhoth_device* dev = htool_libhoth_device();
   if (!dev) {
     return -1;
   }
 
-  const char *image_file;
+  const char* image_file;
   if (htool_get_param_string(inv, "source-file", &image_file)) {
     return -1;
   }
@@ -57,7 +57,7 @@ int htool_payload_update(const struct htool_invocation *inv) {
     goto cleanup;
   }
 
-  uint8_t *image = mmap(NULL, statbuf.st_size, PROT_READ, MAP_PRIVATE, fd, 0);
+  uint8_t* image = mmap(NULL, statbuf.st_size, PROT_READ, MAP_PRIVATE, fd, 0);
   if (image == MAP_FAILED) {
     fprintf(stderr, "mmap error: %s\n", strerror(errno));
     goto cleanup;
@@ -99,7 +99,46 @@ cleanup:
   return retval;
 }
 
-const char *payload_update_getstatus_valid_string(uint8_t v) {
+int htool_payload_read(const struct htool_invocation* inv) {
+  struct libhoth_device* dev = htool_libhoth_device();
+  if (!dev) {
+    return -1;
+  }
+
+  const char* dest_file;
+
+  uint32_t start;
+  uint32_t length;
+
+  if (htool_get_param_string(inv, "dest-file", &dest_file) ||
+      htool_get_param_u32(inv, "start", &start) ||
+      htool_get_param_u32(inv, "length", &length)) {
+    return -1;
+  }
+
+  if (strlen(dest_file) == 0) {
+    fprintf(stderr, "dest-file cannot be empty\n");
+    return -1;
+  }
+
+  if (length == 0) {
+    fprintf(stderr, "Must set --length (-n) to something non-zero\n");
+    return -1;
+  }
+
+  int fd = open(dest_file, O_WRONLY | O_CREAT | O_TRUNC, 0644);
+  if (fd == -1) {
+    fprintf(stderr, "Error opening file %s: %s\n", dest_file, strerror(errno));
+    return -1;
+  }
+
+  int ret = libhoth_payload_update_read_chunk(dev, fd, length, start);
+
+  close(fd);
+  return ret;
+}
+
+const char* payload_update_getstatus_valid_string(uint8_t v) {
   switch (v) {
     case 0:
       return "Invalid";
@@ -114,7 +153,7 @@ const char *payload_update_getstatus_valid_string(uint8_t v) {
   }
 }
 
-const char *payload_update_getstatus_half_string(uint8_t h) {
+const char* payload_update_getstatus_half_string(uint8_t h) {
   switch (h) {
     case 0:
       return "A";
@@ -126,7 +165,7 @@ const char *payload_update_getstatus_half_string(uint8_t h) {
 }
 
 int htool_payload_update_getstatus() {
-  struct libhoth_device *dev = htool_libhoth_device();
+  struct libhoth_device* dev = htool_libhoth_device();
   if (!dev) {
     return -1;
   }
