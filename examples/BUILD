@@ -11,6 +11,7 @@ cc_library(
     ],
     deps = [
         "//protocol:host_cmd",
+        "//protocol:console"
     ],
 )
 
@@ -238,6 +239,7 @@ cc_binary(
         "//protocol:dfu_check",
         "//protocol:hello",
         "//protocol:host_cmd",
+        "//protocol:console",
         "//protocol:i2c",
         "//protocol:jtag",
         "//protocol:key_rotation",

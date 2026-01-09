@@ -374,9 +374,13 @@ cc_library(
     deps = [
         ":host_cmd",
         "//transports:libhoth_device",
+        ":console",
     ],
     srcs = ["opentitan_version.c"],
-    hdrs = ["opentitan_version.h"],
+    hdrs = [
+        "opentitan_version.h",
+        "console.h"
+    ],
 )
 
 cc_test(
@@ -438,6 +442,17 @@ cc_test(
 )
 
 cc_library(
+    name = "console",
+    srcs = ["console.c"],
+    hdrs = ["console.h"],
+    deps = [
+        ":host_cmd",
+        "//transports:libhoth_device",
+        ":util",
+    ],
+)
+
+cc_library(
     name = "dfu_hostcmd",
     srcs = ["dfu_hostcmd.c"],
     hdrs = ["dfu_hostcmd.h"],
@@ -449,9 +464,14 @@ cc_library(
 
 cc_library(
     name = "dfu_check",
-    srcs = ["dfu_check.c"],
-    hdrs = ["dfu_check.h",
-            "opentitan_version.h"],
+    srcs = [
+        "dfu_check.c",
+    ],
+    hdrs = [
+        "dfu_check.h",
+        "opentitan_version.h",
+        "console.h"
+    ],
     deps = [
         ":host_cmd",
         "//transports:libhoth_device",

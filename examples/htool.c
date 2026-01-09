@@ -61,6 +61,8 @@
 #include "protocol/rot_firmware_version.h"
 #include "protocol/opentitan_version.h"
 #include "protocol/spi_proxy.h"
+#include "protocol/console.h"
+#include "protocol/util.h"
 #include "transports/libhoth_device.h"
 #include "transports/libhoth_spi.h"
 
@@ -254,20 +256,6 @@ static int command_authz_host_command_send(const struct htool_invocation* inv) {
   return 0;
 }
 
-static int force_write(int fd, const void* buf, size_t size) {
-  const uint8_t* cbuf = (const uint8_t*)buf;
-  while (size > 0) {
-    ssize_t bytes_written = write(fd, cbuf, size);
-    if (bytes_written <= 0) {
-      perror("write failed");
-      return -1;
-    }
-    size -= bytes_written;
-    cbuf += bytes_written;
-  }
-  return 0;
-}
-
 static int get_address_mode(const char* address_mode, bool* is_4_byte,
                             bool* enter_4byte) {
   if (!strcmp(address_mode, "3B/4B")) {
@@ -338,7 +326,7 @@ static int command_spi_read(const struct htool_invocation* inv) {
     if (status) {
       goto cleanup1;
     }
-    status = force_write(fd, buf, read_size);
+    status = libhoth_force_write(fd, buf, read_size);
     if (status) {
       goto cleanup1;
     }
@@ -463,7 +451,7 @@ static int command_target_reset_pulse(const struct htool_invocation* inv) {
 }
 
 static int command_console(const struct htool_invocation* inv) {
-  struct htool_console_opts opts = {};
+  struct libhoth_htool_console_opts opts = {};
 
   if (htool_get_param_bool(inv, "snapshot", &opts.snapshot)) {
     return -1;
