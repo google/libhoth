@@ -18,6 +18,7 @@
 #include <stdint.h>
 
 #include "protocol/host_cmd.h"
+#include "protocol/console.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -221,86 +222,6 @@ struct hoth_request_reset_target {
 // Arm the coordinated reset trigger, which will cause the hoth to perform a
 // hard reset when it receives the hardware trigger event.
 #define HOTH_PRV_CMD_HOTH_ARM_COORDINATED_RESET 0x001A
-
-#define HOTH_PRV_CMD_HOTH_CHANNEL_READ 0x0036
-struct hoth_channel_read_request {
-  uint32_t channel_id;
-
-  // The 32-bit offset from the start of the stream to retrieve data from. If no
-  // data is available at this offset, it will be incremented to the first
-  // available data. The caller can detect discontinuities by observing the
-  // returned offset.
-  //
-  // This value will wrap around once the channel has delivered 4GiB of data.
-  uint32_t offset;
-  // the amount of data to return
-  uint32_t size;
-  // Maximum time to wait for new data to show up. If timeout is hit, command
-  // will succeed but will return 0 bytes.
-  uint32_t timeout_us;
-} __attribute__((packed, aligned(4)));
-
-struct hoth_channel_read_response {
-  // The actual offset where the returned data was found.
-  // This won't match the offset in the read request if the requested data
-  // wasn't available. Instead, it will be the offset of the first available
-  // data.
-  uint32_t offset;
-
-  // followed by the requested bytes.
-} __attribute__((packed, aligned(4)));
-
-#define HOTH_PRV_CMD_HOTH_CHANNEL_STATUS 0x0037
-struct hoth_channel_status_request {
-  uint32_t channel_id;
-} __attribute__((packed, aligned(4)));
-
-struct hoth_channel_status_response {
-  // The offset where the next data received in the channel will be written
-  uint32_t write_offset;
-} __attribute__((packed, aligned(4)));
-
-#define HOTH_PRV_CMD_HOTH_CHANNEL_WRITE 0x0038
-
-struct hoth_channel_write_request_v0 {
-  uint32_t channel_id;
-
-  // followed by the bytes to write
-} __attribute__((packed, aligned(4)));
-
-#define HOTH_CHANNEL_WRITE_REQUEST_FLAG_FORCE_DRIVE_TX (1 << 0)
-#define HOTH_CHANNEL_WRITE_REQUEST_FLAG_SEND_BREAK (1 << 1)
-
-struct hoth_channel_write_request_v1 {
-  uint32_t channel_id;
-
-  // One of HOTH_CHANNEL_WRITE_REQUEST_FLAG_*
-  uint32_t flags;
-
-  // followed by the bytes to write
-} __attribute__((packed, aligned(4)));
-
-// Takes struct hoth_channel_uart_config_get_req as
-// input and returns hoth_channel_uart_config as output.
-#define HOTH_PRV_CMD_HOTH_CHANNEL_UART_CONFIG_GET 0x0039
-
-struct hoth_channel_uart_config_get_req {
-  uint32_t channel_id;
-} __attribute__((packed, aligned(4)));
-
-struct hoth_channel_uart_config {
-  uint32_t baud_rate;
-  // must be 0
-  uint32_t reserved;
-} __attribute__((packed, aligned(4)));
-
-// Takes struct hoth_channel_uart_config_set_req as input.
-#define HOTH_PRV_CMD_HOTH_CHANNEL_UART_CONFIG_SET 0x003a
-
-struct hoth_channel_uart_config_set_req {
-  uint32_t channel_id;
-  struct hoth_channel_uart_config config;
-} __attribute__((packed, aligned(4)));
 
 #define HOTH_CMD_CONSOLE_REQUEST 0x0097
 #define HOTH_CMD_CONSOLE_READ 0x0098

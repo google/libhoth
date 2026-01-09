@@ -16,6 +16,7 @@
 #define _LIBHOTH_PROTOCOL_UTIL_H_
 
 #include <stdint.h>
+#include <stddef.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -26,6 +27,9 @@ uint64_t libhoth_get_monotonic_ms();
 
 // Helper function for generating an adequate PRNG seed
 uint32_t libhoth_prng_seed();
+
+// Helper function to print out to STDOUT 
+int libhoth_force_write(int fd, const void *buf, size_t count);
 
 #ifdef __cplusplus
 }

@@ -22,6 +22,7 @@ protocol_srcs = [
     'dfu_hostcmd.c',
     'dfu_check.c',
     'util.c',
+    'console.c'
 ]
 
 incdir = include_directories('..')

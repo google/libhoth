@@ -18,28 +18,20 @@
 #include <stdbool.h>
 #include <stdint.h>
 
+#include "protocol/console.h"
+#include "protocol/util.h"
+
 #ifdef __cplusplus
 extern "C" {
 #endif
 
 struct libhoth_device;
 
-struct htool_console_opts {
-  uint32_t channel_id;
-  bool force_drive_tx;
-  bool history;
-  bool onlcr;
-  uint32_t baud_rate;
-  bool snapshot;
-  uint32_t claim_timeout_secs;
-  uint32_t yield_ms;
-};
-
 int htool_console_run(struct libhoth_device* dev,
-                      const struct htool_console_opts* opts);
+                      const struct libhoth_htool_console_opts* opts);
 
 int htool_console_snapshot(struct libhoth_device* dev,
-                           const struct htool_console_opts* opts);
+                           const struct libhoth_htool_console_opts* opts);
 
 #ifdef __cplusplus
 }

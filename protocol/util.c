@@ -43,3 +43,16 @@ uint32_t libhoth_prng_seed() {
   }
   return ts.tv_sec ^ ts.tv_nsec ^ getpid();
 }
+
+int libhoth_force_write(int fd, const void *buf, size_t count) {
+  const char *cbuf = buf;
+  while (count > 0) {
+    ssize_t bytes_written = write(fd, cbuf, count);
+    if (bytes_written < 0) {
+      return -1;
+    }
+    cbuf += bytes_written;
+    count -= bytes_written;
+  }
+  return 0;
+}
