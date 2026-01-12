@@ -140,6 +140,7 @@ int libhoth_get_channel_status(struct libhoth_device *dev,
 
 int libhoth_read_console(struct libhoth_device *dev,
                         int fd,
+                        bool prototext_format_enabled,
                         uint32_t channel_id,
                         uint32_t *offset);
                         
