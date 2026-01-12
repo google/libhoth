@@ -151,7 +151,7 @@ int htool_console_run(struct libhoth_device *dev,
   bool quit = false;
 
   while (!quit) {
-    status = libhoth_read_console(dev, STDOUT_FILENO, opts->channel_id, &offset);
+    status = libhoth_read_console(dev, STDOUT_FILENO, false, opts->channel_id, &offset);
     if (status != LIBHOTH_OK) {
       break;
     }
@@ -224,7 +224,7 @@ int htool_console_snapshot(struct libhoth_device *dev,
   uint32_t offset = current_offset - 0x80000000;
 
   while (true) {
-    status = libhoth_read_console(dev, STDOUT_FILENO,opts->channel_id, &offset);
+    status = libhoth_read_console(dev, STDOUT_FILENO, false, opts->channel_id, &offset);
     if (status != LIBHOTH_OK) {
       break;
     }

@@ -37,7 +37,7 @@ void libhoth_print_erot_console(struct libhoth_device* const dev){
   uint32_t offset = current_offset - 0x80000000;
 
   while (true) {
-    status = libhoth_read_console(dev, STDOUT_FILENO, opts.channel_id, &offset);
+    status = libhoth_read_console(dev, STDOUT_FILENO, true, opts.channel_id, &offset);
     if (status != LIBHOTH_OK) {
       break;
     }
@@ -79,6 +79,7 @@ int libhoth_get_channel_status(struct libhoth_device *dev,
 
 int libhoth_read_console(struct libhoth_device *dev,
                         int fd,
+                        bool prototext_format_enabled,
                         uint32_t channel_id,
                         uint32_t *offset) {
 
@@ -110,9 +111,28 @@ int libhoth_read_console(struct libhoth_device *dev,
 
   int len = response_size - sizeof(resp.resp);
   if (len > 0) {
-    if (libhoth_force_write(fd, resp.buffer, len) != 0) {
-      perror("Unable to write console output");
-      return -1;
+    // formatted prototext
+    if(prototext_format_enabled){
+      for(int i = 0; i < len; i++) {
+        if(resp.buffer[i] == '\n'){
+          printf("\"");
+          printf("%c", resp.buffer[i]);
+          printf("\" ");
+        }
+        else if(resp.buffer[i] == '\r'){
+          printf(" ");
+        }
+        else{
+          printf("%c", resp.buffer[i]);
+        }
+      }
+    }
+    // raw output
+    else{
+      if (libhoth_force_write(fd, resp.buffer, len) != 0) {
+        perror("Unable to write console output");
+        return -1;
+      }
     }
     *offset = resp.resp.offset + len;
   }
