@@ -26,10 +26,6 @@ extern "C" {
 #include "transports/libhoth_device.h"
 
 
-#ifdef __cplusplus
-}
-#endif
-
 #define EROT_CHANNEL_ID 0x45524F54  // 'EROT'
 #define HOTH_FIFO_MAX_REQUEST_SIZE 1024
 #define HOTH_PRV_CMD_HOTH_CHANNEL_STATUS 0x0037
@@ -156,5 +152,9 @@ int libhoth_get_uart_config(struct libhoth_device *dev,
 int libhoth_set_uart_config(struct libhoth_device *dev,
                            const struct libhoth_htool_console_opts *opts,
                            struct hoth_channel_uart_config *config);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif
