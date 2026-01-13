@@ -102,6 +102,7 @@ cc_library(
         ":host_cmd",
         ":payload_info",
         ":util",
+        ":progress",
         "//transports:libhoth_device",
     ],
 )
@@ -114,6 +115,7 @@ cc_test(
     ],
     deps = [
         ":command_version",
+        ":payload_info",
         ":payload_update",
         "//protocol/test:libhoth_device_mock",
         "@googletest//:gtest",

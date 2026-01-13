@@ -19,6 +19,7 @@
 #include <string.h>
 #include <unistd.h>
 
+#include "progress.h"
 #include "command_version.h"
 #include "host_cmd.h"
 #include "payload_info.h"
@@ -82,24 +83,64 @@ static int libhoth_payload_update_finalize(
   return 0;
 }
 
+static int payload_update_erase(struct libhoth_device* const dev, const size_t offset, const size_t len) {
+  struct payload_update_packet request;
+  request.type = PAYLOAD_UPDATE_ERASE;
+  request.offset = offset;
+  request.len = len;
+  return libhoth_hostcmd_exec(dev, HOTH_CMD_BOARD_SPECIFIC_BASE + HOTH_PRV_CMD_HOTH_PAYLOAD_UPDATE, 0, &request, sizeof(request), NULL, 0, NULL);
+}
+
 enum payload_update_err libhoth_payload_update(struct libhoth_device* dev,
-                                               uint8_t* image, size_t size) {
+                                               uint8_t* image, size_t size, bool skip_erase) {
   if (libhoth_find_image_descriptor(image, size) == NULL) {
     return PAYLOAD_UPDATE_BAD_IMG;
   }
 
-  fprintf(stderr, "Initiating payload update protocol with libhoth.\n");
-  if (send_payload_update_request_with_command(dev, PAYLOAD_UPDATE_INITIATE) !=
-      0) {
-    return PAYLOAD_UPDATE_INITIATE_FAIL;
+  if (!skip_erase) {
+    struct libhoth_progress_stderr erase_progress;
+    libhoth_progress_stderr_init(&erase_progress, "Erase staging side");
+
+    const size_t block_erase = 64 * 1024;
+    const size_t sector_erase = 4 * 1024;
+
+    const bool is_image_size_sector_aligned = ((size % sector_erase) == 0);
+    if (!is_image_size_sector_aligned) {
+      fprintf(stderr, "error: image size (0x%zx) is not sector-aligned.\n", size);
+      return PAYLOAD_UPDATE_IMAGE_NOT_SECTOR_ALIGNED;
+    }
+
+    // Erase by blocks as much as possible.
+    size_t offset = 0;
+    for (; offset + block_erase <= size; offset += block_erase) {
+      const int ret = payload_update_erase(dev, offset, block_erase);
+      if (ret != 0) {
+        fprintf(stderr, "block erase err: %d\n", ret);
+        return ret;
+      }
+      erase_progress.progress.func(erase_progress.progress.param, offset, size);
+    }
+
+    // Erase remaining by sectors.
+    for (; offset + sector_erase <= size; offset += sector_erase) {
+      const int ret = payload_update_erase(dev, offset, sector_erase);
+      if (ret != 0) {
+        fprintf(stderr, "sector erase err: %d\n", ret);
+        return ret;
+      }
+      erase_progress.progress.func(erase_progress.progress.param, offset, size);
+    }
   }
 
   const size_t max_chunk_size = LIBHOTH_MAILBOX_SIZE -
                                 sizeof(struct hoth_host_request) -
                                 sizeof(struct payload_update_packet);
 
-  fprintf(stderr, "Flashing the image to hoth.\n");
+  struct libhoth_progress_stderr program_progress;
+  libhoth_progress_stderr_init(&program_progress, "Sending payload");
   for (size_t offset = 0; offset < size; ++offset) {
+    program_progress.progress.func(program_progress.progress.param, offset, size);
+
     if (image[offset] == 0xFF) {
       continue;
     }
