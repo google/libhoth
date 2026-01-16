@@ -29,7 +29,8 @@
 #include "protocol/payload_info.h"
 #include "protocol/payload_status.h"
 
-int htool_payload_status() {
+int htool_payload_status(const struct htool_invocation* inv) {
+  (void)inv;
   struct libhoth_device* dev = htool_libhoth_device();
   if (!dev) {
     return -1;
