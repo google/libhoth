@@ -24,7 +24,7 @@
 extern "C" {
 #endif
 
-int htool_payload_status();
+int htool_payload_status(const struct htool_invocation* inv);
 int htool_payload_info(const struct htool_invocation* inv);
 
 #ifdef __cplusplus
