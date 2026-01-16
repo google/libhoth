@@ -178,7 +178,8 @@ const char* PayloadUpdateErrorToString(uint16_t reason) {
   }
 }
 
-int htool_statistics() {
+int htool_statistics(const struct htool_invocation* inv) {
+  (void)inv;
   struct libhoth_device* dev = htool_libhoth_device();
   if (!dev) {
     return -1;
