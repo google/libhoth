@@ -115,8 +115,8 @@ enum payload_update_err libhoth_payload_update(struct libhoth_device* dev,
     for (; offset + block_erase <= size; offset += block_erase) {
       const int ret = payload_update_erase(dev, offset, block_erase);
       if (ret != 0) {
-        fprintf(stderr, "block erase err: %d\n", ret);
-        return ret;
+        fprintf(stderr, "block erase offset 0x%zx err: %d\n", offset, ret);
+        return PAYLOAD_UPDATE_ERASE_FAIL;
       }
       erase_progress.progress.func(erase_progress.progress.param, offset, size);
     }
@@ -125,8 +125,8 @@ enum payload_update_err libhoth_payload_update(struct libhoth_device* dev,
     for (; offset + sector_erase <= size; offset += sector_erase) {
       const int ret = payload_update_erase(dev, offset, sector_erase);
       if (ret != 0) {
-        fprintf(stderr, "sector erase err: %d\n", ret);
-        return ret;
+        fprintf(stderr, "sector erase offset 0x%zx err: %d\n", offset, ret);
+        return PAYLOAD_UPDATE_ERASE_FAIL;
       }
       erase_progress.progress.func(erase_progress.progress.param, offset, size);
     }
