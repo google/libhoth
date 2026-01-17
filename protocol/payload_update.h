@@ -57,6 +57,7 @@ enum payload_update_err {
   PAYLOAD_UPDATE_FINALIZE_FAIL,
   PAYLOAD_UPDATE_READ_FAIL,
   PAYLOAD_UPDATE_IMAGE_NOT_SECTOR_ALIGNED,
+  PAYLOAD_UPDATE_ERASE_FAIL,
 };
 
 struct payload_update_packet {
