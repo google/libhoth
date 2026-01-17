@@ -127,7 +127,7 @@ TEST_F(LibHothTest, payload_update_erase_fail) {
   std::memcpy(buffer, &kMagic, sizeof(kMagic));
 
   EXPECT_EQ(libhoth_payload_update(&hoth_dev_, buffer, sizeof(buffer), false),
-            -1);
+            PAYLOAD_UPDATE_ERASE_FAIL);
 }
 
 TEST_F(LibHothTest, payload_update_flash_fail) {
