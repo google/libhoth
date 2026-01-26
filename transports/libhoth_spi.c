@@ -281,8 +281,8 @@ static int libhoth_spi_release(struct libhoth_device* dev) {
 }
 
 static int libhoth_spi_reconnect(struct libhoth_device* dev) {
-  // TODO: A correct implementation
-  usleep(1000 * 1000);
+  // TODO: Maybe check for JEDEC ID?
+  // no-op
   return 0;
 }
 
