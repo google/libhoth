@@ -22,6 +22,7 @@ extern "C" {
 #endif
 
 #define LIBHOTH_MAILBOX_SIZE 1024
+#define LIBHOTH_REBOOT_DELAY_MS 1000
 
 typedef enum {
   LIBHOTH_OK = 0,

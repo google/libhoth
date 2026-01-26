@@ -105,12 +105,20 @@ static int libhoth_usb_reconnect(struct libhoth_device* dev) {
   }
 
   libhoth_usb_close(dev);
-  libusb_handle_events_completed(usb_ctx, NULL);
 
   uint64_t start_time_ms = libhoth_get_monotonic_ms();
 
   while (1) {
-    int ret = libhoth_usb_get_device(usb_ctx, &usb_loc, &libusb_dev);
+    libusb_exit(usb_ctx);
+    int ret = libusb_init(&usb_ctx);
+    if (ret != 0) {
+      fprintf(
+          stderr,
+          "libusb_init_context failed while reconnecting (error: %d (%s))\n",
+          ret, libusb_strerror(ret));
+    }
+
+    ret = libhoth_usb_get_device(usb_ctx, &usb_loc, &libusb_dev);
     if (ret == 0) {
       // Found the device
       break;
@@ -123,6 +131,7 @@ static int libhoth_usb_reconnect(struct libhoth_device* dev) {
           stderr,
           "libhoth_usb_open timed out while reconnecting (error: %d (%s))\n",
           ret, libusb_strerror(ret));
+      libusb_exit(usb_ctx);
       return ret;  // Timeout
     }
 
