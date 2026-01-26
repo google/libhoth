@@ -166,6 +166,11 @@ static int release(struct libhoth_device* dev) {
   return LIBHOTH_OK;
 }
 
+static int reconnect(struct libhoth_device* dev) {
+  // no-op
+  return LIBHOTH_OK;
+}
+
 char* with_hoth_id(const char* base, char delimiter, const char* hoth_id) {
   size_t base_len = strlen(base);
   size_t hoth_id_len = strlen(hoth_id);
@@ -242,6 +247,7 @@ int libhoth_dbus_open(const struct libhoth_dbus_device_init_options* options,
   dev->close = close;
   dev->claim = claim;
   dev->release = release;
+  dev->reconnect = reconnect;
   dev->user_ctx = dbus_dev;
 
   *out = dev;

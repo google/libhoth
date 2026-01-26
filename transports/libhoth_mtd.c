@@ -40,6 +40,7 @@ int libhoth_mtd_receive_response(struct libhoth_device* dev, void* response,
                                  int timeout_ms);
 
 int libhoth_mtd_close(struct libhoth_device* dev);
+int libhoth_mtd_reconnect(struct libhoth_device* dev);
 
 static int mtd_read(int fd, unsigned int address, void* data, size_t data_len) {
   if (fd < 0 || !data) {
@@ -191,6 +192,7 @@ int libhoth_mtd_open(const struct libhoth_mtd_device_init_options* options,
   dev->close = libhoth_mtd_close;
   dev->claim = libhoth_mtd_claim;
   dev->release = libhoth_mtd_release;
+  dev->reconnect = libhoth_mtd_reconnect;
   dev->user_ctx = mtd_dev;
 
   *out = dev;
@@ -278,5 +280,10 @@ int libhoth_mtd_close(struct libhoth_device* dev) {
       (struct libhoth_mtd_device*)dev->user_ctx;
   close(mtd_dev->fd);
   free(dev->user_ctx);
+  return LIBHOTH_OK;
+}
+
+int libhoth_mtd_reconnect(struct libhoth_device* dev) {
+  // no-op
   return LIBHOTH_OK;
 }
