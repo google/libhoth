@@ -19,7 +19,8 @@
 extern "C" {
 #endif
 
-int htool_statistics();
+struct htool_invocation;
+int htool_statistics(const struct htool_invocation* inv);
 
 #ifdef __cplusplus
 }
