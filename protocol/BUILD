@@ -101,8 +101,8 @@ cc_library(
         ":command_version",
         ":host_cmd",
         ":payload_info",
-        ":util",
         ":progress",
+        ":util",
         "//transports:libhoth_device",
     ],
 )
@@ -329,6 +329,29 @@ cc_test(
 )
 
 cc_library(
+    name = "firmware_update",
+    srcs = ["firmware_update.c"],
+    hdrs = ["firmware_update.h"],
+    deps = [
+        ":host_cmd",
+        "//transports:libhoth_device",
+    ],
+)
+
+cc_test(
+    name = "firmware_update_test",
+    srcs = ["firmware_update_test.cc"],
+    deps = [
+        ":firmware_update",
+        ":host_cmd",
+        "//protocol/test:libhoth_device_mock",
+        "//transports:libhoth_device",
+        "@googletest//:gtest",
+        "@googletest//:gtest_main",
+    ],
+)
+
+cc_library(
     name = "jtag",
     srcs = ["jtag.c"],
     hdrs = ["jtag.h"],
@@ -374,15 +397,15 @@ cc_test(
 
 cc_library(
     name = "opentitan_version",
-    deps = [
-        ":host_cmd",
-        "//transports:libhoth_device",
-        ":console",
-    ],
     srcs = ["opentitan_version.c"],
     hdrs = [
+        "console.h",
         "opentitan_version.h",
-        "console.h"
+    ],
+    deps = [
+        ":console",
+        ":host_cmd",
+        "//transports:libhoth_device",
     ],
 )
 
@@ -450,8 +473,8 @@ cc_library(
     hdrs = ["console.h"],
     deps = [
         ":host_cmd",
-        "//transports:libhoth_device",
         ":util",
+        "//transports:libhoth_device",
     ],
 )
 
@@ -471,9 +494,9 @@ cc_library(
         "dfu_check.c",
     ],
     hdrs = [
+        "console.h",
         "dfu_check.h",
         "opentitan_version.h",
-        "console.h"
     ],
     deps = [
         ":host_cmd",
