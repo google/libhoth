@@ -14,10 +14,16 @@ static int receive(struct libhoth_device* dev, void* response,
                        timeout_ms);
 }
 
+static int reconnect(struct libhoth_device* dev) {
+  LibHothDeviceMock* mock = (LibHothDeviceMock*)dev->user_ctx;
+  return mock->reconnect(dev);
+}
+
 LibHothTest::LibHothTest() {
   hoth_dev_.user_ctx = &mock_;
   hoth_dev_.send = send;
   hoth_dev_.receive = receive;
+  hoth_dev_.reconnect = reconnect;
 
   // protocol operations should never touch these
   hoth_dev_.close = nullptr;

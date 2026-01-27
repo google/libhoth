@@ -38,9 +38,9 @@ cc_library(
     srcs = ["libhoth_usb.c"],
     hdrs = ["libhoth_usb.h"],
     deps = [
-        "//protocol:util",
         ":libhoth_device",
         ":libhoth_usb_device",
+        "//protocol:util",
         "@libusb",
     ],
 )

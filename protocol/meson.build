@@ -21,6 +21,7 @@ protocol_srcs = [
     'command_version.c',
     'dfu_hostcmd.c',
     'dfu_check.c',
+    'firmware_update.c',
     'util.c',
     'console.c'
 ]
