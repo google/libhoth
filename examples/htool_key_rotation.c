@@ -43,7 +43,7 @@ static const char *get_validation_method_string(uint32_t validation_method) {
   }
 }
 
-int htool_key_rotation_get_status(void) {
+int htool_key_rotation_get_status(const struct htool_invocation* inv) {
   struct libhoth_device *dev = htool_libhoth_device();
   if (!dev) {
     return -1;
@@ -65,7 +65,7 @@ int htool_key_rotation_get_status(void) {
   return 0;
 }
 
-int htool_key_rotation_get_version(void) {
+int htool_key_rotation_get_version(const struct htool_invocation* inv) {
   struct libhoth_device *dev = htool_libhoth_device();
   if (!dev) {
     return -1;
@@ -161,7 +161,7 @@ int htool_key_rotation_update(const struct htool_invocation *inv) {
   return result;
 }
 
-int htool_key_rotation_payload_status() {
+int htool_key_rotation_payload_status(const struct htool_invocation* inv) {
   struct libhoth_device *dev = htool_libhoth_device();
   if (!dev) {
     return -1;

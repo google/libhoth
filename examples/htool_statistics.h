@@ -15,11 +15,13 @@
 #ifndef THIRD_PARTY_LIBHOTH_LIBHOTH_EXAMPLES_HTOOL_STATISTICS_H_
 #define THIRD_PARTY_LIBHOTH_LIBHOTH_EXAMPLES_HTOOL_STATISTICS_H_
 
+#include "htool_cmd.h"
+
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-int htool_statistics();
+int htool_statistics(const struct htool_invocation* inv);
 
 #ifdef __cplusplus
 }

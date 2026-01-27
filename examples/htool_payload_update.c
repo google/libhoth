@@ -172,7 +172,7 @@ const char* payload_update_getstatus_half_string(uint8_t h) {
   }
 }
 
-int htool_payload_update_getstatus() {
+int htool_payload_update_getstatus(const struct htool_invocation* inv) {
   struct libhoth_device* dev = htool_libhoth_device();
   if (!dev) {
     return -1;
