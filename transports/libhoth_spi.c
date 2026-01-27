@@ -247,12 +247,36 @@ static int spi_nor_read(int fd, bool address_mode_4b, unsigned int address,
 }
 
 static int libhoth_spi_claim(struct libhoth_device* dev) {
-  // no-op
+  if (dev == NULL) {
+    return LIBHOTH_ERR_INVALID_PARAMETER;
+  }
+
+  const struct libhoth_spi_device* spi_dev = dev->user_ctx;
+  if (spi_dev == NULL) {
+    return LIBHOTH_ERR_INVALID_PARAMETER;
+  }
+
+  if (flock(spi_dev->fd, LOCK_EX | LOCK_NB) != 0) {
+    // Maybe some other process has the lock?
+    return LIBHOTH_ERR_INTERFACE_BUSY;
+  }
   return LIBHOTH_OK;
 }
 
 static int libhoth_spi_release(struct libhoth_device* dev) {
-  // no-op
+  if (dev == NULL) {
+    return LIBHOTH_ERR_INVALID_PARAMETER;
+  }
+
+  const struct libhoth_spi_device* spi_dev = dev->user_ctx;
+  if (spi_dev == NULL) {
+    return LIBHOTH_ERR_INVALID_PARAMETER;
+  }
+
+  if (flock(spi_dev->fd, LOCK_UN) != 0) {
+    // Maybe `fd` is invalid?
+    return LIBHOTH_ERR_FAIL;
+  }
   return LIBHOTH_OK;
 }
 
@@ -287,11 +311,13 @@ int libhoth_spi_open(const struct libhoth_spi_device_init_options* options,
   // meant to prevent such situations assuming that all processes using this
   // spidev device check for this advisory lock.
   //
-  // This lock is intentionally not released explicitly. `man 2 flock` mentions
-  // that if the file descriptor is duplicated (for eg. using `fork`), unlocking
-  // **any** of the file descriptors would release the lock. Without explicitly
-  // releasing the lock, the lock will be automatically released when **all**
-  // the duplicated file descriptors are closed.
+  // This lock is intentionally not released explicitly in `libhoth_spi_close`.
+  // `man 2 flock` mentions that if the file descriptor is duplicated (for eg.
+  // using `fork`), unlocking **any** of the file descriptors would release the
+  // lock. Without explicitly releasing the lock, the lock will be
+  // automatically released when **all** the duplicated file descriptors are
+  // closed. API users may choose to override this behavior and manage this
+  // lock using `libhoth_spi_claim` and `libhoth_spi_release` APIs
   if (flock(fd, LOCK_EX | LOCK_NB) != 0) {
     // Maybe some other process has the lock?
     status = LIBHOTH_ERR_INTERFACE_BUSY;
