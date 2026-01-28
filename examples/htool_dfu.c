@@ -90,7 +90,7 @@ int htool_dfu_update(const struct htool_invocation* inv) {
   } 
 
   // Populate rom_ext and app with the desired extracted versions from the image
-  retval = libhoth_extract_ot_bundle(image, &desired_rom_ext, &desired_app);
+  retval = libhoth_extract_ot_bundle(image, statbuf.st_size, &desired_rom_ext, &desired_app);
 
   if(retval != 0) {
     fprintf(stderr, "Failed to extract bundle\n");
