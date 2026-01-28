@@ -792,6 +792,48 @@ static int command_opentitan_version(const struct htool_invocation* inv) {
   return 0;
 }
 
+static int command_extract_ot_bundle(const struct htool_invocation* inv) {
+  const char* source_file;
+  if (htool_get_param_string(inv, "source-file", &source_file)) {
+    return -1;
+  }
+
+  int fd = open(source_file, O_RDONLY, 0);
+  if (fd == -1) {
+    fprintf(stderr, "Error opening file %s: %s\n", source_file,
+            strerror(errno));
+    return -1;
+  }
+  int rv = -1;
+
+  struct stat statbuf;
+  if (fstat(fd, &statbuf)) {
+    fprintf(stderr, "fstat error: %s\n", strerror(errno));
+    goto cleanup;
+  }
+  if (statbuf.st_size > SIZE_MAX) {
+    fprintf(stderr, "file too large\n");
+    goto cleanup;
+  }
+  size_t file_size = statbuf.st_size;
+  uint8_t* file_data = mmap(NULL, file_size, PROT_READ, MAP_PRIVATE, fd, 0);
+
+  struct opentitan_image_version rom_ext = {0};
+  struct opentitan_image_version app = {0};
+  rv = libhoth_extract_ot_bundle(file_data, file_size, &rom_ext, &app);
+  if (rv) {
+    fprintf(stderr, "Failed to extract OT bundle (%d)\n", rv);
+    goto cleanup;
+  }
+
+  libhoth_print_ot_version("app: ", &app);
+  libhoth_print_ot_version("rom_ext: ", &rom_ext);
+
+cleanup:
+  close(fd);
+  return rv;
+}
+
 static const struct htool_cmd CMDS[] = {
     {
         .verbs = (const char*[]){"usb", "list", NULL},
@@ -1423,6 +1465,14 @@ static const struct htool_cmd CMDS[] = {
         .desc = "Get OpenTitan version",
         .params = (const struct htool_param[]){{}},
         .func = command_opentitan_version,
+    },
+    {
+        .verbs = (const char*[]){"extract_ot_bundle", NULL},
+        .desc = "Get OpenTitan version",
+        .params =
+            (const struct htool_param[]){
+                {HTOOL_POSITIONAL, .name = "source-file"}, {}},
+        .func = command_extract_ot_bundle,
     },
     {
         .verbs = (const char*[]){"key_rotation", "get", "status", NULL},

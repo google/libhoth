@@ -34,12 +34,20 @@ int libhoth_opentitan_version(struct libhoth_device * dev,
 }
 
 int libhoth_extract_ot_bundle(const uint8_t* image,
+                              size_t image_size,
                               struct opentitan_image_version * rom_ext,
                               struct opentitan_image_version * app) {
 
   // Check if the image is valid
   if(image == NULL) {
     fprintf(stderr, "Image is NULL\n");
+    return -1;
+  }
+
+  const size_t smallest_fw = OPENTITAN_OFFSET_APP_FW + sizeof(struct opentitan_image_version);
+  if (image_size < smallest_fw) {
+    fprintf(stderr, "Image is too small, expected at least %zu but image is %zu\n", 
+            smallest_fw, image_size);
     return -1;
   }
 

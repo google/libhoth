@@ -101,6 +101,7 @@ int libhoth_opentitan_version(struct libhoth_device *device,
                               struct opentitan_get_version_resp *response);                             
 
 int libhoth_extract_ot_bundle(const uint8_t* image,
+                              size_t image_size,
                               struct opentitan_image_version * rom_ext,
                               struct opentitan_image_version * app);
 

@@ -67,7 +67,7 @@ int libhoth_dfu_check(struct libhoth_device* const dev, const uint8_t* image, si
   struct opentitan_image_version desired_app = {0};
 
   // Populate rom_ext and app with the desired extracted versions from the image
-  retval = libhoth_extract_ot_bundle(image, &desired_rom_ext, &desired_app);
+  retval = libhoth_extract_ot_bundle(image, image_size, &desired_rom_ext, &desired_app);
 
   if(retval != 0) {
     fprintf(stderr, "Error: Failed to extract bundle with code %d\n", retval);
