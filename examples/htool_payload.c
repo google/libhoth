@@ -79,11 +79,6 @@ int htool_payload_status(const struct htool_invocation* inv) {
 }
 
 int htool_payload_info(const struct htool_invocation* inv) {
-  struct libhoth_device* dev = htool_libhoth_device();
-  if (!dev) {
-    return -1;
-  }
-
   const char* image_file;
   if (htool_get_param_string(inv, "source-file", &image_file) != 0) {
     return -1;
