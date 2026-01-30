@@ -68,9 +68,9 @@ executable(
 
 
 gtest_dep = dependency('gtest', main: true, disabler: true, required: false)
-gmock_dep = dependency('gmock', main: true, disabler: true, required: false)
+gmock_dep = dependency('gmock', main: false, disabler: true, required: false)
 
-if gtest_dep.found() and gmock_dep.found()
+if gtest_dep.found() and gmock_dep.found() and not get_option('tests').disabled()
     test(
         'htool_provisioning_test_asan',
         executable(
