@@ -23,8 +23,8 @@
 
 using ::testing::_;
 using ::testing::DoAll;
-using ::testing::Return;
 using ::testing::ElementsAreArray;
+using ::testing::Return;
 
 TEST_F(LibHothTest, controlled_storage_read_test) {
   struct hoth_payload_controlled_storage ex_resp = {};
@@ -51,7 +51,7 @@ TEST_F(LibHothTest, controlled_storage_read_test) {
 
   EXPECT_EQ(payload_len, ex_payload_len);
   EXPECT_THAT(std::vector<uint8_t>(ex_resp.data, ex_resp.data + ex_payload_len),
-      ElementsAreArray(resp.data, payload_len));
+              ElementsAreArray(resp.data, payload_len));
 }
 
 TEST_F(LibHothTest, controlled_storage_write_test) {

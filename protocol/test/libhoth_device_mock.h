@@ -62,7 +62,8 @@ ACTION_P(CopyResp, response, resp_size) {
 
   struct {
     struct hoth_host_response hdr;
-    uint8_t payload_buf[LIBHOTH_MAILBOX_SIZE - sizeof(struct hoth_host_response)];
+    uint8_t
+        payload_buf[LIBHOTH_MAILBOX_SIZE - sizeof(struct hoth_host_response)];
   } resp;
 
   ASSERT_LE(full_resp_size, sizeof(resp));
@@ -75,8 +76,8 @@ ACTION_P(CopyResp, response, resp_size) {
 
   std::memcpy(resp.payload_buf, response, resp_size);
 
-  resp.hdr.checksum = libhoth_calculate_checksum(
-      &resp.hdr, sizeof(resp.hdr), &resp.payload_buf, resp_size);
+  resp.hdr.checksum = libhoth_calculate_checksum(&resp.hdr, sizeof(resp.hdr),
+                                                 &resp.payload_buf, resp_size);
 
   std::memcpy(arg1, &resp, full_resp_size);
   *arg3 = full_resp_size;

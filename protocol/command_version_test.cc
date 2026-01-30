@@ -13,11 +13,13 @@
 // limitations under the License.
 
 #include "command_version.h"
+
+#include <gmock/gmock.h>
+#include <gtest/gtest.h>
+
 #include <cstdint>
 
 #include "test/libhoth_device_mock.h"
-#include <gmock/gmock.h>
-#include <gtest/gtest.h>
 #include "transports/libhoth_device.h"
 
 using ::testing::_;

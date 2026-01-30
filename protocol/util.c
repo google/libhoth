@@ -15,10 +15,10 @@
 #include "util.h"
 
 #include <errno.h>
+#include <stdio.h>
+#include <stdlib.h>
 #include <time.h>
 #include <unistd.h>
-#include <stdlib.h>
-#include <stdio.h>
 
 uint64_t libhoth_get_monotonic_ms() {
   struct timespec ts;
@@ -33,7 +33,7 @@ uint64_t libhoth_get_monotonic_ms() {
 }
 
 uint32_t libhoth_prng_seed() {
-  //TODO: Can we just use rand() here?
+  // TODO: Can we just use rand() here?
   struct timespec ts;
   int ret = clock_gettime(CLOCK_MONOTONIC, &ts);
   if (ret != 0) {
@@ -45,8 +45,8 @@ uint32_t libhoth_prng_seed() {
   return ts.tv_sec ^ ts.tv_nsec ^ getpid();
 }
 
-int libhoth_force_write(int fd, const void *buf, size_t count) {
-  const char *cbuf = buf;
+int libhoth_force_write(int fd, const void* buf, size_t count) {
+  const char* cbuf = buf;
   while (count > 0) {
     ssize_t bytes_written = write(fd, cbuf, count);
     if (bytes_written < 0) {

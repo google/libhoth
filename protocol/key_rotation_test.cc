@@ -14,15 +14,16 @@
 
 #include "protocol/key_rotation.h"
 
+#include <gmock/gmock.h>
+#include <gtest/gtest.h>
+
 #include <cstddef>
 #include <cstdint>
 #include <cstdlib>
 #include <cstring>
 
-#include "test/libhoth_device_mock.h"
-#include <gmock/gmock.h>
-#include <gtest/gtest.h>
 #include "protocol/host_cmd.h"
+#include "test/libhoth_device_mock.h"
 #include "transports/libhoth_device.h"
 
 using ::testing::_;

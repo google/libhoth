@@ -57,7 +57,7 @@ void hex_dump(FILE* out, const void* buffer, size_t size) {
 }
 
 uint8_t libhoth_calculate_checksum(const void* header, size_t header_size,
-                                      const void* data, size_t data_size) {
+                                   const void* data, size_t data_size) {
   size_t i;
   uint8_t sum = 0;
 
@@ -74,9 +74,9 @@ uint8_t libhoth_calculate_checksum(const void* header, size_t header_size,
   return 0x100 - sum;
 }
 
-static int populate_ec_request_header(uint16_t command, uint8_t command_version,
-                                      const void* request, size_t request_size,
-                                      struct hoth_host_request* request_header) {
+static int populate_ec_request_header(
+    uint16_t command, uint8_t command_version, const void* request,
+    size_t request_size, struct hoth_host_request* request_header) {
   if (!request_header) {
     fprintf(stderr, "Request header argument cannot be NULL\n");
     return -EINVAL;
@@ -138,7 +138,7 @@ static int validate_ec_response_header(
 
   response_checksum =
       libhoth_calculate_checksum(response_header, sizeof(*response_header),
-                                    response, response_header->data_len);
+                                 response, response_header->data_len);
 
   // Since this checksum includes the `checksum` field in `response_header`, it
   // should be zero.
@@ -154,12 +154,14 @@ static int validate_ec_response_header(
   return 0;
 }
 
-int libhoth_hostcmd_exec(struct libhoth_device* dev, uint16_t command, uint8_t version,
-                 const void* req_payload, size_t req_payload_size,
-                 void* resp_buf, size_t resp_buf_size, size_t* out_resp_size) {
+int libhoth_hostcmd_exec(struct libhoth_device* dev, uint16_t command,
+                         uint8_t version, const void* req_payload,
+                         size_t req_payload_size, void* resp_buf,
+                         size_t resp_buf_size, size_t* out_resp_size) {
   struct {
     struct hoth_host_request hdr;
-    uint8_t payload_buf[LIBHOTH_MAILBOX_SIZE - sizeof(struct hoth_host_request)];
+    uint8_t
+        payload_buf[LIBHOTH_MAILBOX_SIZE - sizeof(struct hoth_host_request)];
   } req;
   if (req_payload_size > sizeof(req.payload_buf)) {
     fprintf(stderr, "req_payload_size too large: %d > %d\n",
@@ -182,11 +184,12 @@ int libhoth_hostcmd_exec(struct libhoth_device* dev, uint16_t command, uint8_t v
   }
   struct {
     struct hoth_host_response hdr;
-    uint8_t payload_buf[LIBHOTH_MAILBOX_SIZE - sizeof(struct hoth_host_response)];
+    uint8_t
+        payload_buf[LIBHOTH_MAILBOX_SIZE - sizeof(struct hoth_host_response)];
   } resp;
   size_t resp_size;
   status = libhoth_receive_response(dev, &resp, sizeof(resp), &resp_size,
-                                   HOTH_CMD_TIMEOUT_MS_DEFAULT);
+                                    HOTH_CMD_TIMEOUT_MS_DEFAULT);
   if (status != LIBHOTH_OK) {
     fprintf(stderr, "libhoth_receive_response() failed: %d\n", status);
     return -1;
