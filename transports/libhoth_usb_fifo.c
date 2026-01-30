@@ -27,9 +27,9 @@
 #define LIBHOTH_USB_FIFO_MTU \
   (LIBHOTH_USB_FIFO_REQUEST_ID_SIZE + LIBHOTH_USB_FIFO_MAX_REQUEST_SIZE)
 
-static int libhoth_usb_fifo_run_transfers(struct libhoth_usb_device *dev,
+static int libhoth_usb_fifo_run_transfers(struct libhoth_usb_device* dev,
                                           bool out, bool in) {
-  struct libhoth_usb_fifo *drvdata = &dev->driver_data.fifo;
+  struct libhoth_usb_fifo* drvdata = &dev->driver_data.fifo;
   drvdata->all_transfers_completed = 0;
   drvdata->out_transfer_completed = !out;
   drvdata->in_transfer_completed = !in;
@@ -56,10 +56,10 @@ static int libhoth_usb_fifo_run_transfers(struct libhoth_usb_device *dev,
   return LIBHOTH_OK;
 }
 
-static void fifo_transfer_callback(struct libusb_transfer *transfer) {
-  struct libhoth_usb_device *dev =
-      (struct libhoth_usb_device *)transfer->user_data;
-  struct libhoth_usb_fifo *drvdata = &dev->driver_data.fifo;
+static void fifo_transfer_callback(struct libusb_transfer* transfer) {
+  struct libhoth_usb_device* dev =
+      (struct libhoth_usb_device*)transfer->user_data;
+  struct libhoth_usb_fifo* drvdata = &dev->driver_data.fifo;
   if (transfer == drvdata->in_transfer) {
     drvdata->in_transfer_completed = true;
     if (transfer->status != LIBUSB_TRANSFER_COMPLETED &&
@@ -84,7 +84,7 @@ static void fifo_transfer_callback(struct libusb_transfer *transfer) {
 }
 
 // 32-bits XOR shift algorithm from "Xorshift RNGs" by George Marsaglia
-static uint32_t libhoth_generate_pseudorandom_u32(uint32_t *seed) {
+static uint32_t libhoth_generate_pseudorandom_u32(uint32_t* seed) {
   *seed ^= (*seed << 13);
   // The paper seems to have a typo in the algorithm presented on Pg 4, missing
   // the ^ operation for second assignment. Pg 3 shows 8 shift operations that
@@ -94,8 +94,8 @@ static uint32_t libhoth_generate_pseudorandom_u32(uint32_t *seed) {
   return *seed;
 }
 
-int libhoth_usb_fifo_open(struct libhoth_usb_device *dev,
-                          const struct libusb_config_descriptor *descriptor,
+int libhoth_usb_fifo_open(struct libhoth_usb_device* dev,
+                          const struct libusb_config_descriptor* descriptor,
                           uint32_t prng_seed) {
   int status = LIBHOTH_OK;
   if (dev == NULL || descriptor == NULL ||
@@ -105,17 +105,17 @@ int libhoth_usb_fifo_open(struct libhoth_usb_device *dev,
       (prng_seed == 0)) {
     return LIBUSB_ERROR_INVALID_PARAM;
   }
-  const struct libusb_interface *interface_settings =
+  const struct libusb_interface* interface_settings =
       &descriptor->interface[dev->info.interface_id];
-  const struct libusb_interface_descriptor *interface =
+  const struct libusb_interface_descriptor* interface =
       &interface_settings->altsetting[dev->info.interface_altsetting];
 
   // Fill out driver data.
-  struct libhoth_usb_fifo *drvdata = &dev->driver_data.fifo;
+  struct libhoth_usb_fifo* drvdata = &dev->driver_data.fifo;
 
   // There should only be one IN endpoint and one OUT endpoint.
   for (int i = 0; i < interface->bNumEndpoints; i++) {
-    const struct libusb_endpoint_descriptor *endpoint = &interface->endpoint[i];
+    const struct libusb_endpoint_descriptor* endpoint = &interface->endpoint[i];
     enum libusb_endpoint_direction direction =
         endpoint->bEndpointAddress & LIBUSB_ENDPOINT_DIR_MASK;
     enum libusb_transfer_type transfer_type =
@@ -148,8 +148,8 @@ int libhoth_usb_fifo_open(struct libhoth_usb_device *dev,
   drvdata->in_transfer->length = 0;
   drvdata->out_transfer->length = 0;
 
-  drvdata->in_buffer = (uint8_t *)malloc(LIBHOTH_USB_FIFO_MTU);
-  drvdata->out_buffer = (uint8_t *)malloc(LIBHOTH_USB_FIFO_MTU);
+  drvdata->in_buffer = (uint8_t*)malloc(LIBHOTH_USB_FIFO_MTU);
+  drvdata->out_buffer = (uint8_t*)malloc(LIBHOTH_USB_FIFO_MTU);
   if (drvdata->in_buffer == NULL) {
     status = LIBHOTH_ERR_MALLOC_FAILED;
     goto err_out;
@@ -168,8 +168,8 @@ err_out:
   return status;
 }
 
-int libhoth_usb_fifo_send_request(struct libhoth_usb_device *dev,
-                                  const void *request, size_t request_size) {
+int libhoth_usb_fifo_send_request(struct libhoth_usb_device* dev,
+                                  const void* request, size_t request_size) {
   if (dev == NULL || request == NULL ||
       request_size > LIBHOTH_USB_FIFO_MAX_REQUEST_SIZE) {
     return LIBUSB_ERROR_INVALID_PARAM;
@@ -181,7 +181,7 @@ int libhoth_usb_fifo_send_request(struct libhoth_usb_device *dev,
   // }
 
   // Prepare the buffer with a request ID
-  struct libhoth_usb_fifo *drvdata = &dev->driver_data.fifo;
+  struct libhoth_usb_fifo* drvdata = &dev->driver_data.fifo;
   for (int i = 0; i < LIBHOTH_USB_FIFO_REQUEST_ID_SIZE; i++) {
     drvdata->out_buffer[i] =
         (uint8_t)libhoth_generate_pseudorandom_u32(&drvdata->prng_state);
@@ -198,16 +198,16 @@ int libhoth_usb_fifo_send_request(struct libhoth_usb_device *dev,
   return LIBHOTH_OK;
 }
 
-int libhoth_usb_fifo_receive_response(struct libhoth_usb_device *dev,
-                                      void *response, size_t max_response_size,
-                                      size_t *actual_size, int timeout_ms) {
+int libhoth_usb_fifo_receive_response(struct libhoth_usb_device* dev,
+                                      void* response, size_t max_response_size,
+                                      size_t* actual_size, int timeout_ms) {
   if (dev == NULL || response == NULL ||
       max_response_size > LIBHOTH_USB_FIFO_MAX_REQUEST_SIZE) {
     return LIBUSB_ERROR_INVALID_PARAM;
   }
   size_t max_in_transfer_size =
       LIBHOTH_USB_FIFO_REQUEST_ID_SIZE + max_response_size;
-  struct libhoth_usb_fifo *drvdata = &dev->driver_data.fifo;
+  struct libhoth_usb_fifo* drvdata = &dev->driver_data.fifo;
   if (drvdata->out_transfer->length == 0) {
     // OUT transfer not filled in. Forgot to call libhoth_usb_fifo_send_request?
     return LIBUSB_ERROR_IO;
@@ -288,11 +288,11 @@ transfer_done:
   return status;
 }
 
-int libhoth_usb_fifo_close(struct libhoth_usb_device *dev) {
+int libhoth_usb_fifo_close(struct libhoth_usb_device* dev) {
   if (dev == NULL) {
     return LIBUSB_ERROR_INVALID_PARAM;
   }
-  struct libhoth_usb_fifo *drvdata = &dev->driver_data.fifo;
+  struct libhoth_usb_fifo* drvdata = &dev->driver_data.fifo;
   if (drvdata->in_buffer != NULL) free(drvdata->in_buffer);
   if (drvdata->out_buffer != NULL) free(drvdata->out_buffer);
   libusb_free_transfer(drvdata->in_transfer);

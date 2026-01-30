@@ -41,7 +41,7 @@ struct spi_operation_transaction {
 #define MAX_TRANSACTIONS 12
 #define MAX_SPI_OP_PAYLOAD_BYTES 1016
 #define OPCODE_AND_ADDRESS_MAX_SIZE 5
-#define READ_CHUNK_SIZE                                                 \
+#define READ_CHUNK_SIZE                                                   \
   (MAX_SPI_OP_PAYLOAD_BYTES - sizeof(struct hoth_spi_operation_request) - \
    OPCODE_AND_ADDRESS_MAX_SIZE)
 

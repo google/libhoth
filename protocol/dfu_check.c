@@ -17,26 +17,26 @@
 #include <assert.h>
 #include <stdbool.h>
 #include <stddef.h>
+#include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <stdint.h>
 // for MIN()
 #include <sys/param.h>
 #include <sys/random.h>
 #include <time.h>
 #include <unistd.h>
 
+#include "protocol/console.h"
 #include "protocol/host_cmd.h"
 #include "protocol/opentitan_version.h"
-#include "protocol/console.h"
 
-void libhoth_print_boot_log(struct opentitan_image_version * booted_rom_ext,
-                            struct opentitan_image_version * booted_app, 
-                            struct opentitan_image_version * desired_rom_ext, 
-                            struct opentitan_image_version * desired_app) {
-
-  printf("installed_version: \"%d.%d\"\n", desired_app->major, desired_app->minor);
+void libhoth_print_boot_log(struct opentitan_image_version* booted_rom_ext,
+                            struct opentitan_image_version* booted_app,
+                            struct opentitan_image_version* desired_rom_ext,
+                            struct opentitan_image_version* desired_app) {
+  printf("installed_version: \"%d.%d\"\n", desired_app->major,
+         desired_app->minor);
   printf("activated_versions: {\n");
   printf("key: \"app\"\n");
   printf("value: \"%d.%d\"\n", booted_app->major, booted_app->minor);
@@ -48,9 +48,11 @@ void libhoth_print_boot_log(struct opentitan_image_version * booted_rom_ext,
   printf("}\n");
 }
 
-void libhoth_print_dfu_error(struct libhoth_device* const dev, struct opentitan_get_version_resp * resp) {
-
-  fprintf(stderr, "Error: Mismatch detected between the current and desired versions.\n");
+void libhoth_print_dfu_error(struct libhoth_device* const dev,
+                             struct opentitan_get_version_resp* resp) {
+  fprintf(
+      stderr,
+      "Error: Mismatch detected between the current and desired versions.\n");
 
   printf("tool_failure_code: -1\n");
   printf("notes: \"");
@@ -60,16 +62,18 @@ void libhoth_print_dfu_error(struct libhoth_device* const dev, struct opentitan_
   printf("\"\n");
 }
 
-int libhoth_dfu_check(struct libhoth_device* const dev, const uint8_t* image, size_t image_size, struct opentitan_get_version_resp * resp) {
-
+int libhoth_dfu_check(struct libhoth_device* const dev, const uint8_t* image,
+                      size_t image_size,
+                      struct opentitan_get_version_resp* resp) {
   int retval = 0;
   struct opentitan_image_version desired_rom_ext = {0};
   struct opentitan_image_version desired_app = {0};
 
   // Populate rom_ext and app with the desired extracted versions from the image
-  retval = libhoth_extract_ot_bundle(image, image_size, &desired_rom_ext, &desired_app);
+  retval = libhoth_extract_ot_bundle(image, image_size, &desired_rom_ext,
+                                     &desired_app);
 
-  if(retval != 0) {
+  if (retval != 0) {
     fprintf(stderr, "Error: Failed to extract bundle with code %d\n", retval);
   }
 
@@ -79,21 +83,29 @@ int libhoth_dfu_check(struct libhoth_device* const dev, const uint8_t* image, si
   uint32_t app_boot_slot = bootslot_int(resp->app.booted_slot);
   uint32_t app_stage_slot = app_boot_slot == 0 ? 1 : 0;
 
-  // Always print out on non-error OR error the installed and active version for parsing purpose
-  libhoth_print_boot_log(&resp->rom_ext.slots[rom_ext_boot_slot], &resp->app.slots[app_boot_slot], &desired_rom_ext, &desired_app);
+  // Always print out on non-error OR error the installed and active version for
+  // parsing purpose
+  libhoth_print_boot_log(&resp->rom_ext.slots[rom_ext_boot_slot],
+                         &resp->app.slots[app_boot_slot], &desired_rom_ext,
+                         &desired_app);
 
-  bool booted_slot_eq = libhoth_ot_version_eq(&resp->rom_ext.slots[rom_ext_boot_slot], &desired_rom_ext) && libhoth_ot_version_eq(&resp->app.slots[app_boot_slot], &desired_app);
-  if(!booted_slot_eq) {
-    libhoth_print_dfu_error(dev,resp);
+  bool booted_slot_eq =
+      libhoth_ot_version_eq(&resp->rom_ext.slots[rom_ext_boot_slot],
+                            &desired_rom_ext) &&
+      libhoth_ot_version_eq(&resp->app.slots[app_boot_slot], &desired_app);
+  if (!booted_slot_eq) {
+    libhoth_print_dfu_error(dev, resp);
     return -1;
   }
 
-  bool staging_slot_eq = libhoth_ot_version_eq(&resp->rom_ext.slots[rom_ext_stage_slot], &desired_rom_ext) && libhoth_ot_version_eq(&resp->app.slots[app_stage_slot], &desired_app);
-  if(!staging_slot_eq) {
+  bool staging_slot_eq =
+      libhoth_ot_version_eq(&resp->rom_ext.slots[rom_ext_stage_slot],
+                            &desired_rom_ext) &&
+      libhoth_ot_version_eq(&resp->app.slots[app_stage_slot], &desired_app);
+  if (!staging_slot_eq) {
     libhoth_print_dfu_error(dev, resp);
     return -1;
   }
 
   return 0;
-
 }

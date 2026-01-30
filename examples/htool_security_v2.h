@@ -38,7 +38,7 @@ struct security_v2_serialized_param {
   // The number of bytes in this parameter's value.
   uint16_t size;
 
-  // Reserved Bytes 
+  // Reserved Bytes
   uint16_t reserved;
 
   // This parameter's value.
@@ -81,17 +81,17 @@ int htool_exec_security_v2_cmd(struct libhoth_device* dev, uint8_t major,
                                uint16_t response_param_count);
 // Executes a SECURITY_V2 host command with `major.minor` code, using serialized
 // response params
-int htool_exec_security_v2_serialized_cmd(struct libhoth_device* dev, uint8_t major,
-                               uint8_t minor, uint16_t base_command,
-                               struct security_v2_buffer* request_buffer,
-                               const struct security_v2_param* request_params,
-                               uint16_t request_param_count,
-                               struct security_v2_buffer* response_buffer,
-                               const struct security_v2_serialized_param** response_params[],
-                               uint16_t response_param_count);
+int htool_exec_security_v2_serialized_cmd(
+    struct libhoth_device* dev, uint8_t major, uint8_t minor,
+    uint16_t base_command, struct security_v2_buffer* request_buffer,
+    const struct security_v2_param* request_params,
+    uint16_t request_param_count, struct security_v2_buffer* response_buffer,
+    const struct security_v2_serialized_param** response_params[],
+    uint16_t response_param_count);
 
 // Copies the serialized param value into an output buffer
-int copy_param(const struct security_v2_serialized_param* param, void* output, size_t output_size);
+int copy_param(const struct security_v2_serialized_param* param, void* output,
+               size_t output_size);
 
 // Returns the necessary padding given the size
 static inline size_t padding_size(uint16_t size) {

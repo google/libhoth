@@ -50,7 +50,7 @@ int htool_info(const struct htool_invocation* inv) {
         struct hoth_response_get_version fw_version_struct;
         status = libhoth_get_rot_fw_version(dev, &fw_version_struct);
         memcpy(&fw_minor_version, &fw_version_struct.version_string_rw,
-            sizeof(fw_version_struct.version_string_rw));
+               sizeof(fw_version_struct.version_string_rw));
         if (status != 0) {
           return status;
         }

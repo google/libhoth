@@ -15,21 +15,25 @@
 #ifndef LIBHOTH_EXAMPLES_HTOOL_DFU_CHECK_H_
 #define LIBHOTH_EXAMPLES_HTOOL_DFU_CHECK_H_
 
-#include <stdint.h>
 #include <stddef.h>
-#include "protocol/opentitan_version.h"
+#include <stdint.h>
+
 #include "protocol/console.h"
+#include "protocol/opentitan_version.h"
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-int libhoth_dfu_check(struct libhoth_device* const dev, const uint8_t* image, size_t image_size, struct opentitan_get_version_resp * resp);
-void libhoth_print_boot_log(struct opentitan_image_version * booted_rom_ext,
-                            struct opentitan_image_version * booted_app, 
-                            struct opentitan_image_version * desired_rom_ext, 
-                            struct opentitan_image_version * desired_app);
-void libhoth_print_dfu_error(struct libhoth_device* const dev, struct opentitan_get_version_resp * resp);
+int libhoth_dfu_check(struct libhoth_device* const dev, const uint8_t* image,
+                      size_t image_size,
+                      struct opentitan_get_version_resp* resp);
+void libhoth_print_boot_log(struct opentitan_image_version* booted_rom_ext,
+                            struct opentitan_image_version* booted_app,
+                            struct opentitan_image_version* desired_rom_ext,
+                            struct opentitan_image_version* desired_app);
+void libhoth_print_dfu_error(struct libhoth_device* const dev,
+                             struct opentitan_get_version_resp* resp);
 void libhoth_print_erot_console(struct libhoth_device* const dev);
 
 #ifdef __cplusplus

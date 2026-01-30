@@ -15,8 +15,8 @@
 #ifndef _LIBHOTH_PROTOCOL_KEY_ROTATION_H_
 #define _LIBHOTH_PROTOCOL_KEY_ROTATION_H_
 
-#include <stdint.h>
 #include <assert.h>
+#include <stdint.h>
 
 #include "protocol/host_cmd.h"
 #include "transports/libhoth_device.h"
@@ -166,7 +166,7 @@ struct bios_verifiction_key_fingerprint {
   sha256 key_fingerprint;  // verification key fignerprint = sha256(n||e)
 };
 static_assert(sizeof(struct bios_verifiction_key_fingerprint) == 40,
-               "bios_verifiction_key_fingerprint size is not 40 bytes!");
+              "bios_verifiction_key_fingerprint size is not 40 bytes!");
 
 struct bios_allowed_hash_list {
   uint32_t hash_count;
@@ -195,8 +195,7 @@ enum key_rotation_err libhoth_key_rotation_read_chunk_type(
     struct hoth_response_key_rotation_record_read* read_response,
     uint16_t* response_size);
 enum key_rotation_err libhoth_key_rotation_chunk_type_count(
-    struct libhoth_device* dev, uint32_t chunk_typecode,
-    uint16_t* chunk_count);
+    struct libhoth_device* dev, uint32_t chunk_typecode, uint16_t* chunk_count);
 enum key_rotation_err libhoth_key_rotation_erase_record(
     struct libhoth_device* dev);
 enum key_rotation_err libhoth_key_rotation_set_mauv(struct libhoth_device* dev,

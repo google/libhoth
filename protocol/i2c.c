@@ -22,9 +22,9 @@ int libhoth_i2c_detect(struct libhoth_device* dev,
                        struct hoth_request_i2c_detect* req,
                        struct hoth_response_i2c_detect* resp) {
   size_t rLen = 0;
-  int ret =
-      libhoth_hostcmd_exec(dev, HOTH_CMD_BOARD_SPECIFIC_BASE + HOTH_PRV_CMD_HOTH_I2C_DETECT,
-                   0, req, sizeof(*req), resp, sizeof(*resp), &rLen);
+  int ret = libhoth_hostcmd_exec(
+      dev, HOTH_CMD_BOARD_SPECIFIC_BASE + HOTH_PRV_CMD_HOTH_I2C_DETECT, 0, req,
+      sizeof(*req), resp, sizeof(*resp), &rLen);
   if (ret != 0) {
     fprintf(stderr, "HOTH_I2C_DETECT error code: %d\n", ret);
     return -1;
@@ -68,8 +68,8 @@ int libhoth_i2c_transfer(struct libhoth_device* dev,
                          struct hoth_response_i2c_transfer* resp) {
   size_t rLen = 0;
   int ret = libhoth_hostcmd_exec(
-      dev, HOTH_CMD_BOARD_SPECIFIC_BASE + HOTH_PRV_CMD_HOTH_I2C_TRANSFER, 0, req,
-      sizeof(*req), resp, sizeof(*resp), &rLen);
+      dev, HOTH_CMD_BOARD_SPECIFIC_BASE + HOTH_PRV_CMD_HOTH_I2C_TRANSFER, 0,
+      req, sizeof(*req), resp, sizeof(*resp), &rLen);
   if (ret != 0) {
     fprintf(stderr, "HOTH_I2C_TRANSFER error code: %d\n", ret);
     return -1;

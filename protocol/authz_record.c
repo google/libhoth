@@ -58,7 +58,8 @@ int libhoth_authz_record_build(struct libhoth_device* dev,
 
   struct hoth_authz_record_get_nonce_response nonce_resp;
   status = libhoth_hostcmd_exec(
-      dev, HOTH_CMD_BOARD_SPECIFIC_BASE + HOTH_PRV_CMD_HOTH_GET_AUTHZ_RECORD_NONCE,
+      dev,
+      HOTH_CMD_BOARD_SPECIFIC_BASE + HOTH_PRV_CMD_HOTH_GET_AUTHZ_RECORD_NONCE,
       /*version=*/0, NULL, 0, &nonce_resp, sizeof(nonce_resp), NULL);
   if (status != 0) {
     return status;

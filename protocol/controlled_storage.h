@@ -34,7 +34,8 @@ enum controlled_storage_op {
   CONTROLLED_STORAGE_DELETE = 2,
 };
 
-// Serves as the response to CONTROLLED_STORAGE_READ as well as payload to CONTROLLED_STORAGE_WRITE.
+// Serves as the response to CONTROLLED_STORAGE_READ as well as payload to
+// CONTROLLED_STORAGE_WRITE.
 struct hoth_payload_controlled_storage {
   uint8_t data[CONTROLLED_STORAGE_SIZE];
 } __attribute__((packed));
@@ -47,13 +48,13 @@ struct hoth_request_controlled_storage {
   struct hoth_payload_controlled_storage payload;
 } __attribute__((packed));
 
-
-int libhoth_controlled_storage_read(struct libhoth_device* dev, uint32_t slot, 
-        struct hoth_payload_controlled_storage* payload, size_t* payload_len);
-int libhoth_controlled_storage_write(struct libhoth_device* dev, uint32_t slot, 
-        const uint8_t* data, size_t len);
-int libhoth_controlled_storage_delete(struct libhoth_device* dev, uint32_t slot);
-
+int libhoth_controlled_storage_read(
+    struct libhoth_device* dev, uint32_t slot,
+    struct hoth_payload_controlled_storage* payload, size_t* payload_len);
+int libhoth_controlled_storage_write(struct libhoth_device* dev, uint32_t slot,
+                                     const uint8_t* data, size_t len);
+int libhoth_controlled_storage_delete(struct libhoth_device* dev,
+                                      uint32_t slot);
 
 #ifdef __cplusplus
 }

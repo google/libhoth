@@ -107,8 +107,8 @@ class HtoolSecurityCertificatesTest : public ::testing::Test {
     } else {
       build_root = ".";
     }
-    std::string tmpl = build_root +
-                       "/htool_security_certificates_test_dir.XXXXXX";
+    std::string tmpl =
+        build_root + "/htool_security_certificates_test_dir.XXXXXX";
     ASSERT_NE(mkdtemp(&tmpl[0]), nullptr)
         << "mkdtemp failed: " << strerror(errno);
     tmp_dir_path_ = tmpl;
@@ -131,8 +131,7 @@ class HtoolSecurityCertificatesTest : public ::testing::Test {
 
 TEST_F(HtoolSecurityCertificatesTest, GetAttestationPubCertSuccess) {
   struct htool_invocation inv{};
-  std::string tmp_output_file =
-      tmp_dir_path_ + "/attestation_pub_cert.bin";
+  std::string tmp_output_file = tmp_dir_path_ + "/attestation_pub_cert.bin";
   EXPECT_CALL(invocation_mock_, GetParamString("output", _))
       .WillOnce(DoAll(SetArgPointee<1>(tmp_output_file.c_str()), Return(0)));
 
@@ -147,19 +146,17 @@ TEST_F(HtoolSecurityCertificatesTest, GetAttestationPubCertSuccess) {
           HOTH_PRV_CMD_HOTH_SECURITY_V2_GET_ATTESTATION_PUB_CERT_MINOR_COMMAND,
           HOTH_BASE_CMD(HOTH_PRV_CMD_HOTH_SECURITY_V2),
           HOTH_SECURITY_V2_REQUEST_SIZE(0),
-          HOTH_SECURITY_V2_RESPONSE_SIZE(1) +
-              sizeof(expected_cert)))
-      .WillOnce([&](struct libhoth_device* dev, uint8_t major,
-                           uint8_t minor, uint16_t base_command,
-                           struct security_v2_buffer* request_buffer,
-                           const struct security_v2_param* request_params,
-                           uint16_t request_param_count,
-                           struct security_v2_buffer* response_buffer,
-                           struct security_v2_param* response_params,
-                           uint16_t response_param_count) {
+          HOTH_SECURITY_V2_RESPONSE_SIZE(1) + sizeof(expected_cert)))
+      .WillOnce([&](struct libhoth_device* dev, uint8_t major, uint8_t minor,
+                    uint16_t base_command,
+                    struct security_v2_buffer* request_buffer,
+                    const struct security_v2_param* request_params,
+                    uint16_t request_param_count,
+                    struct security_v2_buffer* response_buffer,
+                    struct security_v2_param* response_params,
+                    uint16_t response_param_count) {
         EXPECT_EQ(response_param_count, 1);
-        EXPECT_EQ(response_params[0].size,
-                  sizeof(expected_cert));
+        EXPECT_EQ(response_params[0].size, sizeof(expected_cert));
         memcpy(response_params[0].data, &expected_cert, sizeof(expected_cert));
         return 0;
       });
@@ -177,8 +174,7 @@ TEST_F(HtoolSecurityCertificatesTest, GetAttestationPubCertSuccess) {
 
 TEST_F(HtoolSecurityCertificatesTest, GetAttestationPubCertCommandFails) {
   struct htool_invocation inv{};
-  std::string tmp_output_file =
-      tmp_dir_path_ + "/attestation_pub_cert.bin";
+  std::string tmp_output_file = tmp_dir_path_ + "/attestation_pub_cert.bin";
   EXPECT_CALL(invocation_mock_, GetParamString("output", _))
       .WillOnce(DoAll(SetArgPointee<1>(tmp_output_file.c_str()), Return(0)));
 
@@ -207,19 +203,17 @@ TEST_F(HtoolSecurityCertificatesTest, GetSignedAttestationPubCertSuccess) {
           HOTH_PRV_CMD_HOTH_SECURITY_V2_GET_SIGNED_ATTESTATION_PUB_CERT_MINOR_COMMAND,
           HOTH_BASE_CMD(HOTH_PRV_CMD_HOTH_SECURITY_V2),
           HOTH_SECURITY_V2_REQUEST_SIZE(0),
-          HOTH_SECURITY_V2_RESPONSE_SIZE(1) +
-              sizeof(expected_cert)))
-      .WillOnce([&](struct libhoth_device* dev, uint8_t major,
-                           uint8_t minor, uint16_t base_command,
-                           struct security_v2_buffer* request_buffer,
-                           const struct security_v2_param* request_params,
-                           uint16_t request_param_count,
-                           struct security_v2_buffer* response_buffer,
-                           struct security_v2_param* response_params,
-                           uint16_t response_param_count) {
+          HOTH_SECURITY_V2_RESPONSE_SIZE(1) + sizeof(expected_cert)))
+      .WillOnce([&](struct libhoth_device* dev, uint8_t major, uint8_t minor,
+                    uint16_t base_command,
+                    struct security_v2_buffer* request_buffer,
+                    const struct security_v2_param* request_params,
+                    uint16_t request_param_count,
+                    struct security_v2_buffer* response_buffer,
+                    struct security_v2_param* response_params,
+                    uint16_t response_param_count) {
         EXPECT_EQ(response_param_count, 1);
-        EXPECT_EQ(response_params[0].size,
-                  sizeof(expected_cert));
+        EXPECT_EQ(response_params[0].size, sizeof(expected_cert));
         memcpy(response_params[0].data, &expected_cert, sizeof(expected_cert));
         return 0;
       });
@@ -257,7 +251,6 @@ TEST_F(HtoolSecurityCertificatesTest, GetAliasKeyV0CertSuccess) {
   EXPECT_CALL(invocation_mock_, GetParamU32("version", _))
       .WillOnce(DoAll(SetArgPointee<1>(0), Return(0)));
 
-
   uint8_t expected_key[ALIAS_KEY_V0_SIZE];
   for (size_t i = 0; i < sizeof(expected_key); ++i) {
     expected_key[i] = i;
@@ -270,14 +263,14 @@ TEST_F(HtoolSecurityCertificatesTest, GetAliasKeyV0CertSuccess) {
           HOTH_BASE_CMD(HOTH_PRV_CMD_HOTH_SECURITY_V2),
           HOTH_SECURITY_V2_REQUEST_SIZE(0),
           HOTH_SECURITY_V2_RESPONSE_SIZE(1) + ALIAS_KEY_V0_SIZE))
-      .WillOnce([&](struct libhoth_device* dev, uint8_t major,
-                           uint8_t minor, uint16_t base_command,
-                           struct security_v2_buffer* request_buffer,
-                           const struct security_v2_param* request_params,
-                           uint16_t request_param_count,
-                           struct security_v2_buffer* response_buffer,
-                           struct security_v2_param* response_params,
-                           uint16_t response_param_count) {
+      .WillOnce([&](struct libhoth_device* dev, uint8_t major, uint8_t minor,
+                    uint16_t base_command,
+                    struct security_v2_buffer* request_buffer,
+                    const struct security_v2_param* request_params,
+                    uint16_t request_param_count,
+                    struct security_v2_buffer* response_buffer,
+                    struct security_v2_param* response_params,
+                    uint16_t response_param_count) {
         EXPECT_EQ(response_param_count, 1);
         EXPECT_EQ(response_params[0].size, ALIAS_KEY_V0_SIZE);
         memcpy(response_params[0].data, expected_key, sizeof(expected_key));
@@ -303,7 +296,6 @@ TEST_F(HtoolSecurityCertificatesTest, GetAliasKeyV1CertSuccess) {
   EXPECT_CALL(invocation_mock_, GetParamU32("version", _))
       .WillOnce(DoAll(SetArgPointee<1>(1), Return(0)));
 
-
   uint8_t expected_key[ALIAS_KEY_V1_SIZE];
   for (size_t i = 0; i < sizeof(expected_key); ++i) {
     expected_key[i] = i;
@@ -316,14 +308,14 @@ TEST_F(HtoolSecurityCertificatesTest, GetAliasKeyV1CertSuccess) {
           HOTH_BASE_CMD(HOTH_PRV_CMD_HOTH_SECURITY_V2),
           HOTH_SECURITY_V2_REQUEST_SIZE(0),
           HOTH_SECURITY_V2_RESPONSE_SIZE(1) + ALIAS_KEY_V1_SIZE))
-      .WillOnce([&](struct libhoth_device* dev, uint8_t major,
-                           uint8_t minor, uint16_t base_command,
-                           struct security_v2_buffer* request_buffer,
-                           const struct security_v2_param* request_params,
-                           uint16_t request_param_count,
-                           struct security_v2_buffer* response_buffer,
-                           struct security_v2_param* response_params,
-                           uint16_t response_param_count) {
+      .WillOnce([&](struct libhoth_device* dev, uint8_t major, uint8_t minor,
+                    uint16_t base_command,
+                    struct security_v2_buffer* request_buffer,
+                    const struct security_v2_param* request_params,
+                    uint16_t request_param_count,
+                    struct security_v2_buffer* response_buffer,
+                    struct security_v2_param* response_params,
+                    uint16_t response_param_count) {
         EXPECT_EQ(response_param_count, 1);
         EXPECT_EQ(response_params[0].size, ALIAS_KEY_V1_SIZE);
         memcpy(response_params[0].data, expected_key, sizeof(expected_key));
@@ -349,7 +341,6 @@ TEST_F(HtoolSecurityCertificatesTest, GetAliasKeyV0CertCommandFails) {
   EXPECT_CALL(invocation_mock_, GetParamU32("version", _))
       .WillOnce(DoAll(SetArgPointee<1>(0), Return(0)));
 
-
   EXPECT_CALL(security_v2_mock_,
               htool_exec_security_v2_cmd(_, _, _, _, _, _, _, _, _, _))
       .WillOnce(Return(-1));
@@ -364,7 +355,6 @@ TEST_F(HtoolSecurityCertificatesTest, GetAliasKeyV1CertCommandFails) {
       .WillOnce(DoAll(SetArgPointee<1>(tmp_output_file.c_str()), Return(0)));
   EXPECT_CALL(invocation_mock_, GetParamU32("version", _))
       .WillOnce(DoAll(SetArgPointee<1>(1), Return(0)));
-
 
   EXPECT_CALL(security_v2_mock_,
               htool_exec_security_v2_cmd(_, _, _, _, _, _, _, _, _, _))
@@ -400,23 +390,20 @@ TEST_F(HtoolSecurityCertificatesTest, GetDeviceIdCertSuccess) {
           HOTH_PRV_CMD_HOTH_SECURITY_V2_GET_DEVICE_ID_MINOR_COMMAND,
           HOTH_BASE_CMD(HOTH_PRV_CMD_HOTH_SECURITY_V2),
           HOTH_SECURITY_V2_REQUEST_SIZE(0),
-          HOTH_SECURITY_V2_RESPONSE_SIZE(2) +
-              sizeof(expected_cert) +
+          HOTH_SECURITY_V2_RESPONSE_SIZE(2) + sizeof(expected_cert) +
               sizeof(expected_endorsement)))
-      .WillOnce([&](struct libhoth_device* dev, uint8_t major,
-                           uint8_t minor, uint16_t base_command,
-                           struct security_v2_buffer* request_buffer,
-                           const struct security_v2_param* request_params,
-                           uint16_t request_param_count,
-                           struct security_v2_buffer* response_buffer,
-                           struct security_v2_param* response_params,
-                           uint16_t response_param_count) {
+      .WillOnce([&](struct libhoth_device* dev, uint8_t major, uint8_t minor,
+                    uint16_t base_command,
+                    struct security_v2_buffer* request_buffer,
+                    const struct security_v2_param* request_params,
+                    uint16_t request_param_count,
+                    struct security_v2_buffer* response_buffer,
+                    struct security_v2_param* response_params,
+                    uint16_t response_param_count) {
         EXPECT_EQ(response_param_count, 2);
-        EXPECT_EQ(response_params[0].size,
-                  sizeof(expected_cert));
+        EXPECT_EQ(response_params[0].size, sizeof(expected_cert));
         memcpy(response_params[0].data, &expected_cert, sizeof(expected_cert));
-        EXPECT_EQ(response_params[1].size,
-                  sizeof(expected_endorsement));
+        EXPECT_EQ(response_params[1].size, sizeof(expected_endorsement));
         memcpy(response_params[1].data, &expected_endorsement,
                sizeof(expected_endorsement));
         return 0;
@@ -472,23 +459,20 @@ TEST_F(HtoolSecurityCertificatesTest,
           HOTH_PRV_CMD_HOTH_SECURITY_V2_GET_DEVICE_ID_MINOR_COMMAND,
           HOTH_BASE_CMD(HOTH_PRV_CMD_HOTH_SECURITY_V2),
           HOTH_SECURITY_V2_REQUEST_SIZE(0),
-          HOTH_SECURITY_V2_RESPONSE_SIZE(2) +
-              sizeof(expected_cert) +
+          HOTH_SECURITY_V2_RESPONSE_SIZE(2) + sizeof(expected_cert) +
               sizeof(expected_endorsement)))
-      .WillOnce([&](struct libhoth_device* dev, uint8_t major,
-                           uint8_t minor, uint16_t base_command,
-                           struct security_v2_buffer* request_buffer,
-                           const struct security_v2_param* request_params,
-                           uint16_t request_param_count,
-                           struct security_v2_buffer* response_buffer,
-                           struct security_v2_param* response_params,
-                           uint16_t response_param_count) {
+      .WillOnce([&](struct libhoth_device* dev, uint8_t major, uint8_t minor,
+                    uint16_t base_command,
+                    struct security_v2_buffer* request_buffer,
+                    const struct security_v2_param* request_params,
+                    uint16_t request_param_count,
+                    struct security_v2_buffer* response_buffer,
+                    struct security_v2_param* response_params,
+                    uint16_t response_param_count) {
         EXPECT_EQ(response_param_count, 2);
-        EXPECT_EQ(response_params[0].size,
-                  sizeof(expected_cert));
+        EXPECT_EQ(response_params[0].size, sizeof(expected_cert));
         memcpy(response_params[0].data, &expected_cert, sizeof(expected_cert));
-        EXPECT_EQ(response_params[1].size,
-                  sizeof(expected_endorsement));
+        EXPECT_EQ(response_params[1].size, sizeof(expected_endorsement));
         memcpy(response_params[1].data, &expected_endorsement,
                sizeof(expected_endorsement));
         return 0;
@@ -539,23 +523,20 @@ TEST_F(HtoolSecurityCertificatesTest,
           HOTH_PRV_CMD_HOTH_SECURITY_V2_GET_DEVICE_ID_MINOR_COMMAND,
           HOTH_BASE_CMD(HOTH_PRV_CMD_HOTH_SECURITY_V2),
           HOTH_SECURITY_V2_REQUEST_SIZE(0),
-          HOTH_SECURITY_V2_RESPONSE_SIZE(2) +
-              sizeof(expected_cert) +
+          HOTH_SECURITY_V2_RESPONSE_SIZE(2) + sizeof(expected_cert) +
               sizeof(expected_endorsement)))
-      .WillOnce([&](struct libhoth_device* dev, uint8_t major,
-                           uint8_t minor, uint16_t base_command,
-                           struct security_v2_buffer* request_buffer,
-                           const struct security_v2_param* request_params,
-                           uint16_t request_param_count,
-                           struct security_v2_buffer* response_buffer,
-                           struct security_v2_param* response_params,
-                           uint16_t response_param_count) {
+      .WillOnce([&](struct libhoth_device* dev, uint8_t major, uint8_t minor,
+                    uint16_t base_command,
+                    struct security_v2_buffer* request_buffer,
+                    const struct security_v2_param* request_params,
+                    uint16_t request_param_count,
+                    struct security_v2_buffer* response_buffer,
+                    struct security_v2_param* response_params,
+                    uint16_t response_param_count) {
         EXPECT_EQ(response_param_count, 2);
-        EXPECT_EQ(response_params[0].size,
-                  sizeof(expected_cert));
+        EXPECT_EQ(response_params[0].size, sizeof(expected_cert));
         memcpy(response_params[0].data, &expected_cert, sizeof(expected_cert));
-        EXPECT_EQ(response_params[1].size,
-                  sizeof(expected_endorsement));
+        EXPECT_EQ(response_params[1].size, sizeof(expected_endorsement));
         memcpy(response_params[1].data, &expected_endorsement,
                sizeof(expected_endorsement));
         return 0;
@@ -615,8 +596,7 @@ TEST_F(HtoolSecurityCertificatesTest, GetAttestationPubCertFailOpenFile) {
 
 TEST_F(HtoolSecurityCertificatesTest, GetAttestationPubCertFailCommand) {
   struct htool_invocation inv{};
-  std::string tmp_output_file =
-      tmp_dir_path_ + "/attestation_pub_cert.bin";
+  std::string tmp_output_file = tmp_dir_path_ + "/attestation_pub_cert.bin";
   EXPECT_CALL(invocation_mock_, GetParamString("output", _))
       .WillOnce(DoAll(SetArgPointee<1>(tmp_output_file.c_str()), Return(0)));
   EXPECT_CALL(security_v2_mock_,

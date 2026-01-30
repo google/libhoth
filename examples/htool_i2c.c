@@ -26,8 +26,8 @@
 #include "htool_target_control.h"
 #include "protocol/i2c.h"
 
-static int i2c_detect(struct libhoth_device *dev,
-                      const struct htool_invocation *inv) {
+static int i2c_detect(struct libhoth_device* dev,
+                      const struct htool_invocation* inv) {
   uint32_t bus;
   uint32_t start_addr;
   uint32_t end_addr;
@@ -63,8 +63,8 @@ static int i2c_detect(struct libhoth_device *dev,
   return 0;
 }
 
-static int i2c_read(struct libhoth_device *dev,
-                    const struct htool_invocation *inv) {
+static int i2c_read(struct libhoth_device* dev,
+                    const struct htool_invocation* inv) {
   uint32_t bus;
   uint32_t freq;
   uint32_t addr;
@@ -118,21 +118,21 @@ static int i2c_read(struct libhoth_device *dev,
   return 0;
 }
 
-static int i2c_write(struct libhoth_device *dev,
-                     const struct htool_invocation *inv) {
+static int i2c_write(struct libhoth_device* dev,
+                     const struct htool_invocation* inv) {
   uint32_t bus;
   uint32_t freq;
   uint32_t addr;
   uint32_t offset;
   bool no_stop;
-  char *byte_stream = NULL;
+  char* byte_stream = NULL;
 
   if (htool_get_param_u32(inv, "bus", &bus) ||
       htool_get_param_u32(inv, "frequency", &freq) ||
       htool_get_param_u32(inv, "address", &addr) ||
       htool_get_param_u32(inv, "offset", &offset) ||
       htool_get_param_bool(inv, "no_stop", &no_stop) ||
-      htool_get_param_string(inv, "byte_stream", (const char **)&byte_stream)) {
+      htool_get_param_string(inv, "byte_stream", (const char**)&byte_stream)) {
     return -1;
   }
 
@@ -153,9 +153,9 @@ static int i2c_write(struct libhoth_device *dev,
     request.arg_bytes[idx++] = (uint8_t)(offset & 0xFF);
   }
 
-  char *tk = strtok(byte_stream, " ");
+  char* tk = strtok(byte_stream, " ");
   while (tk && (idx < I2C_TRANSFER_DATA_MAX_SIZE_BYTES)) {
-    char *endptr;
+    char* endptr;
     unsigned long int parsed = strtoul(tk, &endptr, 0);
     if (tk == endptr || parsed > UINT8_MAX || *endptr != '\0') {
       fprintf(stderr, "Invalid input data.\n");
@@ -190,8 +190,8 @@ static int i2c_write(struct libhoth_device *dev,
   return 0;
 }
 
-int htool_i2c_run(const struct htool_invocation *inv) {
-  struct libhoth_device *dev = htool_libhoth_device();
+int htool_i2c_run(const struct htool_invocation* inv) {
+  struct libhoth_device* dev = htool_libhoth_device();
   if (!dev) {
     return -1;
   }
@@ -218,7 +218,7 @@ enum {
 };
 
 // Target control status to I2C mux control status mapping
-static const char *i2c_muxctrl_status_str_map(
+static const char* i2c_muxctrl_status_str_map(
     const enum hoth_target_control_status status) {
   switch (status) {
     case HOTH_TARGET_CONTROL_STATUS_ENABLED:
@@ -230,7 +230,7 @@ static const char *i2c_muxctrl_status_str_map(
   }
 }
 
-int htool_i2c_muxctrl_get(const struct htool_invocation *inv) {
+int htool_i2c_muxctrl_get(const struct htool_invocation* inv) {
   struct hoth_response_target_control response;
   int ret = target_control_perform_action(HOTH_TARGET_CONTROL_I2C_MUX,
                                           I2C_MUXCTRL_ACTION_GET, &response);
@@ -266,10 +266,10 @@ static int i2c_mux_control_change_select(
   return 0;
 }
 
-int htool_i2c_muxctrl_select_rot(const struct htool_invocation *inv) {
+int htool_i2c_muxctrl_select_rot(const struct htool_invocation* inv) {
   return i2c_mux_control_change_select(I2C_MUXCTRL_ACTION_SELECT_ROT);
 }
 
-int htool_i2c_muxctrl_select_host(const struct htool_invocation *inv) {
+int htool_i2c_muxctrl_select_host(const struct htool_invocation* inv) {
   return i2c_mux_control_change_select(I2C_MUXCTRL_ACTION_SELECT_HOST);
 }

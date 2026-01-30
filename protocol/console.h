@@ -19,12 +19,11 @@
 extern "C" {
 #endif
 
-#include <stdint.h>
 #include <stdbool.h>
+#include <stdint.h>
 #include <termios.h>
 
 #include "transports/libhoth_device.h"
-
 
 #define EROT_CHANNEL_ID 0x45524F54  // 'EROT'
 #define HOTH_FIFO_MAX_REQUEST_SIZE 1024
@@ -130,28 +129,24 @@ struct libhoth_htool_console_opts {
 
 void libhoth_print_erot_console(struct libhoth_device* const dev);
 
-int libhoth_get_channel_status(struct libhoth_device *dev,
-                              const struct libhoth_htool_console_opts *opts,
-                              uint32_t *offset);
+int libhoth_get_channel_status(struct libhoth_device* dev,
+                               const struct libhoth_htool_console_opts* opts,
+                               uint32_t* offset);
 
-int libhoth_read_console(struct libhoth_device *dev,
-                        int fd,
-                        bool prototext_format_enabled,
-                        uint32_t channel_id,
-                        uint32_t *offset);
-                        
-int libhoth_write_console(struct libhoth_device *dev,
-                          uint32_t channel_id,
-                          bool force_drive_tx, 
-                          bool *quit);
+int libhoth_read_console(struct libhoth_device* dev, int fd,
+                         bool prototext_format_enabled, uint32_t channel_id,
+                         uint32_t* offset);
 
-int libhoth_get_uart_config(struct libhoth_device *dev,
-                           const struct libhoth_htool_console_opts *opts,
-                           struct hoth_channel_uart_config *resp);
+int libhoth_write_console(struct libhoth_device* dev, uint32_t channel_id,
+                          bool force_drive_tx, bool* quit);
 
-int libhoth_set_uart_config(struct libhoth_device *dev,
-                           const struct libhoth_htool_console_opts *opts,
-                           struct hoth_channel_uart_config *config);
+int libhoth_get_uart_config(struct libhoth_device* dev,
+                            const struct libhoth_htool_console_opts* opts,
+                            struct hoth_channel_uart_config* resp);
+
+int libhoth_set_uart_config(struct libhoth_device* dev,
+                            const struct libhoth_htool_console_opts* opts,
+                            struct hoth_channel_uart_config* config);
 
 #ifdef __cplusplus
 }
