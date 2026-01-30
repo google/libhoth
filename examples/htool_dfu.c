@@ -26,9 +26,9 @@
 
 #include "htool.h"
 #include "htool_cmd.h"
+#include "protocol/dfu_check.h"
 #include "protocol/dfu_hostcmd.h"
 #include "protocol/opentitan_version.h"
-#include "protocol/dfu_check.h"
 
 int htool_dfu_update(const struct htool_invocation* inv) {
   struct libhoth_device* dev = htool_libhoth_device();
@@ -87,12 +87,13 @@ int htool_dfu_update(const struct htool_invocation* inv) {
   if (image == MAP_FAILED) {
     fprintf(stderr, "mmap error: %s\n", strerror(errno));
     goto cleanup;
-  } 
+  }
 
   // Populate rom_ext and app with the desired extracted versions from the image
-  retval = libhoth_extract_ot_bundle(image, statbuf.st_size, &desired_rom_ext, &desired_app);
+  retval = libhoth_extract_ot_bundle(image, statbuf.st_size, &desired_rom_ext,
+                                     &desired_app);
 
-  if(retval != 0) {
+  if (retval != 0) {
     fprintf(stderr, "Failed to extract bundle\n");
     goto cleanup2;
   }
@@ -100,7 +101,7 @@ int htool_dfu_update(const struct htool_invocation* inv) {
   // Get the current version of the device
   retval = libhoth_opentitan_version(dev, &resp);
 
-  if(retval != 0) {
+  if (retval != 0) {
     fprintf(stderr, "Failed to get current version\n");
     goto cleanup2;
   }
@@ -113,54 +114,60 @@ int htool_dfu_update(const struct htool_invocation* inv) {
 
   // Compare the desired version with the current bootslot version
   // If they are different, we need to automatically perform the x2 update
-  // If both are the same & the staged slot is different, we need to perform a single update
-  // For all other cases, no update is needed
-  if(libhoth_ot_version_eq(&resp.rom_ext.slots[rom_ext_boot_slot], &desired_rom_ext) == false ||
-     libhoth_ot_version_eq(&resp.app.slots[app_boot_slot], &desired_app) == false ) {
-          printf("The current bootslot is not the desired version. Performing DFU update x2...\n");
-          // Peform the DFU update twice to update both slots
-          // First update will stage to the non-booted slot, second update correct the newly staged slot.
-          for(int i = 0; i < 2; i++){
-            retval = libhoth_dfu_update(
-                dev, image, statbuf.st_size, complete_flags);
+  // If both are the same & the staged slot is different, we need to perform a
+  // single update For all other cases, no update is needed
+  if (libhoth_ot_version_eq(&resp.rom_ext.slots[rom_ext_boot_slot],
+                            &desired_rom_ext) == false ||
+      libhoth_ot_version_eq(&resp.app.slots[app_boot_slot], &desired_app) ==
+          false) {
+    printf(
+        "The current bootslot is not the desired version. Performing DFU "
+        "update x2...\n");
+    // Peform the DFU update twice to update both slots
+    // First update will stage to the non-booted slot, second update correct the
+    // newly staged slot.
+    for (int i = 0; i < 2; i++) {
+      retval = libhoth_dfu_update(dev, image, statbuf.st_size, complete_flags);
 
-            if(retval != 0) {
-              fprintf(stderr, "DFU update failed\n");
-              goto cleanup2;
-            }
-          }
+      if (retval != 0) {
+        fprintf(stderr, "DFU update failed\n");
+        goto cleanup2;
+      }
     }
-    else{
-      if(libhoth_ot_version_eq(&resp.rom_ext.slots[rom_ext_stage_slot], &desired_rom_ext) == false ||
-         libhoth_ot_version_eq(&resp.app.slots[app_stage_slot], &desired_app) == false ) {
-              printf("The staged slot is not the desired version. Performing DFU update x1...\n");
-              // Perform a single DFU update to update the staged slot
-              retval = libhoth_dfu_update(
-                  dev, image, statbuf.st_size, complete_flags);
+  } else {
+    if (libhoth_ot_version_eq(&resp.rom_ext.slots[rom_ext_stage_slot],
+                              &desired_rom_ext) == false ||
+        libhoth_ot_version_eq(&resp.app.slots[app_stage_slot], &desired_app) ==
+            false) {
+      printf(
+          "The staged slot is not the desired version. Performing DFU update "
+          "x1...\n");
+      // Perform a single DFU update to update the staged slot
+      retval = libhoth_dfu_update(dev, image, statbuf.st_size, complete_flags);
 
-              if(retval != 0) {
-                fprintf(stderr, "DFU update failed\n");
-                goto cleanup2;
-              }
-        }
-        else{
-          printf("Device is already at the desired version. No DFU update needed.\n");
-        }
+      if (retval != 0) {
+        fprintf(stderr, "DFU update failed\n");
+        goto cleanup2;
+      }
+    } else {
+      printf(
+          "Device is already at the desired version. No DFU update needed.\n");
     }
+  }
 
   int ret;
 
-  cleanup2:
-    ret = munmap(image, statbuf.st_size);
-    if (ret != 0) {
-      fprintf(stderr, "munmap error: %d\n", ret);
-    }
+cleanup2:
+  ret = munmap(image, statbuf.st_size);
+  if (ret != 0) {
+    fprintf(stderr, "munmap error: %d\n", ret);
+  }
 
-  cleanup:
-    ret = close(fd);
-    if (ret != 0) {
-      fprintf(stderr, "close error: %d\n", ret);
-    }
+cleanup:
+  ret = close(fd);
+  if (ret != 0) {
+    fprintf(stderr, "close error: %d\n", ret);
+  }
 
   return retval;
 }

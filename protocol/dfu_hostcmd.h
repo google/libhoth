@@ -63,7 +63,8 @@ struct hoth_dfu_write_request_header {
   // combination of HOTH_DFU_WRITE_FLAGS_*
   uint32_t flags;
 };
-static_assert(offsetof(struct hoth_dfu_write_request_header, session_id) == 0, "");
+static_assert(offsetof(struct hoth_dfu_write_request_header, session_id) == 0,
+              "");
 static_assert(offsetof(struct hoth_dfu_write_request_header, flags) == 12, "");
 static_assert(sizeof(struct hoth_dfu_write_request_header) == 16, "");
 

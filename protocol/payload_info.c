@@ -16,8 +16,8 @@
 
 #include <string.h>
 
-const struct image_descriptor* libhoth_find_image_descriptor(const uint8_t* image,
-                                                       size_t len) {
+const struct image_descriptor* libhoth_find_image_descriptor(
+    const uint8_t* image, size_t len) {
   for (size_t off = 0; off + sizeof(struct image_descriptor) - 1 < len;
        off += TITAN_IMAGE_DESCRIPTOR_ALIGNMENT) {
     int64_t magic_candidate;
@@ -26,7 +26,7 @@ const struct image_descriptor* libhoth_find_image_descriptor(const uint8_t* imag
       struct image_descriptor* img_dsc =
           (struct image_descriptor*)(image + off);
 
-      if(img_dsc->descriptor_area_size + off > len) {
+      if (img_dsc->descriptor_area_size + off > len) {
         // Image descriptor is clipped
         return NULL;
       }
@@ -39,14 +39,15 @@ const struct image_descriptor* libhoth_find_image_descriptor(const uint8_t* imag
 
 bool libhoth_payload_info(const uint8_t* image, size_t len,
                           struct payload_info* payload_info) {
-  const struct image_descriptor* descr = libhoth_find_image_descriptor(image, len);
+  const struct image_descriptor* descr =
+      libhoth_find_image_descriptor(image, len);
   if (descr == NULL) {
     return false;
   }
 
   memcpy(payload_info->image_name, descr->image_name,
          sizeof(payload_info->image_name));
-  payload_info->image_name[sizeof(payload_info->image_name)-1] = 0;
+  payload_info->image_name[sizeof(payload_info->image_name) - 1] = 0;
 
   payload_info->image_family = descr->image_family;
   payload_info->image_version.major = descr->image_major;
@@ -55,8 +56,8 @@ bool libhoth_payload_info(const uint8_t* image, size_t len,
   payload_info->image_version.subpoint = descr->image_subpoint;
   payload_info->image_type = descr->image_type;
 
-  // Any hash type other than SHA256 is treated as no hash and fail the retrieval.
-  // HW doesnt have support for other hash types.
+  // Any hash type other than SHA256 is treated as no hash and fail the
+  // retrieval. HW doesnt have support for other hash types.
   if (descr->hash_type != HASH_SHA2_256) {
     memset(payload_info->image_hash, 0, sizeof(payload_info->image_hash));
     return false;

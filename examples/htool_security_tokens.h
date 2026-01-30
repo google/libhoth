@@ -2,6 +2,7 @@
 #define LIBHOTH_EXAMPLES_HTOOL_SECURITY_TOKENS_H_
 
 #include <stdint.h>
+
 #include "htool_security_v2_defs.h"
 
 #ifdef __cplusplus
@@ -32,21 +33,21 @@ struct boot_nonce {
 };
 
 struct challenge_response_header {
-    uint32_t signature_version;
-    uint32_t signature_purpose;
-    uint8_t major_command;
-    uint8_t minor_command;
-    uint16_t signed_response_length;
-    uint16_t hw_cat;
-    uint8_t reserved_0[2];
-    uint64_t hw_id;
-    struct nonce verifier_nonce;
-    uint8_t reserved_1[24];
+  uint32_t signature_version;
+  uint32_t signature_purpose;
+  uint8_t major_command;
+  uint8_t minor_command;
+  uint16_t signed_response_length;
+  uint16_t hw_cat;
+  uint8_t reserved_0[2];
+  uint64_t hw_id;
+  struct nonce verifier_nonce;
+  uint8_t reserved_1[24];
 };
 
 struct detached_challenge_response_signature {
-    struct challenge_response_header signature_header;
-    struct ec_p256_signature signature;
+  struct challenge_response_header signature_header;
+  struct ec_p256_signature signature;
 };
 
 struct token_set_info {

@@ -48,10 +48,10 @@ struct libhoth_usb_mailbox {
 };
 
 struct libhoth_usb_fifo {
-  struct libusb_transfer *in_transfer;
-  struct libusb_transfer *out_transfer;
-  uint8_t *in_buffer;
-  uint8_t *out_buffer;
+  struct libusb_transfer* in_transfer;
+  struct libusb_transfer* out_transfer;
+  uint8_t* in_buffer;
+  uint8_t* out_buffer;
   uint16_t max_packet_size_in;
   uint16_t max_packet_size_out;
   uint8_t ep_in;
@@ -69,8 +69,8 @@ struct libhoth_usb_interface_info {
 };
 
 struct libhoth_usb_device {
-  libusb_context *ctx;
-  libusb_device_handle *handle;
+  libusb_context* ctx;
+  libusb_device_handle* handle;
   struct libhoth_usb_interface_info info;
   union driver_data {
     struct libhoth_usb_mailbox mailbox;
@@ -78,24 +78,24 @@ struct libhoth_usb_device {
   } driver_data;
 };
 
-int libhoth_usb_fifo_open(struct libhoth_usb_device *dev,
-                          const struct libusb_config_descriptor *descriptor,
+int libhoth_usb_fifo_open(struct libhoth_usb_device* dev,
+                          const struct libusb_config_descriptor* descriptor,
                           uint32_t prng_seed);
-int libhoth_usb_fifo_send_request(struct libhoth_usb_device *dev,
-                                  const void *request, size_t request_size);
-int libhoth_usb_fifo_receive_response(struct libhoth_usb_device *dev,
-                                      void *response, size_t response_size,
-                                      size_t *actual_size, int timeout_ms);
-int libhoth_usb_fifo_close(struct libhoth_usb_device *dev);
+int libhoth_usb_fifo_send_request(struct libhoth_usb_device* dev,
+                                  const void* request, size_t request_size);
+int libhoth_usb_fifo_receive_response(struct libhoth_usb_device* dev,
+                                      void* response, size_t response_size,
+                                      size_t* actual_size, int timeout_ms);
+int libhoth_usb_fifo_close(struct libhoth_usb_device* dev);
 
-int libhoth_usb_mailbox_open(struct libhoth_usb_device *dev,
-                             const struct libusb_config_descriptor *descriptor);
-int libhoth_usb_mailbox_send_request(struct libhoth_usb_device *dev,
-                                     const void *request, size_t request_size);
-int libhoth_usb_mailbox_receive_response(struct libhoth_usb_device *dev,
-                                         void *response, size_t response_size,
-                                         size_t *actual_size, int timeout_ms);
-int libhoth_usb_mailbox_close(struct libhoth_usb_device *dev);
+int libhoth_usb_mailbox_open(struct libhoth_usb_device* dev,
+                             const struct libusb_config_descriptor* descriptor);
+int libhoth_usb_mailbox_send_request(struct libhoth_usb_device* dev,
+                                     const void* request, size_t request_size);
+int libhoth_usb_mailbox_receive_response(struct libhoth_usb_device* dev,
+                                         void* response, size_t response_size,
+                                         size_t* actual_size, int timeout_ms);
+int libhoth_usb_mailbox_close(struct libhoth_usb_device* dev);
 
 enum libusb_error transfer_status_to_error(
     enum libusb_transfer_status transfer_status);

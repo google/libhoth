@@ -17,8 +17,8 @@
 
 #include <stdint.h>
 
-#include "protocol/host_cmd.h"
 #include "protocol/console.h"
+#include "protocol/host_cmd.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -163,7 +163,8 @@ struct hoth_security_v2_parameter {
 #define HOTH_PRV_CMD_HOTH_SECURITY_V2_GET_ATTESTATION_PUB_CERT_MINOR_COMMAND 4
 
 /**
- * The command to get the signed attestation public certificates ferom the device.
+ * The command to get the signed attestation public certificates ferom the
+ * device.
  */
 #define HOTH_PRV_CMD_HOTH_SECURITY_V2_GET_SIGNED_ATTESTATION_PUB_CERT_MINOR_COMMAND \
   25
@@ -183,12 +184,10 @@ struct hoth_security_v2_parameter {
  */
 #define HOTH_PRV_CMD_HOTH_SECURITY_V2_GET_TOKENS_IN_SET_MINOR_COMMAND 8
 
-
 /**
  * The command to get the token info at a given set index.
  */
 #define HOTH_PRV_CMD_HOTH_SECURITY_V2_GET_TOKEN_SET_INFO_MINOR_COMMAND 7
-
 
 /**
  * The identifier for the getting the major version of the SecurityV2 Info

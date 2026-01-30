@@ -121,7 +121,8 @@ TEST_F(LibHothTest, authz_build_fail_test) {
 
   // key_id supported by RO and RW. These key_id's are expected to match one
   // another to successfully program an authorization record. key_id == 0 should
-  // be interpreted as an unknown key_id. Here we set both to 0 to trigger failure.
+  // be interpreted as an unknown key_id. Here we set both to 0 to trigger
+  // failure.
   struct hoth_authz_record_get_nonce_response nonce_resp = {};
   nonce_resp.ro_supported_key_id = 0;
   nonce_resp.rw_supported_key_id = 0;
@@ -156,8 +157,8 @@ TEST_F(LibHothTest, authz_mismatch_key_id_test) {
 
   // key_id supported by RO and RW. These key_id's are expected to match one
   // another to successfully program an authorization record. key_id == 0 should
-  // be interpreted as an unknown key_id. Here we set both to different values to
-  // trigger failure.
+  // be interpreted as an unknown key_id. Here we set both to different values
+  // to trigger failure.
   struct hoth_authz_record_get_nonce_response nonce_resp = {};
   nonce_resp.ro_supported_key_id = 0;
   nonce_resp.rw_supported_key_id = 1;
@@ -231,4 +232,3 @@ TEST_F(LibHothTest, authz_set_test) {
   struct authorization_record record = {};
   EXPECT_EQ(libhoth_authz_record_set(&hoth_dev_, &record), LIBHOTH_OK);
 }
-

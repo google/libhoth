@@ -24,8 +24,6 @@ static int consume_bytes(struct security_v2_buffer* buffer, uint16_t bytes,
   return 0;
 }
 
-
-
 int htool_exec_security_v2_cmd(struct libhoth_device* dev, uint8_t major,
                                uint8_t minor, uint16_t base_command,
                                struct security_v2_buffer* request_buffer,
@@ -64,11 +62,11 @@ int htool_exec_security_v2_cmd(struct libhoth_device* dev, uint8_t major,
       fprintf(stderr, "insufficient bytes for request param %d\n", i);
       return status;
     }
-    memcpy(request_param_value, request_params[i].data,
-           request_params[i].size);
+    memcpy(request_param_value, request_params[i].data, request_params[i].size);
   }
 
-  // May need to remove bytes_read and replace it with Null in libhoth_hostcmd_exec
+  // May need to remove bytes_read and replace it with Null in
+  // libhoth_hostcmd_exec
   size_t bytes_read;
   status = libhoth_hostcmd_exec(dev, base_command, 0, request_buffer->data,
                                 request_buffer->size, response_buffer->data,
@@ -131,8 +129,9 @@ int htool_exec_security_v2_cmd(struct libhoth_device* dev, uint8_t major,
   return 0;
 }
 
-static int read_security_v2_serialized_header(struct security_v2_buffer* buffer,
-                                              const struct security_v2_serialized_response_hdr** header) {
+static int read_security_v2_serialized_header(
+    struct security_v2_buffer* buffer,
+    const struct security_v2_serialized_response_hdr** header) {
   const struct security_v2_serialized_response_hdr* response_header;
 
   if (!buffer || !header) {
@@ -141,7 +140,9 @@ static int read_security_v2_serialized_header(struct security_v2_buffer* buffer,
   }
 
   // Read the response's header.
-  int status = consume_bytes(buffer, sizeof(struct security_v2_serialized_response_hdr), (uint8_t**)&response_header);
+  int status =
+      consume_bytes(buffer, sizeof(struct security_v2_serialized_response_hdr),
+                    (uint8_t**)&response_header);
   if (status != 0 || !response_header) {
     fprintf(stderr, "Failed to initialize response, cannot read header.");
     return -1;
@@ -157,8 +158,9 @@ static int read_security_v2_serialized_header(struct security_v2_buffer* buffer,
   return 0;
 }
 
-static int validate_param_padding(struct security_v2_buffer* buffer,
-                                  const struct security_v2_serialized_param* param) {
+static int validate_param_padding(
+    struct security_v2_buffer* buffer,
+    const struct security_v2_serialized_param* param) {
   const uint8_t* padding;
   size_t param_padding_size = padding_size(param->size);
   int i;
@@ -174,13 +176,14 @@ static int validate_param_padding(struct security_v2_buffer* buffer,
 
   if (status != 0 || !padding) {
     fprintf(stderr,
-        "Failed to validate param padding, could not read padding data.\n");
+            "Failed to validate param padding, could not read padding data.\n");
     return -1;
   }
 
   for (i = 0; i < param_padding_size; ++i) {
     if (padding[i] != 0) {
-      fprintf(stderr, "Failed to validate param padding, padding is non-zero.\n");
+      fprintf(stderr,
+              "Failed to validate param padding, padding is non-zero.\n");
       return -1;
     }
   }
@@ -188,12 +191,13 @@ static int validate_param_padding(struct security_v2_buffer* buffer,
   return 0;
 }
 
-static int read_security_v2_serialized_params(struct security_v2_buffer* buffer,
-                                              const struct security_v2_serialized_param** param) {
+static int read_security_v2_serialized_params(
+    struct security_v2_buffer* buffer,
+    const struct security_v2_serialized_param** param) {
   const uint8_t* value;
   if (!buffer || !param) {
     fprintf(stderr,
-        "Failed to read response param, arguments cannot be NULL.\n");
+            "Failed to read response param, arguments cannot be NULL.\n");
     return -1;
   }
 
@@ -224,14 +228,13 @@ static int read_security_v2_serialized_params(struct security_v2_buffer* buffer,
   return 0;
 }
 
-int htool_exec_security_v2_serialized_cmd(struct libhoth_device* dev, uint8_t major,
-                                          uint8_t minor, uint16_t base_command,
-                                          struct security_v2_buffer* request_buffer,
-                                          const struct security_v2_param* request_params,
-                                          uint16_t request_param_count,
-                                          struct security_v2_buffer* response_buffer,
-                                          const struct security_v2_serialized_param** response_params[],
-                                          uint16_t response_param_count) {
+int htool_exec_security_v2_serialized_cmd(
+    struct libhoth_device* dev, uint8_t major, uint8_t minor,
+    uint16_t base_command, struct security_v2_buffer* request_buffer,
+    const struct security_v2_param* request_params,
+    uint16_t request_param_count, struct security_v2_buffer* response_buffer,
+    const struct security_v2_serialized_param** response_params[],
+    uint16_t response_param_count) {
   int status = 0;
   const struct security_v2_serialized_response_hdr* response_hdr;
   status = htool_exec_security_v2_cmd(
@@ -254,7 +257,8 @@ int htool_exec_security_v2_serialized_cmd(struct libhoth_device* dev, uint8_t ma
   }
 
   for (int i = 0; i < response_param_count; ++i) {
-    status = read_security_v2_serialized_params(response_buffer, response_params[i]);
+    status =
+        read_security_v2_serialized_params(response_buffer, response_params[i]);
     if (status != 0) {
       return status;
     }
@@ -262,11 +266,13 @@ int htool_exec_security_v2_serialized_cmd(struct libhoth_device* dev, uint8_t ma
   return status;
 }
 
-int copy_param(const struct security_v2_serialized_param* param, void* output, size_t output_size) {
+int copy_param(const struct security_v2_serialized_param* param, void* output,
+               size_t output_size) {
   if (param->size != output_size) {
     fprintf(stderr,
-        "Parameter is too large (%u bytes) to fit in "
-        "the output buffer (%lu bytes)\n", param->size, output_size);
+            "Parameter is too large (%u bytes) to fit in "
+            "the output buffer (%lu bytes)\n",
+            param->size, output_size);
     return -1;
   }
 

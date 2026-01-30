@@ -54,14 +54,14 @@
 #include "htool_usb.h"
 #include "protocol/authz_record.h"
 #include "protocol/chipinfo.h"
+#include "protocol/console.h"
 #include "protocol/controlled_storage.h"
 #include "protocol/hello.h"
+#include "protocol/opentitan_version.h"
 #include "protocol/progress.h"
 #include "protocol/reboot.h"
 #include "protocol/rot_firmware_version.h"
-#include "protocol/opentitan_version.h"
 #include "protocol/spi_proxy.h"
-#include "protocol/console.h"
 #include "protocol/util.h"
 #include "transports/libhoth_device.h"
 #include "transports/libhoth_spi.h"
@@ -976,8 +976,9 @@ static const struct htool_cmd CMDS[] = {
         .params =
             (const struct htool_param[]){
                 {HTOOL_POSITIONAL, .name = "source-file"},
-                {HTOOL_FLAG_BOOL, 's', "skip_erase", "false", .desc = "Skip erasing the staging side."},
-              {}},
+                {HTOOL_FLAG_BOOL, 's', "skip_erase", "false",
+                 .desc = "Skip erasing the staging side."},
+                {}},
         .func = htool_payload_update,
     },
     {
@@ -987,7 +988,8 @@ static const struct htool_cmd CMDS[] = {
             (const struct htool_param[]){
                 {HTOOL_POSITIONAL, .name = "dest-file"},
                 {HTOOL_FLAG_VALUE, 's', "start", "0", .desc = "start address"},
-                {HTOOL_FLAG_VALUE, 'n', "length", "0", .desc = "length of payload read"},
+                {HTOOL_FLAG_VALUE, 'n', "length", "0",
+                 .desc = "length of payload read"},
                 {}},
         .func = htool_payload_read,
     },
@@ -1013,7 +1015,8 @@ static const struct htool_cmd CMDS[] = {
     },
     {
         .verbs = (const char*[]){"dfu", "check", NULL},
-        .desc = "Check that the device is running firmware matching a fwupdate bundle.",
+        .desc = "Check that the device is running firmware matching a fwupdate "
+                "bundle.",
         .params =
             (const struct htool_param[]){
                 {HTOOL_POSITIONAL, .name = "fwupdate-file",
@@ -1156,7 +1159,8 @@ static const struct htool_cmd CMDS[] = {
         .verbs = (const char*[]){"sbs_dual",
                                  SBS_DUAL_CONNECT_TARGET_TO_SPI_FLASH_1_CMD_STR,
                                  NULL},
-        .desc = "Set mux select pin to connect target to spi flash 1 (SBS Dual)",
+        .desc =
+            "Set mux select pin to connect target to spi flash 1 (SBS Dual)",
         .params = (const struct htool_param[]){{}},
         .func = htool_sbs_dual_run,
     },
@@ -1633,20 +1637,22 @@ static const struct htool_cmd CMDS[] = {
         .func = htool_get_provisioning_log,
         .params =
             (const struct htool_param[]){
-                {HTOOL_FLAG_VALUE, .name = "output", .default_value="",
-                 .desc = "The output file which will contain the provisioning log."},
-                 {}},
+                {HTOOL_FLAG_VALUE, .name = "output", .default_value = "",
+                 .desc = "The output file which will contain the provisioning "
+                         "log."},
+                {}},
     },
     {
         .verbs = (const char*[]){"provisioning", "validate_and_sign", NULL},
         .desc = "Validate and Sign the provisioning log",
         .func = htool_validate_and_sign,
-        .params = (const struct htool_param[]){
-                {HTOOL_FLAG_VALUE, .name="perso_blob", .default_value="",
-                 .desc="The perso blob file."},
-                {HTOOL_FLAG_VALUE, .name="output", .default_value="",
-                 .desc="The signed cert file."},
-                 {}},
+        .params =
+            (const struct htool_param[]){
+                {HTOOL_FLAG_VALUE, .name = "perso_blob", .default_value = "",
+                 .desc = "The perso blob file."},
+                {HTOOL_FLAG_VALUE, .name = "output", .default_value = "",
+                 .desc = "The signed cert file."},
+                {}},
     },
     {
         .verbs = (const char*[]){"security", "get_alias_key_cert", NULL},
@@ -1657,7 +1663,8 @@ static const struct htool_cmd CMDS[] = {
                 {HTOOL_FLAG_VALUE, .name = "output", .default_value = "",
                  .desc = "The Alias Key Certificate"},
                 {HTOOL_FLAG_VALUE, .name = "version", .default_value = "1",
-                 .desc = "The version of the Alias Key Certificate being retrieved."},
+                 .desc = "The version of the Alias Key Certificate being "
+                         "retrieved."},
 
                 {}},
     },
@@ -1697,28 +1704,39 @@ static const struct htool_cmd CMDS[] = {
     },
     {
         .verbs = (const char*[]){"security", "attestation", NULL},
-        .desc = "Fetch attestation information, including tokens and certificates.",
+        .desc =
+            "Fetch attestation information, including tokens and certificates.",
         .func = htool_fetch_attestation,
         .params =
             (const struct htool_param[]){
                 {HTOOL_FLAG_VALUE, .name = "token_output", .default_value = "",
                  .desc = "The base filename for the output token binary data."},
-                {HTOOL_FLAG_VALUE, .name = "token_set_info", .default_value = "",
-                 .desc = "The base filename for the token set info binary data."},
-                {HTOOL_FLAG_VALUE, .name = "token_boot_nonce_output", .default_value = "",
+                {HTOOL_FLAG_VALUE, .name = "token_set_info",
+                 .default_value = "",
+                 .desc = "The base filename for the token set info binary "
+                         "data."},
+                {HTOOL_FLAG_VALUE, .name = "token_boot_nonce_output",
+                 .default_value = "",
                  .desc = "The base filename for the boot nonce binary data."},
-                {HTOOL_FLAG_VALUE, .name = "token_signature_output", .default_value = "",
+                {HTOOL_FLAG_VALUE, .name = "token_signature_output",
+                 .default_value = "",
                  .desc = "The base filename for the signature binary data."},
-                {HTOOL_FLAG_VALUE, .name = "token_count_boot_nonce_output", .default_value = "",
+                {HTOOL_FLAG_VALUE, .name = "token_count_boot_nonce_output",
+                 .default_value = "",
                  .desc = "The base filename for the boot nonce binary data."},
-                {HTOOL_FLAG_VALUE, .name = "token_count_signature_output", .default_value = "",
+                {HTOOL_FLAG_VALUE, .name = "token_count_signature_output",
+                 .default_value = "",
                  .desc = "The base filename for the signature binary data."},
-                {HTOOL_FLAG_VALUE, .name = "token_count_output", .default_value = "",
+                {HTOOL_FLAG_VALUE, .name = "token_count_output",
+                 .default_value = "",
                  .desc = "The filename that will contain the token count."},
-                {HTOOL_FLAG_VALUE, .name = "attestation_file", .default_value = "",
-                 .desc = "The filename that will contain the entire attestation as one binary file."
-                        " The attestation_output flag is optional." 
-                        " If the attestation_output flag is provided the other output files are not required."},
+                {HTOOL_FLAG_VALUE, .name = "attestation_file",
+                 .default_value = "",
+                 .desc = "The filename that will contain the entire "
+                         "attestation as one binary file."
+                         " The attestation_output flag is optional."
+                         " If the attestation_output flag is provided the "
+                         "other output files are not required."},
                 {}},
     },
     {},
