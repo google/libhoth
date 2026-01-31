@@ -77,6 +77,10 @@ struct htool_invocation* htool_global_flags(void);
 int htool_main(const struct htool_param* global_flags,
                const struct htool_cmd* cmds, int argc, const char* const* argv);
 
+// Helper function to parse time string with units (s, ms, us) into microseconds
+// Returns -1 on error.
+int64_t parse_time_string_us(const char* time_str);
+
 #ifdef __cplusplus
 }
 #endif

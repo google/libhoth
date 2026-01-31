@@ -296,50 +296,6 @@ libusb_device* htool_libusb_device(void) {
   return select_device(ctx, filter_allow_all, NULL);
 }
 
-// Helper function to parse time string with units (s, ms, us) into microseconds
-// Returns -1 on error.
-static int64_t parse_time_string_us(const char* time_str) {
-  if (!time_str || *time_str == '\0') {
-    return -1;  // Invalid input
-  }
-
-  char* endptr;
-  long long val = strtoll(time_str, &endptr, 10);
-
-  if (endptr == time_str || val < 0) {
-    return -1;  // No digits found or negative value
-  }
-
-  // Skip whitespace
-  while (*endptr != '\0' && isspace((unsigned char)*endptr)) {
-    endptr++;
-  }
-
-  uint64_t multiplier = 1000000;  // Default to seconds if no unit
-
-  if (*endptr != '\0') {
-    // Check for units (case-insensitive)
-    if (tolower((unsigned char)endptr[0]) == 's' && endptr[1] == '\0') {
-      multiplier = 1000000;  // seconds
-    } else if (tolower((unsigned char)endptr[0]) == 'm' &&
-               tolower((unsigned char)endptr[1]) == 's' && endptr[2] == '\0') {
-      multiplier = 1000;  // milliseconds
-    } else if (tolower((unsigned char)endptr[0]) == 'u' &&
-               tolower((unsigned char)endptr[1]) == 's' && endptr[2] == '\0') {
-      multiplier = 1;  // microseconds
-    } else {
-      return -1;  // Invalid unit or extra characters
-    }
-  }
-
-  // Check for potential overflow before multiplying
-  if (val > INT64_MAX / multiplier) {
-    return -1;  // Overflow
-  }
-
-  return (int64_t)val * multiplier;
-}
-
 struct libhoth_device* htool_libhoth_usb_device(void) {
   static struct libhoth_device* result;
   if (result) {
@@ -354,23 +310,48 @@ struct libhoth_device* htool_libhoth_usb_device(void) {
   // Get retry parameters from global flags
   const char* duration_str;
   const char* delay_str;
-  if (htool_get_param_string(htool_global_flags(), "usb_retry_duration",
+  if (htool_get_param_string(htool_global_flags(), "retry_duration",
                              &duration_str) ||
-      htool_get_param_string(htool_global_flags(), "usb_retry_delay",
-                             &delay_str)) {
+      htool_get_param_string(htool_global_flags(), "retry_delay", &delay_str)) {
     return NULL;
   }
 
   int64_t retry_duration_us = parse_time_string_us(duration_str);
   int64_t retry_delay_us = parse_time_string_us(delay_str);
 
+  const char* usb_duration_str;
+  const char* usb_delay_str;
+  if (htool_get_param_string(htool_global_flags(), "usb_retry_duration",
+                             &usb_duration_str) ||
+      htool_get_param_string(htool_global_flags(), "usb_retry_delay",
+                             &usb_delay_str)) {
+    return NULL;
+  }
+
+  int64_t usb_retry_duration_us = parse_time_string_us(usb_duration_str);
+  int64_t usb_retry_delay_us = parse_time_string_us(usb_delay_str);
+
+  if (usb_retry_duration_us != 0) {
+    fprintf(
+        stderr,
+        "Warning: --usb_retry_duration is deprecated, use --retry_duration\n");
+    retry_duration_us = usb_retry_duration_us;
+    duration_str = usb_duration_str;
+  }
+
+  if (usb_retry_delay_us != 0) {
+    fprintf(stderr,
+            "Warning: --usb_retry_delay is deprecated, use --retry_delay\n");
+    retry_delay_us = usb_retry_delay_us;
+    delay_str = usb_delay_str;
+  }
+
   if (retry_duration_us < 0) {
-    fprintf(stderr, "Invalid format for --usb_retry_duration: %s\n",
-            duration_str);
+    fprintf(stderr, "Invalid format for --retry_duration: %s\n", duration_str);
     return NULL;
   }
   if (retry_delay_us < 0) {
-    fprintf(stderr, "Invalid format for --usb_retry_delay: %s\n", delay_str);
+    fprintf(stderr, "Invalid format for --retry_delay: %s\n", delay_str);
     return NULL;
   }
   // Convert duration to milliseconds for comparison with monotonic time helper
