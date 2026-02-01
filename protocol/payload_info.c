@@ -61,7 +61,18 @@ bool libhoth_payload_info(const uint8_t* image, size_t len,
     memset(payload_info->image_hash, 0, sizeof(payload_info->image_hash));
     return false;
   } else {
+    // Check for integer overflow
+    if (descr->descriptor_area_size <=
+	  sizeof(struct image_descriptor) * sizeof(struct hash_sha256)) {
+      return false;
+    }
+    
     uint32_t region_size = descr->region_count * sizeof(struct image_region);
+    // Check for overread
+    if (sizeof(struct image_descriptor) + region_size + sizeof(struct hash_sha256) > descr->descriptor_area_size) {
+      return false;
+    }
+
     struct hash_sha256* hash =
         (struct hash_sha256*)((uint8_t*)&descr->image_regions + region_size);
     memcpy(payload_info->image_hash, hash->hash, sizeof(hash->hash));
