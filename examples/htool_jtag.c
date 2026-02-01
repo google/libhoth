@@ -35,8 +35,8 @@ static char JTAG_TEST_BYPASS_PATTERN_DEFAULT_VALUE[] =
     "0x34 0x3b 0xc3 0xfe 0xf 0x7c 0x5c 0xc8 0x25 0x3b 0x47 0x9f 0x36 0x2a 0x47 "
     "0x1b 0x57 0x13 0x11 0x0";
 
-static int jtag_read_idcode(struct libhoth_device *dev,
-                            const struct htool_invocation *inv) {
+static int jtag_read_idcode(struct libhoth_device* dev,
+                            const struct htool_invocation* inv) {
   uint32_t clk_idiv;
   uint32_t interface_id;
 
@@ -74,17 +74,17 @@ static int jtag_read_idcode(struct libhoth_device *dev,
 // If more than `expected_bytes_count` byte tokens are present in `param_value`,
 // return code indicates error.
 static int parse_string_param_into_byte_sequence(
-    char *param_value, uint8_t *const byte_sequence,
+    char* param_value, uint8_t* const byte_sequence,
     const size_t expected_bytes_count) {
-  char *saveptr = NULL;
-  char *token = strtok_r(param_value, " ", &saveptr);
+  char* saveptr = NULL;
+  char* token = strtok_r(param_value, " ", &saveptr);
   for (size_t i = 0; i < expected_bytes_count; i++) {
     if (token == NULL) {
       fprintf(stderr, "Expected %zu bytes, found %zu\n", expected_bytes_count,
               i);
       return -1;
     }
-    char *endptr = NULL;
+    char* endptr = NULL;
     unsigned long int parsed_value = strtoul(token, &endptr, 0);
     if ((token == endptr) || (parsed_value > UINT8_MAX) || (*endptr != '\0')) {
       fprintf(stderr, "Invalid byte token '%s'\n", token);
@@ -105,14 +105,14 @@ static int parse_string_param_into_byte_sequence(
   return 0;
 }
 
-static int jtag_test_bypass(struct libhoth_device *dev,
-                            const struct htool_invocation *inv) {
-  char *tdi_bytes_str = NULL;
+static int jtag_test_bypass(struct libhoth_device* dev,
+                            const struct htool_invocation* inv) {
+  char* tdi_bytes_str = NULL;
   uint32_t clk_idiv;
   uint32_t interface_id;
 
   if (htool_get_param_u32(inv, "clk_idiv", &clk_idiv) ||
-      htool_get_param_string(inv, "tdi_bytes", (const char **)&tdi_bytes_str)) {
+      htool_get_param_string(inv, "tdi_bytes", (const char**)&tdi_bytes_str)) {
     return -1;
   }
 
@@ -171,8 +171,8 @@ static int jtag_test_bypass(struct libhoth_device *dev,
   return 0;
 }
 
-static int jtag_program_and_verify_pld(struct libhoth_device *dev,
-                                       const struct htool_invocation *inv) {
+static int jtag_program_and_verify_pld(struct libhoth_device* dev,
+                                       const struct htool_invocation* inv) {
   uint32_t offset;
   uint32_t interface_id;
 
@@ -191,8 +191,8 @@ static int jtag_program_and_verify_pld(struct libhoth_device *dev,
   return libhoth_jtag_program_and_verify_pld(dev, interface_id, offset);
 }
 
-static int jtag_verify_pld(struct libhoth_device *dev,
-                           const struct htool_invocation *inv) {
+static int jtag_verify_pld(struct libhoth_device* dev,
+                           const struct htool_invocation* inv) {
   uint32_t offset;
   uint32_t interface_id;
 
@@ -211,8 +211,8 @@ static int jtag_verify_pld(struct libhoth_device *dev,
   return libhoth_jtag_verify_pld(dev, interface_id, offset);
 }
 
-int htool_jtag_run(const struct htool_invocation *inv) {
-  struct libhoth_device *dev = htool_libhoth_device();
+int htool_jtag_run(const struct htool_invocation* inv) {
+  struct libhoth_device* dev = htool_libhoth_device();
   if (!dev) {
     return -1;
   }

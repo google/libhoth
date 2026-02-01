@@ -50,23 +50,23 @@ struct mailbox_response {
 } __attribute__((packed));
 
 int libhoth_usb_mailbox_open(
-    struct libhoth_usb_device *dev,
-    const struct libusb_config_descriptor *descriptor) {
+    struct libhoth_usb_device* dev,
+    const struct libusb_config_descriptor* descriptor) {
   if (dev == NULL || descriptor == NULL ||
       dev->info.type != LIBHOTH_USB_INTERFACE_TYPE_MAILBOX) {
     return LIBUSB_ERROR_INVALID_PARAM;
   }
-  const struct libusb_interface *interface_settings =
+  const struct libusb_interface* interface_settings =
       &descriptor->interface[dev->info.interface_id];
-  const struct libusb_interface_descriptor *interface =
+  const struct libusb_interface_descriptor* interface =
       &interface_settings->altsetting[dev->info.interface_altsetting];
 
   // Fill out driver data
-  struct libhoth_usb_mailbox *drvdata = &dev->driver_data.mailbox;
+  struct libhoth_usb_mailbox* drvdata = &dev->driver_data.mailbox;
 
   // There should only be one IN endpoint and one OUT endpoint.
   for (int i = 0; i < interface->bNumEndpoints; i++) {
-    const struct libusb_endpoint_descriptor *endpoint = &interface->endpoint[i];
+    const struct libusb_endpoint_descriptor* endpoint = &interface->endpoint[i];
     enum libusb_endpoint_direction direction =
         endpoint->bEndpointAddress & LIBUSB_ENDPOINT_DIR_MASK;
     enum libusb_transfer_type transfer_type =
@@ -98,14 +98,14 @@ int libhoth_usb_mailbox_open(
   return LIBHOTH_OK;
 }
 
-int libhoth_usb_mailbox_send_request(struct libhoth_usb_device *dev,
-                                     const void *request, size_t request_size) {
+int libhoth_usb_mailbox_send_request(struct libhoth_usb_device* dev,
+                                     const void* request, size_t request_size) {
   uint8_t packet[LIBHOTH_USB_MAILBOX_MTU];
   if (dev == NULL || request == NULL) {
     return LIBUSB_ERROR_INVALID_PARAM;
   }
 
-  struct libhoth_usb_mailbox *drvdata = &dev->driver_data.mailbox;
+  struct libhoth_usb_mailbox* drvdata = &dev->driver_data.mailbox;
   const size_t max_payload_size =
       drvdata->max_packet_size_in - sizeof(struct mailbox_request);
 
@@ -122,7 +122,7 @@ int libhoth_usb_mailbox_send_request(struct libhoth_usb_device *dev,
     };
     struct mailbox_response response;
     memcpy(&packet[0], &request_header, sizeof(request_header));
-    memcpy(&packet[sizeof(request_header)], (const uint8_t *)request + offset,
+    memcpy(&packet[sizeof(request_header)], (const uint8_t*)request + offset,
            length);
 
     int status = libusb_bulk_transfer(dev->handle, drvdata->ep_out, packet,
@@ -136,7 +136,7 @@ int libhoth_usb_mailbox_send_request(struct libhoth_usb_device *dev,
     }
 
     status =
-        libusb_bulk_transfer(dev->handle, drvdata->ep_in, (void *)&response,
+        libusb_bulk_transfer(dev->handle, drvdata->ep_in, (void*)&response,
                              sizeof(response), &transferred, /*timeout=*/0);
     if (status != LIBUSB_SUCCESS) {
       return status;
@@ -152,15 +152,15 @@ int libhoth_usb_mailbox_send_request(struct libhoth_usb_device *dev,
   return LIBHOTH_OK;
 }
 
-int libhoth_usb_mailbox_receive_response(struct libhoth_usb_device *dev,
-                                         void *response, size_t response_size,
-                                         size_t *actual_size, int timeout_ms) {
+int libhoth_usb_mailbox_receive_response(struct libhoth_usb_device* dev,
+                                         void* response, size_t response_size,
+                                         size_t* actual_size, int timeout_ms) {
   uint8_t packet[LIBHOTH_USB_MAILBOX_MTU];
   if (dev == NULL || response == NULL) {
     return LIBUSB_ERROR_INVALID_PARAM;
   }
 
-  struct libhoth_usb_mailbox *drvdata = &dev->driver_data.mailbox;
+  struct libhoth_usb_mailbox* drvdata = &dev->driver_data.mailbox;
   const size_t max_payload_size =
       drvdata->max_packet_size_in - sizeof(struct mailbox_response);
 
@@ -182,7 +182,7 @@ int libhoth_usb_mailbox_receive_response(struct libhoth_usb_device *dev,
         .length = length,
     };
     int status = libusb_bulk_transfer(dev->handle, drvdata->ep_out,
-                                      (void *)&request, sizeof(request),
+                                      (void*)&request, sizeof(request),
                                       &transferred, /*timeout=*/timeout_ms);
     if (status != LIBUSB_SUCCESS) {
       return status;
@@ -205,7 +205,7 @@ int libhoth_usb_mailbox_receive_response(struct libhoth_usb_device *dev,
     if (response_header.status != MAILBOX_SUCCESS) {
       return LIBUSB_ERROR_IO;
     }
-    memcpy((uint8_t *)response + offset, &packet[sizeof(response_header)],
+    memcpy((uint8_t*)response + offset, &packet[sizeof(response_header)],
            length);
 
     if (offset == 0 && length >= sizeof(struct hoth_host_response)) {
@@ -228,7 +228,7 @@ int libhoth_usb_mailbox_receive_response(struct libhoth_usb_device *dev,
   return LIBHOTH_OK;
 }
 
-int libhoth_usb_mailbox_close(struct libhoth_usb_device *dev) {
+int libhoth_usb_mailbox_close(struct libhoth_usb_device* dev) {
   if (dev == NULL) {
     return LIBUSB_ERROR_INVALID_PARAM;
   }

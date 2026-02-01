@@ -35,11 +35,11 @@ TEST(PayloadInfotest, payload_info) {
   struct stat statbuf;
   ASSERT_EQ(fstat(fd, &statbuf), 0);
 
-  uint8_t *image = reinterpret_cast<uint8_t *>(
+  uint8_t* image = reinterpret_cast<uint8_t*>(
       mmap(NULL, statbuf.st_size, PROT_READ | PROT_WRITE, MAP_PRIVATE, fd, 0));
   ASSERT_NE(image, nullptr);
 
-  const struct image_descriptor *descr =
+  const struct image_descriptor* descr =
       libhoth_find_image_descriptor(image, statbuf.st_size);
 
   ASSERT_NE(descr, nullptr);
@@ -66,7 +66,7 @@ TEST(PayloadInfotest, payload_info) {
   EXPECT_EQ(kTestHash, stream.str());
 
   // Clobber the magic
-  const_cast<image_descriptor *>(descr)->descriptor_magic += 1;
+  const_cast<image_descriptor*>(descr)->descriptor_magic += 1;
 
   EXPECT_FALSE(libhoth_payload_info(image, statbuf.st_size, &info));
 
@@ -80,30 +80,31 @@ TEST(PayloadInfotest, descriptor_clipping) {
   struct stat statbuf;
   ASSERT_EQ(fstat(fd, &statbuf), 0);
 
-  uint8_t *image = reinterpret_cast<uint8_t *>(
+  uint8_t* image = reinterpret_cast<uint8_t*>(
       mmap(NULL, statbuf.st_size, PROT_READ | PROT_WRITE, MAP_PRIVATE, fd, 0));
   ASSERT_NE(image, nullptr);
 
-  struct image_descriptor *descr = const_cast<image_descriptor *>(
+  struct image_descriptor* descr = const_cast<image_descriptor*>(
       libhoth_find_image_descriptor(image, statbuf.st_size));
   ASSERT_NE(descr, nullptr);
 
   ASSERT_EQ(descr->descriptor_area_size, 2 * TITAN_IMAGE_DESCRIPTOR_ALIGNMENT);
 
-  void *end_of_image = image + statbuf.st_size - descr->descriptor_area_size;
+  void* end_of_image = image + statbuf.st_size - descr->descriptor_area_size;
 
   // Move the descriptor to the very end, so that the regions just barely fits
   // into the last 2 64K slots at the end
   std::memcpy(end_of_image, descr, sizeof(image_descriptor));
   descr->descriptor_magic += 1;  // Clobber previous image descriptor
 
-  descr = const_cast<image_descriptor*>(libhoth_find_image_descriptor(image, statbuf.st_size));
+  descr = const_cast<image_descriptor*>(
+      libhoth_find_image_descriptor(image, statbuf.st_size));
   ASSERT_NE(descr, nullptr);
 
   // Move the points to the last 64K
   // Putting the descriptor in here should fail because it extends
   // beyond the end of the payload
-  end_of_image = (uint8_t *)end_of_image + (1 << 16);
+  end_of_image = (uint8_t*)end_of_image + (1 << 16);
 
   std::memcpy(end_of_image, descr, sizeof(image_descriptor));
   descr->descriptor_magic += 1;  // Clobber previous image descriptor
@@ -120,18 +121,18 @@ TEST(PayloadInfotest, payload_info_non_SHA256_hash_type) {
   struct stat statbuf;
   ASSERT_EQ(fstat(fd, &statbuf), 0);
 
-  uint8_t *image = reinterpret_cast<uint8_t *>(
+  uint8_t* image = reinterpret_cast<uint8_t*>(
       mmap(NULL, statbuf.st_size, PROT_READ | PROT_WRITE, MAP_PRIVATE, fd, 0));
   ASSERT_NE(image, nullptr);
 
-  const struct image_descriptor *descr =
+  const struct image_descriptor* descr =
       libhoth_find_image_descriptor(image, statbuf.st_size);
 
   ASSERT_NE(descr, nullptr);
 
   // Clobber the hash type to something other than SHA256 to fail since
   // we only support SHA256
-  const_cast<image_descriptor *>(descr)->hash_type = HASH_SHA2_224;
+  const_cast<image_descriptor*>(descr)->hash_type = HASH_SHA2_224;
 
   struct payload_info info;
   EXPECT_FALSE(libhoth_payload_info(image, statbuf.st_size, &info));

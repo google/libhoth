@@ -14,13 +14,14 @@
 
 #include "payload_update.h"
 
+#include <gmock/gmock.h>
+#include <gtest/gtest.h>
+
 #include <cstdint>
 
 #include "command_version.h"
 #include "payload_info.h"
 #include "test/libhoth_device_mock.h"
-#include <gmock/gmock.h>
-#include <gtest/gtest.h>
 
 using ::testing::_;
 using ::testing::DoAll;
@@ -50,8 +51,9 @@ TEST_F(LibHothTest, payload_update_bad_image_test) {
 
   uint8_t bad_buffer[100] = {0};
 
-  EXPECT_EQ(libhoth_payload_update(&hoth_dev_, bad_buffer, sizeof(bad_buffer), false),
-            PAYLOAD_UPDATE_BAD_IMG);
+  EXPECT_EQ(
+      libhoth_payload_update(&hoth_dev_, bad_buffer, sizeof(bad_buffer), false),
+      PAYLOAD_UPDATE_BAD_IMG);
 }
 
 TEST_F(LibHothTest, payload_update_test) {
@@ -133,8 +135,7 @@ TEST_F(LibHothTest, payload_update_erase_fail) {
 TEST_F(LibHothTest, payload_update_flash_fail) {
   EXPECT_CALL(mock_, send(_, UsesCommand(kCmd), _))
       .WillRepeatedly(Return(LIBHOTH_OK));
-  EXPECT_CALL(mock_, receive)
-      .WillOnce(Return(-1));
+  EXPECT_CALL(mock_, receive).WillOnce(Return(-1));
 
   uint8_t buffer[100] = {0};
   std::memcpy(buffer, &kMagic, sizeof(kMagic));

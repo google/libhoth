@@ -30,7 +30,7 @@
 #include "htool_cmd.h"
 #include "protocol/key_rotation.h"
 
-static const char *get_validation_method_string(uint32_t validation_method) {
+static const char* get_validation_method_string(uint32_t validation_method) {
   switch (validation_method) {
     case 1:
       return "Embedded Key";
@@ -45,7 +45,7 @@ static const char *get_validation_method_string(uint32_t validation_method) {
 
 int htool_key_rotation_get_status(const struct htool_invocation* inv) {
   (void)inv;
-  struct libhoth_device *dev = htool_libhoth_device();
+  struct libhoth_device* dev = htool_libhoth_device();
   if (!dev) {
     return -1;
   }
@@ -68,7 +68,7 @@ int htool_key_rotation_get_status(const struct htool_invocation* inv) {
 
 int htool_key_rotation_get_version(const struct htool_invocation* inv) {
   (void)inv;
-  struct libhoth_device *dev = htool_libhoth_device();
+  struct libhoth_device* dev = htool_libhoth_device();
   if (!dev) {
     return -1;
   }
@@ -82,8 +82,8 @@ int htool_key_rotation_get_version(const struct htool_invocation* inv) {
   return 0;
 }
 
-static int read_image_file(const char *image_file, uint8_t **image,
-                           size_t *size) {
+static int read_image_file(const char* image_file, uint8_t** image,
+                           size_t* size) {
   int fd = -1;
   int result = 0;
   struct stat statbuf;
@@ -131,17 +131,17 @@ cleanup:
   return result;
 }
 
-int htool_key_rotation_update(const struct htool_invocation *inv) {
-  struct libhoth_device *dev = htool_libhoth_device();
+int htool_key_rotation_update(const struct htool_invocation* inv) {
+  struct libhoth_device* dev = htool_libhoth_device();
   if (!dev) {
     return -1;
   }
-  const char *image_file;
+  const char* image_file;
   if (htool_get_param_string(inv, "source-file", &image_file) != 0) {
     return -1;
   }
 
-  uint8_t *image = MAP_FAILED;
+  uint8_t* image = MAP_FAILED;
   size_t size = 0;
   int result = read_image_file(image_file, &image, &size);
   if (result != 0) {
@@ -165,7 +165,7 @@ int htool_key_rotation_update(const struct htool_invocation *inv) {
 
 int htool_key_rotation_payload_status(const struct htool_invocation* inv) {
   (void)inv;
-  struct libhoth_device *dev = htool_libhoth_device();
+  struct libhoth_device* dev = htool_libhoth_device();
   if (!dev) {
     return -1;
   }
@@ -184,8 +184,8 @@ int htool_key_rotation_payload_status(const struct htool_invocation* inv) {
   return 0;
 }
 
-static int get_key_rotation_read_half(const char *read_half,
-                                      uint32_t *read_half_value) {
+static int get_key_rotation_read_half(const char* read_half,
+                                      uint32_t* read_half_value) {
   if (!strcmp(read_half, "active")) {
     *read_half_value = KEY_ROTATION_RECORD_READ_HALF_ACTIVE;
   } else if (!strcmp(read_half, "staging")) {
@@ -201,14 +201,14 @@ static int get_key_rotation_read_half(const char *read_half,
   return 0;
 }
 
-int htool_key_rotation_read(const struct htool_invocation *inv) {
-  struct libhoth_device *dev = htool_libhoth_device();
+int htool_key_rotation_read(const struct htool_invocation* inv) {
+  struct libhoth_device* dev = htool_libhoth_device();
   if (!dev) {
     return -1;
   }
   uint32_t offset = 0;
   uint32_t size = 0;
-  const char *read_half_string;
+  const char* read_half_string;
   if (htool_get_param_u32(inv, "offset", &offset) ||
       htool_get_param_u32(inv, "size", &size) ||
       htool_get_param_string(inv, "half", &read_half_string)) {
@@ -219,7 +219,7 @@ int htool_key_rotation_read(const struct htool_invocation *inv) {
   if (ret_half) {
     return -1;
   }
-  const char *output_file = NULL;
+  const char* output_file = NULL;
   bool output_to_file =
       (htool_get_param_string(inv, "output_file", &output_file) == 0) &&
       (output_file != NULL) && (strlen(output_file) > 0);
@@ -279,8 +279,8 @@ int htool_key_rotation_read(const struct htool_invocation *inv) {
   return 0;
 }
 
-static int get_key_rotation_chunk_type(const char *chunk_type_string,
-                                       uint32_t *chunk_typecode) {
+static int get_key_rotation_chunk_type(const char* chunk_type_string,
+                                       uint32_t* chunk_typecode) {
   if (!strcmp(chunk_type_string, "pkey")) {
     *chunk_typecode = KEY_ROTATION_CHUNK_TYPE_CODE_PKEY;
   } else if (!strcmp(chunk_type_string, "hash")) {
@@ -296,15 +296,15 @@ static int get_key_rotation_chunk_type(const char *chunk_type_string,
   return 0;
 }
 
-int htool_key_rotation_read_chunk_type(const struct htool_invocation *inv) {
-  struct libhoth_device *dev = htool_libhoth_device();
+int htool_key_rotation_read_chunk_type(const struct htool_invocation* inv) {
+  struct libhoth_device* dev = htool_libhoth_device();
   if (!dev) {
     return -1;
   }
   uint32_t offset = 0;
   uint32_t size = 0;
   uint32_t chunk_index = 0;
-  const char *chunk_type_string;
+  const char* chunk_type_string;
   if (htool_get_param_u32(inv, "offset", &offset) ||
       htool_get_param_u32(inv, "size", &size) ||
       htool_get_param_string(inv, "type", &chunk_type_string) ||
@@ -317,7 +317,7 @@ int htool_key_rotation_read_chunk_type(const struct htool_invocation *inv) {
   if (ret_half) {
     return -1;
   }
-  const char *output_file = NULL;
+  const char* output_file = NULL;
   bool output_to_file =
       (htool_get_param_string(inv, "output_file", &output_file) == 0) &&
       (output_file != NULL) && (strlen(output_file) > 0);
@@ -385,12 +385,12 @@ int htool_key_rotation_read_chunk_type(const struct htool_invocation *inv) {
   return 0;
 }
 
-int htool_key_rotation_chunk_type_count(const struct htool_invocation *inv) {
-  struct libhoth_device *dev = htool_libhoth_device();
+int htool_key_rotation_chunk_type_count(const struct htool_invocation* inv) {
+  struct libhoth_device* dev = htool_libhoth_device();
   if (!dev) {
     return -1;
   }
-  const char *chunk_type_string;
+  const char* chunk_type_string;
   if (htool_get_param_string(inv, "type", &chunk_type_string)) {
     return -1;
   }
@@ -411,8 +411,8 @@ int htool_key_rotation_chunk_type_count(const struct htool_invocation *inv) {
   return 0;
 }
 
-int htool_key_rotation_erase_record(const struct htool_invocation *inv) {
-  struct libhoth_device *dev = htool_libhoth_device();
+int htool_key_rotation_erase_record(const struct htool_invocation* inv) {
+  struct libhoth_device* dev = htool_libhoth_device();
   if (!dev) {
     return -1;
   }
@@ -425,8 +425,8 @@ int htool_key_rotation_erase_record(const struct htool_invocation *inv) {
   return 0;
 }
 
-int htool_key_rotation_set_mauv(const struct htool_invocation *inv) {
-  struct libhoth_device *dev = htool_libhoth_device();
+int htool_key_rotation_set_mauv(const struct htool_invocation* inv) {
+  struct libhoth_device* dev = htool_libhoth_device();
   if (!dev) {
     return -1;
   }
@@ -443,8 +443,8 @@ int htool_key_rotation_set_mauv(const struct htool_invocation *inv) {
   return 0;
 }
 
-int htool_key_rotation_get_mauv(const struct htool_invocation *inv) {
-  struct libhoth_device *dev = htool_libhoth_device();
+int htool_key_rotation_get_mauv(const struct htool_invocation* inv) {
+  struct libhoth_device* dev = htool_libhoth_device();
   if (!dev) {
     return -1;
   }

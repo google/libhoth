@@ -59,7 +59,7 @@ TEST_F(HtoolSecurityV2Test, ExecCmdSuccess) {
   // Construct expected response from device
   std::vector<uint8_t> device_response;
   struct hoth_security_v2_response_header resp_hdr = {.param_count = 1,
-                                                     .reserved = 0};
+                                                      .reserved = 0};
   device_response.insert(device_response.end(), (uint8_t*)&resp_hdr,
                          (uint8_t*)&resp_hdr + sizeof(resp_hdr));
 
@@ -76,9 +76,9 @@ TEST_F(HtoolSecurityV2Test, ExecCmdSuccess) {
   EXPECT_CALL(mock_, hostcmd_exec(mock_dev, 3, 0, _, _, _, _, _))
       .WillOnce(DoAll(SetHostCmdResponse(device_response), Return(0)));
 
-  int status = htool_exec_security_v2_cmd(
-      mock_dev, 1, 2, 3, &request_buffer, request_params, 1, &response_buffer,
-      response_params, 1);
+  int status = htool_exec_security_v2_cmd(mock_dev, 1, 2, 3, &request_buffer,
+                                          request_params, 1, &response_buffer,
+                                          response_params, 1);
 
   ASSERT_EQ(status, 0);
   EXPECT_EQ(memcmp(resp_param_buf, resp_param_val, sizeof(resp_param_val)), 0);
@@ -92,12 +92,11 @@ TEST_F(HtoolSecurityV2Test, ExecCmdHostCmdFailure) {
   struct security_v2_buffer response_buffer = {
       .data = response_storage, .size = sizeof(response_storage)};
 
-  EXPECT_CALL(mock_, hostcmd_exec(_, _, _, _, _, _, _, _))
-      .WillOnce(Return(-1));
+  EXPECT_CALL(mock_, hostcmd_exec(_, _, _, _, _, _, _, _)).WillOnce(Return(-1));
 
-  int status = htool_exec_security_v2_cmd(
-      mock_dev, 1, 2, 3, &request_buffer, nullptr, 0, &response_buffer,
-      nullptr, 0);
+  int status =
+      htool_exec_security_v2_cmd(mock_dev, 1, 2, 3, &request_buffer, nullptr, 0,
+                                 &response_buffer, nullptr, 0);
 
   ASSERT_EQ(status, -1);
 }
@@ -118,8 +117,8 @@ TEST_F(HtoolSecurityV2Test, SerializedCmdSuccess) {
 
   // Param 1
   uint32_t param1_val = 0xdeadbeef;
-  struct security_v2_serialized_param param1_hdr = {
-      .size = sizeof(param1_val), .reserved = 0};
+  struct security_v2_serialized_param param1_hdr = {.size = sizeof(param1_val),
+                                                    .reserved = 0};
   response.insert(response.end(), (uint8_t*)&param1_hdr,
                   (uint8_t*)&param1_hdr + sizeof(param1_hdr));
   response.insert(response.end(), (uint8_t*)&param1_val,
@@ -128,8 +127,8 @@ TEST_F(HtoolSecurityV2Test, SerializedCmdSuccess) {
 
   // Param 2
   uint8_t param2_val[] = {1, 2, 3, 4, 5};
-  struct security_v2_serialized_param param2_hdr = {
-      .size = sizeof(param2_val), .reserved = 0};
+  struct security_v2_serialized_param param2_hdr = {.size = sizeof(param2_val),
+                                                    .reserved = 0};
   response.insert(response.end(), (uint8_t*)&param2_hdr,
                   (uint8_t*)&param2_hdr + sizeof(param2_hdr));
   response.insert(response.end(), param2_val, param2_val + sizeof(param2_val));
@@ -168,8 +167,7 @@ TEST_F(HtoolSecurityV2Test, SerializedCmdExecFailure) {
   struct security_v2_buffer response_buffer = {
       .data = response_storage, .size = sizeof(response_storage)};
 
-  EXPECT_CALL(mock_, hostcmd_exec(_, _, _, _, _, _, _, _))
-      .WillOnce(Return(-1));
+  EXPECT_CALL(mock_, hostcmd_exec(_, _, _, _, _, _, _, _)).WillOnce(Return(-1));
 
   const struct security_v2_serialized_param* param_out1 = nullptr;
   const struct security_v2_serialized_param** response_params[] = {&param_out1};
@@ -196,12 +194,12 @@ TEST_F(HtoolSecurityV2Test, SerializedCmdWrongParamCount) {
   response.insert(response.end(), (uint8_t*)&hdr, (uint8_t*)&hdr + sizeof(hdr));
 
   uint32_t param1_val = 0xdeadbeef;
-  struct security_v2_serialized_param param1_hdr = {
-      .size = sizeof(param1_val), .reserved = 0};
+  struct security_v2_serialized_param param1_hdr = {.size = sizeof(param1_val),
+                                                    .reserved = 0};
   response.insert(response.end(), (uint8_t*)&param1_hdr,
                   (uint8_t*)&param1_hdr + sizeof(param1_hdr));
   response.insert(response.end(), (uint8_t*)&param1_val,
-                  (uint8_t*)&param1_val + sizeof(param1_val)); 
+                  (uint8_t*)&param1_val + sizeof(param1_val));
   EXPECT_CALL(mock_, hostcmd_exec(_, _, _, _, _, _, _, _))
       .WillOnce(DoAll(SetHostCmdResponse(response), Return(0)));
 
@@ -234,8 +232,8 @@ TEST_F(HtoolSecurityV2Test, SerializedCmdBadPadding) {
 
   // Param with non-zero padding
   uint8_t param1_val[] = {1, 2, 3, 4, 5};
-  struct security_v2_serialized_param param1_hdr = {
-      .size = sizeof(param1_val), .reserved = 0};
+  struct security_v2_serialized_param param1_hdr = {.size = sizeof(param1_val),
+                                                    .reserved = 0};
   response.insert(response.end(), (uint8_t*)&param1_hdr,
                   (uint8_t*)&param1_hdr + sizeof(param1_hdr));
   response.insert(response.end(), param1_val, param1_val + sizeof(param1_val));
@@ -275,8 +273,8 @@ TEST_F(HtoolSecurityV2Test, SerializedCmdInsufficientBytesForValue) {
 
   // Param with size larger than available data
   uint32_t param1_val = 0xdeadbeef;
-  struct security_v2_serialized_param param1_hdr = {
-      .size = sizeof(param1_val), .reserved = 0};
+  struct security_v2_serialized_param param1_hdr = {.size = sizeof(param1_val),
+                                                    .reserved = 0};
   response.insert(response.end(), (uint8_t*)&param1_hdr,
                   (uint8_t*)&param1_hdr + sizeof(param1_hdr));
   // Only add 2 bytes of value instead of 4

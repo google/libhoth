@@ -19,10 +19,10 @@
 #include <string.h>
 #include <unistd.h>
 
-#include "progress.h"
 #include "command_version.h"
 #include "host_cmd.h"
 #include "payload_info.h"
+#include "progress.h"
 #include "transports/libhoth_device.h"
 #include "util.h"
 
@@ -83,16 +83,20 @@ static int libhoth_payload_update_finalize(
   return 0;
 }
 
-static int payload_update_erase(struct libhoth_device* const dev, const size_t offset, const size_t len) {
+static int payload_update_erase(struct libhoth_device* const dev,
+                                const size_t offset, const size_t len) {
   struct payload_update_packet request;
   request.type = PAYLOAD_UPDATE_ERASE;
   request.offset = offset;
   request.len = len;
-  return libhoth_hostcmd_exec(dev, HOTH_CMD_BOARD_SPECIFIC_BASE + HOTH_PRV_CMD_HOTH_PAYLOAD_UPDATE, 0, &request, sizeof(request), NULL, 0, NULL);
+  return libhoth_hostcmd_exec(
+      dev, HOTH_CMD_BOARD_SPECIFIC_BASE + HOTH_PRV_CMD_HOTH_PAYLOAD_UPDATE, 0,
+      &request, sizeof(request), NULL, 0, NULL);
 }
 
 enum payload_update_err libhoth_payload_update(struct libhoth_device* dev,
-                                               uint8_t* image, size_t size, bool skip_erase) {
+                                               uint8_t* image, size_t size,
+                                               bool skip_erase) {
   if (libhoth_find_image_descriptor(image, size) == NULL) {
     return PAYLOAD_UPDATE_BAD_IMG;
   }
@@ -106,7 +110,8 @@ enum payload_update_err libhoth_payload_update(struct libhoth_device* dev,
 
     const bool is_image_size_sector_aligned = ((size % sector_erase) == 0);
     if (!is_image_size_sector_aligned) {
-      fprintf(stderr, "error: image size (0x%zx) is not sector-aligned.\n", size);
+      fprintf(stderr, "error: image size (0x%zx) is not sector-aligned.\n",
+              size);
       return PAYLOAD_UPDATE_IMAGE_NOT_SECTOR_ALIGNED;
     }
 
@@ -139,7 +144,8 @@ enum payload_update_err libhoth_payload_update(struct libhoth_device* dev,
   struct libhoth_progress_stderr program_progress;
   libhoth_progress_stderr_init(&program_progress, "Sending payload");
   for (size_t offset = 0; offset < size; ++offset) {
-    program_progress.progress.func(program_progress.progress.param, offset, size);
+    program_progress.progress.func(program_progress.progress.param, offset,
+                                   size);
 
     if (image[offset] == 0xFF) {
       continue;
@@ -220,8 +226,8 @@ int libhoth_payload_update_getstatus(
 
 enum payload_update_err libhoth_payload_update_read_chunk(
     struct libhoth_device* dev, int fd, size_t len, size_t offset) {
-  const size_t max_chunk_size = LIBHOTH_MAILBOX_SIZE -
-                                sizeof(struct hoth_host_response);
+  const size_t max_chunk_size =
+      LIBHOTH_MAILBOX_SIZE - sizeof(struct hoth_host_response);
   uint8_t buffer[LIBHOTH_MAILBOX_SIZE];
 
   struct payload_update_packet pkt;
