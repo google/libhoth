@@ -44,6 +44,11 @@ int htool_payload_update(const struct htool_invocation* inv) {
     return -1;
   }
 
+  bool binary_file = false;
+  if (htool_get_param_bool(inv, "binary", &binary_file)) {
+    return -1;
+  }
+
   int fd = open(image_file, O_RDONLY, 0);
   if (fd == -1) {
     fprintf(stderr, "Error opening file %s: %s\n", image_file, strerror(errno));
@@ -68,8 +73,8 @@ int htool_payload_update(const struct htool_invocation* inv) {
     goto cleanup;
   }
 
-  enum payload_update_err payload_update_status =
-      libhoth_payload_update(dev, image, statbuf.st_size, skip_erase);
+  enum payload_update_err payload_update_status = libhoth_payload_update(
+      dev, image, statbuf.st_size, skip_erase, binary_file);
   switch (payload_update_status) {
     case PAYLOAD_UPDATE_OK:
       fprintf(stderr, "Payload update finished\n");

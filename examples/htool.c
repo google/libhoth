@@ -979,6 +979,8 @@ static const struct htool_cmd CMDS[] = {
                 {HTOOL_POSITIONAL, .name = "source-file"},
                 {HTOOL_FLAG_BOOL, 's', "skip_erase", "false",
                  .desc = "Skip erasing the staging side."},
+                {HTOOL_FLAG_BOOL, 'b', "binary", "false",
+                 .desc = "Update with generic binary file"},
                 {}},
         .func = htool_payload_update,
     },

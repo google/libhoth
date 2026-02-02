@@ -118,6 +118,7 @@ cc_test(
         ":payload_info",
         ":payload_update",
         "//protocol/test:libhoth_device_mock",
+        "//transports:libhoth_device",
         "@googletest//:gtest",
         "@googletest//:gtest_main",
     ],

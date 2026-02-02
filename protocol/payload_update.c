@@ -96,8 +96,9 @@ static int payload_update_erase(struct libhoth_device* const dev,
 
 enum payload_update_err libhoth_payload_update(struct libhoth_device* dev,
                                                uint8_t* image, size_t size,
-                                               bool skip_erase) {
-  if (libhoth_find_image_descriptor(image, size) == NULL) {
+                                               bool skip_erase,
+                                               bool binary_file) {
+  if (!binary_file && (libhoth_find_image_descriptor(image, size) == NULL)) {
     return PAYLOAD_UPDATE_BAD_IMG;
   }
 
@@ -184,13 +185,18 @@ enum payload_update_err libhoth_payload_update(struct libhoth_device* dev,
     offset += chunk_size - 1;
   }
 
-  fprintf(stderr, "Finalizing payload update.\n");
-  uint8_t pld_needs_reinitialization = 0;
-  if (libhoth_payload_update_finalize(dev, &pld_needs_reinitialization) != 0) {
-    return PAYLOAD_UPDATE_FINALIZE_FAIL;
-  }
-  if (pld_needs_reinitialization != 0) {
-    fprintf(stderr, "PLD updated. Re-initialization needed.\n");
+  // Don't attempt to verify and activate binary file since most likely it will
+  // fail (unlike actual payload images which have an image descriptor)
+  if (!binary_file) {
+    fprintf(stderr, "Finalizing payload update.\n");
+    uint8_t pld_needs_reinitialization = 0;
+    if (libhoth_payload_update_finalize(dev, &pld_needs_reinitialization) !=
+        0) {
+      return PAYLOAD_UPDATE_FINALIZE_FAIL;
+    }
+    if (pld_needs_reinitialization != 0) {
+      fprintf(stderr, "PLD updated. Re-initialization needed.\n");
+    }
   }
 
   return PAYLOAD_UPDATE_OK;
