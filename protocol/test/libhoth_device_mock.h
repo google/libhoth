@@ -38,6 +38,7 @@ class LibHothDeviceMock {
                const void* request, size_t request_size, void* response,
                size_t max_response_size, size_t* bytes_read),
               ());
+  MOCK_METHOD(int, reconnect, (struct libhoth_device * dev), ());
 };
 
 class LibHothTest : public testing::Test {

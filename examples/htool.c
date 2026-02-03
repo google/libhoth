@@ -33,6 +33,7 @@
 #include "htool_cmd.h"
 #include "htool_console.h"
 #include "htool_dfu.h"
+#include "htool_firmware_update.h"
 #include "htool_i2c.h"
 #include "htool_jtag.h"
 #include "htool_key_rotation.h"
@@ -1000,6 +1001,18 @@ static const struct htool_cmd CMDS[] = {
             (const struct htool_param[]){
                 {HTOOL_POSITIONAL, .name = "source-file"}, {}},
         .func = htool_payload_info,
+    },
+    {
+        .verbs = (const char*[]){"firmware_update",
+                                 "update_from_flash_and_reset", NULL},
+        .desc = "Installs a firmware update from a bundle staged in the "
+                "external flash.",
+        .params =
+            (const struct htool_param[]){
+                {HTOOL_FLAG_VALUE, 'o', "offset", "0",
+                 .desc = "Offset in the the external flash"},
+                {}},
+        .func = htool_firmware_update,
     },
     {
         .verbs = (const char*[]){"dfu", "update", NULL},
