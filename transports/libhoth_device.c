@@ -14,7 +14,9 @@
 
 #include "transports/libhoth_device.h"
 
+#include <stdbool.h>
 #include <stdlib.h>
+#include <unistd.h>
 
 #include "libhoth_device.h"
 
@@ -56,4 +58,56 @@ int libhoth_device_close(struct libhoth_device* dev) {
   int status = dev->close(dev);
   free(dev);
   return status;
+}
+
+int libhoth_claim_device(struct libhoth_device* dev, uint32_t timeout_us) {
+  enum {
+    // The maximum time to sleep per attempt.
+    // Limited by `usleep()` to <1 second.
+    MAX_SINGLE_SLEEP_US = 1000 * 1000 - 1,
+    BACKOFF_FACTOR = 2,
+    INITIAL_WAIT_US = 10 * 1000,
+  };
+
+  uint32_t wait_us = INITIAL_WAIT_US;
+  uint32_t total_waiting_us = 0;
+
+  while (true) {
+    int status = dev->claim(dev);
+
+    if (status != LIBHOTH_ERR_INTERFACE_BUSY) {
+      // We either claimed the device or encountered an unexpected error. Let
+      // the caller know.
+      return status;
+    }
+
+    if (total_waiting_us >= timeout_us) {
+      // We've exhausted our waiting budget. We couldn't claim the device
+      // within the configured timeout.
+      return LIBHOTH_ERR_INTERFACE_BUSY;
+    }
+
+    usleep(wait_us);
+
+    if (total_waiting_us <= UINT32_MAX - wait_us) {
+      total_waiting_us += wait_us;
+    } else {
+      // Saturate at integer upper bound to prevent overflow.
+      total_waiting_us = UINT32_MAX;
+    }
+
+    if (wait_us <= MAX_SINGLE_SLEEP_US / BACKOFF_FACTOR) {
+      wait_us *= BACKOFF_FACTOR;
+    } else {
+      // Saturate at the `usleep()` max sleep bound.
+      wait_us = MAX_SINGLE_SLEEP_US;
+    }
+  }
+
+  // Unreachable
+  return LIBHOTH_ERR_FAIL;
+}
+
+int libhoth_release_device(struct libhoth_device* dev) {
+  return dev->release(dev);
 }

@@ -16,6 +16,7 @@
 #define _LIBHOTH_TRANSPORTS_LIBHOTH_DEVICE_H_
 
 #include <stddef.h>
+#include <stdint.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -74,6 +75,12 @@ int libhoth_receive_response(struct libhoth_device* dev, void* response,
 int libhoth_device_reconnect(struct libhoth_device* dev);
 
 int libhoth_device_close(struct libhoth_device* dev);
+
+// Try to claim `dev`. If `dev` is already claimed, then try to claim later by
+// waiting an exponentially backed off amount of time.
+int libhoth_claim_device(struct libhoth_device* dev, uint32_t timeout_us);
+
+int libhoth_release_device(struct libhoth_device* dev);
 
 #ifdef __cplusplus
 }
