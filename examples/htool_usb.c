@@ -14,7 +14,6 @@
 
 #include "htool_usb.h"
 
-#include <ctype.h>
 #include <errno.h>
 #include <libusb.h>
 #include <stdbool.h>
@@ -294,50 +293,6 @@ libusb_device* htool_libusb_device(void) {
                          (void*)usb_product_substr);
   }
   return select_device(ctx, filter_allow_all, NULL);
-}
-
-// Helper function to parse time string with units (s, ms, us) into microseconds
-// Returns -1 on error.
-static int64_t parse_time_string_us(const char* time_str) {
-  if (!time_str || *time_str == '\0') {
-    return -1;  // Invalid input
-  }
-
-  char* endptr;
-  long long val = strtoll(time_str, &endptr, 10);
-
-  if (endptr == time_str || val < 0) {
-    return -1;  // No digits found or negative value
-  }
-
-  // Skip whitespace
-  while (*endptr != '\0' && isspace((unsigned char)*endptr)) {
-    endptr++;
-  }
-
-  uint64_t multiplier = 1000000;  // Default to seconds if no unit
-
-  if (*endptr != '\0') {
-    // Check for units (case-insensitive)
-    if (tolower((unsigned char)endptr[0]) == 's' && endptr[1] == '\0') {
-      multiplier = 1000000;  // seconds
-    } else if (tolower((unsigned char)endptr[0]) == 'm' &&
-               tolower((unsigned char)endptr[1]) == 's' && endptr[2] == '\0') {
-      multiplier = 1000;  // milliseconds
-    } else if (tolower((unsigned char)endptr[0]) == 'u' &&
-               tolower((unsigned char)endptr[1]) == 's' && endptr[2] == '\0') {
-      multiplier = 1;  // microseconds
-    } else {
-      return -1;  // Invalid unit or extra characters
-    }
-  }
-
-  // Check for potential overflow before multiplying
-  if (val > INT64_MAX / multiplier) {
-    return -1;  // Overflow
-  }
-
-  return (int64_t)val * multiplier;
 }
 
 struct libhoth_device* htool_libhoth_usb_device(void) {
