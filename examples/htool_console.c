@@ -61,53 +61,6 @@ void restore_terminal(int fd, const struct termios* old_termios) {
   tcsetattr(fd, TCSANOW, old_termios);
 }
 
-// Try to claim `dev`. If `dev` is already claimed, then try to claim later by
-// waiting an exponentially backed off amount of time.
-static int claim_device(struct libhoth_device* dev, uint32_t timeout_us) {
-  enum {
-    // The maximum time to sleep per attempt.
-    // Limited by `usleep()` to <1 second.
-    MAX_SINGLE_SLEEP_US = 1000 * 1000 - 1,
-    BACKOFF_FACTOR = 2,
-    INITIAL_WAIT_US = 10 * 1000,
-  };
-
-  uint32_t wait_us = INITIAL_WAIT_US;
-  uint32_t total_waiting_us = 0;
-
-  while (true) {
-    int status = dev->claim(dev);
-
-    if (status != LIBHOTH_ERR_INTERFACE_BUSY) {
-      // We either claimed the device or encountered an unexpected error. Let
-      // the caller know.
-      return status;
-    }
-
-    if (total_waiting_us >= timeout_us) {
-      // We've exhausted our waiting budget. We couldn't claim the device
-      // within the configured timeout.
-      return LIBHOTH_ERR_INTERFACE_BUSY;
-    }
-
-    usleep(wait_us);
-
-    if (total_waiting_us <= UINT32_MAX - wait_us) {
-      total_waiting_us += wait_us;
-    } else {
-      // Saturate at integer upper bound to prevent overflow.
-      total_waiting_us = UINT32_MAX;
-    }
-
-    if (wait_us <= MAX_SINGLE_SLEEP_US / BACKOFF_FACTOR) {
-      wait_us *= BACKOFF_FACTOR;
-    } else {
-      // Saturate at the `usleep()` max sleep bound.
-      wait_us = MAX_SINGLE_SLEEP_US;
-    }
-  }
-}
-
 int htool_console_run(struct libhoth_device* dev,
                       const struct libhoth_htool_console_opts* opts) {
   printf("%sStarting Interactive Console\n", kAnsiRed);
@@ -164,12 +117,12 @@ int htool_console_run(struct libhoth_device* dev,
       break;
     }
 
-    dev->release(dev);
+    libhoth_release_device(dev);
 
     // Give an opportunity for other clients to use the interface.
     usleep(1000 * opts->yield_ms);
 
-    status = claim_device(dev, 1000 * 1000 * opts->claim_timeout_secs);
+    status = libhoth_claim_device(dev, 1000 * 1000 * opts->claim_timeout_secs);
     if (status != LIBHOTH_OK) {
       break;
     }
