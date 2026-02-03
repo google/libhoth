@@ -29,6 +29,7 @@
 #include <time.h>
 #include <unistd.h>
 
+#include "libhoth_device.h"
 #include "libhoth_spi.h"
 #include "transports/libhoth_device.h"
 #include "transports/libhoth_ec.h"
@@ -303,27 +304,6 @@ int libhoth_spi_open(const struct libhoth_spi_device_init_options* options,
     goto err_out;
   }
 
-  // Try to take an exclusive advisory lock without blocking. The current
-  // implementation of operations on spidev device splits transactions into
-  // multiple `ioctl` calls out of necessity. But this may lead to conditions
-  // where multiple processes (all using the same spidev device at the same
-  // time) can interfere with transactions on the spidev device. This lock is
-  // meant to prevent such situations assuming that all processes using this
-  // spidev device check for this advisory lock.
-  //
-  // This lock is intentionally not released explicitly in `libhoth_spi_close`.
-  // `man 2 flock` mentions that if the file descriptor is duplicated (for eg.
-  // using `fork`), unlocking **any** of the file descriptors would release the
-  // lock. Without explicitly releasing the lock, the lock will be
-  // automatically released when **all** the duplicated file descriptors are
-  // closed. API users may choose to override this behavior and manage this
-  // lock using `libhoth_spi_claim` and `libhoth_spi_release` APIs
-  if (flock(fd, LOCK_EX | LOCK_NB) != 0) {
-    // Maybe some other process has the lock?
-    status = LIBHOTH_ERR_INTERFACE_BUSY;
-    goto err_out;
-  }
-
   dev = calloc(1, sizeof(struct libhoth_device));
   if (dev == NULL) {
     status = LIBHOTH_ERR_MALLOC_FAILED;
@@ -333,6 +313,31 @@ int libhoth_spi_open(const struct libhoth_spi_device_init_options* options,
   spi_dev = calloc(1, sizeof(struct libhoth_spi_device));
   if (spi_dev == NULL) {
     status = LIBHOTH_ERR_MALLOC_FAILED;
+    goto err_out;
+  }
+
+  spi_dev->fd = fd;
+  spi_dev->mailbox_address = options->mailbox;
+  spi_dev->address_mode_4b = true;
+  spi_dev->device_busy_wait_timeout = options->device_busy_wait_timeout;
+  spi_dev->device_busy_wait_check_interval =
+      options->device_busy_wait_check_interval;
+
+  if (options->atomic) {
+    dev->send = libhoth_spi_buffer_request;
+    dev->receive = libhoth_spi_send_and_receive_response;
+  } else {
+    dev->send = libhoth_spi_send_request;
+    dev->receive = libhoth_spi_receive_response;
+  }
+  dev->close = libhoth_spi_close;
+  dev->claim = libhoth_spi_claim;
+  dev->release = libhoth_spi_release;
+  dev->reconnect = libhoth_spi_reconnect;
+  dev->user_ctx = spi_dev;
+
+  status = libhoth_claim_device(dev, options->timeout_us);
+  if (status != LIBHOTH_OK) {
     goto err_out;
   }
 
@@ -359,26 +364,6 @@ int libhoth_spi_open(const struct libhoth_spi_device_init_options* options,
       goto err_out;
     }
   }
-
-  spi_dev->fd = fd;
-  spi_dev->mailbox_address = options->mailbox;
-  spi_dev->address_mode_4b = true;
-  spi_dev->device_busy_wait_timeout = options->device_busy_wait_timeout;
-  spi_dev->device_busy_wait_check_interval =
-      options->device_busy_wait_check_interval;
-
-  if (options->atomic) {
-    dev->send = libhoth_spi_buffer_request;
-    dev->receive = libhoth_spi_send_and_receive_response;
-  } else {
-    dev->send = libhoth_spi_send_request;
-    dev->receive = libhoth_spi_receive_response;
-  }
-  dev->close = libhoth_spi_close;
-  dev->claim = libhoth_spi_claim;
-  dev->release = libhoth_spi_release;
-  dev->reconnect = libhoth_spi_reconnect;
-  dev->user_ctx = spi_dev;
 
   *out = dev;
   return LIBHOTH_OK;

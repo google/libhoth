@@ -35,6 +35,7 @@ struct libhoth_spi_device_init_options {
   int atomic;
   uint32_t device_busy_wait_timeout;
   uint32_t device_busy_wait_check_interval;
+  uint32_t timeout_us;
 };
 
 // Note that the options struct only needs to to live for the duration of

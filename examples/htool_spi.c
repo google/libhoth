@@ -59,6 +59,20 @@ struct libhoth_device* htool_libhoth_spi_device(void) {
     return NULL;
   }
 
+  // Get retry parameters from global flags
+  const char* timeout_str;
+  if (htool_get_param_string(htool_global_flags(), "connect_timeout",
+                             &timeout_str)) {
+    return NULL;
+  }
+
+  int64_t timeout_us = parse_time_string_us(timeout_str);
+
+  if (timeout_us < 0) {
+    fprintf(stderr, "Invalid format for --connect_timeout: %s\n", timeout_str);
+    return NULL;
+  }
+
   struct libhoth_spi_device_init_options opts = {
       .path = spidev_path_str,
       .mailbox = mailbox_location,
@@ -66,6 +80,7 @@ struct libhoth_device* htool_libhoth_spi_device(void) {
       .speed = spidev_speed_hz,
       .device_busy_wait_timeout = spidev_device_busy_wait_timeout,
       .device_busy_wait_check_interval = spidev_device_busy_wait_check_interval,
+      .timeout_us = timeout_us,
   };
   rv = libhoth_spi_open(&opts, &result);
   if (rv) {
