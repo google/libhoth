@@ -31,6 +31,7 @@ struct libhoth_progress_stderr {
   struct libhoth_progress progress;
   struct timespec start_time;
   const char* action_title;
+  uint64_t last_reported_numerator;
 };
 
 void libhoth_progress_stderr_init(struct libhoth_progress_stderr* progress,

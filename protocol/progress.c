@@ -14,6 +14,7 @@
 
 #include "progress.h"
 
+#include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
@@ -45,16 +46,30 @@ static uint64_t ts_milliseconds(struct timespec ts) {
   return ((uint64_t)ts.tv_sec) * 1000 + ts.tv_nsec / 1000000;
 }
 
-struct stderr_progress {
-  struct libhoth_progress progress;
-  struct timespec start_time;
-  const char* action_title;
-};
 
 static void libhoth_progress_stderr_func(void* param, uint64_t numerator,
                                          uint64_t denominator) {
-  struct stderr_progress* self = (struct stderr_progress*)param;
   if (isatty(STDERR_FILENO)) {
+    // Calculate 1% of the total size as the minimum increment for reporting.
+    uint64_t one_percent_threshold = denominator / 100;
+    if (one_percent_threshold == 0) {
+      one_percent_threshold = 1;
+    }
+
+    struct libhoth_progress_stderr* self =
+        (struct libhoth_progress_stderr*)param;
+
+    bool is_start = (numerator == 0);
+    bool is_end = (numerator == denominator);
+    bool has_sufficient_progress =
+        (numerator >= self->last_reported_numerator + one_percent_threshold);
+
+    if (!is_start && !is_end && !has_sufficient_progress) {
+      return;
+    }
+
+    self->last_reported_numerator = numerator;
+
     uint64_t duration_ms =
         ts_milliseconds(ts_subtract(ts_now(), self->start_time));
     if (duration_ms == 0) {
@@ -79,4 +94,5 @@ void libhoth_progress_stderr_init(struct libhoth_progress_stderr* progress,
   progress->progress.func = libhoth_progress_stderr_func;
   progress->start_time = ts_now();
   progress->action_title = action_title;
+  progress->last_reported_numerator = 0;
 }
