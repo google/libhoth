@@ -18,6 +18,7 @@
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
 
+#include <cstdint>
 #include <cstring>
 
 #include "protocol/host_cmd.h"
@@ -56,6 +57,14 @@ MATCHER_P(UsesCommand, command, "") {
 MATCHER_P2(UsesCommandWithVersion, command, version, "") {
   struct hoth_host_request* req = (struct hoth_host_request*)arg;
   return req->command == command && req->command_version == version;
+}
+
+// `data_matcher` is a lambda, which takes `void *` as input and returns
+// boolean: true on match and false on no match
+MATCHER_P2(UsesCommandWithData, command, data_matcher, "") {
+  struct hoth_host_request* req = (struct hoth_host_request*)arg;
+  void* req_data = ((uint8_t*)arg) + sizeof(struct hoth_host_request);
+  return (req->command == command) && data_matcher(req_data);
 }
 
 ACTION_P(CopyResp, response, resp_size) {

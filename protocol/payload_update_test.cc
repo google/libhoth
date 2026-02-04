@@ -18,10 +18,12 @@
 #include <gtest/gtest.h>
 
 #include <cstdint>
+#include <memory>
 
 #include "command_version.h"
 #include "payload_info.h"
 #include "test/libhoth_device_mock.h"
+#include "transports/libhoth_device.h"
 
 using ::testing::_;
 using ::testing::DoAll;
@@ -51,9 +53,10 @@ TEST_F(LibHothTest, payload_update_bad_image_test) {
 
   uint8_t bad_buffer[100] = {0};
 
-  EXPECT_EQ(
-      libhoth_payload_update(&hoth_dev_, bad_buffer, sizeof(bad_buffer), false),
-      PAYLOAD_UPDATE_BAD_IMG);
+  EXPECT_EQ(libhoth_payload_update(&hoth_dev_, bad_buffer, sizeof(bad_buffer),
+                                   /*skip_erase=*/false,
+                                   /*binary_file=*/false),
+            PAYLOAD_UPDATE_BAD_IMG);
 }
 
 TEST_F(LibHothTest, payload_update_test) {
@@ -90,7 +93,9 @@ TEST_F(LibHothTest, payload_update_test) {
   std::unique_ptr<uint8_t[]> buffer = std::make_unique<uint8_t[]>(2 * kAlign);
   std::memcpy(buffer.get() + kAlign, &kMagic, sizeof(kMagic));
 
-  EXPECT_EQ(libhoth_payload_update(&hoth_dev_, buffer.get(), 2 * kAlign, false),
+  EXPECT_EQ(libhoth_payload_update(&hoth_dev_, buffer.get(), 2 * kAlign,
+                                   /*skip_erase=*/false,
+                                   /*binary_file=*/false),
             PAYLOAD_UPDATE_OK);
 }
 
@@ -116,7 +121,9 @@ TEST_F(LibHothTest, payload_update_command_version_unsupported) {
   uint8_t buffer[100] = {0};
   std::memcpy(buffer, &kMagic, sizeof(kMagic));
 
-  EXPECT_EQ(libhoth_payload_update(&hoth_dev_, buffer, sizeof(buffer), true),
+  EXPECT_EQ(libhoth_payload_update(&hoth_dev_, buffer, sizeof(buffer),
+                                   /*skip_erase=*/true,
+                                   /*binary_file=*/false),
             PAYLOAD_UPDATE_OK);
 }
 
@@ -128,7 +135,9 @@ TEST_F(LibHothTest, payload_update_erase_fail) {
   uint8_t buffer[4096] = {0};
   std::memcpy(buffer, &kMagic, sizeof(kMagic));
 
-  EXPECT_EQ(libhoth_payload_update(&hoth_dev_, buffer, sizeof(buffer), false),
+  EXPECT_EQ(libhoth_payload_update(&hoth_dev_, buffer, sizeof(buffer),
+                                   /*skip_erase=*/false,
+                                   /*binary_file=*/false),
             PAYLOAD_UPDATE_ERASE_FAIL);
 }
 
@@ -140,7 +149,9 @@ TEST_F(LibHothTest, payload_update_flash_fail) {
   uint8_t buffer[100] = {0};
   std::memcpy(buffer, &kMagic, sizeof(kMagic));
 
-  EXPECT_EQ(libhoth_payload_update(&hoth_dev_, buffer, sizeof(buffer), true),
+  EXPECT_EQ(libhoth_payload_update(&hoth_dev_, buffer, sizeof(buffer),
+                                   /*skip_erase=*/true,
+                                   /*binary_file=*/false),
             PAYLOAD_UPDATE_FLASH_FAIL);
 }
 
@@ -161,7 +172,9 @@ TEST_F(LibHothTest, payload_update_command_version_fail) {
   uint8_t buffer[100] = {0};
   std::memcpy(buffer, &kMagic, sizeof(kMagic));
 
-  EXPECT_EQ(libhoth_payload_update(&hoth_dev_, buffer, sizeof(buffer), true),
+  EXPECT_EQ(libhoth_payload_update(&hoth_dev_, buffer, sizeof(buffer),
+                                   /*skip_erase=*/true,
+                                   /*binary_file=*/false),
             PAYLOAD_UPDATE_FINALIZE_FAIL);
 }
 
@@ -187,7 +200,9 @@ TEST_F(LibHothTest, payload_update_finalize_fail) {
   uint8_t buffer[100] = {0};
   std::memcpy(buffer, &kMagic, sizeof(kMagic));
 
-  EXPECT_EQ(libhoth_payload_update(&hoth_dev_, buffer, sizeof(buffer), true),
+  EXPECT_EQ(libhoth_payload_update(&hoth_dev_, buffer, sizeof(buffer),
+                                   /*skip_erase=*/true,
+                                   /*binary_file=*/false),
             PAYLOAD_UPDATE_FINALIZE_FAIL);
 }
 
@@ -257,6 +272,57 @@ TEST_F(LibHothTest, payload_update_erase_test) {
         .WillOnce(DoAll(CopyResp(&kDummy, 0), Return(LIBHOTH_OK)));
   }
 
-  EXPECT_EQ(libhoth_payload_update(&hoth_dev_, buffer, kSize, false),
+  EXPECT_EQ(
+      libhoth_payload_update(&hoth_dev_, buffer, kSize, /*skip_erase=*/false,
+                             /*binary_file=*/false),
+      PAYLOAD_UPDATE_OK);
+}
+
+TEST_F(LibHothTest, payload_update_test_with_binary_image) {
+  // All erase operation succeed
+  auto payload_erase_matcher = [](const void* reqdata) {
+    const struct payload_update_packet* payload_update_req_data =
+        (struct payload_update_packet*)reqdata;
+    return payload_update_req_data->type == PAYLOAD_UPDATE_ERASE;
+  };
+  EXPECT_CALL(mock_,
+              send(_, UsesCommandWithData(kCmd, payload_erase_matcher), _))
+      .WillRepeatedly(Return(LIBHOTH_OK));
+
+  // All staging operations succeed
+  auto payload_continue_matcher = [](const void* reqdata) {
+    const struct payload_update_packet* payload_update_req_data =
+        (struct payload_update_packet*)reqdata;
+    return payload_update_req_data->type == PAYLOAD_UPDATE_CONTINUE;
+  };
+  EXPECT_CALL(mock_,
+              send(_, UsesCommandWithData(kCmd, payload_continue_matcher), _))
+      .WillRepeatedly(Return(LIBHOTH_OK));
+
+  // No other operations succeed
+  auto not_expected_commands_matcher = [](const void* reqdata) {
+    const struct payload_update_packet* payload_update_req_data =
+        (struct payload_update_packet*)reqdata;
+    return ((payload_update_req_data->type != PAYLOAD_UPDATE_ERASE) &&
+            (payload_update_req_data->type != PAYLOAD_UPDATE_CONTINUE));
+  };
+  EXPECT_CALL(
+      mock_,
+      send(_, UsesCommandWithData(kCmd, not_expected_commands_matcher), _))
+      .Times(0);
+
+  // All response receive operations succeed
+  EXPECT_CALL(mock_, receive)
+      .WillRepeatedly(DoAll(CopyResp(&kDummy, 0), Return(LIBHOTH_OK)));
+
+  EXPECT_CALL(mock_, send(_, UsesCommand(HOTH_CMD_GET_CMD_VERSIONS), _))
+      .Times(0);
+
+  // Use buffer with arbitrary data
+  std::unique_ptr<uint8_t[]> buffer = std::make_unique<uint8_t[]>(2 * kAlign);
+
+  EXPECT_EQ(libhoth_payload_update(&hoth_dev_, buffer.get(), 2 * kAlign,
+                                   /*skip_erase=*/false,
+                                   /*binary_file=*/true),
             PAYLOAD_UPDATE_OK);
 }
