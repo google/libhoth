@@ -36,6 +36,8 @@ struct libhoth_usb_device_init_options {
   // Seed value to use for Pseudo-random number generator for communicating with
   // RoT over USB FIFO interface. Must be non-zero
   uint32_t prng_seed;
+  // Timeout for connecting to the USB bus
+  uint32_t timeout_us;
 };
 
 #define LIBHOTH_NUM_PORTS 16

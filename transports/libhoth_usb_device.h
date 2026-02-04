@@ -71,6 +71,7 @@ struct libhoth_usb_interface_info {
 struct libhoth_usb_device {
   libusb_context* ctx;
   libusb_device_handle* handle;
+  uint32_t claim_timeout_us;
   struct libhoth_usb_interface_info info;
   union driver_data {
     struct libhoth_usb_mailbox mailbox;

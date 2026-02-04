@@ -15,6 +15,7 @@
 #include "transports/libhoth_device.h"
 
 #include <stdbool.h>
+#include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
 
@@ -84,6 +85,8 @@ int libhoth_claim_device(struct libhoth_device* dev, uint32_t timeout_us) {
     if (total_waiting_us >= timeout_us) {
       // We've exhausted our waiting budget. We couldn't claim the device
       // within the configured timeout.
+      fprintf(stderr, "libhoth: timed out claiming transport after %dus\n",
+              timeout_us);
       return LIBHOTH_ERR_INTERFACE_BUSY;
     }
 
