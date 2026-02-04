@@ -307,77 +307,29 @@ struct libhoth_device* htool_libhoth_usb_device(void) {
   }
 
   // Get retry parameters from global flags
-  const char* duration_str;
-  const char* delay_str;
-  if (htool_get_param_string(htool_global_flags(), "usb_retry_duration",
-                             &duration_str) ||
-      htool_get_param_string(htool_global_flags(), "usb_retry_delay",
-                             &delay_str)) {
+  const char* timeout_str;
+  if (htool_get_param_string(htool_global_flags(), "connect_timeout",
+                             &timeout_str)) {
     return NULL;
   }
 
-  int64_t retry_duration_us = parse_time_string_us(duration_str);
-  int64_t retry_delay_us = parse_time_string_us(delay_str);
+  int64_t timeout_us = parse_time_string_us(timeout_str);
 
-  if (retry_duration_us < 0) {
-    fprintf(stderr, "Invalid format for --usb_retry_duration: %s\n",
-            duration_str);
+  if (timeout_us < 0) {
+    fprintf(stderr, "Invalid format for --connect_timeout: %s\n", timeout_str);
     return NULL;
   }
-  if (retry_delay_us < 0) {
-    fprintf(stderr, "Invalid format for --usb_retry_delay: %s\n", delay_str);
-    return NULL;
-  }
-  // Convert duration to milliseconds for comparison with monotonic time helper
-  uint64_t retry_duration_ms = (uint64_t)retry_duration_us / 1000;
 
   uint32_t prng_seed = libhoth_prng_seed();
 
-  struct libhoth_usb_device_init_options opts = {
-      .usb_device = usb_dev, .usb_ctx = ctx, .prng_seed = prng_seed};
+  struct libhoth_usb_device_init_options opts = {.usb_device = usb_dev,
+                                                 .usb_ctx = ctx,
+                                                 .prng_seed = prng_seed,
+                                                 .timeout_us = timeout_us};
 
-  int rv = LIBUSB_ERROR_BUSY;  // Initialize rv to trigger the loop
-  uint64_t start_time_ms = libhoth_get_monotonic_ms();
-  uint64_t current_time_ms;
-
-  while (rv == LIBUSB_ERROR_BUSY) {
-    rv = libhoth_usb_open(&opts, &result);
-    if (rv == LIBUSB_SUCCESS) {
-      break;  // Successfully opened
-    }
-    if (rv != LIBUSB_ERROR_BUSY) {
-      // A different error occurred, report it and exit
-      fprintf(stderr, "libhoth_usb_open error: %d (%s)\n", rv,
-              libusb_strerror(rv));
-      return NULL;
-    }
-
-    // Check elapsed time
-    current_time_ms = libhoth_get_monotonic_ms();
-
-    // Handle potential timer wrap-around or error from get_monotonic_ms
-    if (current_time_ms < start_time_ms) {
-      fprintf(stderr, "Monotonic clock error detected during retry loop.\n");
-      return NULL;
-    }
-
-    if (current_time_ms - start_time_ms >= retry_duration_ms) {
-      fprintf(stderr, "libhoth_usb_open timed out after %s (error: %d (%s))\n",
-              duration_str, rv, libusb_strerror(rv));
-      return NULL;  // Timeout
-    }
-
-    // Wait before retrying
-    // Ensure delay doesn't exceed reasonable limits for usleep (~10s)
-    useconds_t sleep_us =
-        (retry_delay_us > 10000000) ? 10000000 : (useconds_t)retry_delay_us;
-    usleep(sleep_us);
-  }
-
-  if (rv != LIBUSB_SUCCESS) {
-    fprintf(stderr, "libhoth_usb_open error: %d (%s)\n", rv,
-            libusb_strerror(rv));
-    result = NULL;
+  int rv = libhoth_usb_open(&opts, &result);
+  if (rv != LIBHOTH_OK) {
+    fprintf(stderr, "libhoth_usb_open failed: %d\n", rv);
     return NULL;
   }
 

@@ -1796,11 +1796,10 @@ static const struct htool_param GLOBAL_FLAGS[] = {
              "or 'mtd' transports; for example '0x900000'."},
     {HTOOL_FLAG_VALUE, .name = "dbus_hoth_id", .default_value = "",
      .desc = "The hoth ID associated with the RoT's hothd service."},
-    {HTOOL_FLAG_VALUE, .name = "usb_retry_duration", .default_value = "1000ms",
-     .desc = "Maximum duration to retry opening a busy USB device (e.g., "
-             "'1s', '1500ms')."},
-    {HTOOL_FLAG_VALUE, .name = "usb_retry_delay", .default_value = "50ms",
-     .desc = "Delay between USB open retries (e.g., '50ms', '10000us')."},
+    {HTOOL_FLAG_VALUE, .name = "connect_timeout", .default_value = "1000ms",
+     .desc =
+         "Maximum duration to retry opening a busy libhoth transport (e.g., "
+         "'1s', '1500ms')."},
     {HTOOL_FLAG_BOOL, .name = "version", .default_value = "false",
      .desc = "Print htool version."},
     {}};

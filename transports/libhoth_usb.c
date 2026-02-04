@@ -91,6 +91,7 @@ static int libhoth_usb_release(struct libhoth_device* dev) {
 static int libhoth_usb_reconnect(struct libhoth_device* dev) {
   struct libhoth_usb_device* usb_dev = dev->user_ctx;
   libusb_context* usb_ctx = usb_dev->ctx;
+  uint64_t timeout_us = usb_dev->claim_timeout_us;
 
   struct libusb_device* libusb_dev = libusb_get_device(usb_dev->handle);
 
@@ -142,6 +143,7 @@ static int libhoth_usb_reconnect(struct libhoth_device* dev) {
   struct libhoth_usb_device_init_options opts;
   opts.usb_ctx = usb_ctx;
   opts.usb_device = libusb_dev;
+  opts.timeout_us = timeout_us;
   opts.prng_seed = libhoth_prng_seed();
 
   return libhoth_usb_open(&opts, &dev);
@@ -196,12 +198,22 @@ int libhoth_usb_open(const struct libhoth_usb_device_init_options* options,
   }
   usb_dev->info = info;
   usb_dev->ctx = options->usb_ctx;
+  usb_dev->claim_timeout_us = options->timeout_us;
   status = libusb_open(options->usb_device, &usb_dev->handle);
   if (status != LIBUSB_SUCCESS) {
     goto err_out;
   }
-  status = libusb_claim_interface(usb_dev->handle, info.interface_id);
-  if (status != LIBUSB_SUCCESS) {
+
+  dev->send = libhoth_usb_send_request;
+  dev->receive = libhoth_usb_receive_response;
+  dev->close = libhoth_usb_close;
+  dev->claim = libhoth_usb_claim;
+  dev->release = libhoth_usb_release;
+  dev->reconnect = libhoth_usb_reconnect;
+  dev->user_ctx = usb_dev;
+
+  status = libhoth_claim_device(dev, options->timeout_us);
+  if (status != LIBHOTH_OK) {
     goto err_out;
   }
 
@@ -220,14 +232,6 @@ int libhoth_usb_open(const struct libhoth_usb_device_init_options* options,
   }
 
   if (status != LIBHOTH_OK) goto err_out;
-
-  dev->send = libhoth_usb_send_request;
-  dev->receive = libhoth_usb_receive_response;
-  dev->close = libhoth_usb_close;
-  dev->claim = libhoth_usb_claim;
-  dev->release = libhoth_usb_release;
-  dev->reconnect = libhoth_usb_reconnect;
-  dev->user_ctx = usb_dev;
 
   *out = dev;
   libusb_free_config_descriptor(config_descriptor);
