@@ -20,7 +20,9 @@
 #include <stdlib.h>
 #include <unistd.h>
 
-static struct timespec ts_now() {
+// This function is defined as weak to allow unit tests to override it
+// with a mock implementation for deterministic time control.
+__attribute__((weak)) struct timespec libhoth_progress_get_time(void) {
   struct timespec result;
   int rv = clock_gettime(CLOCK_MONOTONIC, &result);
   if (rv != 0) {
@@ -70,8 +72,9 @@ static void libhoth_progress_stderr_func(void* param, const uint64_t current,
 
   self->last_reported_val = current;
 
-  uint64_t duration_ms =
-      ts_milliseconds(ts_subtract(ts_now(), self->start_time));
+  struct timespec now = libhoth_progress_get_time();
+
+  uint64_t duration_ms = ts_milliseconds(ts_subtract(now, self->start_time));
   if (duration_ms == 0) {
     // avoid divide-by-zero
     duration_ms = 1;
@@ -95,7 +98,7 @@ void libhoth_progress_stderr_init(struct libhoth_progress_stderr* progress,
                                   const char* action_title) {
   progress->progress.param = progress;
   progress->progress.func = libhoth_progress_stderr_func;
-  progress->start_time = ts_now();
+  progress->start_time = libhoth_progress_get_time();
   progress->action_title = action_title;
   progress->last_reported_val = 0;
   progress->is_tty = isatty(STDERR_FILENO);
