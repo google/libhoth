@@ -14,6 +14,7 @@
 
 #include "progress.h"
 
+#include <inttypes.h>
 #include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -30,7 +31,7 @@ static struct timespec ts_now() {
 }
 
 static struct timespec ts_subtract(struct timespec a, struct timespec b) {
-  if (a.tv_nsec > b.tv_nsec) {
+  if (a.tv_nsec >= b.tv_nsec) {
     return (struct timespec){
         .tv_sec = (a.tv_sec - b.tv_sec),
         .tv_nsec = (a.tv_nsec - b.tv_nsec),
@@ -46,46 +47,48 @@ static uint64_t ts_milliseconds(struct timespec ts) {
   return ((uint64_t)ts.tv_sec) * 1000 + ts.tv_nsec / 1000000;
 }
 
+static void libhoth_progress_stderr_func(void* param, const uint64_t current,
+                                         const uint64_t total) {
+  struct libhoth_progress_stderr* const self =
+      (struct libhoth_progress_stderr*)param;
 
-static void libhoth_progress_stderr_func(void* param, uint64_t numerator,
-                                         uint64_t denominator) {
-  if (isatty(STDERR_FILENO)) {
-    // Calculate 1% of the total size as the minimum increment for reporting.
-    uint64_t one_percent_threshold = denominator / 100;
-    if (one_percent_threshold == 0) {
-      one_percent_threshold = 1;
-    }
-
-    struct libhoth_progress_stderr* self =
-        (struct libhoth_progress_stderr*)param;
-
-    bool is_start = (numerator == 0);
-    bool is_end = (numerator == denominator);
-    bool has_sufficient_progress =
-        (numerator >= self->last_reported_numerator + one_percent_threshold);
-
-    if (!is_start && !is_end && !has_sufficient_progress) {
-      return;
-    }
-
-    self->last_reported_numerator = numerator;
-
-    uint64_t duration_ms =
-        ts_milliseconds(ts_subtract(ts_now(), self->start_time));
-    if (duration_ms == 0) {
-      // avoid divide-by-zero
-      duration_ms = 1;
-    }
-    fprintf(
-        stderr,
-        "%s: % 3.0f%% - %lldkB / %lldkB  %lld kB/sec; %.1f s remaining     %s",
-        self->action_title, ((double)numerator / (double)denominator) * 100.0,
-        (long long)(numerator / 1000), (long long)(denominator / 1000),
-        (long long)(numerator / duration_ms),
-        (double)(denominator - numerator) * (double)duration_ms * 0.001 /
-            (double)numerator,
-        numerator == denominator ? "\n" : "\r");
+  if (!self->is_tty) {
+    return;
   }
+
+  // Calculate 1% of the total size as the minimum increment for reporting.
+  const uint64_t one_percent_threshold = (total < 100) ? 1 : (total / 100);
+
+  const bool is_start = (current == 0);
+  const bool is_end = (current == total);
+  const bool has_sufficient_progress =
+      (current >= self->last_reported_val + one_percent_threshold);
+
+  if (!is_start && !is_end && !has_sufficient_progress) {
+    return;
+  }
+
+  self->last_reported_val = current;
+
+  uint64_t duration_ms =
+      ts_milliseconds(ts_subtract(ts_now(), self->start_time));
+  if (duration_ms == 0) {
+    // avoid divide-by-zero
+    duration_ms = 1;
+  }
+
+  const double progress_pct = total > 0 ? (100.0 * current) / total : 100.0;
+  const double speed_kib_s = (current / 1024.0) / (duration_ms / 1000.0);
+  double remaining_s = 0;
+  if (speed_kib_s > 0) {
+    remaining_s = ((total - current) / 1024.0) / speed_kib_s;
+  }
+
+  fprintf(stderr,
+          "%s: %3.0f%% - %" PRIu64 "KiB / %" PRIu64
+          "KiB  %.0f KiB/sec; %.0f s remaining%s",
+          self->action_title, progress_pct, current / 1024, total / 1024,
+          speed_kib_s, remaining_s, is_end ? "\033[K\n" : "\033[K\r");
 }
 
 void libhoth_progress_stderr_init(struct libhoth_progress_stderr* progress,
@@ -94,5 +97,6 @@ void libhoth_progress_stderr_init(struct libhoth_progress_stderr* progress,
   progress->progress.func = libhoth_progress_stderr_func;
   progress->start_time = ts_now();
   progress->action_title = action_title;
-  progress->last_reported_numerator = 0;
+  progress->last_reported_val = 0;
+  progress->is_tty = isatty(STDERR_FILENO);
 }
