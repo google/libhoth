@@ -19,11 +19,12 @@
 extern "C" {
 #endif
 
+#include <stdbool.h>
 #include <stdint.h>
 #include <time.h>
 
 struct libhoth_progress {
-  void (*func)(void*, uint64_t numerator, uint64_t denominator);
+  void (*func)(void*, uint64_t current, uint64_t total);
   void* param;
 };
 
@@ -31,7 +32,8 @@ struct libhoth_progress_stderr {
   struct libhoth_progress progress;
   struct timespec start_time;
   const char* action_title;
-  uint64_t last_reported_numerator;
+  uint64_t last_reported_val;
+  bool is_tty;
 };
 
 void libhoth_progress_stderr_init(struct libhoth_progress_stderr* progress,
