@@ -17,3 +17,4 @@ filegroup(
     name = "test_data",
     srcs = glob(["*.bin"]),
 )
+
