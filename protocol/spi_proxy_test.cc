@@ -43,9 +43,11 @@ const uint8_t SPI_OP_READ = 0x03;
 #define SPI_TEST_ADDR_ALIGNED (0x20000)
 
 // The SPI response payload length calculation
-#define SPI_TEST_RESP_PAYLOAD_LEN (LIBHOTH_MAILBOX_SIZE - sizeof(struct hoth_host_response))
+#define SPI_TEST_RESP_PAYLOAD_LEN \
+  (LIBHOTH_MAILBOX_SIZE - sizeof(struct hoth_host_response))
 // Replicating the offset calculation for spi operation request MISO data offset
-#define SPI_TEST_OP_REQ_MISO_OFFSET (sizeof(struct hoth_spi_operation_request)) + sizeof(SPI_OP_READ)
+#define SPI_TEST_OP_REQ_MISO_OFFSET \
+  (sizeof(struct hoth_spi_operation_request)) + sizeof(SPI_OP_READ)
 
 // Test for spi_proxy_init for basic spi proxy initialization and communication
 
@@ -64,19 +66,18 @@ TEST_F(LibHothTest, spi_proxy_init) {
   EXPECT_EQ(libhoth_spi_proxy_init(&spi, &hoth_dev_, false, false), LIBHOTH_OK);
 }
 
-
-
 TEST_F(LibHothTest, spi_proxy_verify) {
-  //Create a buffer that matches a mock location that lives within
-  //the external SPI flash and set to all zeros.
+  // Create a buffer that matches a mock location that lives within
+  // the external SPI flash and set to all zeros.
   std::vector<uint8_t> buffer(SPI_TEST_RESP_PAYLOAD_LEN, 0);
 
   std::vector<uint8_t> mock_resp_buffer(SPI_TEST_RESP_PAYLOAD_LEN, 0);
 
   // Populate the mock response buffer with expected data
-  for(unsigned int i = 0; i < SPI_TEST_MOSI_LEN; i++) {
+  for (unsigned int i = 0; i < SPI_TEST_MOSI_LEN; i++) {
     mock_resp_buffer[SPI_TEST_OP_REQ_MISO_OFFSET + i] = (7 + i) % 256;
-    buffer[SPI_TEST_OP_REQ_MISO_OFFSET + i] = mock_resp_buffer[SPI_TEST_OP_REQ_MISO_OFFSET + i];
+    buffer[SPI_TEST_OP_REQ_MISO_OFFSET + i] =
+        mock_resp_buffer[SPI_TEST_OP_REQ_MISO_OFFSET + i];
   }
 
   EXPECT_CALL(mock_, send(_,
@@ -86,7 +87,8 @@ TEST_F(LibHothTest, spi_proxy_verify) {
       .WillRepeatedly(Return(LIBHOTH_OK));
 
   EXPECT_CALL(mock_, receive)
-      .WillRepeatedly(DoAll(CopyResp(&buffer[0], SPI_TEST_RESP_PAYLOAD_LEN), Return(LIBHOTH_OK)));
+      .WillRepeatedly(DoAll(CopyResp(&buffer[0], SPI_TEST_RESP_PAYLOAD_LEN),
+                            Return(LIBHOTH_OK)));
 
   struct libhoth_spi_proxy spi = {};
   spi.dev = &hoth_dev_;
@@ -95,19 +97,23 @@ TEST_F(LibHothTest, spi_proxy_verify) {
   struct libhoth_progress_stderr progress = {};
   libhoth_progress_stderr_init(&progress, "Verifying SPI flash");
 
-  EXPECT_EQ(libhoth_spi_proxy_verify(&spi, SPI_TEST_DEFAULT_ADDR, &mock_resp_buffer[SPI_TEST_OP_REQ_MISO_OFFSET], SPI_TEST_DEFAULT_SIZE, &progress.progress), LIBHOTH_OK);
+  EXPECT_EQ(
+      libhoth_spi_proxy_verify(&spi, SPI_TEST_DEFAULT_ADDR,
+                               &mock_resp_buffer[SPI_TEST_OP_REQ_MISO_OFFSET],
+                               SPI_TEST_DEFAULT_SIZE, &progress.progress),
+      LIBHOTH_OK);
 }
 
 // Test for spi_proxy_verify failure case
 TEST_F(LibHothTest, spi_proxy_fail_verify) {
-  //Create a buffer that matches a mock location that lives within
-  //the external SPI flash and set to all zeros.
+  // Create a buffer that matches a mock location that lives within
+  // the external SPI flash and set to all zeros.
   std::vector<uint8_t> buffer(SPI_TEST_RESP_PAYLOAD_LEN, 0);
 
   std::vector<uint8_t> mock_resp_buffer(SPI_TEST_RESP_PAYLOAD_LEN, 0);
 
   // Populate the mock response buffer with expected data
-  for(unsigned int i = 0; i < SPI_TEST_MOSI_LEN; i++) {
+  for (unsigned int i = 0; i < SPI_TEST_MOSI_LEN; i++) {
     mock_resp_buffer[SPI_TEST_OP_REQ_MISO_OFFSET + i] = (7 + i) % 256;
   }
 
@@ -118,7 +124,8 @@ TEST_F(LibHothTest, spi_proxy_fail_verify) {
       .WillRepeatedly(Return(LIBHOTH_OK));
 
   EXPECT_CALL(mock_, receive)
-      .WillRepeatedly(DoAll(CopyResp(&buffer[0], SPI_TEST_RESP_PAYLOAD_LEN), Return(LIBHOTH_OK)));
+      .WillRepeatedly(DoAll(CopyResp(&buffer[0], SPI_TEST_RESP_PAYLOAD_LEN),
+                            Return(LIBHOTH_OK)));
 
   struct libhoth_spi_proxy spi = {};
   spi.dev = &hoth_dev_;
@@ -127,7 +134,11 @@ TEST_F(LibHothTest, spi_proxy_fail_verify) {
   struct libhoth_progress_stderr progress = {};
   libhoth_progress_stderr_init(&progress, "Verifying SPI flash");
 
-  EXPECT_EQ(libhoth_spi_proxy_verify(&spi, SPI_TEST_DEFAULT_ADDR, &mock_resp_buffer[SPI_TEST_OP_REQ_MISO_OFFSET], SPI_TEST_DEFAULT_SIZE, &progress.progress), -1);
+  EXPECT_EQ(
+      libhoth_spi_proxy_verify(&spi, SPI_TEST_DEFAULT_ADDR,
+                               &mock_resp_buffer[SPI_TEST_OP_REQ_MISO_OFFSET],
+                               SPI_TEST_DEFAULT_SIZE, &progress.progress),
+      -1);
 }
 
 // Test for spi_proxy_update with progress callback enabled
@@ -142,7 +153,6 @@ TEST_F(LibHothTest, spi_proxy_update) {
   EXPECT_CALL(mock_, receive)
       .WillRepeatedly(DoAll(CopyResp(&dummy, 0), Return(LIBHOTH_OK)));
 
-
   struct libhoth_spi_proxy spi = {};
   spi.dev = &hoth_dev_;
 
@@ -150,7 +160,8 @@ TEST_F(LibHothTest, spi_proxy_update) {
   libhoth_progress_stderr_init(&progress, "Updating SPI flash");
 
   std::vector<uint8_t> buffer(SPI_TEST_DEFAULT_LEN);
-  EXPECT_EQ(libhoth_spi_proxy_update(&spi, SPI_TEST_DEFAULT_ADDR, buffer.data(), SPI_TEST_DEFAULT_LEN, &progress.progress),
+  EXPECT_EQ(libhoth_spi_proxy_update(&spi, SPI_TEST_DEFAULT_ADDR, buffer.data(),
+                                     SPI_TEST_DEFAULT_LEN, &progress.progress),
             LIBHOTH_OK);
 }
 
@@ -161,16 +172,16 @@ TEST_F(LibHothTest, spi_proxy_update_64k_erase) {
                                       HOTH_PRV_CMD_HOTH_SPI_OPERATION),
                           _))
       .WillRepeatedly(Return(LIBHOTH_OK));
-      
+
   uint32_t dummy;
   EXPECT_CALL(mock_, receive)
       .WillRepeatedly(DoAll(CopyResp(&dummy, 0), Return(LIBHOTH_OK)));
-
 
   struct libhoth_spi_proxy spi = {};
   spi.dev = &hoth_dev_;
 
   std::vector<uint8_t> buffer(SPI_TEST_DATA_LEN_64K);
-  EXPECT_EQ(libhoth_spi_proxy_update(&spi, SPI_TEST_ADDR_ALIGNED, buffer.data(), SPI_TEST_DATA_LEN_64K, nullptr),
+  EXPECT_EQ(libhoth_spi_proxy_update(&spi, SPI_TEST_ADDR_ALIGNED, buffer.data(),
+                                     SPI_TEST_DATA_LEN_64K, nullptr),
             LIBHOTH_OK);
 }

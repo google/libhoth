@@ -28,9 +28,9 @@
 #include <vector>
 
 #include "examples/test/test_util.h"
-#include "protocol/host_cmd.h"
 #include "host_commands.h"
 #include "htool_security_version.h"
+#include "protocol/host_cmd.h"
 #include "protocol/test/libhoth_device_mock.h"
 #include "transports/libhoth_device.h"
 
@@ -84,7 +84,6 @@ class HtoolProvisioningTest : public LibHothTest {
     ASSERT_NE(mkdtemp(&tmpl[0]), nullptr)
         << "mkdtemp failed: " << strerror(errno);
     tmp_dir_path_ = tmpl;
-
   }
 
   void TearDown() override {
@@ -222,8 +221,8 @@ TEST_F(HtoolProvisioningTest, GetProvisioningLogSuccess) {
 TEST_F(HtoolProvisioningTest, GetProvisioningLogUnexpectedResponseSize) {
   struct htool_invocation inv{};
   std::string tmp_output_file =
-    tmp_dir_path_ +
-    "/provisioning_log.GetProvisioningLogUnexpectedResponseSize.bin";
+      tmp_dir_path_ +
+      "/provisioning_log.GetProvisioningLogUnexpectedResponseSize.bin";
   EXPECT_CALL(invocation_mock_, GetParamString("output", _))
       .WillOnce(DoAll(SetArgPointee<1>(tmp_output_file.c_str()), Return(0)));
 
@@ -632,11 +631,9 @@ TEST_F(HtoolProvisioningTest, ValidateAndSignOutputFileNotAbleToBeOpened) {
 TEST_F(HtoolProvisioningTest, ValidateAndSignPersoBlobFileEmpty) {
   struct htool_invocation inv{};
   std::string tmp_perso_blob_file =
-      tmp_dir_path_ +
-      "/perso_blob.ValidateAndSignPersoBlobFileEmpty.bin";
+      tmp_dir_path_ + "/perso_blob.ValidateAndSignPersoBlobFileEmpty.bin";
   std::string tmp_output_file =
-      tmp_dir_path_ +
-      "/signed_log.ValidateAndSignPersoBlobFileEmpty.bin";
+      tmp_dir_path_ + "/signed_log.ValidateAndSignPersoBlobFileEmpty.bin";
   EXPECT_CALL(invocation_mock_, GetParamString("perso_blob", _))
       .WillOnce(
           DoAll(SetArgPointee<1>(tmp_perso_blob_file.c_str()), Return(0)));

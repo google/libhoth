@@ -13,13 +13,14 @@
 // limitations under the License.
 
 #include "protocol/console.h"
-#include "protocol/util.h"
-#include "host_cmd.h"
-#include <unistd.h>
+
 #include <fcntl.h>
+#include <unistd.h>
 
-void libhoth_print_erot_console(struct libhoth_device* const dev){
+#include "host_cmd.h"
+#include "protocol/util.h"
 
+void libhoth_print_erot_console(struct libhoth_device* const dev) {
   uint32_t current_offset = 0;
 
   // Init the opts and set it to EROT channel
@@ -37,21 +38,21 @@ void libhoth_print_erot_console(struct libhoth_device* const dev){
   uint32_t offset = current_offset - 0x80000000;
 
   while (true) {
-    status = libhoth_read_console(dev, STDOUT_FILENO, true, opts.channel_id, &offset);
+    status = libhoth_read_console(dev, STDOUT_FILENO, true, opts.channel_id,
+                                  &offset);
     if (status != LIBHOTH_OK) {
       break;
     }
-    // Extra check in case UINT32_MAX wrap-around. 
+    // Extra check in case UINT32_MAX wrap-around.
     if (!(offset < current_offset || offset - current_offset > 0x80000000)) {
       break;
     }
   }
-
 }
 
-int libhoth_get_channel_status(struct libhoth_device *dev,
-                              const struct libhoth_htool_console_opts *opts,
-                              uint32_t *offset) {
+int libhoth_get_channel_status(struct libhoth_device* dev,
+                               const struct libhoth_htool_console_opts* opts,
+                               uint32_t* offset) {
   struct hoth_channel_status_request req = {
       .channel_id = opts->channel_id,
   };
@@ -77,12 +78,9 @@ int libhoth_get_channel_status(struct libhoth_device *dev,
   return 0;
 }
 
-int libhoth_read_console(struct libhoth_device *dev,
-                        int fd,
-                        bool prototext_format_enabled,
-                        uint32_t channel_id,
-                        uint32_t *offset) {
-
+int libhoth_read_console(struct libhoth_device* dev, int fd,
+                         bool prototext_format_enabled, uint32_t channel_id,
+                         uint32_t* offset) {
   struct hoth_channel_read_request req = {
       .channel_id = channel_id,
       .offset = *offset,
@@ -112,23 +110,21 @@ int libhoth_read_console(struct libhoth_device *dev,
   int len = response_size - sizeof(resp.resp);
   if (len > 0) {
     // formatted prototext
-    if(prototext_format_enabled){
-      for(int i = 0; i < len; i++) {
-        if(resp.buffer[i] == '\n'){
+    if (prototext_format_enabled) {
+      for (int i = 0; i < len; i++) {
+        if (resp.buffer[i] == '\n') {
           printf("\"");
           printf("%c", resp.buffer[i]);
           printf("\" ");
-        }
-        else if(resp.buffer[i] == '\r'){
+        } else if (resp.buffer[i] == '\r') {
           printf(" ");
-        }
-        else{
+        } else {
           printf("%c", resp.buffer[i]);
         }
       }
     }
     // raw output
-    else{
+    else {
       if (libhoth_force_write(fd, resp.buffer, len) != 0) {
         perror("Unable to write console output");
         return -1;
@@ -140,7 +136,7 @@ int libhoth_read_console(struct libhoth_device *dev,
   return 0;
 }
 
-static int unescape(char *buf, int in, struct unescape_flags *flags) {
+static int unescape(char* buf, int in, struct unescape_flags* flags) {
   static bool escaped = false;
   int out = 0;
   for (int i = 0; i < in; i++) {
@@ -176,10 +172,8 @@ static int unescape(char *buf, int in, struct unescape_flags *flags) {
   return out;
 }
 
-int libhoth_write_console(struct libhoth_device *dev,
-                         uint32_t channel_id,
-                         bool force_drive_tx, 
-                         bool *quit) {
+int libhoth_write_console(struct libhoth_device* dev, uint32_t channel_id,
+                          bool force_drive_tx, bool* quit) {
   struct {
     struct hoth_channel_write_request_v1 req;
     char buffer[64];
@@ -220,9 +214,9 @@ int libhoth_write_console(struct libhoth_device *dev,
   return 0;
 }
 
-int libhoth_get_uart_config(struct libhoth_device *dev,
-                           const struct libhoth_htool_console_opts *opts,
-                           struct hoth_channel_uart_config *resp) {
+int libhoth_get_uart_config(struct libhoth_device* dev,
+                            const struct libhoth_htool_console_opts* opts,
+                            struct hoth_channel_uart_config* resp) {
   struct hoth_channel_uart_config_get_req req = {
       .channel_id = opts->channel_id,
   };
@@ -231,9 +225,9 @@ int libhoth_get_uart_config(struct libhoth_device *dev,
       HOTH_CMD_BOARD_SPECIFIC_BASE + HOTH_PRV_CMD_HOTH_CHANNEL_UART_CONFIG_GET,
       /*version=*/0, &req, sizeof(req), resp, sizeof(*resp), NULL);
 }
-int libhoth_set_uart_config(struct libhoth_device *dev,
-                           const struct libhoth_htool_console_opts *opts,
-                           struct hoth_channel_uart_config *config) {
+int libhoth_set_uart_config(struct libhoth_device* dev,
+                            const struct libhoth_htool_console_opts* opts,
+                            struct hoth_channel_uart_config* config) {
   struct hoth_channel_uart_config_set_req req = {
       .channel_id = opts->channel_id,
       .config = *config,
@@ -243,6 +237,3 @@ int libhoth_set_uart_config(struct libhoth_device *dev,
       HOTH_CMD_BOARD_SPECIFIC_BASE + HOTH_PRV_CMD_HOTH_CHANNEL_UART_CONFIG_SET,
       /*version=*/0, &req, sizeof(req), NULL, 0, NULL);
 }
-
-
-

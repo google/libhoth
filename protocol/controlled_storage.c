@@ -43,8 +43,8 @@ int libhoth_controlled_storage_write(struct libhoth_device* dev, uint32_t slot,
   return libhoth_hostcmd_exec(
       dev, HOTH_CMD_BOARD_SPECIFIC_BASE + HOTH_PRV_CMD_HOTH_CONTROLLED_STORAGE,
       /*version=*/0, &req,
-      sizeof(req) - sizeof(struct hoth_payload_controlled_storage) + len, NULL, 0,
-      NULL);
+      sizeof(req) - sizeof(struct hoth_payload_controlled_storage) + len, NULL,
+      0, NULL);
 }
 
 int libhoth_controlled_storage_delete(struct libhoth_device* dev,

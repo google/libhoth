@@ -24,6 +24,7 @@ executable(
         'htool_console.c',
         'htool_dbus.c',
         'htool_dfu.c',
+        'htool_firmware_update.c',
         'htool_i2c.c',
         'htool_jtag.c',
         'htool_mtd.c',
@@ -67,8 +68,8 @@ executable(
 )
 
 
-gtest_dep = dependency('gtest', main: true, disabler: true, required: false)
-gmock_dep = dependency('gmock', main: true, disabler: true, required: false)
+gtest_dep = dependency('gtest', main: true, disabler: true, required: get_option('tests'))
+gmock_dep = dependency('gmock', main: false, disabler: true, required: get_option('tests'))
 
 if gtest_dep.found() and gmock_dep.found()
     test(

@@ -1,4 +1,4 @@
-// Copyright 2025 Google LLC
+// Copyright 2026 Google LLC
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -12,27 +12,22 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef _LIBHOTH_PROTOCOL_UTIL_H_
-#define _LIBHOTH_PROTOCOL_UTIL_H_
+#include "htool_firmware_update.h"
 
-#include <stddef.h>
 #include <stdint.h>
 
-#ifdef __cplusplus
-extern "C" {
-#endif
+#include "htool.h"
+#include "htool_cmd.h"
+#include "protocol/firmware_update.h"
 
-// Helper function to get current monotonic time in milliseconds
-uint64_t libhoth_get_monotonic_ms();
-
-// Helper function for generating an adequate PRNG seed
-uint32_t libhoth_prng_seed();
-
-// Helper function for writing all of `buf` into `fd`
-int libhoth_force_write(int fd, const void* buf, size_t count);
-
-#ifdef __cplusplus
+int htool_firmware_update(const struct htool_invocation* inv) {
+  struct libhoth_device* dev = htool_libhoth_device();
+  if (!dev) {
+    return -1;
+  }
+  uint32_t offset = 0;
+  if (htool_get_param_u32(inv, "offset", &offset)) {
+    return -1;
+  }
+  return libhoth_firmware_update_from_flash_and_reset(dev, offset);
 }
-#endif
-
-#endif  // _LIBHOTH_PROTOCOL_UTIL_H_

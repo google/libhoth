@@ -198,8 +198,8 @@ int libhoth_get_panic(struct libhoth_device* dev,
         .index = i,
     };
 
-    int ret =
-        libhoth_hostcmd_exec(dev, cmd, 0, &req, sizeof(req), dest, chunk_size, &rlen);
+    int ret = libhoth_hostcmd_exec(dev, cmd, 0, &req, sizeof(req), dest,
+                                   chunk_size, &rlen);
 
     if (ret) {
       return -1;

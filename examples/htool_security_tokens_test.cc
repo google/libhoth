@@ -64,8 +64,7 @@ extern "C" int htool_exec_security_v2_cmd(
     uint16_t base_command, struct security_v2_buffer* request_buffer,
     const struct security_v2_param* request_params,
     uint16_t request_param_count, struct security_v2_buffer* response_buffer,
-    struct security_v2_param* response_params,
-    uint16_t response_param_count) {
+    struct security_v2_param* response_params, uint16_t response_param_count) {
   if (g_htool_security_v2_mock) {
     return g_htool_security_v2_mock->htool_exec_security_v2_cmd(
         dev, major, minor, base_command, request_buffer, request_params,
@@ -148,7 +147,7 @@ class HtoolSecurityTokensTest : public LibHothTest {
 };
 
 TEST_F(HtoolSecurityTokensTest, FetchAttestationSuccess) {
-  struct htool_invocation inv {};
+  struct htool_invocation inv{};
   std::string token_output_file_base = tmp_dir_path_ + "/tokens.bin";
   std::string signature_output_file_base =
       tmp_dir_path_ + "/token_signature.bin";
@@ -176,8 +175,8 @@ TEST_F(HtoolSecurityTokensTest, FetchAttestationSuccess) {
       .WillRepeatedly(
           DoAll(SetArgPointee<1>(token_set_info_file_base.c_str()), Return(0)));
   EXPECT_CALL(invocation_mock_, GetParamString("token_count_output", _))
-      .WillRepeatedly(DoAll(SetArgPointee<1>(token_count_output_file.c_str()),
-                            Return(0)));
+      .WillRepeatedly(
+          DoAll(SetArgPointee<1>(token_count_output_file.c_str()), Return(0)));
   EXPECT_CALL(invocation_mock_,
               GetParamString("token_count_boot_nonce_output", _))
       .WillRepeatedly(
@@ -248,7 +247,7 @@ TEST_F(HtoolSecurityTokensTest, FetchAttestationSuccess) {
 }
 
 TEST_F(HtoolSecurityTokensTest, FetchAttestationGetCountFails) {
-  struct htool_invocation inv {};
+  struct htool_invocation inv{};
 
   std::string token_count_output_file = tmp_dir_path_ + "/token_count.bin";
   std::string token_count_boot_nonce_output_file =
@@ -259,14 +258,15 @@ TEST_F(HtoolSecurityTokensTest, FetchAttestationGetCountFails) {
   EXPECT_CALL(invocation_mock_, GetParamString("attestation_file", _))
       .WillRepeatedly(DoAll(SetArgPointee<1>(""), Return(0)));
   EXPECT_CALL(invocation_mock_, GetParamString("token_count_output", _))
-      .WillRepeatedly(DoAll(SetArgPointee<1>(token_count_output_file.c_str()),
-                            Return(0)));
+      .WillRepeatedly(
+          DoAll(SetArgPointee<1>(token_count_output_file.c_str()), Return(0)));
   EXPECT_CALL(invocation_mock_,
               GetParamString("token_count_boot_nonce_output", _))
       .WillRepeatedly(
           DoAll(SetArgPointee<1>(token_count_boot_nonce_output_file.c_str()),
                 Return(0)));
-  EXPECT_CALL(invocation_mock_, GetParamString("token_count_signature_output", _))
+  EXPECT_CALL(invocation_mock_,
+              GetParamString("token_count_signature_output", _))
       .WillRepeatedly(
           DoAll(SetArgPointee<1>(token_count_signature_output_file.c_str()),
                 Return(0)));
@@ -279,7 +279,7 @@ TEST_F(HtoolSecurityTokensTest, FetchAttestationGetCountFails) {
 }
 
 TEST_F(HtoolSecurityTokensTest, FetchAttestationGetTokensFails) {
-  struct htool_invocation inv {};
+  struct htool_invocation inv{};
   std::string token_output_file_base = tmp_dir_path_ + "/tokens.bin";
   std::string signature_output_file_base =
       tmp_dir_path_ + "/token_signature.bin";
@@ -294,14 +294,15 @@ TEST_F(HtoolSecurityTokensTest, FetchAttestationGetTokensFails) {
   EXPECT_CALL(invocation_mock_, GetParamString("attestation_file", _))
       .WillRepeatedly(DoAll(SetArgPointee<1>(""), Return(0)));
   EXPECT_CALL(invocation_mock_, GetParamString("token_count_output", _))
-      .WillRepeatedly(DoAll(SetArgPointee<1>(token_count_output_file.c_str()),
-                            Return(0)));
+      .WillRepeatedly(
+          DoAll(SetArgPointee<1>(token_count_output_file.c_str()), Return(0)));
   EXPECT_CALL(invocation_mock_,
               GetParamString("token_count_boot_nonce_output", _))
       .WillRepeatedly(
           DoAll(SetArgPointee<1>(token_count_boot_nonce_output_file.c_str()),
                 Return(0)));
-  EXPECT_CALL(invocation_mock_, GetParamString("token_count_signature_output", _))
+  EXPECT_CALL(invocation_mock_,
+              GetParamString("token_count_signature_output", _))
       .WillRepeatedly(
           DoAll(SetArgPointee<1>(token_count_signature_output_file.c_str()),
                 Return(0)));
@@ -325,16 +326,16 @@ TEST_F(HtoolSecurityTokensTest, FetchAttestationGetTokensFails) {
                       Return(0)));
 
   // Mock for htool_get_tokens_in_set to fail
-  EXPECT_CALL(security_v2_serialized_mock_,
-              htool_exec_security_v2_serialized_cmd(_, _, _, _, _, _, _, _, _,
-                                                    _))
+  EXPECT_CALL(
+      security_v2_serialized_mock_,
+      htool_exec_security_v2_serialized_cmd(_, _, _, _, _, _, _, _, _, _))
       .WillOnce(Return(-1));
 
   ASSERT_NE(htool_fetch_attestation(&inv), 0);
 }
 
 TEST_F(HtoolSecurityTokensTest, FetchAttestationGetInfoFails) {
-  struct htool_invocation inv {};
+  struct htool_invocation inv{};
   std::string token_output_file_base = tmp_dir_path_ + "/tokens.bin";
   std::string signature_output_file_base =
       tmp_dir_path_ + "/token_signature.bin";
@@ -362,14 +363,15 @@ TEST_F(HtoolSecurityTokensTest, FetchAttestationGetInfoFails) {
       .WillRepeatedly(
           DoAll(SetArgPointee<1>(token_set_info_file_base.c_str()), Return(0)));
   EXPECT_CALL(invocation_mock_, GetParamString("token_count_output", _))
-      .WillRepeatedly(DoAll(SetArgPointee<1>(token_count_output_file.c_str()),
-                            Return(0)));
+      .WillRepeatedly(
+          DoAll(SetArgPointee<1>(token_count_output_file.c_str()), Return(0)));
   EXPECT_CALL(invocation_mock_,
               GetParamString("token_count_boot_nonce_output", _))
       .WillRepeatedly(
           DoAll(SetArgPointee<1>(token_count_boot_nonce_output_file.c_str()),
                 Return(0)));
-  EXPECT_CALL(invocation_mock_, GetParamString("token_count_signature_output", _))
+  EXPECT_CALL(invocation_mock_,
+              GetParamString("token_count_signature_output", _))
       .WillRepeatedly(
           DoAll(SetArgPointee<1>(token_count_signature_output_file.c_str()),
                 Return(0)));
@@ -386,16 +388,16 @@ TEST_F(HtoolSecurityTokensTest, FetchAttestationGetInfoFails) {
 
   // Mock for htool_get_tokens_in_set to succeed
   std::vector<uint8_t> tokens(TOKEN_BYTE_SIZE * 3);  // 3 tokens
-  EXPECT_CALL(security_v2_serialized_mock_,
-              htool_exec_security_v2_serialized_cmd(_, _, _, _, _, _, _, _, _,
-                                                    _))
+  EXPECT_CALL(
+      security_v2_serialized_mock_,
+      htool_exec_security_v2_serialized_cmd(_, _, _, _, _, _, _, _, _, _))
       .WillOnce(DoAll(SetSerializedV2TokenResponse(tokens), Return(0)));
 
   ASSERT_NE(htool_fetch_attestation(&inv), 0);
 }
 
 TEST_F(HtoolSecurityTokensTest, FetchAttestationSuccessWithAttestationFile) {
-  struct htool_invocation inv {};
+  struct htool_invocation inv{};
   std::string attestation_file = tmp_dir_path_ + "/attestation.bin";
   std::string token_output_file_base = tmp_dir_path_ + "/tokens.bin";
   std::string signature_output_file_base =
@@ -462,9 +464,8 @@ TEST_F(HtoolSecurityTokensTest, FetchAttestationSuccessWithAttestationFile) {
   fclose(fp);
 
   // The expected size is the sum of all data written to the buffer.
-  size_t expected_size =
-      sizeof(num_ids) + sizeof(boot_nonce) + sizeof(signature) +
-      tokens.size() + sizeof(boot_nonce) + sizeof(signature) + sizeof(info);
+  size_t expected_size = sizeof(num_ids) + sizeof(boot_nonce) +
+                         sizeof(signature) + tokens.size() +
+                         sizeof(boot_nonce) + sizeof(signature) + sizeof(info);
   ASSERT_EQ(file_contents.size(), expected_size);
 }
-      

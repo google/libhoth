@@ -156,8 +156,8 @@ struct payload_info {
 
 // Returns a pointer to a valid image_descriptor if found inside the image,
 // otherwise returns NULL
-const struct image_descriptor* libhoth_find_image_descriptor(const uint8_t* image,
-                                                       size_t len);
+const struct image_descriptor* libhoth_find_image_descriptor(
+    const uint8_t* image, size_t len);
 bool libhoth_payload_info(const uint8_t* image, size_t len,
                           struct payload_info* payload_info);
 
