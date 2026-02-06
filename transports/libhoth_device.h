@@ -64,7 +64,7 @@ int libhoth_send_request(struct libhoth_device* dev, const void* request,
 // be written. Errors if libhoth_send_request() wasn't called previously.
 // Returns LIBHOTH_ERR_TIMEOUT if the response is not ready by the
 // specified timeout, and the user can call again later. If timeout_ms is zero,
-// returns immediately.
+// the waiting behavior is implementation defined
 // This function is not thread-safe. In multi-threaded contexts, callers must
 // ensure libhoth_send_request() and libhoth_receive_response() occur
 // atomically (with respect to other calls to those functions).

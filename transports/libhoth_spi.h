@@ -33,7 +33,7 @@ struct libhoth_spi_device_init_options {
   int mode;
   int speed;
   int atomic;
-  uint32_t device_busy_wait_timeout;
+  uint32_t page_program_busy_wait_timeout;
   uint32_t device_busy_wait_check_interval;
 };
 
