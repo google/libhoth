@@ -1777,10 +1777,10 @@ static const struct htool_param GLOBAL_FLAGS[] = {
     {HTOOL_FLAG_VALUE, .name = "spidev_speed_hz", .default_value = "0",
      .desc = "Clock speed (in Hz) to use when using spidev transport. Default "
              "behavior (with input 0) is to not change the clock speed"},
-    {HTOOL_FLAG_VALUE, .name = "spidev_device_busy_wait_timeout",
-     .default_value = "180000000",
-     .desc = "Maximum duration (in microseconds) to wait when SPI device "
-             "indicates that it is busy"},
+    {HTOOL_FLAG_VALUE, .name = "spidev_page_program_busy_wait_timeout",
+     .default_value = "10",
+     .desc = "Maximum duration (in milliseconds) to wait after a page program "
+             "command when SPI device indicates that it is busy"},
     {HTOOL_FLAG_VALUE, .name = "spidev_device_busy_wait_check_interval",
      .default_value = "100",
      .desc = "Interval duration (in microseconds) to wait before checking SPI "

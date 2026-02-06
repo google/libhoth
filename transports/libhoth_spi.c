@@ -42,7 +42,7 @@ struct libhoth_spi_device {
 
   void* buffered_request;
   size_t buffered_request_size;
-  uint32_t device_busy_wait_timeout;
+  uint32_t page_program_busy_wait_timeout;
   uint32_t device_busy_wait_check_interval;
 };
 
@@ -99,7 +99,7 @@ static int get_monotonic_ms(uint64_t* time_ms) {
   return 0;
 }
 
-static libhoth_status spi_nor_busy_wait(const int fd, uint32_t timeout_us,
+static libhoth_status spi_nor_busy_wait(const int fd, uint32_t timeout_ms,
                                         uint32_t check_interval_us) {
   uint8_t tx_buf[2];
   uint8_t rx_buf[2];
@@ -128,20 +128,22 @@ static libhoth_status spi_nor_busy_wait(const int fd, uint32_t timeout_us,
       return LIBHOTH_OK;
     }
 
-    uint64_t current_time_ms;
-    if (get_monotonic_ms(&current_time_ms) != 0) {
-      return LIBHOTH_ERR_FAIL;
-    }
-    uint64_t time_elapsed_ms = 0;
-    if (current_time_ms < start_time_ms) {
-      // Wrap around
-      time_elapsed_ms = (UINT64_MAX - start_time_ms) + current_time_ms;
-    } else {
-      time_elapsed_ms = current_time_ms - start_time_ms;
-    }
+    if (timeout_ms != 0) {
+      uint64_t current_time_ms;
+      if (get_monotonic_ms(&current_time_ms) != 0) {
+        return LIBHOTH_ERR_FAIL;
+      }
+      uint64_t time_elapsed_ms = 0;
+      if (current_time_ms < start_time_ms) {
+        // Wrap around
+        time_elapsed_ms = (UINT64_MAX - start_time_ms) + current_time_ms;
+      } else {
+        time_elapsed_ms = current_time_ms - start_time_ms;
+      }
 
-    if (time_elapsed_ms > (timeout_us / 1000)) {
-      return LIBHOTH_ERR_TIMEOUT;
+      if (time_elapsed_ms > timeout_ms) {
+        return LIBHOTH_ERR_TIMEOUT;
+      }
     }
     usleep(check_interval_us);
   }
@@ -167,13 +169,24 @@ static int spi_nor_write_enable(const int fd) {
 
 static int spi_nor_write(int fd, bool address_mode_4b, unsigned int address,
                          const void* data, size_t data_len,
-                         uint32_t device_busy_wait_timeout,
+                         uint32_t page_program_busy_wait_timeout,
                          uint32_t device_busy_wait_check_interval) {
   if (fd < 0 || !data || !data_len) return LIBHOTH_ERR_INVALID_PARAMETER;
 
   // Page program operations
   size_t bytes_sent = 0;
   while (bytes_sent < data_len) {
+    // - For the first iteration, wait for any previous operations that might
+    // have set the busy bit to finish
+    // - For rest of the iterations, wait for each page program operation to be
+    // handled except the last one. Waiting for the last page program will be
+    // done in `libhoth_spi_receive_response` since RoT will take some time to
+    // execute the host command
+    libhoth_status busy_wait_status = spi_nor_busy_wait(
+        fd, page_program_busy_wait_timeout, device_busy_wait_check_interval);
+    if (busy_wait_status != LIBHOTH_OK) {
+      return busy_wait_status;
+    }
     // Send write enable before each Page program operation
     int status = spi_nor_write_enable(fd);
     if (status != LIBHOTH_OK) {
@@ -206,13 +219,6 @@ static int spi_nor_write(int fd, bool address_mode_4b, unsigned int address,
     }
     bytes_sent += chunk_send_size;
     address += chunk_send_size;
-
-    // Wait for each page program operation to be handled
-    libhoth_status busy_wait_status = spi_nor_busy_wait(
-        fd, device_busy_wait_timeout, device_busy_wait_check_interval);
-    if (busy_wait_status != LIBHOTH_OK) {
-      return busy_wait_status;
-    }
   }
   return LIBHOTH_OK;
 }
@@ -363,7 +369,8 @@ int libhoth_spi_open(const struct libhoth_spi_device_init_options* options,
   spi_dev->fd = fd;
   spi_dev->mailbox_address = options->mailbox;
   spi_dev->address_mode_4b = true;
-  spi_dev->device_busy_wait_timeout = options->device_busy_wait_timeout;
+  spi_dev->page_program_busy_wait_timeout =
+      options->page_program_busy_wait_timeout;
   spi_dev->device_busy_wait_check_interval =
       options->device_busy_wait_check_interval;
 
@@ -408,7 +415,7 @@ int libhoth_spi_send_request(struct libhoth_device* dev, const void* request,
 
   return spi_nor_write(spi_dev->fd, spi_dev->address_mode_4b,
                        spi_dev->mailbox_address, request, request_size,
-                       spi_dev->device_busy_wait_timeout,
+                       spi_dev->page_program_busy_wait_timeout,
                        spi_dev->device_busy_wait_check_interval);
 }
 
@@ -428,6 +435,12 @@ int libhoth_spi_receive_response(struct libhoth_device* dev, void* response,
   struct hoth_host_response host_response;
   struct libhoth_spi_device* spi_dev =
       (struct libhoth_spi_device*)dev->user_ctx;
+
+  libhoth_status busy_wait_status = spi_nor_busy_wait(
+      spi_dev->fd, timeout_ms, spi_dev->device_busy_wait_check_interval);
+  if (busy_wait_status != LIBHOTH_OK) {
+    return busy_wait_status;
+  }
 
   // Read Header From Mailbox
   status = spi_nor_read(spi_dev->fd, spi_dev->address_mode_4b,
