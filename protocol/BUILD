@@ -264,6 +264,16 @@ cc_library(
     hdrs = ["progress.h"],
 )
 
+cc_test(
+    name = "progress_test",
+    srcs = ["progress_test.cc"],
+    deps = [
+        ":progress",
+        "@googletest//:gtest",
+        "@googletest//:gtest_main",
+    ],
+)
+
 cc_library(
     name = "spi_proxy",
     srcs = ["spi_proxy.c"],
