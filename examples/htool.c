@@ -1796,7 +1796,7 @@ static const struct htool_param GLOBAL_FLAGS[] = {
              "or 'mtd' transports; for example '0x900000'."},
     {HTOOL_FLAG_VALUE, .name = "dbus_hoth_id", .default_value = "",
      .desc = "The hoth ID associated with the RoT's hothd service."},
-    {HTOOL_FLAG_VALUE, .name = "connect_timeout", .default_value = "1000ms",
+    {HTOOL_FLAG_VALUE, .name = "connect_timeout", .default_value = "10s",
      .desc =
          "Maximum duration to retry opening a busy libhoth transport (e.g., "
          "'1s', '1500ms')."},
