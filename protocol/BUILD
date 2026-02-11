@@ -515,6 +515,24 @@ cc_library(
     ],
 )
 
+cc_test(
+    name = "dfu_check_test",
+    srcs = ["dfu_check_test.cc"],
+    data = [
+        "//protocol/test:test_data",
+    ],
+    deps = [
+        ":host_cmd",
+        ":dfu_check",
+        ":opentitan_version",
+        "//protocol/test:libhoth_device_mock",
+        "//transports:libhoth_device",
+        "@googletest//:gtest",
+        "@googletest//:gtest_main",
+    ],
+)
+
+
 cc_library(
     name = "util",
     srcs = ["util.c"],
