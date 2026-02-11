@@ -21,6 +21,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <sys/file.h>
 #include <sys/ioctl.h>
 #include <unistd.h>
 
@@ -100,12 +101,36 @@ static int mtd_write(int fd, unsigned int address, const void* data,
 }
 
 static int libhoth_mtd_claim(struct libhoth_device* dev) {
-  // no-op
+  if (dev == NULL) {
+    return LIBHOTH_ERR_INVALID_PARAMETER;
+  }
+
+  const struct libhoth_mtd_device* mtd_dev = dev->user_ctx;
+  if (mtd_dev == NULL) {
+    return LIBHOTH_ERR_INVALID_PARAMETER;
+  }
+
+  if (flock(mtd_dev->fd, LOCK_EX | LOCK_NB) != 0) {
+    // Maybe some other process has the lock?
+    return LIBHOTH_ERR_INTERFACE_BUSY;
+  }
   return LIBHOTH_OK;
 }
 
 static int libhoth_mtd_release(struct libhoth_device* dev) {
-  // no-op
+  if (dev == NULL) {
+    return LIBHOTH_ERR_INVALID_PARAMETER;
+  }
+
+  const struct libhoth_mtd_device* mtd_dev = dev->user_ctx;
+  if (mtd_dev == NULL) {
+    return LIBHOTH_ERR_INVALID_PARAMETER;
+  }
+
+  if (flock(mtd_dev->fd, LOCK_UN) != 0) {
+    // Maybe `fd` is invalid?
+    return LIBHOTH_ERR_FAIL;
+  }
   return LIBHOTH_OK;
 }
 
@@ -169,6 +194,25 @@ int libhoth_mtd_open(const struct libhoth_mtd_device_init_options* options,
   fd = mtd_open(options->path, options->name);
   if (fd < 0) {
     status = LIBHOTH_ERR_INTERFACE_NOT_FOUND;
+    goto err_out;
+  }
+
+  // Try to take an exclusive advisory lock without blocking. This lock is
+  // meant to prevent situation where multiple threads/processes are writing to
+  // and receiving data from HOTH mailbox (assuming that all processes using
+  // this MTD character device and corresponding MTD block device check for this
+  // advisory lock)
+  //
+  // This lock is intentionally not released explicitly in `libhoth_mtd_close`.
+  // `man 2 flock` mentions that if the file descriptor is duplicated (for eg.
+  // using `fork`), unlocking **any** of the file descriptors would release the
+  // lock. Without explicitly releasing the lock, the lock will be
+  // automatically released when **all** the duplicated file descriptors are
+  // closed. API users may choose to override this behavior and manage this
+  // lock using `libhoth_mtd_claim` and `libhoth_mtd_release` APIs
+  if (flock(fd, LOCK_EX | LOCK_NB) != 0) {
+    // Maybe some other process has the lock?
+    status = LIBHOTH_ERR_INTERFACE_BUSY;
     goto err_out;
   }
 
