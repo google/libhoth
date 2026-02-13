@@ -50,6 +50,11 @@ int libhoth_extract_ot_bundle(const uint8_t* image, size_t image_size,
     return -1;
   }
 
+  static_assert(
+      OPENTITAN_OFFSET_APP_FW + sizeof(struct opentitan_image_version) >=
+          OPENTITAN_OFFSET_HEADER_DATA + 4,
+      "Smallest FW size must be enough to cover header data offset");
+
   // Check if the image has the correct magic number
   char magic[] = "_OTFWUPDATE_";
   for (int i = 0; i < (sizeof(magic) - 1); i++) {
@@ -66,6 +71,26 @@ int libhoth_extract_ot_bundle(const uint8_t* image, size_t image_size,
                      image[OPENTITAN_OFFSET_HEADER_DATA + 1] << 8 |
                      image[OPENTITAN_OFFSET_HEADER_DATA + 2] << 16 |
                      image[OPENTITAN_OFFSET_HEADER_DATA + 3] << 24);
+
+  // Check that version offsets are within bounds
+  static_assert(
+      OPENTITAN_OFFSET_VERSION_MINOR >= OPENTITAN_OFFSET_VERSION_MAJOR,
+      "Version minor offset must be >= major offset");
+
+  // Checks that the image offset doesn't cause
+  // the offset calculations to read beyond the image buffer.
+  if ((offset + OPENTITAN_OFFSET_APP_FW + OPENTITAN_OFFSET_VERSION_MINOR + 4) >
+      image_size) {
+    fprintf(stderr, "Image offset %u is invalid", offset);
+    return -1;
+  }
+  // Checks that the image offset won't overflow the offset calculations
+  if ((offset + OPENTITAN_OFFSET_APP_FW + OPENTITAN_OFFSET_VERSION_MINOR + 4) <
+      offset) {
+    fprintf(stderr, "Image offset %u caused integer overflow", offset);
+    return -1;
+  }
+
   rom_ext->major = image[offset + OPENTITAN_OFFSET_VERSION_MAJOR] |
                    image[offset + OPENTITAN_OFFSET_VERSION_MAJOR + 1] << 8 |
                    image[offset + OPENTITAN_OFFSET_VERSION_MAJOR + 2] << 16 |
