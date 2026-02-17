@@ -973,7 +973,8 @@ static const struct htool_cmd CMDS[] = {
     },
     {
         .verbs = (const char*[]){"payload", "update", NULL},
-        .desc = "Perform payload update protocol for Titan images.",
+        .desc = "Perform payload update protocol for Titan images. Optional "
+                "allows for payload confirmation.",
         .params =
             (const struct htool_param[]){
                 {HTOOL_POSITIONAL, .name = "source-file"},
@@ -981,8 +982,24 @@ static const struct htool_cmd CMDS[] = {
                  .desc = "Skip erasing the staging side."},
                 {HTOOL_FLAG_BOOL, 'b', "binary", "false",
                  .desc = "Update with generic binary file"},
+                {HTOOL_FLAG_BOOL, 'e', "enable", "false",
+                 .desc = "Enable confirm mode"},
+                {HTOOL_FLAG_VALUE, 't', "timeout", "0",
+                 .desc = "Timeout in seconds"},
                 {}},
         .func = htool_payload_update,
+    },
+    {
+        .verbs = (const char*[]){"payload", "confirm", NULL},
+        .desc = "Finish a payload update confirmation.",
+        .params = (const struct htool_param[]){{}},
+        .func = htool_payload_update_confirm,
+    },
+    {
+        .verbs = (const char*[]){"payload", "get_timeout", NULL},
+        .desc = "Get the current payload update confirmation timeout.",
+        .params = (const struct htool_param[]){{}},
+        .func = htool_payload_update_confirm_get_timeout,
     },
     {
         .verbs = (const char*[]){"payload", "read", NULL},
