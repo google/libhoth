@@ -29,7 +29,9 @@ int htool_payload_update_getstatus(const struct htool_invocation* inv);
 int htool_payload_erase(const struct htool_invocation* inv);
 int htool_payload_activate(const struct htool_invocation* inv);
 int htool_payload_update_verify(const struct htool_invocation* inv);
-
+int htool_payload_update_confirm(const struct htool_invocation* inv);
+int htool_payload_update_confirm_get_timeout(
+    const struct htool_invocation* inv);
 #ifdef __cplusplus
 }
 #endif
