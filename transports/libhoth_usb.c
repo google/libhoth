@@ -30,6 +30,10 @@
 #define HOTH_D_PRODUCT_ID 0x022a
 #define HOTH_E_PRODUCT_ID 0x023b
 
+static int libhoth_usb_device_open(
+    const struct libhoth_usb_device_init_options* options,
+    struct libhoth_device* dev);
+
 int libhoth_usb_send_request(struct libhoth_device* dev, const void* request,
                              size_t request_size);
 
@@ -146,16 +150,12 @@ static int libhoth_usb_reconnect(struct libhoth_device* dev) {
   opts.timeout_us = timeout_us;
   opts.prng_seed = libhoth_prng_seed();
 
-  return libhoth_usb_open(&opts, &dev);
+  return libhoth_usb_device_open(&opts, dev);
 }
 
-int libhoth_usb_open(const struct libhoth_usb_device_init_options* options,
-                     struct libhoth_device** out) {
-  if (out == NULL || options == NULL || options->usb_device == NULL) {
-    return LIBUSB_ERROR_INVALID_PARAM;
-  }
-
-  struct libhoth_device* dev = NULL;
+static int libhoth_usb_device_open(
+    const struct libhoth_usb_device_init_options* options,
+    struct libhoth_device* dev) {
   struct libhoth_usb_device* usb_dev = NULL;
   struct libusb_device_descriptor device_descriptor;
   int status =
@@ -182,12 +182,6 @@ int libhoth_usb_open(const struct libhoth_usb_device_init_options* options,
       libhoth_usb_find_interface(config_descriptor);
   if (info.type == LIBHOTH_USB_INTERFACE_TYPE_UNKNOWN) {
     status = LIBHOTH_ERR_INTERFACE_NOT_FOUND;
-    goto err_out;
-  }
-
-  dev = calloc(1, sizeof(struct libhoth_device));
-  if (dev == NULL) {
-    status = LIBHOTH_ERR_MALLOC_FAILED;
     goto err_out;
   }
 
@@ -233,7 +227,6 @@ int libhoth_usb_open(const struct libhoth_usb_device_init_options* options,
 
   if (status != LIBHOTH_OK) goto err_out;
 
-  *out = dev;
   libusb_free_config_descriptor(config_descriptor);
   return LIBHOTH_OK;
 
@@ -246,10 +239,30 @@ err_out:
       }
       free(usb_dev);
     }
-    free(dev);
   }
   libusb_free_config_descriptor(config_descriptor);
   return status;
+}
+
+int libhoth_usb_open(const struct libhoth_usb_device_init_options* options,
+                     struct libhoth_device** out) {
+  if (out == NULL || options == NULL || options->usb_device == NULL) {
+    return LIBUSB_ERROR_INVALID_PARAM;
+  }
+
+  struct libhoth_device* dev = calloc(1, sizeof(struct libhoth_device));
+  if (dev == NULL) {
+    return LIBHOTH_ERR_MALLOC_FAILED;
+  }
+
+  int ret = libhoth_usb_device_open(options, dev);
+  if (ret != LIBUSB_SUCCESS) {
+    free(dev);
+    return ret;
+  }
+
+  *out = dev;
+  return LIBHOTH_OK;
 }
 
 int libhoth_usb_send_request(struct libhoth_device* dev, const void* request,
