@@ -154,12 +154,37 @@ struct payload_info {
   uint8_t image_hash[HASH_SHA256_BYTES];
 };
 
+struct payload_region_info {
+  char region_name[32];
+  uint32_t region_offset;
+  uint32_t region_size;
+  uint16_t region_version;
+  uint16_t region_attributes;
+};
+
+// Avoid oversized stack allocations in struct payload_info_all.
+#define PAYLOAD_INFO_ALL_MAX_REGIONS 32
+
+struct payload_info_all {
+  struct payload_info info;
+  uint8_t descriptor_major;
+  uint8_t descriptor_minor;
+  uint64_t build_timestamp;
+  uint8_t hash_type;
+  uint8_t region_count;
+  uint32_t image_size;
+  uint32_t blob_size;
+  struct payload_region_info regions[PAYLOAD_INFO_ALL_MAX_REGIONS];
+};
+
 // Returns a pointer to a valid image_descriptor if found inside the image,
 // otherwise returns NULL
 const struct image_descriptor* libhoth_find_image_descriptor(
     const uint8_t* image, size_t len);
 bool libhoth_payload_info(const uint8_t* image, size_t len,
                           struct payload_info* payload_info);
+bool libhoth_payload_info_all(const uint8_t* image, size_t len,
+                              struct payload_info_all* info_all);
 
 #ifdef __cplusplus
 }
