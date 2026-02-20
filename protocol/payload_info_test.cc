@@ -163,3 +163,71 @@ TEST(PayloadInfoTest, PayloadInfoFuzzRegression) {
   EXPECT_FALSE(libhoth_payload_info(
       reinterpret_cast<const uint8_t*>(data.data()), data.size(), &info));
 }
+
+TEST(PayloadInfotest, payload_info_all) {
+  int fd = open(kTestData, O_RDONLY, 0);
+  ASSERT_NE(fd, -1);
+
+  struct stat statbuf;
+  ASSERT_EQ(fstat(fd, &statbuf), 0);
+
+  uint8_t* image = reinterpret_cast<uint8_t*>(
+      mmap(NULL, statbuf.st_size, PROT_READ | PROT_WRITE, MAP_PRIVATE, fd, 0));
+  ASSERT_NE(image, nullptr);
+
+  struct image_descriptor* descr = const_cast<image_descriptor*>(
+      libhoth_find_image_descriptor(image, statbuf.st_size));
+  ASSERT_NE(descr, nullptr);
+
+  struct payload_info_all info_all;
+  EXPECT_TRUE(libhoth_payload_info_all(image, statbuf.st_size, &info_all));
+
+  // Verify basic info fields match the existing payload_info test
+  EXPECT_STREQ(info_all.info.image_name, "test layout");
+  EXPECT_EQ(info_all.info.image_family, 2);
+  EXPECT_EQ(info_all.info.image_version.major, 1);
+  EXPECT_EQ(info_all.info.image_version.minor, 0);
+  EXPECT_EQ(info_all.info.image_version.point, 0);
+  EXPECT_EQ(info_all.info.image_version.subpoint, 0);
+  EXPECT_EQ(info_all.info.image_type, 0);
+
+  // Verify hash matches
+  std::stringstream stream;
+  stream << std::hex;
+  for (const auto c : info_all.info.image_hash) {
+    stream << std::setw(2) << std::setfill('0') << (int)c;
+  }
+  EXPECT_EQ(kTestHash, stream.str());
+
+  // Verify extended fields
+  EXPECT_EQ(info_all.hash_type, HASH_SHA2_256);
+  ASSERT_EQ(info_all.region_count, 8);
+  EXPECT_EQ(info_all.image_size, 0x400000u);
+
+  // Verify region offsets and sizes against the known test image layout.
+  EXPECT_EQ(info_all.regions[0].region_offset, 0x0u);
+  EXPECT_EQ(info_all.regions[0].region_size, 0x1000u);
+  EXPECT_EQ(info_all.regions[1].region_offset, 0x1000u);
+  EXPECT_EQ(info_all.regions[1].region_size, 0xf000u);
+  EXPECT_EQ(info_all.regions[2].region_offset, 0x10000u);
+  EXPECT_EQ(info_all.regions[2].region_size, 0x10000u);
+  EXPECT_EQ(info_all.regions[3].region_offset, 0x20000u);
+  EXPECT_EQ(info_all.regions[3].region_size, 0x20000u);
+  EXPECT_EQ(info_all.regions[4].region_offset, 0x40000u);
+  EXPECT_EQ(info_all.regions[4].region_size, 0x10000u);
+  EXPECT_EQ(info_all.regions[5].region_offset, 0x50000u);
+  EXPECT_EQ(info_all.regions[5].region_size, 0x10000u);
+  EXPECT_EQ(info_all.regions[6].region_offset, 0x60000u);
+  EXPECT_EQ(info_all.regions[6].region_size, 0x20000u);
+  EXPECT_EQ(info_all.regions[7].region_offset, 0x80000u);
+  EXPECT_EQ(info_all.regions[7].region_size, 0x380000u);
+
+  // Set region_count beyond PAYLOAD_INFO_ALL_MAX_REGIONS (32) to verify
+  // that libhoth_payload_info_all() rejects it.
+  descr->region_count = 64;
+
+  EXPECT_FALSE(libhoth_payload_info_all(image, statbuf.st_size, &info_all));
+
+  (void)munmap(image, statbuf.st_size);
+  close(fd);
+}
