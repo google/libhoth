@@ -62,3 +62,103 @@ TEST_F(LibHothTest, opentitan_version_test) {
   EXPECT_EQ(response.app.slots[1].major, mock_response.app.slots[1].major);
   EXPECT_EQ(response.app.slots[1].minor, mock_response.app.slots[1].minor);
 }
+
+TEST_F(LibHothTest, ExtractOtBundleBoundsCheckLargeOffset) {
+  size_t image_size = 70000;
+  std::vector<uint8_t> image(image_size, 0);
+  struct opentitan_image_version rom_ext;
+  struct opentitan_image_version app;
+
+  // Magic
+  const char* magic = "_OTFWUPDATE_";
+  memcpy(image.data(), magic, strlen(magic));
+
+  // Offset = 65536, causes
+  // 65536 + OPENTITAN_OFFSET_APP_FW + OPENTITAN_OFFSET_VERSION_MINOR + 4
+  // = 65536 + 65536 + 840 + 4 = 131916
+  // to be > image_size, triggering bounds check.
+  uint32_t offset = 65536;
+  image[OPENTITAN_OFFSET_HEADER_DATA] = offset & 0xff;
+  image[OPENTITAN_OFFSET_HEADER_DATA + 1] = (offset >> 8) & 0xff;
+  image[OPENTITAN_OFFSET_HEADER_DATA + 2] = (offset >> 16) & 0xff;
+  image[OPENTITAN_OFFSET_HEADER_DATA + 3] = (offset >> 24) & 0xff;
+
+  // Expect call to fail with -1
+  EXPECT_EQ(libhoth_extract_ot_bundle(image.data(), image_size, &rom_ext, &app),
+            -1);
+}
+
+TEST_F(LibHothTest, ExtractOtBundleBoundsCheckSmallImage) {
+  size_t image_size = 66379;
+  std::vector<uint8_t> image(image_size, 0);
+  struct opentitan_image_version rom_ext;
+  struct opentitan_image_version app;
+
+  // Magic
+  const char* magic = "_OTFWUPDATE_";
+  memcpy(image.data(), magic, strlen(magic));
+
+  // Offset = 0, but image_size is too small for reads because
+  // 0 + OPENTITAN_OFFSET_APP_FW + OPENTITAN_OFFSET_VERSION_MINOR + 4
+  // = 0 + 65536 + 840 + 4 = 66380
+  // is > image_size, triggering bounds check.
+  uint32_t offset = 0;
+  image[OPENTITAN_OFFSET_HEADER_DATA] = offset & 0xff;
+  image[OPENTITAN_OFFSET_HEADER_DATA + 1] = (offset >> 8) & 0xff;
+  image[OPENTITAN_OFFSET_HEADER_DATA + 2] = (offset >> 16) & 0xff;
+  image[OPENTITAN_OFFSET_HEADER_DATA + 3] = (offset >> 24) & 0xff;
+
+  // Expect call to fail with -1
+  EXPECT_EQ(libhoth_extract_ot_bundle(image.data(), image_size, &rom_ext, &app),
+            -1);
+}
+
+TEST_F(LibHothTest, ExtractOtBundleImageTooSmall) {
+  size_t image_size = 100;
+  std::vector<uint8_t> image(image_size, 0);
+  struct opentitan_image_version rom_ext;
+  struct opentitan_image_version app;
+
+  // Magic
+  const char* magic = "_OTFWUPDATE_";
+  memcpy(image.data(), magic, strlen(magic));
+
+  // image_size is 100, which is smaller than
+  // OPENTITAN_OFFSET_APP_FW + sizeof(struct opentitan_image_version)
+  // = 65536 + 64 = 65600
+  uint32_t offset = 0;
+  image[OPENTITAN_OFFSET_HEADER_DATA] = offset & 0xff;
+  image[OPENTITAN_OFFSET_HEADER_DATA + 1] = (offset >> 8) & 0xff;
+  image[OPENTITAN_OFFSET_HEADER_DATA + 2] = (offset >> 16) & 0xff;
+  image[OPENTITAN_OFFSET_HEADER_DATA + 3] = (offset >> 24) & 0xff;
+
+  // Expect call to fail with -1
+  EXPECT_EQ(libhoth_extract_ot_bundle(image.data(), image_size, &rom_ext, &app),
+            -1);
+}
+
+TEST_F(LibHothTest, ExtractOtBundleIntegerOverflow) {
+  size_t image_size = 0xFFFFFFFF;
+  std::vector<uint8_t> image(66380, 0);  // small image buffer is fine
+  struct opentitan_image_version rom_ext;
+  struct opentitan_image_version app;
+
+  // Magic
+  const char* magic = "_OTFWUPDATE_";
+  memcpy(image.data(), magic, strlen(magic));
+
+  // Offset = 0xFFFFFFFF, causes
+  // offset + OPENTITAN_OFFSET_APP_FW + OPENTITAN_OFFSET_VERSION_MINOR + 4
+  // to wrap around.
+  // 0xFFFFFFFF + 65536 + 840 + 4 = 66379 (mod 2^32)
+  // 66379 < 0xFFFFFFFF should trigger overflow check
+  uint32_t offset = 0xFFFFFFFF;
+  image[OPENTITAN_OFFSET_HEADER_DATA] = offset & 0xff;
+  image[OPENTITAN_OFFSET_HEADER_DATA + 1] = (offset >> 8) & 0xff;
+  image[OPENTITAN_OFFSET_HEADER_DATA + 2] = (offset >> 16) & 0xff;
+  image[OPENTITAN_OFFSET_HEADER_DATA + 3] = (offset >> 24) & 0xff;
+
+  // Expect call to fail with -1
+  EXPECT_EQ(libhoth_extract_ot_bundle(image.data(), image_size, &rom_ext, &app),
+            -1);
+}
