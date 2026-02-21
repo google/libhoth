@@ -997,6 +997,23 @@ static const struct htool_cmd CMDS[] = {
         .func = htool_payload_read,
     },
     {
+        .verbs = (const char*[]){"payload", "info", "all", NULL},
+        .desc = "Display detailed payload info for a Titan image, "
+                "including region details.",
+        .params =
+            (const struct htool_param[]){
+                {HTOOL_POSITIONAL, .name = "source-file"}, {}},
+        .func = htool_payload_info_all,
+    },
+    {
+        .verbs = (const char*[]){"payload", "info", "nonstatic", NULL},
+        .desc = "Print non-static regions in a Titan image.",
+        .params =
+            (const struct htool_param[]){
+                {HTOOL_POSITIONAL, .name = "source-file"}, {}},
+        .func = htool_payload_info_nonstatic,
+    },
+    {
         .verbs = (const char*[]){"payload", "info", NULL},
         .desc = "Display payload info for a Titan image.",
         .params =
