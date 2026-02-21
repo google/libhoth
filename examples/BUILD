@@ -230,6 +230,16 @@ cc_binary(
         "htool_usb.c",
         "htool_usb.h",
     ],
+    features = select({
+        "//third_party/bazel_platforms/os:linux-gbmc": ["fully_static_link"],
+        "//buildenv/platforms/constraints/cc_toolchain:gbmc-armv8a": ["fully_static_link"],
+        "//conditions:default": [],
+    }),
+    malloc = select({
+        "//third_party/bazel_platforms/os:linux-gbmc": "//base:system_malloc",
+        "//buildenv/platforms/constraints/cc_toolchain:gbmc-armv8a": "//base:system_malloc",
+        "//conditions:default": "//tools/cpp:malloc",
+    }),
     deps = [
         ":host_commands",
         ":srtm",
