@@ -1025,6 +1025,10 @@ static const struct htool_cmd CMDS[] = {
                  .desc = "A .fwupdate file compatible with this device."},
                 {HTOOL_FLAG_VALUE, .name = "reset",
                  .desc = "warm, cold, or none", .default_value = "warm"},
+                {HTOOL_FLAG_BOOL, .ch = 'f', .name = "force",
+                 .default_value = "false",
+                 .desc = "always attempt dfu update twice regardless of the "
+                         "RoT state"},
                 {}},
         .func = htool_dfu_update,
     },
