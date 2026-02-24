@@ -2424,6 +2424,10 @@ static const struct htool_param GLOBAL_FLAGS[] = {
      .default_value = "100",
      .desc = "Interval duration (in microseconds) to wait before checking SPI "
              "device status again when it indicates that the device is busy"},
+    {HTOOL_FLAG_VALUE, .name = "spidev_io_mode", .default_value = "single",
+     .desc = "Data lines used for spidev mailbox reads and writes: 'single' "
+             "(1-1-1) or 'quad' (1-1-4). 'quad' requires a SPI controller and "
+             "RoT that support quad I/O."},
     {HTOOL_FLAG_VALUE, .name = "mtddev_path", .default_value = "",
      .desc = "The full MTD path of the RoT mailbox; for example "
              "'/dev/mtd0'. If unspecified, will attempt to detect "

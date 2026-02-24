@@ -18,9 +18,11 @@
 #include <linux/spi/spidev.h>
 #include <sys/ioctl.h>
 
+#include <cerrno>
 #include <cstdarg>
 #include <cstdint>
 #include <cstring>
+#include <iterator>
 #include <vector>
 
 #include "protocol/status.h"
@@ -34,6 +36,9 @@ struct CapturedSpiIoctl {
   unsigned long last_request = 0;
   std::vector<spi_ioc_transfer> xfers;
   std::vector<std::vector<uint8_t>> tx_payloads;
+  // `xfers` and `tx_payloads` of every SPI_IOC_MESSAGE, in order.
+  std::vector<std::vector<spi_ioc_transfer>> xfer_history;
+  std::vector<std::vector<std::vector<uint8_t>>> tx_history;
   struct hoth_host_response canned_response = {
       .struct_version = 3,
       .checksum = 0xfd,
@@ -41,6 +46,9 @@ struct CapturedSpiIoctl {
       .data_len = 0,
       .reserved = 0,
   };
+  // Emulates spi_setup() dropping mode bits the controller does not support.
+  uint32_t controller_mode_bits = UINT32_MAX;
+  uint32_t spi_mode = 0;
 };
 
 CapturedSpiIoctl* g_captured = nullptr;
@@ -49,12 +57,28 @@ extern "C" int __wrap_ioctl(int fd, unsigned long request, ...) {
   (void)fd;
   va_list ap;
   va_start(ap, request);
-  auto* xfers = va_arg(ap, struct spi_ioc_transfer*);
+  void* arg = va_arg(ap, void*);
   va_end(ap);
 
   if (!g_captured) {
     return -1;
   }
+
+  // Device configuration ioctls issued by libhoth_spi_open().
+  switch (request) {
+    case SPI_IOC_WR_MODE32:
+      g_captured->spi_mode =
+          *static_cast<uint32_t*>(arg) & g_captured->controller_mode_bits;
+      return 0;
+    case SPI_IOC_RD_MODE32:
+      *static_cast<uint32_t*>(arg) = g_captured->spi_mode;
+      return 0;
+    case SPI_IOC_WR_BITS_PER_WORD:
+    case SPI_IOC_WR_MAX_SPEED_HZ:
+      return 0;
+  }
+
+  auto* xfers = static_cast<struct spi_ioc_transfer*>(arg);
   g_captured->call_count++;
   g_captured->last_request = request;
 
@@ -79,6 +103,8 @@ extern "C" int __wrap_ioctl(int fd, unsigned long request, ...) {
       }
     }
   }
+  g_captured->xfer_history.push_back(g_captured->xfers);
+  g_captured->tx_history.push_back(g_captured->tx_payloads);
   return 0;
 }
 
@@ -165,6 +191,147 @@ TEST_F(LibHothSpiAtomicTest,
             LIBHOTH_ERR_CONSTRUCT(HOTH_CTX_SPI, HOTH_HOST_SPACE_LIBHOTH,
                                   LIBHOTH_ERR_INVALID_PARAMETER));
   EXPECT_EQ(spi_dev_.buffered_request, nullptr);
+}
+
+using Bytes = std::vector<uint8_t>;
+
+// Mailbox address 0x00800000 in 4-byte address mode.
+constexpr uint8_t kAddr[] = {0x00, 0x80, 0x00, 0x00};
+
+Bytes Header(uint8_t opcode, size_t dummy_bytes = 0) {
+  Bytes header = {opcode};
+  header.insert(header.end(), std::begin(kAddr), std::end(kAddr));
+  header.insert(header.end(), dummy_bytes, 0x00);
+  return header;
+}
+
+TEST_F(LibHothSpiAtomicTest, SingleIoModeUsesSingleLineReadAndPageProgram) {
+  Bytes req(16, 0x11);
+  ASSERT_EQ(libhoth_spi_buffer_request(&dev_, req.data(), req.size()),
+            HOTH_SUCCESS);
+  Bytes resp_buf(LIBHOTH_MAILBOX_SIZE, 0);
+  ASSERT_EQ(libhoth_spi_send_and_receive_response(
+                &dev_, resp_buf.data(), resp_buf.size(), nullptr, 1000),
+            HOTH_SUCCESS);
+
+  ASSERT_EQ(captured_.xfers.size(), 5u);
+  EXPECT_EQ(captured_.tx_payloads[1], Header(SPI_NOR_OPCODE_PAGE_PROGRAM));
+  EXPECT_EQ(captured_.xfers[1].tx_nbits, 1);
+  EXPECT_EQ(captured_.xfers[2].tx_nbits, 1);
+  EXPECT_EQ(captured_.tx_payloads[3], Header(SPI_NOR_OPCODE_SLOW_READ));
+  EXPECT_EQ(captured_.xfers[3].tx_nbits, 1);
+  EXPECT_EQ(captured_.xfers[4].rx_nbits, 1);
+}
+
+TEST_F(LibHothSpiAtomicTest, QuadIoModeAtomicUsesQuadDataAndDummyByte) {
+  spi_dev_.io_mode = LIBHOTH_SPI_IO_MODE_QUAD;
+  Bytes req(16, 0x22);
+  ASSERT_EQ(libhoth_spi_buffer_request(&dev_, req.data(), req.size()),
+            HOTH_SUCCESS);
+  Bytes resp_buf(LIBHOTH_MAILBOX_SIZE, 0);
+  ASSERT_EQ(libhoth_spi_send_and_receive_response(
+                &dev_, resp_buf.data(), resp_buf.size(), nullptr, 1000),
+            HOTH_SUCCESS);
+
+  ASSERT_EQ(captured_.xfers.size(), 5u);
+  // WREN, opcode, address and dummy bytes stay on a single line.
+  EXPECT_EQ(captured_.tx_payloads[0], Bytes{SPI_NOR_OPCODE_WRITE_ENABLE});
+  EXPECT_EQ(captured_.xfers[0].tx_nbits, 1);
+  EXPECT_EQ(captured_.tx_payloads[1], Header(SPI_NOR_OPCODE_QUAD_PAGE_PROGRAM));
+  EXPECT_EQ(captured_.xfers[1].tx_nbits, 1);
+  EXPECT_EQ(captured_.tx_payloads[2], req);
+  EXPECT_EQ(captured_.xfers[2].tx_nbits, 4);
+  EXPECT_EQ(captured_.tx_payloads[3], Header(SPI_NOR_OPCODE_QUAD_READ, 1));
+  EXPECT_EQ(captured_.xfers[3].tx_nbits, 1);
+  EXPECT_EQ(captured_.xfers[4].rx_nbits, 4);
+}
+
+TEST_F(LibHothSpiAtomicTest, QuadIoModeNonAtomicSendAndReceive) {
+  spi_dev_.io_mode = LIBHOTH_SPI_IO_MODE_QUAD;
+  spi_dev_.device_busy_wait_timeout = 10000;
+  spi_dev_.device_busy_wait_check_interval = 10;
+
+  Bytes req(16, 0x33);
+  ASSERT_EQ(libhoth_spi_send_request(&dev_, req.data(), req.size()),
+            HOTH_SUCCESS);
+  // WRITE_ENABLE, PAGE_PROGRAM, READ_STATUS.
+  ASSERT_EQ(captured_.xfer_history.size(), 3u);
+  const auto& pp_xfers = captured_.xfer_history[1];
+  const auto& pp_tx = captured_.tx_history[1];
+  ASSERT_EQ(pp_xfers.size(), 2u);
+  EXPECT_EQ(pp_tx[0], Header(SPI_NOR_OPCODE_QUAD_PAGE_PROGRAM));
+  EXPECT_EQ(pp_xfers[0].tx_nbits, 1);
+  EXPECT_EQ(pp_tx[1], req);
+  EXPECT_EQ(pp_xfers[1].tx_nbits, 4);
+  // Status polling is always single line.
+  EXPECT_EQ(captured_.xfer_history[2][0].rx_nbits, 1);
+
+  Bytes resp_buf(LIBHOTH_MAILBOX_SIZE, 0);
+  size_t actual_size = 0;
+  captured_.xfer_history.clear();
+  captured_.tx_history.clear();
+  captured_.canned_response.data_len = 8;
+  ASSERT_EQ(libhoth_spi_receive_response(&dev_, resp_buf.data(),
+                                         resp_buf.size(), &actual_size, 1000),
+            HOTH_SUCCESS);
+  EXPECT_EQ(actual_size, sizeof(struct hoth_host_response) + 8);
+  // Header read, then payload read at mailbox + sizeof(header).
+  ASSERT_EQ(captured_.xfer_history.size(), 2u);
+  EXPECT_EQ(captured_.tx_history[0][0], Header(SPI_NOR_OPCODE_QUAD_READ, 1));
+  EXPECT_EQ(captured_.tx_history[1][0],
+            (Bytes{SPI_NOR_OPCODE_QUAD_READ, 0x00, 0x80, 0x00, 0x08, 0x00}));
+  for (const auto& xfers : captured_.xfer_history) {
+    ASSERT_EQ(xfers.size(), 2u);
+    EXPECT_EQ(xfers[0].tx_nbits, 1);
+    EXPECT_EQ(xfers[1].rx_nbits, 4);
+  }
+}
+
+class LibHothSpiOpenTest : public ::testing::Test {
+ protected:
+  void SetUp() override {
+    g_captured = &captured_;
+    opts_.path = "/dev/null";
+  }
+  void TearDown() override {
+    if (dev_ != nullptr) {
+      EXPECT_EQ(libhoth_device_close(dev_), HOTH_SUCCESS);
+    }
+    g_captured = nullptr;
+  }
+
+  static constexpr uint32_t kQuadBits = SPI_TX_QUAD | SPI_RX_QUAD;
+  CapturedSpiIoctl captured_;
+  struct libhoth_spi_device_init_options opts_{};
+  struct libhoth_device* dev_ = nullptr;
+};
+
+TEST_F(LibHothSpiOpenTest, SingleIoModeLeavesQuadBitsClear) {
+  ASSERT_EQ(libhoth_spi_open(&opts_, &dev_), HOTH_SUCCESS);
+  EXPECT_EQ(captured_.spi_mode & kQuadBits, 0u);
+}
+
+TEST_F(LibHothSpiOpenTest, QuadIoModeSetsQuadBits) {
+  opts_.io_mode = LIBHOTH_SPI_IO_MODE_QUAD;
+  ASSERT_EQ(libhoth_spi_open(&opts_, &dev_), HOTH_SUCCESS);
+  EXPECT_EQ(captured_.spi_mode & kQuadBits, kQuadBits);
+}
+
+TEST_F(LibHothSpiOpenTest, QuadIoModeFailsWhenControllerLacksQuad) {
+  captured_.controller_mode_bits = ~kQuadBits;
+  opts_.io_mode = LIBHOTH_SPI_IO_MODE_QUAD;
+  EXPECT_EQ(
+      libhoth_spi_open(&opts_, &dev_),
+      LIBHOTH_ERR_CONSTRUCT(HOTH_CTX_SPI, HOTH_HOST_SPACE_POSIX, EOPNOTSUPP));
+  EXPECT_EQ(dev_, nullptr);
+}
+
+TEST_F(LibHothSpiOpenTest, RejectsUnknownIoMode) {
+  opts_.io_mode = static_cast<enum libhoth_spi_io_mode>(42);
+  EXPECT_EQ(libhoth_spi_open(&opts_, &dev_),
+            LIBHOTH_ERR_CONSTRUCT(HOTH_CTX_SPI, HOTH_HOST_SPACE_LIBHOTH,
+                                  LIBHOTH_ERR_INVALID_PARAMETER));
+  EXPECT_EQ(dev_, nullptr);
 }
 
 }  // namespace

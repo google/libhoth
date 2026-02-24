@@ -161,8 +161,8 @@ Global flags:
         Maximum duration (in microseconds) to wait when SPI device indicates that it is busy
   --spidev_device_busy_wait_check_interval (default: "100")
         Interval duration (in microseconds) to wait before checking SPI device status again when it indicates that the device is busy
-  --quadmode (default: "auto")
-        Enable Quad SPI mode (auto|on|force|off). Default: auto
+  --spidev_io_mode (default: "single")
+        Data lines used for spidev mailbox reads and writes: 'single' (1-1-1) or 'quad' (1-1-4). 'quad' requires a SPI controller and RoT that support quad I/O.
   --mtddev_path (default: "")
         The full MTD path of the RoT mailbox; for example '/dev/mtd0'. If unspecified, will attempt to detect the correct device automatically
   --mtddev_name (default: "hoth-mailbox")

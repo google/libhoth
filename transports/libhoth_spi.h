@@ -27,6 +27,18 @@ extern "C" {
 
 struct libhoth_device;
 
+// Number of data lines used for mailbox reads and writes. The opcode, address
+// and any dummy cycles are always sent on a single line.
+enum libhoth_spi_io_mode {
+  // 1-1-1: Read (0x03) and Page Program (0x02).
+  LIBHOTH_SPI_IO_MODE_SINGLE = 0,
+  // 1-1-4: Quad Output Fast Read (0x6B) and Quad Input Page Program (0x32).
+  // Requires a spidev controller that supports SPI_TX_QUAD and SPI_RX_QUAD
+  // for plain transfers (not only via spi-mem); open fails if the controller
+  // does not advertise them.
+  LIBHOTH_SPI_IO_MODE_QUAD,
+};
+
 struct libhoth_spi_device_init_options {
   // The device filepath to open
   const char* path;
@@ -39,6 +51,7 @@ struct libhoth_spi_device_init_options {
   uint32_t device_busy_wait_timeout;
   uint32_t device_busy_wait_check_interval;
   uint32_t timeout_us;
+  enum libhoth_spi_io_mode io_mode;
 };
 
 struct libhoth_spi_device {
@@ -50,6 +63,7 @@ struct libhoth_spi_device {
   size_t buffered_request_size;
   uint32_t device_busy_wait_timeout;
   uint32_t device_busy_wait_check_interval;
+  enum libhoth_spi_io_mode io_mode;
 };
 
 enum {
@@ -57,7 +71,9 @@ enum {
   SPI_NOR_OPCODE_READ_STATUS = 0x05,
   SPI_NOR_OPCODE_WRITE_ENABLE = 0x06,
   SPI_NOR_OPCODE_PAGE_PROGRAM = 0x02,
+  SPI_NOR_OPCODE_QUAD_PAGE_PROGRAM = 0x32,
   SPI_NOR_OPCODE_SLOW_READ = 0x03,
+  SPI_NOR_OPCODE_QUAD_READ = 0x6B,
   SPI_NOR_FLASH_PAGE_SIZE = 256,  // in bytes
 };
 

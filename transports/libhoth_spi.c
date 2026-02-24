@@ -71,6 +71,44 @@ static int spi_nor_address(uint8_t* buf, uint32_t address,
   }
 }
 
+// Opcode + up to 4 address bytes + up to 1 dummy byte.
+#define SPI_NOR_MAX_HEADER_SIZE 6
+
+// A mailbox read or page program command. The header (opcode, address and
+// dummy bytes) is always single line; only the data phase uses `data_nbits`.
+struct spi_nor_cmd {
+  uint8_t opcode;
+  uint8_t dummy_bytes;
+  uint8_t data_nbits;
+};
+
+static struct spi_nor_cmd spi_nor_read_cmd(enum libhoth_spi_io_mode io_mode) {
+  if (io_mode == LIBHOTH_SPI_IO_MODE_QUAD) {
+    // Quad Output Fast Read needs 8 dummy clocks: one byte on a single line.
+    return (struct spi_nor_cmd){SPI_NOR_OPCODE_QUAD_READ, 1, SPI_NBITS_QUAD};
+  }
+  return (struct spi_nor_cmd){SPI_NOR_OPCODE_SLOW_READ, 0, SPI_NBITS_SINGLE};
+}
+
+static struct spi_nor_cmd spi_nor_program_cmd(
+    enum libhoth_spi_io_mode io_mode) {
+  if (io_mode == LIBHOTH_SPI_IO_MODE_QUAD) {
+    return (struct spi_nor_cmd){SPI_NOR_OPCODE_QUAD_PAGE_PROGRAM, 0,
+                                SPI_NBITS_QUAD};
+  }
+  return (struct spi_nor_cmd){SPI_NOR_OPCODE_PAGE_PROGRAM, 0, SPI_NBITS_SINGLE};
+}
+
+// Writes the command header into `buf` and returns its length.
+static size_t spi_nor_header(uint8_t buf[SPI_NOR_MAX_HEADER_SIZE],
+                             const struct spi_nor_cmd* cmd, uint32_t address,
+                             bool address_mode_4b) {
+  buf[0] = cmd->opcode;
+  size_t len = 1 + spi_nor_address(&buf[1], address, address_mode_4b);
+  memset(&buf[len], 0, cmd->dummy_bytes);
+  return len + cmd->dummy_bytes;
+}
+
 // Helper function to get current monotonic time in milliseconds
 static int get_monotonic_ms(uint64_t* time_ms) {
   struct timespec ts = {0};
@@ -153,11 +191,14 @@ static int spi_nor_write_enable(const int fd) {
   return LIBHOTH_OK;
 }
 
-static int spi_nor_write(int fd, bool address_mode_4b, unsigned int address,
+static int spi_nor_write(int fd, bool address_mode_4b,
+                         enum libhoth_spi_io_mode io_mode, unsigned int address,
                          const void* data, size_t data_len,
                          uint32_t device_busy_wait_timeout,
                          uint32_t device_busy_wait_check_interval) {
   if (fd < 0 || !data || !data_len) return LIBHOTH_ERR_INVALID_PARAMETER;
+
+  const struct spi_nor_cmd cmd = spi_nor_program_cmd(io_mode);
 
   // Page program operations
   size_t bytes_sent = 0;
@@ -169,14 +210,12 @@ static int spi_nor_write(int fd, bool address_mode_4b, unsigned int address,
     }
 
     struct spi_ioc_transfer xfer[2] = {0};
-    uint8_t rq_buf[5] = {0};  // 1 for command opcode, 4 (max) for address
+    uint8_t rq_buf[SPI_NOR_MAX_HEADER_SIZE];
 
     // Page Program OPCODE + Address
-    rq_buf[0] = SPI_NOR_OPCODE_PAGE_PROGRAM;
-    int address_len = spi_nor_address(&rq_buf[1], address, address_mode_4b);
     xfer[0] = (struct spi_ioc_transfer){
         .tx_buf = (unsigned long)rq_buf,
-        .len = 1 + address_len,
+        .len = spi_nor_header(rq_buf, &cmd, address, address_mode_4b),
         .cs_change = 0,
         .tx_nbits = SPI_NBITS_SINGLE,
     };
@@ -187,7 +226,7 @@ static int spi_nor_write(int fd, bool address_mode_4b, unsigned int address,
     xfer[1] = (struct spi_ioc_transfer){
         .tx_buf = ((unsigned long)(data) + bytes_sent),
         .len = chunk_send_size,
-        .tx_nbits = SPI_NBITS_SINGLE,
+        .tx_nbits = cmd.data_nbits,
     };
 
     status = ioctl(fd, SPI_IOC_MESSAGE(2), xfer);
@@ -207,19 +246,19 @@ static int spi_nor_write(int fd, bool address_mode_4b, unsigned int address,
   return LIBHOTH_OK;
 }
 
-static int spi_nor_read(int fd, bool address_mode_4b, unsigned int address,
+static int spi_nor_read(int fd, bool address_mode_4b,
+                        enum libhoth_spi_io_mode io_mode, unsigned int address,
                         void* data, size_t data_len) {
   if (fd < 0 || !data || !data_len) return LIBHOTH_ERR_INVALID_PARAMETER;
 
-  uint8_t rd_request[5] = {0};
+  const struct spi_nor_cmd cmd = spi_nor_read_cmd(io_mode);
+  uint8_t rd_request[SPI_NOR_MAX_HEADER_SIZE];
   struct spi_ioc_transfer xfer[2] = {0};
 
   // Read OPCODE and mailbox address
-  rd_request[0] = SPI_NOR_OPCODE_SLOW_READ;
-  int address_len = spi_nor_address(&rd_request[1], address, address_mode_4b);
   xfer[0] = (struct spi_ioc_transfer){
       .tx_buf = (unsigned long)rd_request,
-      .len = 1 + address_len,
+      .len = spi_nor_header(rd_request, &cmd, address, address_mode_4b),
       .tx_nbits = SPI_NBITS_SINGLE,
   };
 
@@ -227,7 +266,7 @@ static int spi_nor_read(int fd, bool address_mode_4b, unsigned int address,
   xfer[1] = (struct spi_ioc_transfer){
       .rx_buf = (unsigned long)data,
       .len = data_len,
-      .rx_nbits = SPI_NBITS_SINGLE,
+      .rx_nbits = cmd.data_nbits,
   };
 
   int status = ioctl(fd, SPI_IOC_MESSAGE(2), xfer);
@@ -285,6 +324,17 @@ libhoth_error libhoth_spi_open(
     return spi_err_libhoth(LIBHOTH_ERR_INVALID_PARAMETER);
   }
 
+  uint32_t quad_mode_bits = 0;
+  switch (options->io_mode) {
+    case LIBHOTH_SPI_IO_MODE_SINGLE:
+      break;
+    case LIBHOTH_SPI_IO_MODE_QUAD:
+      quad_mode_bits = SPI_TX_QUAD | SPI_RX_QUAD;
+      break;
+    default:
+      return spi_err_libhoth(LIBHOTH_ERR_INVALID_PARAMETER);
+  }
+
   libhoth_error status = HOTH_SUCCESS;
   int fd = -1;
   struct libhoth_device* dev = NULL;
@@ -311,6 +361,7 @@ libhoth_error libhoth_spi_open(
   spi_dev->fd = fd;
   spi_dev->mailbox_address = options->mailbox;
   spi_dev->address_mode_4b = true;
+  spi_dev->io_mode = options->io_mode;
   spi_dev->device_busy_wait_timeout = options->device_busy_wait_timeout;
   spi_dev->device_busy_wait_check_interval =
       options->device_busy_wait_check_interval;
@@ -339,10 +390,24 @@ libhoth_error libhoth_spi_open(
     goto err_out;
   }
 
-  const uint32_t mode = (uint32_t)options->mode;
+  const uint32_t mode = (uint32_t)options->mode | quad_mode_bits;
   if (ioctl(fd, SPI_IOC_WR_MODE32, &mode) < 0) {
     status = spi_err_libhoth(LIBHOTH_ERR_FAIL);
     goto err_out;
+  }
+
+  // spi_setup() silently drops multi-line mode bits the controller does not
+  // support, so read the mode back to fail here rather than on first transfer.
+  if (quad_mode_bits != 0) {
+    uint32_t actual_mode = 0;
+    if (ioctl(fd, SPI_IOC_RD_MODE32, &actual_mode) < 0) {
+      status = spi_err_libhoth(LIBHOTH_ERR_FAIL);
+      goto err_out;
+    }
+    if ((actual_mode & quad_mode_bits) != quad_mode_bits) {
+      status = spi_err_posix(EOPNOTSUPP);
+      goto err_out;
+    }
   }
 
   if (options->speed) {
@@ -381,10 +446,11 @@ libhoth_error libhoth_spi_send_request(struct libhoth_device* dev,
   struct libhoth_spi_device* spi_dev =
       (struct libhoth_spi_device*)dev->user_ctx;
 
-  return spi_err_libhoth(spi_nor_write(
-      spi_dev->fd, spi_dev->address_mode_4b, spi_dev->mailbox_address, request,
-      request_size, spi_dev->device_busy_wait_timeout,
-      spi_dev->device_busy_wait_check_interval));
+  return spi_err_libhoth(
+      spi_nor_write(spi_dev->fd, spi_dev->address_mode_4b, spi_dev->io_mode,
+                    spi_dev->mailbox_address, request, request_size,
+                    spi_dev->device_busy_wait_timeout,
+                    spi_dev->device_busy_wait_check_interval));
 }
 
 libhoth_error libhoth_spi_receive_response(struct libhoth_device* dev,
@@ -408,7 +474,7 @@ libhoth_error libhoth_spi_receive_response(struct libhoth_device* dev,
       (struct libhoth_spi_device*)dev->user_ctx;
 
   // Read Header From Mailbox
-  status = spi_nor_read(spi_dev->fd, spi_dev->address_mode_4b,
+  status = spi_nor_read(spi_dev->fd, spi_dev->address_mode_4b, spi_dev->io_mode,
                         spi_dev->mailbox_address, response,
                         sizeof(struct hoth_host_response));
   if (status != LIBHOTH_OK) {
@@ -429,9 +495,10 @@ libhoth_error libhoth_spi_receive_response(struct libhoth_device* dev,
   if (host_response.data_len > 0) {
     // Read remainder of data based on header length
     uint8_t* const data_start = (uint8_t*)response + total_bytes;
-    status = spi_nor_read(spi_dev->fd, spi_dev->address_mode_4b,
-                          spi_dev->mailbox_address + total_bytes, data_start,
-                          host_response.data_len);
+    status =
+        spi_nor_read(spi_dev->fd, spi_dev->address_mode_4b, spi_dev->io_mode,
+                     spi_dev->mailbox_address + total_bytes, data_start,
+                     host_response.data_len);
     if (status != LIBHOTH_OK) {
       return spi_err_libhoth(status);
     }
@@ -512,12 +579,11 @@ libhoth_error libhoth_spi_send_and_receive_response(struct libhoth_device* dev,
   };
 
   // Page Program OPCODE + Mailbox Address
-  uint8_t pp_buf[5] = {0};
-  pp_buf[0] = SPI_NOR_OPCODE_PAGE_PROGRAM;
-  int address_len = spi_nor_address(&pp_buf[1], address, address_mode_4b);
+  const struct spi_nor_cmd pp_cmd = spi_nor_program_cmd(spi_dev->io_mode);
+  uint8_t pp_buf[SPI_NOR_MAX_HEADER_SIZE];
   xfer[1] = (struct spi_ioc_transfer){
       .tx_buf = (unsigned long)pp_buf,
-      .len = 1 + address_len,
+      .len = spi_nor_header(pp_buf, &pp_cmd, address, address_mode_4b),
       .tx_nbits = SPI_NBITS_SINGLE,
   };
 
@@ -526,18 +592,17 @@ libhoth_error libhoth_spi_send_and_receive_response(struct libhoth_device* dev,
       .tx_buf = (unsigned long)spi_dev->buffered_request,
       .len = spi_dev->buffered_request_size,
       .cs_change = 1,
-      .tx_nbits = SPI_NBITS_SINGLE,
+      .tx_nbits = pp_cmd.data_nbits,
   };
 
   // Wait for status register is handled by the spidev driver.
 
   // Read opcode + Mailbox Address
-  uint8_t rd_buf[5] = {0};
-  rd_buf[0] = SPI_NOR_OPCODE_SLOW_READ;
-  address_len = spi_nor_address(&rd_buf[1], address, address_mode_4b);
+  const struct spi_nor_cmd rd_cmd = spi_nor_read_cmd(spi_dev->io_mode);
+  uint8_t rd_buf[SPI_NOR_MAX_HEADER_SIZE];
   xfer[3] = (struct spi_ioc_transfer){
       .tx_buf = (unsigned long)rd_buf,
-      .len = 1 + address_len,
+      .len = spi_nor_header(rd_buf, &rd_cmd, address, address_mode_4b),
       .tx_nbits = SPI_NBITS_SINGLE,
   };
 
@@ -546,7 +611,7 @@ libhoth_error libhoth_spi_send_and_receive_response(struct libhoth_device* dev,
   xfer[4] = (struct spi_ioc_transfer){
       .rx_buf = (unsigned long)response,
       .len = rx_len,
-      .rx_nbits = SPI_NBITS_SINGLE,
+      .rx_nbits = rd_cmd.data_nbits,
   };
 
   libhoth_error rc = HOTH_SUCCESS;
