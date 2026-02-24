@@ -66,6 +66,21 @@ int libhoth_extract_ot_bundle(const uint8_t* image, size_t image_size,
                      image[OPENTITAN_OFFSET_HEADER_DATA + 1] << 8 |
                      image[OPENTITAN_OFFSET_HEADER_DATA + 2] << 16 |
                      image[OPENTITAN_OFFSET_HEADER_DATA + 3] << 24);
+
+  // Checks that the image offset doesn't cause
+  // the offset calculations to read beyond the image buffer.
+  if ((offset + OPENTITAN_OFFSET_APP_FW + OPENTITAN_OFFSET_VERSION_MINOR + 4) >
+      image_size) {
+    fprintf(stderr, "Image offset is invalid");
+    return -1;
+  }
+  // Checks that the image offset won't overflow the offset calculations
+  if ((offset + OPENTITAN_OFFSET_APP_FW + OPENTITAN_OFFSET_VERSION_MINOR + 4) <
+      offset) {
+    fprintf(stderr, "Image offset caused integer overflow");
+    return -1;
+  }
+
   rom_ext->major = image[offset + OPENTITAN_OFFSET_VERSION_MAJOR] |
                    image[offset + OPENTITAN_OFFSET_VERSION_MAJOR + 1] << 8 |
                    image[offset + OPENTITAN_OFFSET_VERSION_MAJOR + 2] << 16 |
