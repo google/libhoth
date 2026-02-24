@@ -24,6 +24,12 @@ extern "C" {
 
 struct libhoth_device;
 
+enum libhoth_spi_mode {
+  LIBHOTH_SPI_MODE_SINGLE = 0,
+  LIBHOTH_SPI_MODE_DUAL,
+  LIBHOTH_SPI_MODE_QUAD,
+};
+
 struct libhoth_spi_device_init_options {
   // The device filepath to open
   const char* path;
@@ -33,6 +39,7 @@ struct libhoth_spi_device_init_options {
   int mode;
   int speed;
   int atomic;
+  enum libhoth_spi_mode operation_mode;
   uint32_t device_busy_wait_timeout;
   uint32_t device_busy_wait_check_interval;
   uint32_t timeout_us;
