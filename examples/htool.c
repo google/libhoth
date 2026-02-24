@@ -1863,6 +1863,9 @@ static const struct htool_param GLOBAL_FLAGS[] = {
      .default_value = "100",
      .desc = "Interval duration (in microseconds) to wait before checking SPI "
              "device status again when it indicates that the device is busy"},
+    // TODO(michaelfield) : b/346345769 - enable spidev mode auto-detection
+    {HTOOL_FLAG_VALUE, .name = "spidev_mode", .default_value = "single",
+     .desc = "SPI mode toggles (single|dual|quad)."},
     {HTOOL_FLAG_VALUE, .name = "mtddev_path", .default_value = "",
      .desc = "The full MTD path of the RoT mailbox; for example "
              "'/dev/mtd0'. If unspecified, will attempt to detect "
