@@ -124,6 +124,27 @@ void libhoth_print_ot_version_resp(
 const char* bootslot_str(enum opentitan_boot_slot input);
 int bootslot_int(enum opentitan_boot_slot input);
 
+const struct opentitan_image_version* libhoth_ot_boot_app(
+    const struct opentitan_get_version_resp* resp);
+const struct opentitan_image_version* libhoth_ot_boot_romext(
+    const struct opentitan_get_version_resp* resp);
+const struct opentitan_image_version* libhoth_ot_staged_app(
+    const struct opentitan_get_version_resp* resp);
+const struct opentitan_image_version* libhoth_ot_staged_romext(
+    const struct opentitan_get_version_resp* resp);
+bool libhoth_ot_boot_slot_eq(
+    const struct opentitan_get_version_resp* resp,
+    const struct opentitan_image_version* desired_romext,
+    const struct opentitan_image_version* desired_app);
+bool libhoth_ot_staged_slot_eq(
+    const struct opentitan_get_version_resp* resp,
+    const struct opentitan_image_version* desired_romext,
+    const struct opentitan_image_version* desired_app);
+bool libhoth_update_complete(
+    const struct opentitan_get_version_resp* resp,
+    const struct opentitan_image_version* desired_romext,
+    const struct opentitan_image_version* desired_app);
+
 #ifdef __cplusplus
 }
 #endif

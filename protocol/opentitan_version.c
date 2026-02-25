@@ -159,3 +159,54 @@ int bootslot_int(enum opentitan_boot_slot input) {
     return 0x0;
   }
 }
+
+const struct opentitan_image_version* libhoth_ot_boot_app(
+    const struct opentitan_get_version_resp* resp) {
+  uint32_t app_boot_slot = bootslot_int(resp->app.booted_slot);
+  return &resp->app.slots[app_boot_slot];
+}
+
+const struct opentitan_image_version* libhoth_ot_boot_romext(
+    const struct opentitan_get_version_resp* resp) {
+  uint32_t rom_ext_boot_slot = bootslot_int(resp->rom_ext.booted_slot);
+  return &resp->rom_ext.slots[rom_ext_boot_slot];
+}
+
+const struct opentitan_image_version* libhoth_ot_staged_app(
+    const struct opentitan_get_version_resp* resp) {
+  uint32_t app_boot_slot = bootslot_int(resp->app.booted_slot);
+  uint32_t app_stage_slot = app_boot_slot == 0 ? 1 : 0;
+  return &resp->app.slots[app_stage_slot];
+}
+
+const struct opentitan_image_version* libhoth_ot_staged_romext(
+    const struct opentitan_get_version_resp* resp) {
+  uint32_t rom_ext_boot_slot = bootslot_int(resp->rom_ext.booted_slot);
+  uint32_t rom_ext_stage_slot = rom_ext_boot_slot == 0 ? 1 : 0;
+  return &resp->rom_ext.slots[rom_ext_stage_slot];
+}
+
+bool libhoth_ot_boot_slot_eq(
+    const struct opentitan_get_version_resp* resp,
+    const struct opentitan_image_version* desired_romext,
+    const struct opentitan_image_version* desired_app) {
+  return libhoth_ot_version_eq(libhoth_ot_boot_romext(resp), desired_romext) &&
+         libhoth_ot_version_eq(libhoth_ot_boot_app(resp), desired_app);
+}
+
+bool libhoth_ot_staged_slot_eq(
+    const struct opentitan_get_version_resp* resp,
+    const struct opentitan_image_version* desired_romext,
+    const struct opentitan_image_version* desired_app) {
+  return libhoth_ot_version_eq(libhoth_ot_staged_romext(resp),
+                               desired_romext) &&
+         libhoth_ot_version_eq(libhoth_ot_staged_app(resp), desired_app);
+}
+
+bool libhoth_update_complete(
+    const struct opentitan_get_version_resp* resp,
+    const struct opentitan_image_version* desired_romext,
+    const struct opentitan_image_version* desired_app) {
+  return libhoth_ot_boot_slot_eq(resp, desired_romext, desired_app) &&
+         libhoth_ot_staged_slot_eq(resp, desired_romext, desired_app);
+}
