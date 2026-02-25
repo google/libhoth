@@ -186,8 +186,8 @@ int libhoth_hostcmd_exec(struct libhoth_device* dev, uint16_t command,
     struct hoth_host_response hdr;
     uint8_t
         payload_buf[LIBHOTH_MAILBOX_SIZE - sizeof(struct hoth_host_response)];
-  } resp;
-  size_t resp_size;
+  } resp = {};
+  size_t resp_size = 0;
   status = libhoth_receive_response(dev, &resp, sizeof(resp), &resp_size,
                                     HOTH_CMD_TIMEOUT_MS_DEFAULT);
   if (status != LIBHOTH_OK) {
