@@ -160,8 +160,31 @@ int htool_dfu_update(const struct htool_invocation* inv) {
 
     if (retval != 0) {
       fprintf(stderr, "DFU update failed\n");
+      libhoth_print_dfu_error(dev, NULL);
+      retval = -1;
       goto cleanup2;
     }
+
+    retval = libhoth_opentitan_version(dev, &resp);
+    if (retval != 0) {
+      fprintf(stderr, "Failed to get ot version after dfu update\n");
+      libhoth_print_dfu_error(dev, NULL);
+      goto cleanup2;
+    }
+
+    if (!libhoth_ot_boot_slot_eq(&resp, &desired_rom_ext, &desired_app)) {
+      fprintf(stderr, "Boot slot is wrong after dfu update %d\n", i);
+      libhoth_print_dfu_error(dev, &resp);
+      retval = -1;
+      goto cleanup2;
+    }
+  }
+
+  if (!libhoth_update_complete(&resp, &desired_rom_ext, &desired_app)) {
+    fprintf(stderr, "DFU update failed\n");
+    libhoth_print_dfu_error(dev, &resp);
+    retval = -1;
+    goto cleanup2;
   }
 
   int ret;
