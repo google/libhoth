@@ -28,10 +28,10 @@ extern "C" {
 int libhoth_dfu_check(struct libhoth_device* const dev, const uint8_t* image,
                       size_t image_size,
                       struct opentitan_get_version_resp* resp);
-void libhoth_print_boot_log(struct opentitan_image_version* booted_rom_ext,
-                            struct opentitan_image_version* booted_app,
-                            struct opentitan_image_version* desired_rom_ext,
-                            struct opentitan_image_version* desired_app);
+void libhoth_print_boot_log(
+    const struct opentitan_get_version_resp* resp,
+    const struct opentitan_image_version* desired_rom_ext,
+    const struct opentitan_image_version* desired_app);
 void libhoth_print_dfu_error(struct libhoth_device* const dev,
                              struct opentitan_get_version_resp* resp);
 void libhoth_print_erot_console(struct libhoth_device* const dev);
