@@ -27,14 +27,19 @@
 #include <time.h>
 #include <unistd.h>
 
+#include "opentitan_version.h"
 #include "protocol/console.h"
 #include "protocol/host_cmd.h"
 #include "protocol/opentitan_version.h"
 
-void libhoth_print_boot_log(struct opentitan_image_version* booted_rom_ext,
-                            struct opentitan_image_version* booted_app,
-                            struct opentitan_image_version* desired_rom_ext,
-                            struct opentitan_image_version* desired_app) {
+void libhoth_print_boot_log(
+    const struct opentitan_get_version_resp* resp,
+    const struct opentitan_image_version* desired_rom_ext,
+    const struct opentitan_image_version* desired_app) {
+  const struct opentitan_image_version* booted_rom_ext =
+      libhoth_ot_boot_romext(resp);
+  const struct opentitan_image_version* booted_app = libhoth_ot_boot_app(resp);
+
   printf("installed_version: \"%d.%d\"\n", desired_app->major,
          desired_app->minor);
   printf("activated_versions: {\n");
@@ -56,7 +61,18 @@ void libhoth_print_dfu_error(struct libhoth_device* const dev,
 
   printf("tool_failure_code: -1\n");
   printf("notes: \"");
-  libhoth_print_ot_version_resp(resp);
+
+  if (resp != NULL) {
+    libhoth_print_ot_version_resp(resp);
+  } else {
+    struct opentitan_get_version_resp ot_resp;
+    int retval = libhoth_opentitan_version(dev, &ot_resp);
+    if (retval == LIBHOTH_OK) {
+      libhoth_print_ot_version_resp(&ot_resp);
+    } else {
+      printf("[FAILED to get OT version information from RoT]\n");
+    }
+  }
   libhoth_print_erot_console(dev);
   // Added to enclosed the "" within the notes field
   printf("\"\n");
@@ -77,32 +93,11 @@ int libhoth_dfu_check(struct libhoth_device* const dev, const uint8_t* image,
     fprintf(stderr, "Error: Failed to extract bundle with code %d\n", retval);
   }
 
-  // Determine the stage slot for each ot get version to compare
-  uint32_t rom_ext_boot_slot = bootslot_int(resp->rom_ext.booted_slot);
-  uint32_t rom_ext_stage_slot = rom_ext_boot_slot == 0 ? 1 : 0;
-  uint32_t app_boot_slot = bootslot_int(resp->app.booted_slot);
-  uint32_t app_stage_slot = app_boot_slot == 0 ? 1 : 0;
-
   // Always print out on non-error OR error the installed and active version for
   // parsing purpose
-  libhoth_print_boot_log(&resp->rom_ext.slots[rom_ext_boot_slot],
-                         &resp->app.slots[app_boot_slot], &desired_rom_ext,
-                         &desired_app);
+  libhoth_print_boot_log(resp, &desired_rom_ext, &desired_app);
 
-  bool booted_slot_eq =
-      libhoth_ot_version_eq(&resp->rom_ext.slots[rom_ext_boot_slot],
-                            &desired_rom_ext) &&
-      libhoth_ot_version_eq(&resp->app.slots[app_boot_slot], &desired_app);
-  if (!booted_slot_eq) {
-    libhoth_print_dfu_error(dev, resp);
-    return -1;
-  }
-
-  bool staging_slot_eq =
-      libhoth_ot_version_eq(&resp->rom_ext.slots[rom_ext_stage_slot],
-                            &desired_rom_ext) &&
-      libhoth_ot_version_eq(&resp->app.slots[app_stage_slot], &desired_app);
-  if (!staging_slot_eq) {
+  if (!libhoth_update_complete(resp, &desired_rom_ext, &desired_app)) {
     libhoth_print_dfu_error(dev, resp);
     return -1;
   }
