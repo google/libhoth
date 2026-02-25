@@ -23,11 +23,7 @@
 void libhoth_print_erot_console(struct libhoth_device* const dev) {
   uint32_t current_offset = 0;
 
-  // Init the opts and set it to EROT channel
-  struct libhoth_htool_console_opts opts = {0};
-  opts.channel_id = EROT_CHANNEL_ID;
-
-  int status = libhoth_get_channel_status(dev, &opts, &current_offset);
+  int status = libhoth_get_channel_status(dev, EROT_CHANNEL_ID, &current_offset);
   if (status != LIBHOTH_OK) {
     fprintf(stderr, "libhoth_get_channel_status() failed: %d\n", status);
     return;
@@ -38,7 +34,7 @@ void libhoth_print_erot_console(struct libhoth_device* const dev) {
   uint32_t offset = current_offset - 0x80000000;
 
   while (true) {
-    status = libhoth_read_console(dev, STDOUT_FILENO, true, opts.channel_id,
+    status = libhoth_read_console(dev, STDOUT_FILENO, true, EROT_CHANNEL_ID,
                                   &offset);
     if (status != LIBHOTH_OK) {
       break;
@@ -51,10 +47,10 @@ void libhoth_print_erot_console(struct libhoth_device* const dev) {
 }
 
 int libhoth_get_channel_status(struct libhoth_device* dev,
-                               const struct libhoth_htool_console_opts* opts,
+                               uint32_t channel_id,
                                uint32_t* offset) {
   struct hoth_channel_status_request req = {
-      .channel_id = opts->channel_id,
+      .channel_id = channel_id,
   };
   struct hoth_channel_status_response resp;
 
@@ -215,21 +211,22 @@ int libhoth_write_console(struct libhoth_device* dev, uint32_t channel_id,
 }
 
 int libhoth_get_uart_config(struct libhoth_device* dev,
-                            const struct libhoth_htool_console_opts* opts,
+                            uint32_t channel_id,
                             struct hoth_channel_uart_config* resp) {
   struct hoth_channel_uart_config_get_req req = {
-      .channel_id = opts->channel_id,
+      .channel_id = channel_id,
   };
   return libhoth_hostcmd_exec(
       dev,
       HOTH_CMD_BOARD_SPECIFIC_BASE + HOTH_PRV_CMD_HOTH_CHANNEL_UART_CONFIG_GET,
       /*version=*/0, &req, sizeof(req), resp, sizeof(*resp), NULL);
 }
+
 int libhoth_set_uart_config(struct libhoth_device* dev,
-                            const struct libhoth_htool_console_opts* opts,
+                            const uint32_t channel_id,
                             struct hoth_channel_uart_config* config) {
   struct hoth_channel_uart_config_set_req req = {
-      .channel_id = opts->channel_id,
+      .channel_id = channel_id,
       .config = *config,
   };
   return libhoth_hostcmd_exec(

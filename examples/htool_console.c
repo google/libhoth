@@ -66,11 +66,11 @@ int htool_console_run(struct libhoth_device* dev,
   printf("%sStarting Interactive Console\n", kAnsiRed);
 
   struct hoth_channel_uart_config uart_config = {};
-  int status = libhoth_get_uart_config(dev, opts, &uart_config);
+  int status = libhoth_get_uart_config(dev, opts->channel_id, &uart_config);
   if (status == LIBHOTH_OK) {
     if (opts->baud_rate != 0) {
       uart_config.baud_rate = opts->baud_rate;
-      status = libhoth_set_uart_config(dev, opts, &uart_config);
+      status = libhoth_set_uart_config(dev, opts->channel_id, &uart_config);
       if (status != LIBHOTH_OK) {
         fprintf(
             stderr,
@@ -78,7 +78,7 @@ int htool_console_run(struct libhoth_device* dev,
             status);
         return status;
       }
-      status = libhoth_get_uart_config(dev, opts, &uart_config);
+      status = libhoth_get_uart_config(dev, opts->channel_id, &uart_config);
     }
   }
   if (status == LIBHOTH_OK) {
@@ -89,7 +89,7 @@ int htool_console_run(struct libhoth_device* dev,
   // Get the channel write pointer. (any new serial data received after this
   // will be stored at this offset)
   uint32_t offset;
-  status = libhoth_get_channel_status(dev, opts, &offset);
+  status = libhoth_get_channel_status(dev, opts->channel_id, &offset);
   if (status != LIBHOTH_OK) {
     fprintf(stderr, "libhoth_get_channel_status() failed: %d\n", status);
     return status;
@@ -172,7 +172,7 @@ int htool_console_snapshot(struct libhoth_device* dev,
   // Starting from current_offset - 0x80000000 so it's guaranteed to be outside
   // of the Hoth buffer. Repeat read until reaching current offset.
   uint32_t current_offset;
-  int status = libhoth_get_channel_status(dev, opts, &current_offset);
+  int status = libhoth_get_channel_status(dev, opts->channel_id, &current_offset);
   if (status != LIBHOTH_OK) {
     fprintf(stderr, "libhoth_get_channel_status) failed: %d\n", status);
     return status;

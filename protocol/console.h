@@ -116,21 +116,10 @@ struct hoth_channel_uart_config_set_req {
   struct hoth_channel_uart_config config;
 } __attribute__((packed, aligned(4)));
 
-struct libhoth_htool_console_opts {
-  uint32_t channel_id;
-  bool force_drive_tx;
-  bool history;
-  bool onlcr;
-  uint32_t baud_rate;
-  bool snapshot;
-  uint32_t claim_timeout_secs;
-  uint32_t yield_ms;
-};
-
 void libhoth_print_erot_console(struct libhoth_device* const dev);
 
 int libhoth_get_channel_status(struct libhoth_device* dev,
-                               const struct libhoth_htool_console_opts* opts,
+                               uint32_t channel_id,
                                uint32_t* offset);
 
 int libhoth_read_console(struct libhoth_device* dev, int fd,
@@ -141,11 +130,11 @@ int libhoth_write_console(struct libhoth_device* dev, uint32_t channel_id,
                           bool force_drive_tx, bool* quit);
 
 int libhoth_get_uart_config(struct libhoth_device* dev,
-                            const struct libhoth_htool_console_opts* opts,
+                            uint32_t channel_id,
                             struct hoth_channel_uart_config* resp);
 
 int libhoth_set_uart_config(struct libhoth_device* dev,
-                            const struct libhoth_htool_console_opts* opts,
+                            uint32_t channel_id,
                             struct hoth_channel_uart_config* config);
 
 #ifdef __cplusplus
