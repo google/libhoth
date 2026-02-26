@@ -83,3 +83,50 @@ bool libhoth_payload_info(const uint8_t* image, size_t len,
 
   return true;
 }
+
+bool libhoth_payload_info_all(const uint8_t* image, size_t len,
+                              struct payload_info_all* info_all) {
+  if (!libhoth_payload_info(image, len, &info_all->info)) {
+    return false;
+  }
+
+  const struct image_descriptor* descr =
+      libhoth_find_image_descriptor(image, len);
+  if (descr == NULL) {
+    return false;
+  }
+
+  // Reject images with more regions than PAYLOAD_INFO_ALL_MAX_REGIONS
+  uint8_t count = descr->region_count;
+  if (count > PAYLOAD_INFO_ALL_MAX_REGIONS) {
+    return false;
+  }
+
+  // Validate that the claimed region_count fits within descriptor_area_size.
+  uint32_t regions_end =
+      sizeof(struct image_descriptor) + count * sizeof(struct image_region);
+  if (regions_end > descr->descriptor_area_size) {
+    return false;
+  }
+
+  info_all->descriptor_major = descr->descriptor_major;
+  info_all->descriptor_minor = descr->descriptor_minor;
+  info_all->build_timestamp = descr->build_timestamp;
+  info_all->hash_type = descr->hash_type;
+  info_all->region_count = descr->region_count;
+  info_all->image_size = descr->image_size;
+  info_all->blob_size = descr->blob_size;
+
+  for (uint8_t i = 0; i < count; i++) {
+    const struct image_region* src = &descr->image_regions[i];
+    struct payload_region_info* dst = &info_all->regions[i];
+    memcpy(dst->region_name, src->region_name, sizeof(dst->region_name));
+    dst->region_name[sizeof(dst->region_name) - 1] = 0;
+    dst->region_offset = src->region_offset;
+    dst->region_size = src->region_size;
+    dst->region_version = src->region_version;
+    dst->region_attributes = src->region_attributes;
+  }
+
+  return true;
+}
