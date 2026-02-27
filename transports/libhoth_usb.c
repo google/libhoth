@@ -314,6 +314,7 @@ int libhoth_usb_close(struct libhoth_device* dev) {
 
   struct libhoth_usb_device* usb_dev =
       (struct libhoth_usb_device*)dev->user_ctx;
+  dev->user_ctx = NULL;
   switch (usb_dev->info.type) {
     case LIBHOTH_USB_INTERFACE_TYPE_MAILBOX:
       status = libhoth_usb_mailbox_close(usb_dev);
