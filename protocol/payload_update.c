@@ -26,6 +26,12 @@
 #include "transports/libhoth_device.h"
 #include "util.h"
 
+#define PAYLOAD_UPDATE_CONFIRM_OP_ENABLE 0
+#define PAYLOAD_UPDATE_CONFIRM_OP_ENABLE_WITH_TIMEOUT 1
+#define PAYLOAD_UPDATE_CONFIRM_OP_DISABLE 2
+#define PAYLOAD_UPDATE_CONFIRM_OP_CONFIRM 3
+#define PAYLOAD_UPDATE_CONFIRM_OP_GET_TIMEOUT_VALUES 4
+
 static int send_payload_update_request_with_command(struct libhoth_device* dev,
                                                     uint8_t command) {
   struct payload_update_packet request;
@@ -268,4 +274,111 @@ enum payload_update_err libhoth_payload_update_read_chunk(
   }
 
   return PAYLOAD_UPDATE_OK;
+}
+
+int libhoth_payload_update_confirm(struct libhoth_device* dev) {
+  payload_update_confirm_response_t confirm_response = {0};
+
+  // 1. Create the structures
+  payload_update_confirm_request_t confirm_request = {0};
+  confirm_request.op = PAYLOAD_UPDATE_CONFIRM_OP_CONFIRM;
+
+  struct payload_update_packet pkt_header = {
+      .type = PAYLOAD_UPDATE_CONFIRM,
+      .offset = 0,
+      .len = sizeof(confirm_request),
+  };
+
+  uint8_t send_buf[sizeof(pkt_header) + sizeof(confirm_request)] = {0};
+  memcpy(&send_buf[0], &pkt_header, sizeof(pkt_header));
+  memcpy(&send_buf[sizeof(pkt_header)], &confirm_request,
+         sizeof(confirm_request));
+
+  int ret = libhoth_hostcmd_exec(
+      dev, HOTH_CMD_BOARD_SPECIFIC_BASE + HOTH_PRV_CMD_HOTH_PAYLOAD_UPDATE, 0,
+      &send_buf, sizeof(send_buf), &confirm_response, sizeof(confirm_response),
+      NULL);
+  if (ret != 0) {
+    fprintf(stderr, "Payload update confirm failed, err code: %d\n", ret);
+    return -1;
+  }
+
+  return 0;
+}
+
+int libhoth_payload_update_confirm_enable(struct libhoth_device* dev,
+                                          bool enable,
+                                          uint32_t timeout_seconds) {
+  payload_update_confirm_response_t confirm_response = {0};
+
+  payload_update_confirm_request_t confirm_request = {0};
+  confirm_request.op = enable ? PAYLOAD_UPDATE_CONFIRM_OP_ENABLE_WITH_TIMEOUT
+                              : PAYLOAD_UPDATE_CONFIRM_OP_DISABLE;
+  confirm_request.timeout = timeout_seconds;
+
+  struct payload_update_packet pkt_header = {
+      .type = PAYLOAD_UPDATE_CONFIRM,
+      .offset = 0,
+      .len = sizeof(confirm_request),
+  };
+
+  // timout_seconds of 0 is treated as a special value to use the default
+  // timeout value defined in the firmware.
+  if (timeout_seconds == 0) {
+    confirm_request.op = PAYLOAD_UPDATE_CONFIRM_OP_ENABLE;
+    confirm_request.timeout = PAYLOAD_UPDATE_CONFIRM_SECONDS_DEFAULT;
+  }
+
+  if (confirm_request.timeout < PAYLOAD_UPDATE_CONFIRM_SECONDS_MIN ||
+      confirm_request.timeout > PAYLOAD_UPDATE_CONFIRM_SECONDS_MAX) {
+    fprintf(stderr,
+            "Invalid timeout value: %u. Must be between %u and %u seconds.\n",
+            confirm_request.timeout, PAYLOAD_UPDATE_CONFIRM_SECONDS_MIN,
+            PAYLOAD_UPDATE_CONFIRM_SECONDS_MAX);
+    return -1;
+  }
+
+  uint8_t send_buf[sizeof(pkt_header) + sizeof(confirm_request)] = {0};
+  memcpy(&send_buf[0], &pkt_header, sizeof(pkt_header));
+  memcpy(&send_buf[sizeof(pkt_header)], &confirm_request,
+         sizeof(confirm_request));
+
+  int ret = libhoth_hostcmd_exec(
+      dev, HOTH_CMD_BOARD_SPECIFIC_BASE + HOTH_PRV_CMD_HOTH_PAYLOAD_UPDATE, 0,
+      &send_buf, sizeof(send_buf), &confirm_response, sizeof(confirm_response),
+      NULL);
+  if (ret != 0) {
+    fprintf(stderr, "Payload update confirm enable failed, err code: %d\n",
+            ret);
+    return -1;
+  }
+
+  return 0;
+}
+
+int libhoth_payload_update_confirm_get_timeout(
+    struct libhoth_device* dev, payload_update_confirm_response_t* response) {
+  payload_update_confirm_request_t confirm_request = {0};
+  confirm_request.op = PAYLOAD_UPDATE_CONFIRM_OP_GET_TIMEOUT_VALUES;
+
+  struct payload_update_packet pkt_header = {
+      .type = PAYLOAD_UPDATE_CONFIRM,
+      .offset = 0,
+      .len = sizeof(confirm_request),
+  };
+
+  uint8_t send_buf[sizeof(pkt_header) + sizeof(confirm_request)] = {0};
+  memcpy(&send_buf[0], &pkt_header, sizeof(pkt_header));
+  memcpy(&send_buf[sizeof(pkt_header)], &confirm_request,
+         sizeof(confirm_request));
+
+  int ret = libhoth_hostcmd_exec(
+      dev, HOTH_CMD_BOARD_SPECIFIC_BASE + HOTH_PRV_CMD_HOTH_PAYLOAD_UPDATE, 0,
+      &send_buf, sizeof(send_buf), response, sizeof(*response), NULL);
+  if (ret != 0) {
+    fprintf(stderr, "Payload update get timeout failed, err code: %d\n", ret);
+    return -1;
+  }
+
+  return 0;
 }
