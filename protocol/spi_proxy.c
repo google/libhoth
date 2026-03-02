@@ -60,34 +60,39 @@ static void spi_operation_init(struct spi_operation* op) {
 
 static int spi_operation_execute(struct spi_operation* op,
                                  struct libhoth_device* dev) {
-  uint8_t response_buf[MAX_SPI_OP_PAYLOAD_BYTES];
-  size_t response_len;
+  uint8_t response_buf[MAX_SPI_OP_PAYLOAD_BYTES] = {0};
+  size_t response_len = 0;
 
-  // hexdump(op->buf, op->pos);
   int status = libhoth_hostcmd_exec(
       dev, HOTH_CMD_BOARD_SPECIFIC_BASE + HOTH_PRV_CMD_HOTH_SPI_OPERATION,
       /*version=*/0, op->buf, op->pos, response_buf, sizeof(response_buf),
       &response_len);
+
   if (status != 0) {
     return status;
   }
+
   size_t pos = 0;
   for (size_t i = 0; i < op->num_transactions; i++) {
     struct spi_operation_transaction* transaction = &op->transactions[i];
-    if (transaction->miso_dest_buf) {
-      if (transaction->miso_dest_buf_len > 0) {
-        if (pos + transaction->miso_dest_buf_len > response_len) {
-          fprintf(stderr,
-                  "returned SPI operation payload is smaller than expected");
-          return -1;
-        }
+
+    if (transaction->miso_dest_buf_len > 0) {
+      if (pos + transaction->miso_dest_buf_len + transaction->skip_miso_nbytes >
+          response_len) {
+        fprintf(stderr,
+                "returned SPI operation payload is smaller than expected");
+        return -1;
+      }
+      if (transaction->miso_dest_buf) {
         memcpy(transaction->miso_dest_buf,
                &response_buf[pos + transaction->skip_miso_nbytes],
                transaction->miso_dest_buf_len);
       }
     }
+
     pos += transaction->skip_miso_nbytes + transaction->miso_dest_buf_len;
   }
+
   return 0;
 }
 
