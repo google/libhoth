@@ -106,6 +106,10 @@ int libhoth_read_console(struct libhoth_device* dev, int fd,
   if (status != 0) {
     return status;
   }
+  if (req.offset != resp.resp.offset) {
+    fprintf(stderr, "Console jumped forward %u bytes\n",
+            resp.resp.offset - req.offset);
+  }
 
   int len = response_size - sizeof(resp.resp);
   if (len > 0) {
@@ -130,9 +134,9 @@ int libhoth_read_console(struct libhoth_device* dev, int fd,
         return -1;
       }
     }
-    *offset = resp.resp.offset + len;
   }
 
+  *offset = resp.resp.offset + len;
   return 0;
 }
 
