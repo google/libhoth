@@ -107,8 +107,8 @@ static int populate_ec_request_header(
 }
 
 static int validate_ec_response_header(
-    const struct hoth_host_response* response_header, const void* response,
-    size_t response_size) {
+    const struct hoth_host_response* response_header,
+    const void* response_payload, size_t response_header_and_payload_size) {
   uint8_t response_checksum;
 
   if (!response_header) {
@@ -116,7 +116,13 @@ static int validate_ec_response_header(
     return -EINVAL;
   }
 
-  if (!response && response_header->data_len > 0) {
+  if (response_header_and_payload_size < sizeof(*response_header)) {
+    fprintf(stderr, "Partial response header (size %zu)\n",
+            response_header_and_payload_size);
+    return -EINVAL;
+  }
+
+  if (!response_payload && response_header->data_len > 0) {
     fprintf(
         stderr,
         "response cannot be NULL if the response data_len is greater than 0\n");
@@ -129,16 +135,18 @@ static int validate_ec_response_header(
     return -EINVAL;
   }
 
-  if (response_header->data_len > response_size) {
+  if (response_header->data_len !=
+      (response_header_and_payload_size - sizeof(*response_header))) {
     fprintf(stderr,
-            "Error: insufficient response buffer size. Have %zu, need %u\n",
-            response_size, response_header->data_len);
+            "Error: Incorrect response data length. Have %u, need %zu\n",
+            response_header->data_len,
+            response_header_and_payload_size - sizeof(*response_header));
     return -EINVAL;
   }
 
   response_checksum =
       libhoth_calculate_checksum(response_header, sizeof(*response_header),
-                                 response, response_header->data_len);
+                                 response_payload, response_header->data_len);
 
   // Since this checksum includes the `checksum` field in `response_header`, it
   // should be zero.
@@ -147,7 +155,7 @@ static int validate_ec_response_header(
     fprintf(stderr, "Response header:\n");
     hex_dump(stderr, response_header, sizeof(*response_header));
     fprintf(stderr, "Response body:\n");
-    hex_dump(stderr, response, response_header->data_len);
+    hex_dump(stderr, response_payload, response_header->data_len);
     return -EINVAL;
   }
 
@@ -186,7 +194,7 @@ int libhoth_hostcmd_exec(struct libhoth_device* dev, uint16_t command,
     struct hoth_host_response hdr;
     uint8_t
         payload_buf[LIBHOTH_MAILBOX_SIZE - sizeof(struct hoth_host_response)];
-  } resp = {};
+  } resp;
   size_t resp_size = 0;
   status = libhoth_receive_response(dev, &resp, sizeof(resp), &resp_size,
                                     HOTH_CMD_TIMEOUT_MS_DEFAULT);
