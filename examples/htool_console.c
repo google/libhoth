@@ -105,26 +105,39 @@ int htool_console_run(struct libhoth_device* dev,
   bool quit = false;
 
   while (!quit) {
+    // Any previous failure should reset all of the USB state before retrying
+    while (status != LIBHOTH_OK) {
+      // TODO: Read STDIN during this time and buffer it so we can capture
+      // quit events even when the console is disconnected. We will also want
+      // to tune the reconnect time to match.
+      status = libhoth_device_reconnect(dev);
+      // If USB is down we might fail reconnect, just retry
+      if (status != LIBHOTH_OK) {
+        // Make sure we don't end up in a tight retry loop
+        usleep(100 * 1000);
+      }
+    }
+    // Give an opportunity for other clients to use the interface.
+    libhoth_release_device(dev);
+    usleep(1000 * opts->yield_ms);
+    status = libhoth_claim_device(dev, 1000 * 1000 * opts->claim_timeout_secs);
+    if (status != LIBHOTH_OK) {
+      // If USB is down we might fail claim, just go back and retry
+      continue;
+    }
+
     status = libhoth_read_console(dev, STDOUT_FILENO, false, opts->channel_id,
                                   &offset);
     if (status != LIBHOTH_OK) {
-      break;
+      // Device resets cause failures, just loop and allow reconnection
+      continue;
     }
 
     status = libhoth_write_console(dev, opts->channel_id, opts->force_drive_tx,
                                    &quit);
     if (status != LIBHOTH_OK) {
-      break;
-    }
-
-    libhoth_release_device(dev);
-
-    // Give an opportunity for other clients to use the interface.
-    usleep(1000 * opts->yield_ms);
-
-    status = libhoth_claim_device(dev, 1000 * 1000 * opts->claim_timeout_secs);
-    if (status != LIBHOTH_OK) {
-      break;
+      // Device resets cause failures, just loop and allow reconnection
+      continue;
     }
   }
 
