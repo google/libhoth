@@ -33,7 +33,7 @@ void libhoth_print_boot_log(
     const struct opentitan_image_version* desired_rom_ext,
     const struct opentitan_image_version* desired_app);
 void libhoth_print_dfu_error(struct libhoth_device* const dev,
-                             struct opentitan_get_version_resp* resp);
+                             struct opentitan_get_version_resp* resp, int err);
 void libhoth_print_erot_console(struct libhoth_device* const dev);
 
 #ifdef __cplusplus
