@@ -140,7 +140,7 @@ int htool_dfu_update(const struct htool_invocation* inv) {
                                      &desired_app);
 
   if (retval != 0) {
-    fprintf(stderr, "Failed to extract bundle\n");
+    fprintf(stderr, "Failed to extract bundle (%d)\n", retval);
     goto cleanup2;
   }
 
@@ -148,7 +148,7 @@ int htool_dfu_update(const struct htool_invocation* inv) {
   retval = libhoth_opentitan_version(dev, &resp);
 
   if (retval != 0) {
-    fprintf(stderr, "Failed to get current version\n");
+    fprintf(stderr, "Failed to get current version (%d)\n", retval);
     goto cleanup2;
   }
 
@@ -159,30 +159,34 @@ int htool_dfu_update(const struct htool_invocation* inv) {
     retval = libhoth_dfu_update(dev, image, statbuf.st_size, complete_flags);
 
     if (retval != 0) {
-      fprintf(stderr, "DFU update failed\n");
-      libhoth_print_dfu_error(dev, NULL);
+      fprintf(stderr, "DFU update failed (%d)\n", retval);
+      libhoth_print_dfu_error(dev, NULL, retval);
       retval = -1;
       goto cleanup2;
     }
 
     retval = libhoth_opentitan_version(dev, &resp);
     if (retval != 0) {
-      fprintf(stderr, "Failed to get ot version after dfu update\n");
-      libhoth_print_dfu_error(dev, NULL);
+      fprintf(stderr, "Failed to get ot version after dfu update (%d)\n",
+              retval);
+      libhoth_print_dfu_error(dev, NULL, retval);
       goto cleanup2;
     }
 
     if (!libhoth_ot_boot_slot_eq(&resp, &desired_rom_ext, &desired_app)) {
       fprintf(stderr, "Boot slot is wrong after dfu update %d\n", i);
-      libhoth_print_dfu_error(dev, &resp);
+      libhoth_print_dfu_error(dev, &resp, LIBHOTH_OK);
       retval = -1;
       goto cleanup2;
     }
   }
 
   if (!libhoth_update_complete(&resp, &desired_rom_ext, &desired_app)) {
-    fprintf(stderr, "DFU update failed\n");
-    libhoth_print_dfu_error(dev, &resp);
+    fprintf(stderr,
+            "DFU update failed, running image does not match expected after %d "
+            "dfu updates\n",
+            update_cnt);
+    libhoth_print_dfu_error(dev, &resp, LIBHOTH_OK);
     retval = -1;
     goto cleanup2;
   }

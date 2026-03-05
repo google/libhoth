@@ -54,13 +54,13 @@ void libhoth_print_boot_log(
 }
 
 void libhoth_print_dfu_error(struct libhoth_device* const dev,
-                             struct opentitan_get_version_resp* resp) {
-  fprintf(
-      stderr,
-      "Error: Mismatch detected between the current and desired versions.\n");
-
+                             struct opentitan_get_version_resp* resp, int err) {
   printf("tool_failure_code: -1\n");
   printf("notes: \"");
+
+  if (!err) {
+    printf("dfu failed with error code %d\n", err);
+  }
 
   if (resp != NULL) {
     libhoth_print_ot_version_resp(resp);
@@ -70,7 +70,7 @@ void libhoth_print_dfu_error(struct libhoth_device* const dev,
     if (retval == LIBHOTH_OK) {
       libhoth_print_ot_version_resp(&ot_resp);
     } else {
-      printf("[FAILED to get OT version information from RoT]\n");
+      printf("Failed to get OT version information from RoT\n");
     }
   }
   libhoth_print_erot_console(dev);
@@ -98,7 +98,10 @@ int libhoth_dfu_check(struct libhoth_device* const dev, const uint8_t* image,
   libhoth_print_boot_log(resp, &desired_rom_ext, &desired_app);
 
   if (!libhoth_update_complete(resp, &desired_rom_ext, &desired_app)) {
-    libhoth_print_dfu_error(dev, resp);
+    fprintf(
+        stderr,
+        "Error: Mismatch detected between the current and desired versions.\n");
+    libhoth_print_dfu_error(dev, resp, LIBHOTH_OK);
     return -1;
   }
 
