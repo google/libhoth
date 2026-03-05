@@ -16,18 +16,131 @@
 
 #include <errno.h>
 #include <fcntl.h>
+#include <inttypes.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <sys/mman.h>
 #include <sys/stat.h>
 #include <sys/types.h>
+#include <time.h>
 #include <unistd.h>
 
 #include "host_commands.h"
 #include "htool.h"
 #include "protocol/payload_info.h"
 #include "protocol/payload_status.h"
+
+static void print_region_attributes(uint16_t attributes) {
+  static const struct {
+    uint16_t mask;
+    const char* name;
+  } flags[] = {
+      {IMAGE_REGION_STATIC, "STATIC"},
+      {IMAGE_REGION_COMPRESSED, "COMPRESSED"},
+      {IMAGE_REGION_WRITE_PROTECTED, "WRITE_PROTECTED"},
+      {IMAGE_REGION_PERSISTENT, "PERSISTENT"},
+      {IMAGE_REGION_PERSISTENT_RELOCATABLE, "PERSISTENT_RELOCATABLE"},
+      {IMAGE_REGION_PERSISTENT_EXPANDABLE, "PERSISTENT_EXPANDABLE"},
+      {IMAGE_REGION_OVERRIDE, "OVERRIDE"},
+      {IMAGE_REGION_OVERRIDE_ON_TRANSITION, "OVERRIDE_ON_TRANSITION"},
+      {IMAGE_REGION_MAILBOX, "MAILBOX"},
+      {IMAGE_REGION_SKIP_BOOT_VALIDATION, "SKIP_BOOT_VALIDATION"},
+      {IMAGE_REGION_EMPTY, "EMPTY"},
+  };
+
+  printf("0x%04x", attributes);
+  bool first = true;
+  for (size_t i = 0; i < sizeof(flags) / sizeof(flags[0]); i++) {
+    if (attributes & flags[i].mask) {
+      printf("%s%s", first ? " (" : " | ", flags[i].name);
+      first = false;
+    }
+  }
+  if (!first) {
+    printf(")");
+  }
+  printf("\n");
+}
+
+static void print_regions(const struct payload_info_all* info_all,
+                          uint16_t skip_mask) {
+  for (uint8_t i = 0; i < info_all->region_count; i++) {
+    const struct payload_region_info* r = &info_all->regions[i];
+    if (r->region_attributes & skip_mask) {
+      continue;
+    }
+    printf("  Region %u:\n", i);
+    printf("    name: %s\n", r->region_name);
+    printf("    offset: 0x%08x\n", r->region_offset);
+    printf("    size: 0x%08x\n", r->region_size);
+    printf("    version: %u\n", r->region_version);
+    printf("    attributes: ");
+    print_region_attributes(r->region_attributes);
+  }
+}
+
+static const char* hash_type_string(uint8_t hash_type) {
+  switch (hash_type) {
+    case HASH_NONE:
+      return "None";
+    case HASH_SHA2_256:
+      return "SHA2-256";
+    default:
+      return "Unknown";
+  }
+}
+
+struct htool_payload_image {
+  uint8_t* image;
+  size_t size;
+  int fd;
+};
+
+static int htool_payload_image_open(const struct htool_invocation* inv,
+                                    struct htool_payload_image* img) {
+  const char* image_file;
+  if (htool_get_param_string(inv, "source-file", &image_file) != 0) {
+    return -1;
+  }
+  img->fd = open(image_file, O_RDONLY, 0);
+  if (img->fd == -1) {
+    fprintf(stderr, "Error opening file %s: %s\n", image_file, strerror(errno));
+    return -1;
+  }
+  struct stat statbuf;
+  if (fstat(img->fd, &statbuf)) {
+    fprintf(stderr, "fstat error: %s\n", strerror(errno));
+    close(img->fd);
+    return -1;
+  }
+  if (statbuf.st_size > SIZE_MAX) {
+    fprintf(stderr, "file too large\n");
+    close(img->fd);
+    return -1;
+  }
+  img->size = (size_t)statbuf.st_size;
+  img->image = mmap(NULL, img->size, PROT_READ, MAP_PRIVATE, img->fd, 0);
+  if (img->image == MAP_FAILED) {
+    fprintf(stderr, "mmap error: %s\n", strerror(errno));
+    close(img->fd);
+    return -1;
+  }
+  return 0;
+}
+
+static int htool_payload_image_close(struct htool_payload_image* img) {
+  int rv = 0;
+  if (munmap(img->image, img->size) != 0) {
+    fprintf(stderr, "munmap error: %s\n", strerror(errno));
+    rv = -1;
+  }
+  if (close(img->fd) != 0) {
+    fprintf(stderr, "close error: %s\n", strerror(errno));
+    rv = -1;
+  }
+  return rv;
+}
 
 int htool_payload_status(const struct htool_invocation* inv) {
   (void)inv;
@@ -79,36 +192,15 @@ int htool_payload_status(const struct htool_invocation* inv) {
 }
 
 int htool_payload_info(const struct htool_invocation* inv) {
-  const char* image_file;
-  if (htool_get_param_string(inv, "source-file", &image_file) != 0) {
+  struct htool_payload_image img;
+  if (htool_payload_image_open(inv, &img) != 0) {
     return -1;
-  }
-
-  int fd = open(image_file, O_RDONLY, 0);
-  if (fd == -1) {
-    fprintf(stderr, "Error opening file %s: %s\n", image_file, strerror(errno));
-    return -1;
-  }
-  struct stat statbuf;
-  if (fstat(fd, &statbuf)) {
-    fprintf(stderr, "fstat error: %s\n", strerror(errno));
-    goto cleanup2;
-  }
-  if (statbuf.st_size > SIZE_MAX) {
-    fprintf(stderr, "file too large\n");
-    goto cleanup2;
-  }
-
-  uint8_t* image = mmap(NULL, statbuf.st_size, PROT_READ, MAP_PRIVATE, fd, 0);
-  if (image == MAP_FAILED) {
-    fprintf(stderr, "mmap error: %s\n", strerror(errno));
-    goto cleanup2;
   }
 
   struct payload_info info;
-  if (!libhoth_payload_info(image, statbuf.st_size, &info)) {
+  if (!libhoth_payload_info(img.image, img.size, &info)) {
     fprintf(stderr, "Failed to parse payload image.  Is this a titan image?\n");
-    goto cleanup;
+    return htool_payload_image_close(&img);
   }
 
   printf("Payload Info:\n");
@@ -119,22 +211,80 @@ int htool_payload_info(const struct htool_invocation* inv) {
          info.image_version.subpoint);
   printf("  type: %u\n", info.image_type);
   printf("  hash: ");
-  for (int i = 0; i < sizeof(info.image_hash); i++) {
+  for (size_t i = 0; i < sizeof(info.image_hash); i++) {
     printf("%02x", info.image_hash[i]);
   }
   printf("\n");
 
-cleanup:
-  if (munmap(image, statbuf.st_size) != 0) {
-    fprintf(stderr, "munmap error: %s\n", strerror(errno));
+  return htool_payload_image_close(&img);
+}
+
+int htool_payload_info_all(const struct htool_invocation* inv) {
+  struct htool_payload_image img;
+  if (htool_payload_image_open(inv, &img) != 0) {
     return -1;
   }
 
-cleanup2:
-  if (close(fd) != 0) {
-    fprintf(stderr, "close error: %s\n", strerror(errno));
+  struct payload_info_all info_all;
+  if (!libhoth_payload_info_all(img.image, img.size, &info_all)) {
+    fprintf(stderr, "Failed to parse payload image.  Is this a titan image?\n");
+    return htool_payload_image_close(&img);
+  }
+
+  printf("Payload Info All:\n");
+  printf("  name: %-32s\n", info_all.info.image_name);
+  printf("  family: %u\n", info_all.info.image_family);
+  printf("  version: %u.%u.%u.%u\n", info_all.info.image_version.major,
+         info_all.info.image_version.minor, info_all.info.image_version.point,
+         info_all.info.image_version.subpoint);
+  printf("  type: %u (%s)\n", info_all.info.image_type,
+         libhoth_image_type_string(info_all.info.image_type));
+  printf("  hash_type: %u (%s)\n", info_all.hash_type,
+         hash_type_string(info_all.hash_type));
+  printf("  hash: ");
+  for (size_t i = 0; i < sizeof(info_all.info.image_hash); i++) {
+    printf("%02x", info_all.info.image_hash[i]);
+  }
+  printf("\n");
+  printf("  descriptor_version: %u.%u\n", info_all.descriptor_major,
+         info_all.descriptor_minor);
+  printf("  build_timestamp: %" PRIu64, info_all.build_timestamp);
+#if __SIZEOF_POINTER__ >= 8
+  if (info_all.build_timestamp != 0) {
+    time_t t = (time_t)info_all.build_timestamp;
+    struct tm tm;
+    if (gmtime_r(&t, &tm)) {
+      char buf[64];
+      if (strftime(buf, sizeof(buf), "%Y-%m-%d %H:%M:%S UTC", &tm) > 0) {
+        printf(" (%s)", buf);
+      }
+    }
+  }
+#endif
+  printf("\n");
+  printf("  image_size: 0x%08x\n", info_all.image_size);
+  printf("  blob_size: %u\n", info_all.blob_size);
+  printf("  region_count: %u\n", info_all.region_count);
+
+  print_regions(&info_all, /*skip_mask=*/0);
+
+  return htool_payload_image_close(&img);
+}
+
+int htool_payload_info_nonstatic(const struct htool_invocation* inv) {
+  struct htool_payload_image img;
+  if (htool_payload_image_open(inv, &img) != 0) {
     return -1;
   }
 
-  return 0;
+  struct payload_info_all info_all;
+  if (!libhoth_payload_info_all(img.image, img.size, &info_all)) {
+    fprintf(stderr, "Failed to parse payload image.  Is this a titan image?\n");
+    return htool_payload_image_close(&img);
+  }
+
+  printf("Non-static regions:\n");
+  print_regions(&info_all, /*skip_mask=*/IMAGE_REGION_STATIC);
+
+  return htool_payload_image_close(&img);
 }
