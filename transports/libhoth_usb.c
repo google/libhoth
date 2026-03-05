@@ -204,9 +204,25 @@ static int libhoth_usb_device_open(
     goto err_out;
   }
 
-  status = libusb_open(options->usb_device, &usb_dev->handle);
-  if (status != LIBUSB_SUCCESS) {
-    goto err_out;
+  uint32_t wait_time_us = 0;
+  while (true) {
+    status = libusb_open(options->usb_device, &usb_dev->handle);
+
+    if (status == LIBUSB_SUCCESS) {
+      break;
+    }
+
+    if (status != LIBUSB_ERROR_ACCESS) {
+      goto err_out;
+    }
+
+    if (wait_time_us >= options->timeout_us) {
+      // timeout
+      goto err_out;
+    }
+
+    usleep(1000);
+    wait_time_us += 1000;
   }
 
   dev->send = libhoth_usb_send_request;
