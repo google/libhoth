@@ -136,6 +136,8 @@ enum payload_update_err libhoth_payload_update(struct libhoth_device* dev,
       }
       erase_progress.progress.func(erase_progress.progress.param, offset, size);
     }
+
+    erase_progress.progress.func(erase_progress.progress.param, size, size);
   }
 
   const size_t max_chunk_size = LIBHOTH_MAILBOX_SIZE -
@@ -184,6 +186,8 @@ enum payload_update_err libhoth_payload_update(struct libhoth_device* dev,
 
     offset += chunk_size - 1;
   }
+
+  program_progress.progress.func(program_progress.progress.param, size, size);
 
   // Don't attempt to verify and activate binary file since most likely it will
   // fail (unlike actual payload images which have an image descriptor)
