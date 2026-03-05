@@ -119,23 +119,25 @@ enum payload_update_err libhoth_payload_update(struct libhoth_device* dev,
     // Erase by blocks as much as possible.
     size_t offset = 0;
     for (; offset + block_erase <= size; offset += block_erase) {
+      erase_progress.progress.func(erase_progress.progress.param, offset, size);
       const int ret = payload_update_erase(dev, offset, block_erase);
       if (ret != 0) {
         fprintf(stderr, "block erase offset 0x%zx err: %d\n", offset, ret);
         return PAYLOAD_UPDATE_ERASE_FAIL;
       }
-      erase_progress.progress.func(erase_progress.progress.param, offset, size);
     }
 
     // Erase remaining by sectors.
     for (; offset + sector_erase <= size; offset += sector_erase) {
+      erase_progress.progress.func(erase_progress.progress.param, offset, size);
       const int ret = payload_update_erase(dev, offset, sector_erase);
       if (ret != 0) {
         fprintf(stderr, "sector erase offset 0x%zx err: %d\n", offset, ret);
         return PAYLOAD_UPDATE_ERASE_FAIL;
       }
-      erase_progress.progress.func(erase_progress.progress.param, offset, size);
     }
+
+    erase_progress.progress.func(erase_progress.progress.param, size, size);
   }
 
   const size_t max_chunk_size = LIBHOTH_MAILBOX_SIZE -
@@ -184,6 +186,8 @@ enum payload_update_err libhoth_payload_update(struct libhoth_device* dev,
 
     offset += chunk_size - 1;
   }
+
+  program_progress.progress.func(program_progress.progress.param, size, size);
 
   // Don't attempt to verify and activate binary file since most likely it will
   // fail (unlike actual payload images which have an image descriptor)
