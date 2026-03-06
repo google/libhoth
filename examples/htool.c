@@ -52,6 +52,7 @@
 #include "htool_srtm.h"
 #include "htool_statistics.h"
 #include "htool_target_control.h"
+#include "htool_tpm.h"
 #include "htool_usb.h"
 #include "protocol/authz_record.h"
 #include "protocol/chipinfo.h"
@@ -1757,6 +1758,30 @@ static const struct htool_cmd CMDS[] = {
                          " If the attestation_output flag is provided the "
                          "other output files are not required."},
                 {}},
+    },
+    {
+        .verbs = (const char*[]){"tpm", "get_mode", NULL},
+        .desc = "Get the current TPM mode.",
+        .params = (const struct htool_param[]){{}},
+        .func = htool_get_tpm_mode,
+    },
+    {
+        .verbs = (const char*[]){"tpm", "set_mode", "disabled", NULL},
+        .desc = "Set the TPM mode to DISABLED.",
+        .params = (const struct htool_param[]){{}},
+        .func = htool_set_tpm_mode,
+    },
+    {
+        .verbs = (const char*[]){"tpm", "set_mode", "tpm_spi", NULL},
+        .desc = "Set the TPM mode to TPM_SPI.",
+        .params = (const struct htool_param[]){{}},
+        .func = htool_set_tpm_mode,
+    },
+    {
+        .verbs = (const char*[]){"tpm", "set_mode", "spi_nor_mailbox", NULL},
+        .desc = "Set the TPM mode to SPI_NOR_MAILBOX.",
+        .params = (const struct htool_param[]){{}},
+        .func = htool_set_tpm_mode,
     },
     {},
 };

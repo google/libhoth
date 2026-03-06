@@ -58,6 +58,8 @@ executable(
         'htool_security_certificates.c',
         'htool_security_tokens.h',
         'htool_security_tokens.c',
+        'htool_tpm.h',
+        'htool_tpm.c',
         git_version_h,
     ],
     dependencies: [libusb],
