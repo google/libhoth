@@ -326,3 +326,75 @@ TEST_F(LibHothTest, payload_update_test_with_binary_image) {
                                    /*binary_file=*/true),
             PAYLOAD_UPDATE_OK);
 }
+
+TEST_F(LibHothTest, payload_update_erase_cmd_test) {
+  constexpr size_t kBlockErase = 64 * 1024;
+  constexpr size_t kSectorErase = 4 * 1024;
+  // Offset that is 1 sector before block boundary
+  constexpr size_t kOffset = kBlockErase - kSectorErase;
+  // Size to trigger 1 sector erase, 1 block erase, 1 sector erase
+  constexpr size_t kSize = kSectorErase + kBlockErase + kSectorErase;
+
+  {
+    InSequence s;
+
+    // Sector Erase to align to block boundary
+    EXPECT_CALL(mock_, send(_, IsEraseRequest(kOffset, kSectorErase), _))
+        .WillOnce(Return(LIBHOTH_OK));
+    EXPECT_CALL(mock_, receive)
+        .WillOnce(DoAll(CopyResp(&kDummy, 0), Return(LIBHOTH_OK)));
+
+    // Block Erase exactly at block boundary
+    EXPECT_CALL(mock_,
+                send(_, IsEraseRequest(kOffset + kSectorErase, kBlockErase), _))
+        .WillOnce(Return(LIBHOTH_OK));
+    EXPECT_CALL(mock_, receive)
+        .WillOnce(DoAll(CopyResp(&kDummy, 0), Return(LIBHOTH_OK)));
+
+    // Sector Erase for the remaining tail
+    EXPECT_CALL(mock_, send(_,
+                            IsEraseRequest(kOffset + kSectorErase + kBlockErase,
+                                           kSectorErase),
+                            _))
+        .WillOnce(Return(LIBHOTH_OK));
+    EXPECT_CALL(mock_, receive)
+        .WillOnce(DoAll(CopyResp(&kDummy, 0), Return(LIBHOTH_OK)));
+  }
+
+  EXPECT_EQ(libhoth_payload_update_erase(&hoth_dev_, kOffset, kSize),
+            PAYLOAD_UPDATE_OK);
+}
+
+TEST_F(LibHothTest, payload_update_erase_cmd_unaligned_offset_test) {
+  constexpr size_t kSize = 4 * 1024;
+  constexpr size_t kOffset = 1;
+
+  EXPECT_EQ(libhoth_payload_update_erase(&hoth_dev_, kOffset, kSize),
+            PAYLOAD_UPDATE_IMAGE_NOT_SECTOR_ALIGNED);
+}
+
+TEST_F(LibHothTest, payload_update_erase_cmd_unaligned_size_test) {
+  constexpr size_t kSize = 4 * 1024 + 1;
+  constexpr size_t kOffset = 4 * 1024;
+
+  EXPECT_EQ(libhoth_payload_update_erase(&hoth_dev_, kOffset, kSize),
+            PAYLOAD_UPDATE_IMAGE_NOT_SECTOR_ALIGNED);
+}
+
+TEST_F(LibHothTest, payload_update_erase_cmd_zero_size_test) {
+  constexpr size_t kSize = 0;
+  constexpr size_t kOffset = 0;
+
+  EXPECT_EQ(libhoth_payload_update_erase(&hoth_dev_, kOffset, kSize),
+            PAYLOAD_UPDATE_IMAGE_NOT_SECTOR_ALIGNED);
+}
+
+TEST_F(LibHothTest, payload_update_erase_cmd_range_overflow_test) {
+  constexpr uint32_t kSectorErase = 4 * 1024;
+  // offset + size slightly exceeding UINT32_MAX
+  constexpr uint32_t kOffset = 0xFFFFF000;
+  constexpr uint32_t kSize = 2 * kSectorErase;
+
+  EXPECT_EQ(libhoth_payload_update_erase(&hoth_dev_, kOffset, kSize),
+            PAYLOAD_UPDATE_INVALID_ARGS);
+}

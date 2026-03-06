@@ -14,6 +14,7 @@
 
 #include "payload_update.h"
 
+#include <inttypes.h>
 #include <stdbool.h>
 #include <stdint.h>
 #include <string.h>
@@ -83,8 +84,9 @@ static int libhoth_payload_update_finalize(
   return 0;
 }
 
-static int payload_update_erase(struct libhoth_device* const dev,
-                                const size_t offset, const size_t len) {
+static int payload_update_erase_chunk(struct libhoth_device* const dev,
+                                      const uint32_t offset,
+                                      const uint32_t len) {
   struct payload_update_packet request;
   request.type = PAYLOAD_UPDATE_ERASE;
   request.offset = offset;
@@ -92,6 +94,57 @@ static int payload_update_erase(struct libhoth_device* const dev,
   return libhoth_hostcmd_exec(
       dev, HOTH_CMD_BOARD_SPECIFIC_BASE + HOTH_PRV_CMD_HOTH_PAYLOAD_UPDATE, 0,
       &request, sizeof(request), NULL, 0, NULL);
+}
+
+enum payload_update_err libhoth_payload_update_erase(
+    struct libhoth_device* const dev, const uint32_t offset,
+    const uint32_t len) {
+  struct libhoth_progress_stderr erase_progress;
+  libhoth_progress_stderr_init(&erase_progress, "Erase staging side");
+
+  const size_t block_erase = 64 * 1024;
+  const size_t sector_erase = 4 * 1024;
+
+  if (len == 0 || (len % sector_erase) != 0) {
+    fprintf(stderr,
+            "error: erase length (0x%" PRIx32
+            ") is zero or not sector-aligned.\n",
+            len);
+    return PAYLOAD_UPDATE_IMAGE_NOT_SECTOR_ALIGNED;
+  }
+  if ((offset % sector_erase) != 0) {
+    fprintf(stderr, "error: offset (0x%" PRIx32 ") is not sector-aligned.\n",
+            offset);
+    return PAYLOAD_UPDATE_IMAGE_NOT_SECTOR_ALIGNED;
+  }
+  if (UINT32_MAX - offset < len) {
+    fprintf(stderr,
+            "error: invalid erase range (offset 0x%" PRIx32 ", len 0x%" PRIx32
+            ")\n",
+            offset, len);
+    return PAYLOAD_UPDATE_INVALID_ARGS;
+  }
+
+  uint32_t erased = 0;
+
+  while (erased < len) {
+    erase_progress.progress.func(erase_progress.progress.param, erased, len);
+    const uint32_t current_offset = offset + erased;
+    const uint32_t remaining = len - erased;
+    const bool send_block_erase =
+        (current_offset % block_erase == 0) && (remaining >= block_erase);
+    const uint32_t chunk_size = send_block_erase ? block_erase : sector_erase;
+    const int ret = payload_update_erase_chunk(dev, current_offset, chunk_size);
+    if (ret != 0) {
+      fprintf(stderr, "error: erase chunk offset 0x%" PRIx32 " err: %d\n",
+              current_offset, ret);
+      return PAYLOAD_UPDATE_ERASE_FAIL;
+    }
+    erased += chunk_size;
+  }
+
+  erase_progress.progress.func(erase_progress.progress.param, len, len);
+  return PAYLOAD_UPDATE_OK;
 }
 
 enum payload_update_err libhoth_payload_update(struct libhoth_device* dev,
@@ -103,41 +156,10 @@ enum payload_update_err libhoth_payload_update(struct libhoth_device* dev,
   }
 
   if (!skip_erase) {
-    struct libhoth_progress_stderr erase_progress;
-    libhoth_progress_stderr_init(&erase_progress, "Erase staging side");
-
-    const size_t block_erase = 64 * 1024;
-    const size_t sector_erase = 4 * 1024;
-
-    const bool is_image_size_sector_aligned = ((size % sector_erase) == 0);
-    if (!is_image_size_sector_aligned) {
-      fprintf(stderr, "error: image size (0x%zx) is not sector-aligned.\n",
-              size);
-      return PAYLOAD_UPDATE_IMAGE_NOT_SECTOR_ALIGNED;
+    enum payload_update_err err = libhoth_payload_update_erase(dev, 0, size);
+    if (err != PAYLOAD_UPDATE_OK) {
+      return err;
     }
-
-    // Erase by blocks as much as possible.
-    size_t offset = 0;
-    for (; offset + block_erase <= size; offset += block_erase) {
-      erase_progress.progress.func(erase_progress.progress.param, offset, size);
-      const int ret = payload_update_erase(dev, offset, block_erase);
-      if (ret != 0) {
-        fprintf(stderr, "block erase offset 0x%zx err: %d\n", offset, ret);
-        return PAYLOAD_UPDATE_ERASE_FAIL;
-      }
-    }
-
-    // Erase remaining by sectors.
-    for (; offset + sector_erase <= size; offset += sector_erase) {
-      erase_progress.progress.func(erase_progress.progress.param, offset, size);
-      const int ret = payload_update_erase(dev, offset, sector_erase);
-      if (ret != 0) {
-        fprintf(stderr, "sector erase offset 0x%zx err: %d\n", offset, ret);
-        return PAYLOAD_UPDATE_ERASE_FAIL;
-      }
-    }
-
-    erase_progress.progress.func(erase_progress.progress.param, size, size);
   }
 
   const size_t max_chunk_size = LIBHOTH_MAILBOX_SIZE -
