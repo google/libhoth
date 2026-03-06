@@ -49,6 +49,16 @@ int htool_payload_update(const struct htool_invocation* inv) {
     return -1;
   }
 
+  uint32_t timeout = 0;
+  if (htool_get_param_u32(inv, "timeout", &timeout)) {
+    return -1;
+  }
+
+  bool enable_confirm = false;
+  if (htool_get_param_bool(inv, "enable", &enable_confirm)) {
+    return -1;
+  }
+
   int fd = open(image_file, O_RDONLY, 0);
   if (fd == -1) {
     fprintf(stderr, "Error opening file %s: %s\n", image_file, strerror(errno));
@@ -70,6 +80,15 @@ int htool_payload_update(const struct htool_invocation* inv) {
   uint8_t* image = mmap(NULL, statbuf.st_size, PROT_READ, MAP_PRIVATE, fd, 0);
   if (image == MAP_FAILED) {
     fprintf(stderr, "mmap error: %s\n", strerror(errno));
+    goto cleanup;
+  }
+
+  if (timeout > PAYLOAD_UPDATE_CONFIRM_SECONDS_MAX ||
+      timeout < PAYLOAD_UPDATE_CONFIRM_SECONDS_MIN) {
+    fprintf(stderr,
+            "Invalid timeout value: %u. Must be between %u and %u seconds.\n",
+            timeout, PAYLOAD_UPDATE_CONFIRM_SECONDS_MIN,
+            PAYLOAD_UPDATE_CONFIRM_SECONDS_MAX);
     goto cleanup;
   }
 
@@ -97,6 +116,15 @@ int htool_payload_update(const struct htool_invocation* inv) {
       break;
     default:
       break;
+  }
+
+  if (enable_confirm) {
+    int ret =
+        libhoth_payload_update_confirm_enable(dev, enable_confirm, timeout);
+    if (ret != 0) {
+      fprintf(stderr, "Failed to confirm payload update\n");
+      goto cleanup;
+    }
   }
 
   int ret = munmap(image, statbuf.st_size);
@@ -204,6 +232,43 @@ int htool_payload_update_getstatus(const struct htool_invocation* inv) {
   printf("persistent_half: %s (%u)\n",
          payload_update_getstatus_half_string(pus.persistent_half),
          pus.persistent_half);
+
+  return 0;
+}
+
+int htool_payload_update_confirm(const struct htool_invocation* inv) {
+  struct libhoth_device* dev = htool_libhoth_device();
+  if (!dev) {
+    return -1;
+  }
+
+  int ret = 0;
+
+  ret = libhoth_payload_update_confirm(dev);
+  if (ret != 0) {
+    fprintf(stderr, "Failed to confirm payload update\n");
+    return -1;
+  }
+
+  return ret;
+}
+
+int htool_payload_update_confirm_get_timeout(
+    const struct htool_invocation* inv) {
+  struct libhoth_device* dev = htool_libhoth_device();
+  if (!dev) {
+    return -1;
+  }
+
+  payload_update_confirm_response_t response = {0};
+
+  int ret = libhoth_payload_update_confirm_get_timeout(dev, &response);
+  if (ret != 0) {
+    fprintf(stderr, "Failed to get payload update timeout\n");
+    return -1;
+  }
+
+  printf("Current timeout: %u seconds\n", response.timeouts.current);
 
   return 0;
 }
