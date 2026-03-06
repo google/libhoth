@@ -1010,6 +1010,15 @@ static const struct htool_cmd CMDS[] = {
         .func = htool_payload_erase,
     },
     {
+        .verbs = (const char*[]){"payload", "activate", NULL},
+        .desc = "Activate a payload side for next boot.",
+        .params =
+            (const struct htool_param[]){{HTOOL_FLAG_VALUE, 's', "side",
+                                          .desc = "Side to activate (A or B)"},
+                                         {}},
+        .func = htool_payload_activate,
+    },
+    {
         .verbs = (const char*[]){"payload", "info", NULL},
         .desc = "Display payload info for a Titan image.",
         .params =

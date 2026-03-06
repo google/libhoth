@@ -44,27 +44,45 @@ static int send_payload_update_request_with_command(struct libhoth_device* dev,
   return 0;
 }
 
-static int libhoth_payload_update_finalize(
-    struct libhoth_device* dev, uint8_t* pld_needs_reinitialization) {
+static int get_payload_update_version(struct libhoth_device* dev,
+                                      uint8_t* version) {
   uint32_t version_mask = 0;
-  int status = libhoth_get_command_versions(
+  const int status = libhoth_get_command_versions(
       dev, HOTH_CMD_BOARD_SPECIFIC_BASE + HOTH_PRV_CMD_HOTH_PAYLOAD_UPDATE,
       &version_mask);
-  // Command version check in not supported or version 1 is not supported,
-  // default to version 0.
-  if (status == HTOOL_ERROR_HOST_COMMAND_START + HOTH_RES_INVALID_COMMAND ||
-      (status == 0 && (version_mask & 0x2) == 0)) {
+  const bool get_version_unsupported =
+      (status == HTOOL_ERROR_HOST_COMMAND_START + HOTH_RES_INVALID_COMMAND);
+  const bool is_version_0 = (status == 0 && (version_mask & 0x2) == 0);
+  if (get_version_unsupported || is_version_0) {
+    *version = 0;
+    return 0;
+  }
+  if (status != 0) {
+    return status;
+  }
+  *version = 1;
+  return 0;
+}
+
+static int libhoth_payload_update_finalize(
+    struct libhoth_device* dev, uint8_t* pld_needs_reinitialization) {
+  uint8_t version;
+  int status = get_payload_update_version(dev, &version);
+
+  if (status != 0) {
+    fprintf(stderr,
+            "Checking supported command version got unexpected error: %d\n",
+            status);
+    return status;
+  }
+
+  if (version == 0) {
     fprintf(stderr, "Using payload update version 0\n");
     if (pld_needs_reinitialization != NULL) {
       *pld_needs_reinitialization = 0;
     }
     return send_payload_update_request_with_command(dev,
                                                     PAYLOAD_UPDATE_FINALIZE);
-  } else if (status != 0) {
-    fprintf(stderr,
-            "Checking supported command version got unexpected error: %d\n",
-            status);
-    return status;
   }
   fprintf(stderr, "Using payload update version 1\n");
   struct payload_update_packet request = {
@@ -294,4 +312,69 @@ enum payload_update_err libhoth_payload_update_read_chunk(
   }
 
   return PAYLOAD_UPDATE_OK;
+}
+
+// Version 0 does not return a response.
+static enum payload_update_err libhoth_payload_update_activate_v0(
+    struct libhoth_device* dev,
+    struct payload_update_activate_request* request) {
+  int status = libhoth_hostcmd_exec(
+      dev, HOTH_CMD_BOARD_SPECIFIC_BASE + HOTH_PRV_CMD_HOTH_PAYLOAD_UPDATE,
+      /*version=*/0, request, sizeof(*request), NULL, 0, NULL);
+  if (status != 0) {
+    fprintf(stderr, "HOTH_PAYLOAD_UPDATE_ACTIVATE v0 error code: %d\n", status);
+    return PAYLOAD_UPDATE_ACTIVATE_FAIL;
+  }
+  return PAYLOAD_UPDATE_OK;
+}
+
+// Version 1 returns a response indicating if the PLD needs to be reinitialized.
+static enum payload_update_err libhoth_payload_update_activate_v1(
+    struct libhoth_device* dev, struct payload_update_activate_request* request,
+    uint8_t* pld_needs_reinitialization) {
+  struct payload_update_activate_response_v1 response = {0};
+  int status = libhoth_hostcmd_exec(
+      dev, HOTH_CMD_BOARD_SPECIFIC_BASE + HOTH_PRV_CMD_HOTH_PAYLOAD_UPDATE,
+      /*version=*/1, request, sizeof(*request), &response, sizeof(response),
+      NULL);
+  if (status != 0) {
+    fprintf(stderr, "HOTH_PAYLOAD_UPDATE_ACTIVATE v1 error code: %d\n", status);
+    return PAYLOAD_UPDATE_ACTIVATE_FAIL;
+  }
+  if (pld_needs_reinitialization != NULL) {
+    *pld_needs_reinitialization = response.pld_needs_reinitialization;
+  }
+  return PAYLOAD_UPDATE_OK;
+}
+
+enum payload_update_err libhoth_payload_update_activate(
+    struct libhoth_device* dev, uint8_t half,
+    uint8_t* pld_needs_reinitialization) {
+  uint8_t version;
+  int status = get_payload_update_version(dev, &version);
+  if (status != 0) {
+    fprintf(stderr,
+            "Checking supported command version got unexpected error: %d\n",
+            status);
+    return PAYLOAD_UPDATE_ACTIVATE_FAIL;
+  }
+
+  struct payload_update_activate_request request = {
+      .header.type = PAYLOAD_UPDATE_ACTIVATE,
+      .header.offset = 0,
+      .header.len = sizeof(struct payload_update_activate),
+      .activate.half = half,
+      .activate.make_persistent = 1,
+  };
+
+  if (version == 0) {
+    fprintf(stderr, "Using payload update version 0\n");
+    if (pld_needs_reinitialization != NULL) {
+      *pld_needs_reinitialization = 0;
+    }
+    return libhoth_payload_update_activate_v0(dev, &request);
+  }
+  fprintf(stderr, "Using payload update version 1\n");
+  return libhoth_payload_update_activate_v1(dev, &request,
+                                            pld_needs_reinitialization);
 }
