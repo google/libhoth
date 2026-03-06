@@ -224,6 +224,8 @@ cc_binary(
         "htool_spi.c",
         "htool_statistics.c",
         "htool_statistics.h",
+        "htool_tpm.c",
+        "htool_tpm.h",
         "htool_target_control.c",
         "htool_target_control.h",
         "htool_update_failure_reasons.h",
