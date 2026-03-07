@@ -998,6 +998,18 @@ static const struct htool_cmd CMDS[] = {
         .func = htool_payload_read,
     },
     {
+        .verbs = (const char*[]){"payload", "erase", NULL},
+        .desc = "Erase a range on the staging side.",
+        .params =
+            (const struct htool_param[]){
+                {HTOOL_FLAG_VALUE, .ch = 's', .name = "start",
+                 .desc = "start address of the range to erase"},
+                {HTOOL_FLAG_VALUE, .ch = 'n', .name = "length",
+                 .desc = "length of the range"},
+                {}},
+        .func = htool_payload_erase,
+    },
+    {
         .verbs = (const char*[]){"payload", "info", NULL},
         .desc = "Display payload info for a Titan image.",
         .params =

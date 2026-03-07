@@ -207,3 +207,19 @@ int htool_payload_update_getstatus(const struct htool_invocation* inv) {
 
   return 0;
 }
+
+int htool_payload_erase(const struct htool_invocation* inv) {
+  struct libhoth_device* dev = htool_libhoth_device();
+  if (!dev) {
+    return -1;
+  }
+  uint32_t start;
+  uint32_t length;
+  if (htool_get_param_u32(inv, "start", &start) ||
+      htool_get_param_u32(inv, "length", &length)) {
+    return -1;
+  }
+  return (libhoth_payload_update_erase(dev, start, length) == PAYLOAD_UPDATE_OK)
+             ? 0
+             : -1;
+}
