@@ -967,6 +967,17 @@ static const struct htool_cmd CMDS[] = {
         .func = htool_payload_update_getstatus,
     },
     {
+        .verbs = (const char*[]){"payload", "verify", NULL},
+        .desc = "Verify the staging side.",
+        .params =
+            (const struct htool_param[]){
+                {HTOOL_FLAG_BOOL, 'd', "descriptor", "false",
+                 .desc = "Verify only the image descriptor "
+                         "(PAYLOAD_UPDATE_VERIFY_DESCRIPTOR)."},
+                {}},
+        .func = htool_payload_update_verify,
+    },
+    {
         .verbs = (const char*[]){"payload", "status", NULL},
         .desc = "Show payload status",
         .params = (const struct htool_param[]){{}},

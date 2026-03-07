@@ -292,6 +292,36 @@ TEST_F(LibHothTest, payload_update_status) {
   EXPECT_EQ(exp_us.active_half, us.active_half);
 }
 
+TEST_F(LibHothTest, payload_update_verify) {
+  auto payload_verify_matcher = [](const void* reqdata) {
+    const struct payload_update_packet* payload_update_req_data =
+        (struct payload_update_packet*)reqdata;
+    return payload_update_req_data->type == PAYLOAD_UPDATE_VERIFY;
+  };
+  EXPECT_CALL(mock_,
+              send(_, UsesCommandWithData(kCmd, payload_verify_matcher), _))
+      .WillOnce(Return(LIBHOTH_OK));
+  EXPECT_CALL(mock_, receive)
+      .WillOnce(DoAll(CopyResp(&kDummy, 0), Return(LIBHOTH_OK)));
+
+  EXPECT_EQ(libhoth_payload_update_verify(&hoth_dev_), 0);
+}
+
+TEST_F(LibHothTest, payload_update_verify_descriptor) {
+  auto payload_verify_matcher = [](const void* reqdata) {
+    const struct payload_update_packet* payload_update_req_data =
+        (struct payload_update_packet*)reqdata;
+    return payload_update_req_data->type == PAYLOAD_UPDATE_VERIFY_DESCRIPTOR;
+  };
+  EXPECT_CALL(mock_,
+              send(_, UsesCommandWithData(kCmd, payload_verify_matcher), _))
+      .WillOnce(Return(LIBHOTH_OK));
+  EXPECT_CALL(mock_, receive)
+      .WillOnce(DoAll(CopyResp(&kDummy, 0), Return(LIBHOTH_OK)));
+
+  EXPECT_EQ(libhoth_payload_update_verify_descriptor(&hoth_dev_), 0);
+}
+
 TEST_F(LibHothTest, payload_update_erase_test) {
   constexpr size_t kBlockErase = 64 * 1024;
   constexpr size_t kSectorErase = 4 * 1024;

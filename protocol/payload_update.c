@@ -378,3 +378,12 @@ enum payload_update_err libhoth_payload_update_activate(
   return libhoth_payload_update_activate_v1(dev, &request,
                                             pld_needs_reinitialization);
 }
+
+int libhoth_payload_update_verify(struct libhoth_device* dev) {
+  return send_payload_update_request_with_command(dev, PAYLOAD_UPDATE_VERIFY);
+}
+
+int libhoth_payload_update_verify_descriptor(struct libhoth_device* dev) {
+  return send_payload_update_request_with_command(
+      dev, PAYLOAD_UPDATE_VERIFY_DESCRIPTOR);
+}

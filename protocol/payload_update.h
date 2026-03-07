@@ -107,6 +107,8 @@ enum payload_update_err libhoth_payload_update_erase(struct libhoth_device* dev,
 enum payload_update_err libhoth_payload_update_activate(
     struct libhoth_device* dev, uint8_t half,
     uint8_t* pld_needs_reinitialization);
+int libhoth_payload_update_verify(struct libhoth_device* dev);
+int libhoth_payload_update_verify_descriptor(struct libhoth_device* dev);
 
 #ifdef __cplusplus
 }
