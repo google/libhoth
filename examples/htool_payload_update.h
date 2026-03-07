@@ -27,6 +27,7 @@ int htool_payload_update(const struct htool_invocation* inv);
 int htool_payload_read(const struct htool_invocation* inv);
 int htool_payload_update_getstatus(const struct htool_invocation* inv);
 int htool_payload_erase(const struct htool_invocation* inv);
+int htool_payload_activate(const struct htool_invocation* inv);
 
 #ifdef __cplusplus
 }

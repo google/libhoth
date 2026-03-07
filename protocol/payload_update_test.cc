@@ -206,6 +206,74 @@ TEST_F(LibHothTest, payload_update_finalize_fail) {
             PAYLOAD_UPDATE_FINALIZE_FAIL);
 }
 
+TEST_F(LibHothTest, payload_update_activate_v0) {
+  {
+    InSequence s;
+
+    EXPECT_CALL(mock_, send(_, UsesCommand(HOTH_CMD_GET_CMD_VERSIONS), _))
+        .WillOnce(Return(LIBHOTH_OK));
+    EXPECT_CALL(mock_, send(_, UsesCommand(kCmd), _))
+        .WillOnce(Return(LIBHOTH_OK));
+  }
+
+  static constexpr uint32_t kVersionMask = 0;
+  EXPECT_CALL(mock_, receive)
+      .WillOnce(DoAll(CopyResp(&kVersionMask, sizeof(kVersionMask)),
+                      Return(LIBHOTH_OK)))
+      .WillOnce(DoAll(CopyResp(&kDummy, 0), Return(LIBHOTH_OK)));
+
+  uint8_t pld_needs_reinit = 0xff;
+  EXPECT_EQ(libhoth_payload_update_activate(&hoth_dev_, 1, &pld_needs_reinit),
+            PAYLOAD_UPDATE_OK);
+  EXPECT_EQ(pld_needs_reinit, 0);
+}
+
+TEST_F(LibHothTest, payload_update_activate_v1) {
+  {
+    InSequence s;
+
+    EXPECT_CALL(mock_, send(_, UsesCommand(HOTH_CMD_GET_CMD_VERSIONS), _))
+        .WillOnce(Return(LIBHOTH_OK));
+    EXPECT_CALL(mock_, send(_, UsesCommandWithVersion(kCmd, 1), _))
+        .WillOnce(Return(LIBHOTH_OK));
+  }
+
+  static constexpr uint32_t kVersionMask = 0x3;
+  static constexpr uint8_t kPldNeedsReinitialization = 1;
+  EXPECT_CALL(mock_, receive)
+      .WillOnce(DoAll(CopyResp(&kVersionMask, sizeof(kVersionMask)),
+                      Return(LIBHOTH_OK)))
+      .WillOnce(DoAll(CopyResp(&kPldNeedsReinitialization,
+                               sizeof(kPldNeedsReinitialization)),
+                      Return(LIBHOTH_OK)));
+
+  uint8_t pld_needs_reinit = 0xff;
+  EXPECT_EQ(libhoth_payload_update_activate(&hoth_dev_, 0, &pld_needs_reinit),
+            PAYLOAD_UPDATE_OK);
+  EXPECT_EQ(pld_needs_reinit, 1);
+}
+
+TEST_F(LibHothTest, payload_update_activate_fail) {
+  {
+    InSequence s;
+
+    EXPECT_CALL(mock_, send(_, UsesCommand(HOTH_CMD_GET_CMD_VERSIONS), _))
+        .WillOnce(Return(LIBHOTH_OK));
+    EXPECT_CALL(mock_, send(_, UsesCommand(kCmd), _))
+        .WillOnce(Return(LIBHOTH_OK));
+  }
+
+  static constexpr uint32_t kVersionMask = 0;
+  EXPECT_CALL(mock_, receive)
+      .WillOnce(DoAll(CopyResp(&kVersionMask, sizeof(kVersionMask)),
+                      Return(LIBHOTH_OK)))
+      .WillOnce(DoAll(CopyResp(&kDummy, 0), Return(-1)));
+
+  uint8_t pld_needs_reinit = 0xff;
+  EXPECT_EQ(libhoth_payload_update_activate(&hoth_dev_, 1, &pld_needs_reinit),
+            PAYLOAD_UPDATE_ACTIVATE_FAIL);
+}
+
 TEST_F(LibHothTest, payload_update_status) {
   EXPECT_CALL(mock_, send(_, UsesCommand(kCmd), _))
       .WillOnce(Return(LIBHOTH_OK));

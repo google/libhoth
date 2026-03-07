@@ -213,6 +213,7 @@ int htool_payload_erase(const struct htool_invocation* inv) {
   if (!dev) {
     return -1;
   }
+
   uint32_t start;
   uint32_t length;
   if (htool_get_param_u32(inv, "start", &start) ||
@@ -222,4 +223,36 @@ int htool_payload_erase(const struct htool_invocation* inv) {
   return (libhoth_payload_update_erase(dev, start, length) == PAYLOAD_UPDATE_OK)
              ? 0
              : -1;
+}
+
+int htool_payload_activate(const struct htool_invocation* inv) {
+  struct libhoth_device* dev = htool_libhoth_device();
+  if (!dev) {
+    return -1;
+  }
+
+  const char* side_str;
+  if (htool_get_param_string(inv, "side", &side_str)) {
+    return -1;
+  }
+
+  uint8_t half;
+  if (strcasecmp(side_str, "A") == 0) {
+    half = 0;
+  } else if (strcasecmp(side_str, "B") == 0) {
+    half = 1;
+  } else {
+    fprintf(stderr, "Unknown side: %s (expected A or B)\n", side_str);
+    return -1;
+  }
+
+  uint8_t pld_needs_reinitialization = 0;
+  if (libhoth_payload_update_activate(dev, half, &pld_needs_reinitialization) !=
+      PAYLOAD_UPDATE_OK) {
+    fprintf(stderr, "Failed to activate payload.\n");
+    return -1;
+  }
+
+  printf("PLD needs re-initialization?: %d\n", pld_needs_reinitialization);
+  return 0;
 }
