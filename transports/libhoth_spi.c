@@ -541,9 +541,12 @@ int libhoth_spi_send_and_receive_response(struct libhoth_device* dev,
   if (status < 0) {
     rc = LIBHOTH_ERR_FAIL;
   } else {
-    if (actual_size) {
-      struct hoth_host_response* host_response =
-          (struct hoth_host_response*)response;
+    struct hoth_host_response* host_response =
+        (struct hoth_host_response*)response;
+    if (host_response->data_len >
+        (max_response_size - sizeof(struct hoth_host_response))) {
+      rc = LIBHOTH_ERR_RESPONSE_BUFFER_OVERFLOW;
+    } else if (actual_size) {
       *actual_size =
           (size_t)host_response->data_len + sizeof(struct hoth_host_response);
     }
