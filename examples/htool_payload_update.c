@@ -256,3 +256,33 @@ int htool_payload_activate(const struct htool_invocation* inv) {
   printf("PLD needs re-initialization?: %d\n", pld_needs_reinitialization);
   return 0;
 }
+
+int htool_payload_update_verify(const struct htool_invocation* inv) {
+  struct libhoth_device* dev = htool_libhoth_device();
+  if (!dev) {
+    return -1;
+  }
+
+  bool verify_only_descriptor = false;
+  if (htool_get_param_bool(inv, "descriptor", &verify_only_descriptor)) {
+    return -1;
+  }
+  int ret;
+  if (verify_only_descriptor) {
+    ret = libhoth_payload_update_verify_descriptor(dev);
+  } else {
+    fprintf(stderr,
+            "Verifying the payload. This can take up to three minutes...\n");
+    ret = libhoth_payload_update_verify(dev);
+  }
+  if (ret != 0) {
+    fprintf(stderr, "Payload verify failed\n");
+    return -1;
+  }
+  if (verify_only_descriptor) {
+    printf("Payload verify descriptor successful\n");
+  } else {
+    printf("Payload verify successful\n");
+  }
+  return 0;
+}
