@@ -15,6 +15,7 @@
 #ifndef _LIBHOTH_LIBHOTH_SPI_H_
 #define _LIBHOTH_LIBHOTH_SPI_H_
 
+#include <stdbool.h>
 #include <stddef.h>
 #include <stdint.h>
 
@@ -38,11 +39,48 @@ struct libhoth_spi_device_init_options {
   uint32_t timeout_us;
 };
 
+struct libhoth_spi_device {
+  int fd;
+  unsigned int mailbox_address;
+  bool address_mode_4b;
+
+  void* buffered_request;
+  size_t buffered_request_size;
+  uint32_t device_busy_wait_timeout;
+  uint32_t device_busy_wait_check_interval;
+};
+
+enum {
+  SPI_NOR_DEVICE_STATUS_WIP_BIT = (1 << 0),
+  SPI_NOR_OPCODE_READ_STATUS = 0x05,
+  SPI_NOR_OPCODE_WRITE_ENABLE = 0x06,
+  SPI_NOR_OPCODE_PAGE_PROGRAM = 0x02,
+  SPI_NOR_OPCODE_SLOW_READ = 0x03,
+  SPI_NOR_FLASH_PAGE_SIZE = 256,  // in bytes
+};
+
 // Note that the options struct only needs to to live for the duration of
 // this function call. It can be destroyed once libhoth_spi_open returns.
 int libhoth_spi_open(const struct libhoth_spi_device_init_options* options,
                      struct libhoth_device** out);
 int libhoth_tpm_spi_probe(struct libhoth_device* dev);
+
+int libhoth_spi_send_request(struct libhoth_device* dev, const void* request,
+                             size_t request_size);
+
+int libhoth_spi_receive_response(struct libhoth_device* dev, void* response,
+                                 size_t max_response_size, size_t* actual_size,
+                                 int timeout_ms);
+
+int libhoth_spi_buffer_request(struct libhoth_device* dev, const void* request,
+                               size_t request_size);
+
+int libhoth_spi_send_and_receive_response(struct libhoth_device* dev,
+                                          void* response,
+                                          size_t max_response_size,
+                                          size_t* actual_size, int timeout_ms);
+
+int libhoth_spi_close(struct libhoth_device* dev);
 
 #ifdef __cplusplus
 }
