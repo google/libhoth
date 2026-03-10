@@ -28,21 +28,6 @@
 #include "transports/libhoth_device.h"
 #include "transports/libhoth_ec.h"
 
-struct libhoth_mtd_device {
-  int fd;
-  unsigned int mailbox_address;
-};
-
-int libhoth_mtd_send_request(struct libhoth_device* dev, const void* request,
-                             size_t request_size);
-
-int libhoth_mtd_receive_response(struct libhoth_device* dev, void* response,
-                                 size_t max_response_size, size_t* actual_size,
-                                 int timeout_ms);
-
-int libhoth_mtd_close(struct libhoth_device* dev);
-int libhoth_mtd_reconnect(struct libhoth_device* dev);
-
 static int mtd_read(int fd, unsigned int address, void* data, size_t data_len) {
   if (fd < 0 || !data) {
     return LIBHOTH_ERR_INVALID_PARAMETER;
@@ -139,17 +124,17 @@ static int mtd_open(const char* path, const char* name) {
     return open(path, O_RDWR);
   }
 
-  FILE* fp;
+  FILE* fp = NULL;
   char* line = NULL;
   size_t len = 0;
-  ssize_t read;
+  ssize_t read = 0;
 
   fp = fopen("/proc/mtd", "r");
   if (fp == NULL) {
     return -1;
   }
 
-  int status;
+  int status = LIBHOTH_ERR_FAIL;
   int mtd_id = -1;
   char mtd_size[20] = "";
   char mtd_erasesize[20] = "";
@@ -163,9 +148,8 @@ static int mtd_open(const char* path, const char* name) {
     }
     // Strip '"' if any.
     if (mtd_name[0] == '"') {
-      int i;
       int name_len = strlen(mtd_name);
-      for (i = 0; i < name_len - 2; ++i) {
+      for (int i = 0; i < name_len - 2; ++i) {
         mtd_name[i] = mtd_name[i + 1];
         mtd_name[i + 1] = 0;
       }
@@ -186,7 +170,7 @@ int libhoth_mtd_open(const struct libhoth_mtd_device_init_options* options,
     return LIBHOTH_ERR_INVALID_PARAMETER;
   }
 
-  int status;
+  int status = LIBHOTH_ERR_FAIL;
   int fd = -1;
   struct libhoth_device* dev = NULL;
   struct libhoth_mtd_device* mtd_dev = NULL;
@@ -279,9 +263,9 @@ int libhoth_mtd_receive_response(struct libhoth_device* dev, void* response,
     return LIBHOTH_ERR_INVALID_PARAMETER;
   }
 
-  size_t total_bytes;
-  int status;
-  struct hoth_host_response host_response;
+  size_t total_bytes = 0;
+  int status = LIBHOTH_ERR_FAIL;
+  struct hoth_host_response host_response = {0};
   struct libhoth_mtd_device* mtd_dev =
       (struct libhoth_mtd_device*)dev->user_ctx;
 

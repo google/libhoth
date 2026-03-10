@@ -32,6 +32,21 @@ struct libhoth_mtd_device_init_options {
   unsigned int mailbox;
 };
 
+struct libhoth_mtd_device {
+  int fd;
+  unsigned int mailbox_address;
+};
+
+int libhoth_mtd_send_request(struct libhoth_device* dev, const void* request,
+                             size_t request_size);
+
+int libhoth_mtd_receive_response(struct libhoth_device* dev, void* response,
+                                 size_t max_response_size, size_t* actual_size,
+                                 int timeout_ms);
+
+int libhoth_mtd_close(struct libhoth_device* dev);
+int libhoth_mtd_reconnect(struct libhoth_device* dev);
+
 // Note that the options struct only needs to to live for the duration of
 // this function call. It can be destroyed once libhoth_mtd_open returns.
 int libhoth_mtd_open(const struct libhoth_mtd_device_init_options* options,
