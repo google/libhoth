@@ -18,6 +18,7 @@
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
 #include <sys/mman.h>
+#include <sys/stat.h>
 
 #include <cstdint>
 #include <cstring>
@@ -33,20 +34,31 @@ using ::testing::Return;
 
 constexpr char kTestData[] = "protocol/test/test_fwupdate.bin";
 
+// Helper to manage test image lifetime
+struct MappedFile {
+  int fd = -1;
+  uint8_t* data = nullptr;
+  size_t size = 0;
+  ~MappedFile() {
+    if (data) munmap(data, size);
+    if (fd != -1) close(fd);
+  }
+
+  bool Load(const char* path) {
+    fd = open(path, O_RDONLY, 0);
+    if (fd == -1) return false;
+    struct stat statbuf = {0};
+    if (fstat(fd, &statbuf) != 0) return false;
+    size = statbuf.st_size;
+    data = reinterpret_cast<uint8_t*>(
+        mmap(NULL, size, PROT_READ | PROT_WRITE, MAP_PRIVATE, fd, 0));
+    return data != MAP_FAILED;
+  }
+};
+
 TEST_F(LibHothTest, dfu_check_test) {
-  int fd = open(kTestData, O_RDONLY, 0);
-  ASSERT_NE(fd, -1);
-
-  struct stat statbuf;
-  ASSERT_EQ(fstat(fd, &statbuf), 0);
-
-  uint8_t* image = reinterpret_cast<uint8_t*>(
-      mmap(NULL, statbuf.st_size, PROT_READ | PROT_WRITE, MAP_PRIVATE, fd, 0));
-  ASSERT_NE(image, nullptr);
-
-  struct opentitan_image_version rom_ext;
-  struct opentitan_image_version app;
-  libhoth_extract_ot_bundle(image, statbuf.st_size, &rom_ext, &app);
+  MappedFile image = {};
+  ASSERT_TRUE(image.Load(kTestData));
 
   struct opentitan_get_version_resp mock_response = {};
 
@@ -61,24 +73,13 @@ TEST_F(LibHothTest, dfu_check_test) {
   mock_response.app.slots[1].minor = 5;
 
   EXPECT_EQ(
-      libhoth_dfu_check(&hoth_dev_, image, statbuf.st_size, &mock_response),
+      libhoth_dfu_check(&hoth_dev_, image.data, image.size, &mock_response),
       LIBHOTH_OK);
 }
 
 TEST_F(LibHothTest, dfu_check_fail) {
-  int fd = open(kTestData, O_RDONLY, 0);
-  ASSERT_NE(fd, -1);
-
-  struct stat statbuf;
-  ASSERT_EQ(fstat(fd, &statbuf), 0);
-
-  uint8_t* image = reinterpret_cast<uint8_t*>(
-      mmap(NULL, statbuf.st_size, PROT_READ | PROT_WRITE, MAP_PRIVATE, fd, 0));
-  ASSERT_NE(image, nullptr);
-
-  struct opentitan_image_version rom_ext;
-  struct opentitan_image_version app;
-  libhoth_extract_ot_bundle(image, statbuf.st_size, &rom_ext, &app);
+  MappedFile image = {};
+  ASSERT_TRUE(image.Load(kTestData));
 
   struct opentitan_get_version_resp mock_response = {};
 
@@ -93,6 +94,6 @@ TEST_F(LibHothTest, dfu_check_fail) {
   mock_response.app.slots[1].minor = 20;
 
   EXPECT_EQ(
-      libhoth_dfu_check(&hoth_dev_, image, statbuf.st_size, &mock_response),
+      libhoth_dfu_check(&hoth_dev_, image.data, image.size, &mock_response),
       -1);
 }
