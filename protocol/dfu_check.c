@@ -27,9 +27,7 @@
 #include <time.h>
 #include <unistd.h>
 
-#include "opentitan_version.h"
 #include "protocol/console.h"
-#include "protocol/host_cmd.h"
 #include "protocol/opentitan_version.h"
 
 void libhoth_print_boot_log(
