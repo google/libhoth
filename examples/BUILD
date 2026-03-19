@@ -264,6 +264,7 @@ cc_binary(
         "//transports:libhoth_mtd",
         "//transports:libhoth_spi",
         "//transports:libhoth_usb",
+        "//transports:libhoth_usb_device",
         "@libusb",
     ] + select({
         ":dbus_backend": ["//transports:libhoth_dbus"],

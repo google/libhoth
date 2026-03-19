@@ -92,41 +92,52 @@ static int libhoth_usb_release(struct libhoth_device* dev) {
   return libusb_release_interface(usb_dev->handle, usb_dev->info.interface_id);
 }
 
+static int libhoth_usb_close_internal(struct libhoth_usb_device* usb_dev) {
+  int status = LIBUSB_SUCCESS;
+  if (usb_dev->handle != NULL) {
+    switch (usb_dev->info.type) {
+      case LIBHOTH_USB_INTERFACE_TYPE_MAILBOX:
+        status = libhoth_usb_mailbox_close(usb_dev);
+        break;
+      case LIBHOTH_USB_INTERFACE_TYPE_FIFO:
+        status = libhoth_usb_fifo_close(usb_dev);
+        break;
+      default:
+        status = LIBHOTH_ERR_INTERFACE_NOT_FOUND;
+        break;
+    }
+    libusb_release_interface(usb_dev->handle, usb_dev->info.interface_id);
+    libusb_close(usb_dev->handle);
+    usb_dev->handle = NULL;
+  }
+  return status;
+}
+
 static int libhoth_usb_reconnect(struct libhoth_device* dev) {
   struct libhoth_usb_device* usb_dev = dev->user_ctx;
+  if (usb_dev == NULL) {
+    return LIBUSB_ERROR_INVALID_PARAM;
+  }
   libusb_context* usb_ctx = usb_dev->ctx;
   uint64_t timeout_us = usb_dev->claim_timeout_us;
 
-  struct libusb_device* libusb_dev = libusb_get_device(usb_dev->handle);
-
-  struct libhoth_usb_loc usb_loc;
-  usb_loc.bus = libusb_get_bus_number(libusb_dev);
-  usb_loc.num_ports = libusb_get_port_numbers(
-      libusb_dev, (uint8_t*)&usb_loc.ports, LIBHOTH_NUM_PORTS);
-  if (usb_loc.num_ports == LIBUSB_ERROR_OVERFLOW) {
-    fprintf(stderr, "Failed to list port numbers when reconnecting. (%s)\n",
-            libusb_strerror(LIBUSB_ERROR_OVERFLOW));
-    return LIBUSB_ERROR_OVERFLOW;
-  }
-
-  libhoth_usb_close(dev);
-
   uint64_t start_time_ms = libhoth_get_monotonic_ms();
-
   while (1) {
-    libusb_exit(usb_ctx);
-    int ret = libusb_init(&usb_ctx);
-    if (ret != 0) {
-      fprintf(
-          stderr,
-          "libusb_init_context failed while reconnecting (error: %d (%s))\n",
-          ret, libusb_strerror(ret));
-    }
-
-    ret = libhoth_usb_get_device(usb_ctx, &usb_loc, &libusb_dev);
+    libusb_device* new_libusb_dev = NULL;
+    int ret = libhoth_usb_get_device(usb_ctx, &usb_dev->loc, &new_libusb_dev);
     if (ret == 0) {
-      // Found the device
-      break;
+      struct libhoth_usb_device_init_options opts;
+      opts.usb_ctx = usb_ctx;
+      opts.usb_device = new_libusb_dev;
+      opts.timeout_us = timeout_us;
+      opts.prng_seed = libhoth_prng_seed();
+
+      // Close the old handle and driver data, but keep the usb_dev structure.
+      libhoth_usb_close_internal(usb_dev);
+
+      ret = libhoth_usb_device_open(&opts, dev);
+      libusb_unref_device(new_libusb_dev);
+      return ret;
     }
 
     uint64_t current_time_ms = libhoth_get_monotonic_ms();
@@ -136,27 +147,18 @@ static int libhoth_usb_reconnect(struct libhoth_device* dev) {
           stderr,
           "libhoth_usb_open timed out while reconnecting (error: %d (%s))\n",
           ret, libusb_strerror(ret));
-      libusb_exit(usb_ctx);
       return ret;  // Timeout
     }
 
     // 100ms delay
     usleep(100 * 1000);
   }
-
-  struct libhoth_usb_device_init_options opts;
-  opts.usb_ctx = usb_ctx;
-  opts.usb_device = libusb_dev;
-  opts.timeout_us = timeout_us;
-  opts.prng_seed = libhoth_prng_seed();
-
-  return libhoth_usb_device_open(&opts, dev);
 }
 
 static int libhoth_usb_device_open(
     const struct libhoth_usb_device_init_options* options,
     struct libhoth_device* dev) {
-  struct libhoth_usb_device* usb_dev = NULL;
+  struct libhoth_usb_device* usb_dev = dev->user_ctx;
   struct libusb_device_descriptor device_descriptor;
   int status =
       libusb_get_device_descriptor(options->usb_device, &device_descriptor);
@@ -185,14 +187,23 @@ static int libhoth_usb_device_open(
     goto err_out;
   }
 
-  usb_dev = calloc(1, sizeof(struct libhoth_usb_device));
   if (usb_dev == NULL) {
-    status = LIBHOTH_ERR_MALLOC_FAILED;
-    goto err_out;
+    usb_dev = calloc(1, sizeof(struct libhoth_usb_device));
+    if (usb_dev == NULL) {
+      status = LIBHOTH_ERR_MALLOC_FAILED;
+      goto err_out;
+    }
+    dev->user_ctx = usb_dev;
   }
   usb_dev->info = info;
   usb_dev->ctx = options->usb_ctx;
   usb_dev->claim_timeout_us = options->timeout_us;
+
+  if (libhoth_get_usb_loc(options->usb_device, &usb_dev->loc) != 0) {
+    status = LIBUSB_ERROR_OTHER;
+    goto err_out;
+  }
+
   status = libusb_open(options->usb_device, &usb_dev->handle);
   if (status != LIBUSB_SUCCESS) {
     goto err_out;
@@ -204,7 +215,6 @@ static int libhoth_usb_device_open(
   dev->claim = libhoth_usb_claim;
   dev->release = libhoth_usb_release;
   dev->reconnect = libhoth_usb_reconnect;
-  dev->user_ctx = usb_dev;
 
   status = libhoth_claim_device(dev, options->timeout_us);
   if (status != LIBHOTH_OK) {
@@ -231,14 +241,10 @@ static int libhoth_usb_device_open(
   return LIBHOTH_OK;
 
 err_out:
-  if (dev != NULL) {
-    if (usb_dev != NULL) {
-      if (usb_dev->handle != NULL) {
-        libusb_release_interface(usb_dev->handle, usb_dev->info.interface_id);
-        libusb_close(usb_dev->handle);
-      }
-      free(usb_dev);
-    }
+  if (usb_dev != NULL && usb_dev->handle != NULL) {
+    libusb_release_interface(usb_dev->handle, usb_dev->info.interface_id);
+    libusb_close(usb_dev->handle);
+    usb_dev->handle = NULL;
   }
   libusb_free_config_descriptor(config_descriptor);
   return status;
@@ -257,6 +263,9 @@ int libhoth_usb_open(const struct libhoth_usb_device_init_options* options,
 
   int ret = libhoth_usb_device_open(options, dev);
   if (ret != LIBUSB_SUCCESS) {
+    if (dev->user_ctx != NULL) {
+      free(dev->user_ctx);
+    }
     free(dev);
     return ret;
   }
@@ -273,6 +282,9 @@ int libhoth_usb_send_request(struct libhoth_device* dev, const void* request,
 
   struct libhoth_usb_device* usb_dev =
       (struct libhoth_usb_device*)dev->user_ctx;
+  if (usb_dev->handle == NULL) {
+    return LIBUSB_ERROR_NO_DEVICE;
+  }
   switch (usb_dev->info.type) {
     case LIBHOTH_USB_INTERFACE_TYPE_MAILBOX:
       return libhoth_usb_mailbox_send_request(usb_dev, request, request_size);
@@ -293,6 +305,9 @@ int libhoth_usb_receive_response(struct libhoth_device* dev, void* response,
 
   struct libhoth_usb_device* usb_dev =
       (struct libhoth_usb_device*)dev->user_ctx;
+  if (usb_dev->handle == NULL) {
+    return LIBUSB_ERROR_NO_DEVICE;
+  }
   switch (usb_dev->info.type) {
     case LIBHOTH_USB_INTERFACE_TYPE_MAILBOX:
       return libhoth_usb_mailbox_receive_response(
@@ -307,33 +322,17 @@ int libhoth_usb_receive_response(struct libhoth_device* dev, void* response,
 }
 
 int libhoth_usb_close(struct libhoth_device* dev) {
-  int status;
   if (dev->user_ctx == NULL) {
-    return LIBUSB_ERROR_INVALID_PARAM;
+    return LIBUSB_SUCCESS;
   }
 
   struct libhoth_usb_device* usb_dev =
       (struct libhoth_usb_device*)dev->user_ctx;
   dev->user_ctx = NULL;
-  switch (usb_dev->info.type) {
-    case LIBHOTH_USB_INTERFACE_TYPE_MAILBOX:
-      status = libhoth_usb_mailbox_close(usb_dev);
-      break;
-    case LIBHOTH_USB_INTERFACE_TYPE_FIFO:
-      status = libhoth_usb_fifo_close(usb_dev);
-      break;
-    default:
-      return LIBHOTH_ERR_INTERFACE_NOT_FOUND;
-  }
-  if (status != LIBHOTH_OK) {
-    return status;
-  }
-  if (usb_dev->handle != NULL) {
-    libusb_release_interface(usb_dev->handle, usb_dev->info.interface_id);
-    libusb_close(usb_dev->handle);
-  }
+
+  int status = libhoth_usb_close_internal(usb_dev);
   free(usb_dev);
-  return LIBHOTH_OK;
+  return status;
 }
 
 enum libusb_error transfer_status_to_error(

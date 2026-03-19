@@ -47,6 +47,14 @@ struct libhoth_usb_mailbox {
   uint8_t ep_out;
 };
 
+#define LIBHOTH_NUM_PORTS 16
+
+struct libhoth_usb_loc {
+  uint8_t bus;
+  uint8_t ports[LIBHOTH_NUM_PORTS];
+  int num_ports;
+};
+
 struct libhoth_usb_fifo {
   struct libusb_transfer* in_transfer;
   struct libusb_transfer* out_transfer;
@@ -72,6 +80,7 @@ struct libhoth_usb_device {
   libusb_context* ctx;
   libusb_device_handle* handle;
   uint32_t claim_timeout_us;
+  struct libhoth_usb_loc loc;
   struct libhoth_usb_interface_info info;
   union driver_data {
     struct libhoth_usb_mailbox mailbox;
