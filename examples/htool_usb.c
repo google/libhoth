@@ -29,6 +29,7 @@
 #include "htool_cmd.h"
 #include "protocol/util.h"
 #include "transports/libhoth_usb.h"
+#include "transports/libhoth_usb_device.h"
 
 static int enumerate_devices(
     libusb_context* libusb_ctx,

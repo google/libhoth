@@ -26,6 +26,7 @@ extern "C" {
 #endif
 
 struct libhoth_device;
+struct libhoth_usb_loc;
 
 struct libhoth_usb_device_init_options {
   // The device to open
@@ -38,14 +39,6 @@ struct libhoth_usb_device_init_options {
   uint32_t prng_seed;
   // Timeout for connecting to the USB bus
   uint32_t timeout_us;
-};
-
-#define LIBHOTH_NUM_PORTS 16
-
-struct libhoth_usb_loc {
-  uint8_t bus;
-  uint8_t ports[LIBHOTH_NUM_PORTS];
-  int num_ports;
 };
 
 // Note that the options struct only needs to to live for the duration of

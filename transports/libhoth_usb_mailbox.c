@@ -232,5 +232,6 @@ int libhoth_usb_mailbox_close(struct libhoth_usb_device* dev) {
   if (dev == NULL) {
     return LIBUSB_ERROR_INVALID_PARAM;
   }
+  memset(&dev->driver_data.mailbox, 0, sizeof(dev->driver_data.mailbox));
   return LIBHOTH_OK;
 }

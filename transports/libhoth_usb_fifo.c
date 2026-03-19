@@ -297,5 +297,6 @@ int libhoth_usb_fifo_close(struct libhoth_usb_device* dev) {
   if (drvdata->out_buffer != NULL) free(drvdata->out_buffer);
   libusb_free_transfer(drvdata->in_transfer);
   libusb_free_transfer(drvdata->out_transfer);
+  memset(drvdata, 0, sizeof(*drvdata));
   return LIBHOTH_OK;
 }
