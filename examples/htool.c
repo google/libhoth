@@ -997,6 +997,12 @@ static const struct htool_cmd CMDS[] = {
         .func = htool_payload_update,
     },
     {
+        .verbs = (const char*[]){"payload", "confirm", NULL},
+        .desc = "Finish a payload update confirmation.",
+        .params = (const struct htool_param[]){{}},
+        .func = htool_payload_update_confirm,
+    },
+    {
         .verbs = (const char*[]){"payload", "get_timeout", NULL},
         .desc = "Get the current payload update confirmation timeout.",
         .params = (const struct htool_param[]){{}},

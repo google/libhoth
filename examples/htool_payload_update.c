@@ -287,6 +287,23 @@ int htool_payload_update_verify(const struct htool_invocation* inv) {
   return 0;
 }
 
+int htool_payload_update_confirm(const struct htool_invocation* inv) {
+  struct libhoth_device* dev = htool_libhoth_device();
+  if (!dev) {
+    return -1;
+  }
+
+  int ret = 0;
+
+  ret = libhoth_payload_update_confirm(dev);
+  if (ret != 0) {
+    fprintf(stderr, "Failed to confirm payload update\n");
+    return -1;
+  }
+
+  return ret;
+}
+
 int htool_payload_update_confirm_get_staged_timeout(
     const struct htool_invocation* inv) {
   struct libhoth_device* dev = htool_libhoth_device();
