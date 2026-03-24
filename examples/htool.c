@@ -997,6 +997,12 @@ static const struct htool_cmd CMDS[] = {
         .func = htool_payload_update,
     },
     {
+        .verbs = (const char*[]){"payload", "get_timeout", NULL},
+        .desc = "Get the current payload update confirmation timeout.",
+        .params = (const struct htool_param[]){{}},
+        .func = htool_payload_update_confirm_get_staged_timeout,
+    },
+    {
         .verbs = (const char*[]){"payload", "read", NULL},
         .desc = "Read content of staging flash for Titan images.",
         .params =

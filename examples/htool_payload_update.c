@@ -286,3 +286,23 @@ int htool_payload_update_verify(const struct htool_invocation* inv) {
   }
   return 0;
 }
+
+int htool_payload_update_confirm_get_staged_timeout(
+    const struct htool_invocation* inv) {
+  struct libhoth_device* dev = htool_libhoth_device();
+  if (!dev) {
+    return -1;
+  }
+
+  payload_update_confirm_response_t response = {0};
+
+  int ret = libhoth_payload_update_confirm_get_staged_timeout(dev, &response);
+  if (ret != 0) {
+    fprintf(stderr, "Failed to get payload update timeout\n");
+    return -1;
+  }
+
+  printf("Current timeout: %u seconds\n", response.timeouts.current);
+
+  return 0;
+}
