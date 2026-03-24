@@ -188,7 +188,7 @@ int libhoth_payload_update_confirm(struct libhoth_device* dev);
 int libhoth_payload_update_confirm_enable(struct libhoth_device* dev,
                                           bool enable,
                                           uint32_t timeout_seconds);
-int libhoth_payload_update_confirm_get_timeout(
+int libhoth_payload_update_confirm_get_staged_timeout(
     struct libhoth_device* dev,
     payload_update_confirm_response_t* timeout_seconds);
 
