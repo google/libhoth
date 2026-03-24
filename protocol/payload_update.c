@@ -27,6 +27,7 @@
 #include "transports/libhoth_device.h"
 #include "util.h"
 
+#define PAYLOAD_UPDATE_CONFIRM_OP_CONFIRM 3
 #define PAYLOAD_UPDATE_CONFIRM_OP_GET_STAGED_TIMEOUT_VALUES 4
 
 static int send_payload_update_request_with_command(struct libhoth_device* dev,
@@ -390,6 +391,35 @@ int libhoth_payload_update_verify_descriptor(struct libhoth_device* dev) {
       dev, PAYLOAD_UPDATE_VERIFY_DESCRIPTOR);
 }
 
+int libhoth_payload_update_confirm(struct libhoth_device* dev) {
+  payload_update_confirm_response_t confirm_response = {0};
+
+  // 1. Create the structures
+  payload_update_confirm_request_t confirm_request = {0};
+  confirm_request.op = PAYLOAD_UPDATE_CONFIRM_OP_CONFIRM;
+
+  struct payload_update_packet pkt_header = {
+      .type = PAYLOAD_UPDATE_CONFIRM,
+      .offset = 0,
+      .len = sizeof(confirm_request),
+  };
+
+  uint8_t send_buf[sizeof(pkt_header) + sizeof(confirm_request)] = {0};
+  memcpy(&send_buf[0], &pkt_header, sizeof(pkt_header));
+  memcpy(&send_buf[sizeof(pkt_header)], &confirm_request,
+         sizeof(confirm_request));
+
+  int ret = libhoth_hostcmd_exec(
+      dev, HOTH_CMD_BOARD_SPECIFIC_BASE + HOTH_PRV_CMD_HOTH_PAYLOAD_UPDATE, 0,
+      &send_buf, sizeof(send_buf), &confirm_response, sizeof(confirm_response),
+      NULL);
+  if (ret != 0) {
+    fprintf(stderr, "Payload update confirm failed, err code: %d\n", ret);
+    return -1;
+  }
+
+  return 0;
+}
 int libhoth_payload_update_confirm_get_staged_timeout(
     struct libhoth_device* dev, payload_update_confirm_response_t* response) {
   payload_update_confirm_request_t confirm_request = {0};
