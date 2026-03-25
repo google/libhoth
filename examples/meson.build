@@ -6,7 +6,7 @@ git_version_h = vcs_tag(
     replace_string: '@GIT_COMMIT@',
 )
 
-incdir = include_directories('..')
+incdir = libhoth_include_dirs
 link_with = [libhoth.get_static_lib()]
 c_args = []
 
