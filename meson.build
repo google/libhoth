@@ -1,5 +1,9 @@
 project('libhoth', 'c', 'cpp', license: 'Apache-2.0', version: '0.0.0')
 
+install_headers('include/libhoth/status.h', subdir: 'libhoth')
+
+libhoth_include_dirs = include_directories('include', '.')
+
 header_subdirs = ['libhoth']
 libhoth_objs = []
 libhoth_deps = []
