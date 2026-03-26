@@ -1009,6 +1009,19 @@ static const struct htool_cmd CMDS[] = {
         .func = htool_payload_update_confirm_get_staged_timeout,
     },
     {
+        .verbs = (const char*[]){"payload", "timeout_enable", NULL},
+        .desc =
+            "Enable/Disable the timeout mechanism for payload update confirm",
+        .params =
+            (const struct htool_param[]){
+                {HTOOL_FLAG_BOOL, 'e', "enable", "true",
+                 .desc = "Enable confirm mode"},
+                {HTOOL_FLAG_VALUE, 't', "timeout", "0",
+                 .desc = "Timeout in seconds"},
+                {}},
+        .func = htool_payload_update_confirm_enable,
+    },
+    {
         .verbs = (const char*[]){"payload", "read", NULL},
         .desc = "Read content of staging flash for Titan images.",
         .params =

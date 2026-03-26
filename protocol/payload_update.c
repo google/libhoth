@@ -397,7 +397,6 @@ int libhoth_payload_update_verify_descriptor(struct libhoth_device* dev) {
 int libhoth_payload_update_confirm(struct libhoth_device* dev) {
   payload_update_confirm_response_t confirm_response = {0};
 
-  // 1. Create the structures
   payload_update_confirm_request_t confirm_request = {0};
   confirm_request.op = PAYLOAD_UPDATE_CONFIRM_OP_CONFIRM;
 
@@ -429,9 +428,12 @@ int libhoth_payload_update_confirm_enable(struct libhoth_device* dev,
                                           uint32_t timeout_seconds) {
   payload_update_confirm_response_t confirm_response = {0};
 
+  // Initially fill timeout with the set timeout, if enabled
+  // Later we will adjust timeout to default if not explicitly defined here
   payload_update_confirm_request_t confirm_request = {0};
   confirm_request.op = enable ? PAYLOAD_UPDATE_CONFIRM_OP_ENABLE_WITH_TIMEOUT
                               : PAYLOAD_UPDATE_CONFIRM_OP_DISABLE;
+
   confirm_request.timeout = timeout_seconds;
 
   struct payload_update_packet pkt_header = {
@@ -442,18 +444,8 @@ int libhoth_payload_update_confirm_enable(struct libhoth_device* dev,
 
   // timout_seconds of 0 is treated as a special value to use the default
   // timeout value defined in the firmware.
-  if (timeout_seconds == 0) {
+  if (timeout_seconds == 0 && enable == true) {
     confirm_request.op = PAYLOAD_UPDATE_CONFIRM_OP_ENABLE;
-    confirm_request.timeout = PAYLOAD_UPDATE_CONFIRM_SECONDS_DEFAULT;
-  }
-
-  if (confirm_request.timeout < PAYLOAD_UPDATE_CONFIRM_SECONDS_MIN ||
-      confirm_request.timeout > PAYLOAD_UPDATE_CONFIRM_SECONDS_MAX) {
-    fprintf(stderr,
-            "Invalid timeout value: %u. Must be between %u and %u seconds.\n",
-            confirm_request.timeout, PAYLOAD_UPDATE_CONFIRM_SECONDS_MIN,
-            PAYLOAD_UPDATE_CONFIRM_SECONDS_MAX);
-    return -1;
   }
 
   uint8_t send_buf[sizeof(pkt_header) + sizeof(confirm_request)] = {0};

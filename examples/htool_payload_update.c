@@ -323,3 +323,30 @@ int htool_payload_update_confirm_get_staged_timeout(
 
   return 0;
 }
+
+int htool_payload_update_confirm_enable(const struct htool_invocation* inv) {
+  struct libhoth_device* dev = htool_libhoth_device();
+  if (!dev) {
+    return -1;
+  }
+
+  int ret = 0;
+
+  uint32_t timeout = 0;
+  if (htool_get_param_u32(inv, "timeout", &timeout)) {
+    return -1;
+  }
+
+  bool enable_confirm = true;
+  if (htool_get_param_bool(inv, "enable", &enable_confirm)) {
+    return -1;
+  }
+
+  ret = libhoth_payload_update_confirm_enable(dev, enable_confirm, timeout);
+  if (ret != 0) {
+    fprintf(stderr, "Failed to confirm payload update\n");
+    return -1;
+  }
+
+  return ret;
+}
