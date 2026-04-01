@@ -32,6 +32,7 @@
 #include "htool_authz_command.h"
 #include "htool_cmd.h"
 #include "htool_console.h"
+#include "htool_debug.h"
 #include "htool_dfu.h"
 #include "htool_firmware_update.h"
 #include "htool_i2c.h"
@@ -927,6 +928,24 @@ static const struct htool_cmd CMDS[] = {
         .desc = "Quickly put the target device in and out of reset",
         .params = (const struct htool_param[]){{}},
         .func = command_target_reset_pulse,
+    },
+    {
+        .verbs = (const char*[]){"target", "debug", "enable", NULL},
+        .desc = "Enable target debug.",
+        .params = (const struct htool_param[]){{}},
+        .func = htool_target_debug_enable,
+    },
+    {
+        .verbs = (const char*[]){"target", "debug", "disable", NULL},
+        .desc = "Disable target debug.",
+        .params = (const struct htool_param[]){{}},
+        .func = htool_target_debug_disable,
+    },
+    {
+        .verbs = (const char*[]){"target", "debug", "get", NULL},
+        .desc = "Get target debug status.",
+        .params = (const struct htool_param[]){{}},
+        .func = htool_target_debug_get,
     },
     {
         .verbs = (const char*[]){"console", NULL},
