@@ -311,7 +311,8 @@ enum hoth_target_control_action {
 };
 
 enum hoth_target_control_function {
-  HOTH_TARGET_CONTROL_RESERVED0 = 0,
+  // Allow control over GPIO for Jtag debug enable (if present)
+  HOTH_TARGET_CONTROL_DEBUG = 0,
   HOTH_TARGET_CONTROL_RESERVED1 = 1,
   // Allow control over GPIO for I2C Mux select (if present)
   HOTH_TARGET_CONTROL_I2C_MUX = 2,
