@@ -48,13 +48,14 @@ struct hoth_request_controlled_storage {
   struct hoth_payload_controlled_storage payload;
 } __attribute__((packed));
 
-int libhoth_controlled_storage_read(
+libhoth_error libhoth_controlled_storage_read(
     struct libhoth_device* dev, uint32_t slot,
     struct hoth_payload_controlled_storage* payload, size_t* payload_len);
-int libhoth_controlled_storage_write(struct libhoth_device* dev, uint32_t slot,
-                                     const uint8_t* data, size_t len);
-int libhoth_controlled_storage_delete(struct libhoth_device* dev,
-                                      uint32_t slot);
+libhoth_error libhoth_controlled_storage_write(struct libhoth_device* dev,
+                                               uint32_t slot,
+                                               const uint8_t* data, size_t len);
+libhoth_error libhoth_controlled_storage_delete(struct libhoth_device* dev,
+                                                uint32_t slot);
 
 #ifdef __cplusplus
 }

@@ -107,17 +107,21 @@ struct hoth_authz_record_get_nonce_response {
   uint32_t rw_supported_key_id;
 } __attribute__((packed));
 
-int libhoth_authz_record_erase(struct libhoth_device* dev);
-int libhoth_authz_record_read(struct libhoth_device* dev,
-                              struct hoth_authz_record_get_response* resp);
-int libhoth_authz_record_build(struct libhoth_device* dev,
-                               uint32_t capabilities,
-                               struct authorization_record* record);
-int libhoth_authz_record_set(struct libhoth_device* dev,
-                             const struct authorization_record* record);
+libhoth_error libhoth_authz_record_erase(struct libhoth_device* dev);
+
+libhoth_error libhoth_authz_record_read(
+    struct libhoth_device* dev, struct hoth_authz_record_get_response* resp);
+
+libhoth_error libhoth_authz_record_build(struct libhoth_device* dev,
+                                         uint32_t capabilities,
+                                         struct authorization_record* record);
+
+libhoth_error libhoth_authz_record_set(
+    struct libhoth_device* dev, const struct authorization_record* record);
 
 int libhoth_authorization_record_print_hex_string(
     const struct authorization_record* record);
+
 int libhoth_authorization_record_from_hex_string(
     struct authorization_record* record, const char* buf, size_t length);
 

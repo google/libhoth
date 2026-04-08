@@ -162,19 +162,21 @@ static int validate_ec_response_header(
   return 0;
 }
 
-int libhoth_hostcmd_exec(struct libhoth_device* dev, uint16_t command,
-                         uint8_t version, const void* req_payload,
-                         size_t req_payload_size, void* resp_buf,
-                         size_t resp_buf_size, size_t* out_resp_size) {
+libhoth_error libhoth_hostcmd_exec(struct libhoth_device* dev, uint16_t command,
+                                   uint8_t version, const void* req_payload,
+                                   size_t req_payload_size, void* resp_buf,
+                                   size_t resp_buf_size,
+                                   size_t* out_resp_size) {
   struct {
     struct hoth_host_request hdr;
     uint8_t
         payload_buf[LIBHOTH_MAILBOX_SIZE - sizeof(struct hoth_host_request)];
-  } req;
+  } req = {0};
   if (req_payload_size > sizeof(req.payload_buf)) {
     fprintf(stderr, "req_payload_size too large: %d > %d\n",
             (int)req_payload_size, (int)sizeof(req.payload_buf));
-    return -1;
+    return LIBHOTH_ERR_CONSTRUCT(HOTH_CTX_CMD_EXEC, HOTH_HOST_SPACE_LIBHOTH,
+                                 HOTH_LIBHOTH_REQUEST_TOO_BIG);
   }
   if (req_payload) {
     memcpy(req.payload_buf, req_payload, req_payload_size);
@@ -183,40 +185,47 @@ int libhoth_hostcmd_exec(struct libhoth_device* dev, uint16_t command,
                                           req_payload_size, &req.hdr);
   if (status != 0) {
     fprintf(stderr, "populate_ec_request_header() failed: %d\n", status);
-    return -1;
+    return LIBHOTH_ERR_CONSTRUCT(HOTH_CTX_CMD_EXEC, HOTH_HOST_SPACE_LIBHOTH,
+                                 HOTH_LIBHOTH_EC_ERROR);
   }
   status = libhoth_send_request(dev, &req, sizeof(req.hdr) + req_payload_size);
   if (status != LIBHOTH_OK) {
     fprintf(stderr, "libhoth_send_request() failed: %d\n", status);
-    return -1;
+    return LIBHOTH_ERR_CONSTRUCT(HOTH_CTX_CMD_EXEC, HOTH_HOST_SPACE_LIBHOTH,
+                                 HOTH_LIBHOTH_SEND_ERROR);
   }
   struct {
     struct hoth_host_response hdr;
     uint8_t
         payload_buf[LIBHOTH_MAILBOX_SIZE - sizeof(struct hoth_host_response)];
-  } resp;
+  } resp = {0};
   size_t resp_size = 0;
   status = libhoth_receive_response(dev, &resp, sizeof(resp), &resp_size,
                                     HOTH_CMD_TIMEOUT_MS_DEFAULT);
   if (status != LIBHOTH_OK) {
     fprintf(stderr, "libhoth_receive_response() failed: %d\n", status);
-    return -1;
+    return LIBHOTH_ERR_CONSTRUCT(HOTH_CTX_CMD_EXEC, HOTH_HOST_SPACE_LIBHOTH,
+                                 HOTH_LIBHOTH_RECEIVE_ERROR);
   }
   status = validate_ec_response_header(&resp.hdr, resp.payload_buf, resp_size);
   if (status != 0) {
     fprintf(stderr, "EC response header invalid: %d\n", status);
-    return -1;
+    return LIBHOTH_ERR_CONSTRUCT(HOTH_CTX_CMD_EXEC, HOTH_HOST_SPACE_LIBHOTH,
+                                 HOTH_LIBHOTH_VALIDATE_ERROR);
   }
   if (resp.hdr.result != HOTH_RES_SUCCESS) {
     fprintf(stderr, "EC response contained error: %d", resp.hdr.result);
     if (resp.hdr.data_len >= 4) {
-      uint32_t error_code;
+      uint32_t error_code = 0;
       memcpy(&error_code, resp.payload_buf, sizeof(error_code));
       fprintf(stderr, " (extended: 0x%08x)\n", error_code);
+      return LIBHOTH_ERR_CONSTRUCT(HOTH_CTX_CMD_EXEC, HOTH_HOST_SPACE_FW,
+                                   error_code);
     } else {
       fprintf(stderr, "\n");
+      return LIBHOTH_ERR_CONSTRUCT(HOTH_CTX_CMD_EXEC, HOTH_HOST_SPACE_FW,
+                                   resp.hdr.result);
     }
-    return HTOOL_ERROR_HOST_COMMAND_START + resp.hdr.result;
   }
 
   size_t resp_payload_size = resp_size - sizeof(struct hoth_host_response);
@@ -226,14 +235,16 @@ int libhoth_hostcmd_exec(struct libhoth_device* dev, uint16_t command,
           stderr,
           "Response payload too large to fit in supplied buffer: %zu > %zu\n",
           resp_payload_size, resp_buf_size);
-      return -1;
+      return LIBHOTH_ERR_CONSTRUCT(HOTH_CTX_CMD_EXEC, HOTH_HOST_SPACE_LIBHOTH,
+                                   HOTH_LIBHOTH_RESPONSE_TOO_BIG);
     }
   } else {
     if (resp_payload_size != resp_buf_size) {
       fprintf(stderr,
               "Unexpected response payload size: got %zu expected %zu\n",
               resp_payload_size, resp_buf_size);
-      return -1;
+      return LIBHOTH_ERR_CONSTRUCT(HOTH_CTX_CMD_EXEC, HOTH_HOST_SPACE_LIBHOTH,
+                                   HOTH_LIBHOTH_RESPONSE_TOO_BIG);
     }
   }
   if (resp_buf) {

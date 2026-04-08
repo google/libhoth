@@ -47,7 +47,9 @@ TEST_F(LibHothTest, authz_erase_test) {
 
   EXPECT_CALL(mock_, receive).WillOnce(DoAll(CopyResp(&dummy, 0), Return(-1)));
 
-  EXPECT_EQ(libhoth_authz_record_erase(&hoth_dev_), -1);
+  EXPECT_EQ(libhoth_authz_record_erase(&hoth_dev_),
+            LIBHOTH_ERR_CONSTRUCT(HOTH_CTX_CMD_EXEC, HOTH_HOST_SPACE_LIBHOTH,
+                                  HOTH_LIBHOTH_RECEIVE_ERROR));
 }
 
 TEST_F(LibHothTest, authz_read_test) {
@@ -147,7 +149,9 @@ TEST_F(LibHothTest, authz_build_fail_test) {
   uint32_t cap = 123;
   struct authorization_record record = {};
 
-  EXPECT_EQ(libhoth_authz_record_build(&hoth_dev_, cap, &record), -1);
+  EXPECT_EQ(libhoth_authz_record_build(&hoth_dev_, cap, &record),
+            LIBHOTH_ERR_CONSTRUCT(HOTH_CTX_CMD_EXEC, HOTH_HOST_SPACE_LIBHOTH,
+                                  HOTH_LIBHOTH_ERROR));
 }
 
 TEST_F(LibHothTest, authz_mismatch_key_id_test) {
@@ -183,7 +187,9 @@ TEST_F(LibHothTest, authz_mismatch_key_id_test) {
   uint32_t cap = 123;
   struct authorization_record record = {};
 
-  EXPECT_EQ(libhoth_authz_record_build(&hoth_dev_, cap, &record), -1);
+  EXPECT_EQ(libhoth_authz_record_build(&hoth_dev_, cap, &record),
+            LIBHOTH_ERR_CONSTRUCT(HOTH_CTX_CMD_EXEC, HOTH_HOST_SPACE_LIBHOTH,
+                                  HOTH_LIBHOTH_ERROR));
 }
 
 TEST_F(LibHothTest, authz_nonce_fail_test) {
@@ -215,7 +221,9 @@ TEST_F(LibHothTest, authz_nonce_fail_test) {
   uint32_t cap = 123;
   struct authorization_record record;
 
-  EXPECT_EQ(libhoth_authz_record_build(&hoth_dev_, cap, &record), -1);
+  EXPECT_EQ(libhoth_authz_record_build(&hoth_dev_, cap, &record),
+            LIBHOTH_ERR_CONSTRUCT(HOTH_CTX_CMD_EXEC, HOTH_HOST_SPACE_LIBHOTH,
+                                  HOTH_LIBHOTH_ERROR));
 }
 
 TEST_F(LibHothTest, authz_set_test) {

@@ -9,6 +9,7 @@
 
 #include "examples/host_commands.h"
 #include "examples/test/test_util.h"
+#include "libhoth/status.h"
 #include "protocol/test/libhoth_device_mock.h"
 
 using ::testing::_;
@@ -21,10 +22,11 @@ using ::testing::SetArrayArgument;
 struct libhoth_device* mock_dev = nullptr;
 struct libhoth_device* htool_libhoth_device() { return mock_dev; }
 
-int libhoth_hostcmd_exec(struct libhoth_device* dev, uint16_t command,
-                         uint8_t version, const void* request,
-                         size_t request_size, void* response,
-                         size_t max_response_size, size_t* bytes_read) {
+libhoth_error libhoth_hostcmd_exec(struct libhoth_device* dev, uint16_t command,
+                                   uint8_t version, const void* request,
+                                   size_t request_size, void* response,
+                                   size_t max_response_size,
+                                   size_t* bytes_read) {
   LibHothDeviceMock* mock = (LibHothDeviceMock*)dev->user_ctx;
   return mock->hostcmd_exec(dev, command, version, request, request_size,
                             response, max_response_size, bytes_read);
@@ -92,13 +94,18 @@ TEST_F(HtoolSecurityV2Test, ExecCmdHostCmdFailure) {
   struct security_v2_buffer response_buffer = {
       .data = response_storage, .size = sizeof(response_storage)};
 
-  EXPECT_CALL(mock_, hostcmd_exec(_, _, _, _, _, _, _, _)).WillOnce(Return(-1));
+  EXPECT_CALL(mock_, hostcmd_exec(_, _, _, _, _, _, _, _))
+      .WillOnce(Return(LIBHOTH_ERR_CONSTRUCT(HOTH_CTX_CMD_EXEC,
+                                             HOTH_HOST_SPACE_LIBHOTH,
+                                             HOTH_LIBHOTH_SEND_ERROR)));
 
   int status =
       htool_exec_security_v2_cmd(mock_dev, 1, 2, 3, &request_buffer, nullptr, 0,
                                  &response_buffer, nullptr, 0);
 
-  ASSERT_EQ(status, -1);
+  ASSERT_EQ(status, (int)LIBHOTH_ERR_CONSTRUCT(HOTH_CTX_CMD_EXEC,
+                                               HOTH_HOST_SPACE_LIBHOTH,
+                                               HOTH_LIBHOTH_SEND_ERROR));
 }
 
 TEST_F(HtoolSecurityV2Test, SerializedCmdSuccess) {
@@ -167,7 +174,10 @@ TEST_F(HtoolSecurityV2Test, SerializedCmdExecFailure) {
   struct security_v2_buffer response_buffer = {
       .data = response_storage, .size = sizeof(response_storage)};
 
-  EXPECT_CALL(mock_, hostcmd_exec(_, _, _, _, _, _, _, _)).WillOnce(Return(-1));
+  EXPECT_CALL(mock_, hostcmd_exec(_, _, _, _, _, _, _, _))
+      .WillOnce(Return(LIBHOTH_ERR_CONSTRUCT(HOTH_CTX_CMD_EXEC,
+                                             HOTH_HOST_SPACE_LIBHOTH,
+                                             HOTH_LIBHOTH_SEND_ERROR)));
 
   const struct security_v2_serialized_param* param_out1 = nullptr;
   const struct security_v2_serialized_param** response_params[] = {&param_out1};

@@ -161,6 +161,7 @@ cc_test(
         ":htool_security_version",
         "//examples/test:test_util",
         "//protocol/test:libhoth_device_mock",
+        "//:libhoth_status",
         "@googletest//:gtest",
         "@googletest//:gtest_main",
     ],
@@ -265,6 +266,7 @@ cc_binary(
         "//transports:libhoth_spi",
         "//transports:libhoth_usb",
         "//transports:libhoth_usb_device",
+        "//:libhoth_status",
         "@libusb",
     ] + select({
         ":dbus_backend": ["//transports:libhoth_dbus"],

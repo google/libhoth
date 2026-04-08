@@ -8,6 +8,7 @@ cc_library(
     srcs = ["host_cmd.c"],
     hdrs = ["host_cmd.h"],
     deps = [
+        "//:libhoth_status",
         "//transports:libhoth_device",
     ],
 )
@@ -17,6 +18,7 @@ cc_test(
     srcs = ["host_cmd_test.cc"],
     deps = [
         ":host_cmd",
+        "//:libhoth_status",
         "//protocol/test:libhoth_device_mock",
         "//transports:libhoth_device",
         "@googletest//:gtest",
@@ -390,6 +392,7 @@ cc_library(
     hdrs = ["hello.h"],
     deps = [
         ":host_cmd",
+        "//:libhoth_status",
         "//transports:libhoth_device",
     ],
 )

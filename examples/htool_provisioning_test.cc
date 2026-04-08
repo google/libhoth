@@ -297,7 +297,10 @@ TEST_F(HtoolProvisioningTest, GetProvisioningLogUnexpectedErrorFromDevice) {
       .WillOnce(DoAll(CopyResp(&response, sizeof(header) + header.size),
                       Return(LIBHOTH_ERR_INTERFACE_NOT_FOUND)));
 
-  ASSERT_EQ(htool_get_provisioning_log(&inv), -1);
+  ASSERT_EQ(
+      htool_get_provisioning_log(&inv),
+      (int)LIBHOTH_ERR_CONSTRUCT(HOTH_CTX_CMD_EXEC, HOTH_HOST_SPACE_LIBHOTH,
+                                 HOTH_LIBHOTH_RECEIVE_ERROR));
 
   // Verify output file is empty
   FILE* fp = fopen(tmp_output_file.c_str(), "rb");
@@ -548,7 +551,10 @@ TEST_F(HtoolProvisioningTest, ValidateAndSignUnexpectedErrorFromDevice) {
       .WillOnce(DoAll(CopyResp(signed_log_data.data(), signed_log_data.size()),
                       Return(LIBHOTH_ERR_INTERFACE_NOT_FOUND)));
 
-  ASSERT_EQ(htool_validate_and_sign(&inv), -1);
+  ASSERT_EQ(
+      htool_validate_and_sign(&inv),
+      (int)LIBHOTH_ERR_CONSTRUCT(HOTH_CTX_CMD_EXEC, HOTH_HOST_SPACE_LIBHOTH,
+                                 HOTH_LIBHOTH_RECEIVE_ERROR));
 
   // Verify output file is empty
   FILE* fp = fopen(tmp_output_file.c_str(), "rb");
@@ -712,7 +718,10 @@ TEST_F(HtoolProvisioningTest, ValidateAndSignTooLargeResponse) {
       .WillOnce(DoAll(CopyResp(signed_log_data.data(), signed_log_data.size()),
                       Return(LIBHOTH_OK)));
 
-  ASSERT_EQ(htool_validate_and_sign(&inv), -1);
+  ASSERT_EQ(
+      htool_validate_and_sign(&inv),
+      (int)LIBHOTH_ERR_CONSTRUCT(HOTH_CTX_CMD_EXEC, HOTH_HOST_SPACE_LIBHOTH,
+                                 HOTH_LIBHOTH_RESPONSE_TOO_BIG));
 
   // Verify output file size is 0
   FILE* fp = fopen(tmp_output_file.c_str(), "rb");

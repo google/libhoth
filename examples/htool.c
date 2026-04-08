@@ -769,10 +769,12 @@ static int command_hello(const struct htool_invocation* inv) {
   }
 
   uint32_t output = 0;
-  const int rv = libhoth_hello(dev, input, &output);
+  const libhoth_error rv = libhoth_hello(dev, input, &output);
   if (rv) {
     return rv;
   }
+
+  printf("Rv: %ld\n", rv);
 
   printf("output: 0x%08x\n", output);
   return 0;
