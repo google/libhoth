@@ -17,6 +17,7 @@
 
 #include <stdint.h>
 
+#include "libhoth/status.h"
 #include "protocol/host_cmd.h"
 
 #ifdef __cplusplus
@@ -35,7 +36,8 @@ struct hoth_response_hello {
   uint32_t output;
 } __hoth_align4;
 
-int libhoth_hello(struct libhoth_device* dev, uint32_t input, uint32_t* output);
+libhoth_error libhoth_hello(struct libhoth_device* dev, uint32_t input,
+                            uint32_t* output);
 
 #ifdef __cplusplus
 }

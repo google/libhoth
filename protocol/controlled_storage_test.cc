@@ -73,7 +73,8 @@ TEST_F(LibHothTest, controlled_storage_write_test) {
       LIBHOTH_OK);
   EXPECT_EQ(
       libhoth_controlled_storage_write(&hoth_dev_, 0, payload, sizeof(payload)),
-      -1);
+      LIBHOTH_ERR_CONSTRUCT(HOTH_CTX_CMD_EXEC, HOTH_HOST_SPACE_LIBHOTH,
+                            HOTH_LIBHOTH_SEND_ERROR));
 }
 
 TEST_F(LibHothTest, controlled_storage_delete_test) {
@@ -89,5 +90,7 @@ TEST_F(LibHothTest, controlled_storage_delete_test) {
       .WillOnce(DoAll(CopyResp(&dummy, 0), Return(LIBHOTH_OK)));
 
   EXPECT_EQ(libhoth_controlled_storage_delete(&hoth_dev_, 0), LIBHOTH_OK);
-  EXPECT_EQ(libhoth_controlled_storage_delete(&hoth_dev_, 0), -1);
+  EXPECT_EQ(libhoth_controlled_storage_delete(&hoth_dev_, 0),
+            LIBHOTH_ERR_CONSTRUCT(HOTH_CTX_CMD_EXEC, HOTH_HOST_SPACE_LIBHOTH,
+                                  HOTH_LIBHOTH_SEND_ERROR));
 }

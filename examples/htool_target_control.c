@@ -39,32 +39,39 @@ int target_control_perform_action(
   };
 
   size_t response_length = 0;
-  int ret = libhoth_hostcmd_exec(
+  libhoth_error ret = libhoth_hostcmd_exec(
       dev, HOTH_CMD_BOARD_SPECIFIC_BASE + HOTH_PRV_CMD_HOTH_TARGET_CONTROL,
       /*version=*/0, &request, sizeof(request), response, sizeof(*response),
       &response_length);
 
   if (ret != 0) {
-    fprintf(stderr, "HOTH_TARGET_CONTROL error code: %d\n", ret);
+    fprintf(stderr, "HOTH_TARGET_CONTROL error code: %ld\n", ret);
     switch (ret) {
-      case (HTOOL_ERROR_HOST_COMMAND_START + HOTH_RES_INVALID_COMMAND):
+      case (LIBHOTH_ERR_CONSTRUCT(HOTH_CTX_CMD_EXEC, HOTH_HOST_SPACE_FW,
+                                  HOTH_RES_FW_INVALID_COMMAND)):
         fprintf(stderr,
                 "Command not supported, or requested action is forbidden on "
                 "function. Please confirm if the RoT FW version supports this "
                 "command, and requested action is allowed on the function\n");
         break;
-      case (HTOOL_ERROR_HOST_COMMAND_START + HOTH_RES_INVALID_PARAM):
+      case (LIBHOTH_ERR_CONSTRUCT(HOTH_CTX_CMD_EXEC, HOTH_HOST_SPACE_FW,
+                                  HOTH_RES_FW_INVALID_PARAM)):
         fprintf(stderr,
                 "Invalid function or action. Please confirm if the RoT "
                 "firmware version supports the given function, and action on "
                 "that function is correct\n");
         break;
-      case (HTOOL_ERROR_HOST_COMMAND_START + HOTH_RES_ACCESS_DENIED):
+      case (LIBHOTH_ERR_CONSTRUCT(HOTH_CTX_CMD_EXEC, HOTH_HOST_SPACE_FW,
+                                  HOTH_RES_FW_ACCESS_DENIED)):
         fprintf(stderr,
                 "Not authorized to perform requested action on function. "
                 "Please use `authz_host_command` commands to authorize RoT to "
                 "perform requested action on function\n");
         break;
+      default:
+        fprintf(stderr,
+                "Unexpected error. Please check the transport layer and "
+                "RoT firmware are working correctly\n");
     }
     return -1;
   }

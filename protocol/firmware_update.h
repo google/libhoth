@@ -17,6 +17,7 @@
 
 #include <stdint.h>
 
+#include "libhoth/status.h"
 #include "protocol/host_cmd.h"
 
 #ifdef __cplusplus
@@ -37,8 +38,8 @@ struct hoth_request_firmware_update {
   uint32_t offset;     // Bundle offset in the active side of flash.
 } __attribute__((packed, aligned(4)));
 
-int libhoth_firmware_update_from_flash_and_reset(struct libhoth_device* dev,
-                                                 uint32_t offset);
+libhoth_error libhoth_firmware_update_from_flash_and_reset(
+    struct libhoth_device* dev, uint32_t offset);
 
 #ifdef __cplusplus
 }

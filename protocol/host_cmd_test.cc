@@ -17,7 +17,7 @@
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
 
-#include "protocol/host_cmd.h"
+#include "libhoth/status.h"
 #include "test/libhoth_device_mock.h"
 #include "transports/libhoth_device.h"
 
@@ -47,7 +47,7 @@ TEST_F(LibHothTest, response_failure_legacy) {
   size_t out_resp_size;
   EXPECT_EQ(libhoth_hostcmd_exec(&hoth_dev_, kCmd, 0, nullptr, 0, resp_buf,
                                  sizeof(resp_buf), &out_resp_size),
-            HTOOL_ERROR_HOST_COMMAND_START + 2);
+            LIBHOTH_ERR_CONSTRUCT(HOTH_CTX_CMD_EXEC, HOTH_HOST_SPACE_FW, 2));
 }
 
 TEST_F(LibHothTest, response_failure_extended) {
@@ -60,7 +60,9 @@ TEST_F(LibHothTest, response_failure_extended) {
 
   uint8_t resp_buf[1024];
   size_t out_resp_size;
+  // Payload is 0x05, 0x00, 0xc7, 0x89 -> 0x89c70005. The code is the low 16
+  // bits: 5.
   EXPECT_EQ(libhoth_hostcmd_exec(&hoth_dev_, kCmd, 0, nullptr, 0, resp_buf,
                                  sizeof(resp_buf), &out_resp_size),
-            HTOOL_ERROR_HOST_COMMAND_START + 2);
+            LIBHOTH_ERR_CONSTRUCT(HOTH_CTX_CMD_EXEC, HOTH_HOST_SPACE_FW, 5));
 }

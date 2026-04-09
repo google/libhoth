@@ -17,6 +17,8 @@
 #define LIBHOTH_EXAMPLES_HTOOL_TARGET_CONTROL_H_
 
 #include "host_commands.h"
+#include "libhoth/status.h"
+
 #ifdef __cplusplus
 extern "C" {
 #endif
