@@ -20,6 +20,7 @@ rust_library(
         "sha256_sw.rs",
     ],
     crate_name = "mutask_sha256_sw",
+    edition = "2024",
     visibility = ["//visibility:public"],
     deps = [
         "//third_party:zerocopy",
@@ -30,6 +31,7 @@ rust_library(
 rust_test(
     name = "sha256_sw_test",
     crate = ":sha256_sw",
+    edition = "2024",
     rustc_flags = [
         "-C",
         "debug-assertions",

@@ -19,6 +19,7 @@ rust_library(
     testonly = True,
     srcs = ["golden.rs"],
     crate_name = "mutask_golden",
+    edition = "2024",
     visibility = ["//visibility:public"],
     deps = [
         "//third_party:difflib",
@@ -29,4 +30,5 @@ rust_test(
     name = "golden_test",
     compile_data = glob(["testdata/**"]),
     crate = ":golden",
+    edition = "2024",
 )
