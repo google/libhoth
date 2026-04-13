@@ -7,7 +7,7 @@ transport_srcs = [
     'libhoth_usb_mailbox.c',
 ]
 
-incdir = include_directories('..')
+incdir = libhoth_include_dirs
 libusb = dependency('libusb-1.0')
 libsystemd = dependency('libsystemd')
 libcap = dependency('libcap')
@@ -16,7 +16,7 @@ if get_option('dbus_backend')
     libhoth_dbus = static_library(
         'hoth_dbus',
         'libhoth_dbus.c',
-        include_directories: incdir,
+        include_directories: libhoth_include_dirs,
         dependencies: [libsystemd],
     )
     libhoth_objs += [libhoth_dbus.extract_all_objects(recursive: false)]
@@ -27,7 +27,7 @@ endif
 libhoth_transport = static_library(
     'hoth_transports',
     transport_srcs,
-    include_directories: incdir,
+    include_directories: libhoth_include_dirs,
     dependencies: [libusb],
 )
 

@@ -26,12 +26,12 @@ protocol_srcs = [
     'console.c'
 ]
 
-incdir = include_directories('..')
+incdir = libhoth_include_dirs
 
 libhoth_protocol = static_library(
     'hoth_protocols',
     protocol_srcs,
-    include_directories: incdir,
+    include_directories: libhoth_include_dirs,
     link_with: [libhoth_transport],
 )
 libhoth_objs += [libhoth_protocol.extract_all_objects(recursive: false)]
