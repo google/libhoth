@@ -537,3 +537,13 @@ cc_library(
     srcs = ["util.c"],
     hdrs = ["util.h"],
 )
+
+cc_library(
+    name = "mauv",
+    srcs = ["mauv.c"],
+    hdrs = ["mauv.h"],
+    deps = [
+        ":host_cmd",
+        "//transports:libhoth_device",
+    ],
+)
