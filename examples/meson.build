@@ -31,6 +31,8 @@ executable(
         'htool_jtag.c',
         'htool_mtd.c',
         'htool_key_rotation.c',
+        'htool_mauv.h',
+        'htool_mauv.c',
         'htool_panic.c',
         'htool_payload.c',
         'htool_payload_update.c',

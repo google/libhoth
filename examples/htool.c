@@ -38,6 +38,7 @@
 #include "htool_i2c.h"
 #include "htool_jtag.h"
 #include "htool_key_rotation.h"
+#include "htool_mauv.h"
 #include "htool_panic.h"
 #include "htool_payload.h"
 #include "htool_payload_update.h"
@@ -1851,6 +1852,18 @@ static const struct htool_cmd CMDS[] = {
                          " If the attestation_output flag is provided the "
                          "other output files are not required."},
                 {}},
+    },
+    {
+        .verbs = (const char*[]){"mauv", "compiled", NULL},
+        .desc = "Get compiled MAUV",
+        .params = (const struct htool_param[]){{}},
+        .func = htool_mauv_compiled,
+    },
+    {
+        .verbs = (const char*[]){"mauv", "effective", NULL},
+        .desc = "Get effective MAUV",
+        .params = (const struct htool_param[]){{}},
+        .func = htool_mauv_effective,
     },
     {
         .verbs = (const char*[]){"tpm", "get_mode", NULL},
