@@ -23,6 +23,8 @@ executable(
         'htool_cmd.c',
         'htool_console.c',
         'htool_dbus.c',
+        'htool_debug.c',
+        'htool_debug.h',
         'htool_dfu.c',
         'htool_firmware_update.c',
         'htool_i2c.c',

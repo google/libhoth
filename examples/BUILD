@@ -180,6 +180,8 @@ cc_binary(
         "htool_console.h",
         "htool_constants.h",
         "htool_dbus.c",
+        "htool_debug.c",
+        "htool_debug.h",
         "htool_dfu.c",
         "htool_dfu.h",
         "htool_firmware_update.c",
