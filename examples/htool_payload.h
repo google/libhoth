@@ -28,6 +28,8 @@ int htool_payload_status(const struct htool_invocation* inv);
 int htool_payload_info(const struct htool_invocation* inv);
 int htool_payload_info_all(const struct htool_invocation* inv);
 int htool_payload_info_nonstatic(const struct htool_invocation* inv);
+int htool_get_compiled_payload_mauv(const struct htool_invocation* inv);
+int htool_get_effective_payload_mauv(const struct htool_invocation* inv);
 
 #ifdef __cplusplus
 }
