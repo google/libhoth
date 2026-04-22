@@ -15,6 +15,7 @@ protocol_srcs = [
     'payload_info.c',
     'controlled_storage.c',
     'jtag.c',
+    'mauv.c',
     'hello.c',
     'key_rotation.c',
     'secure_boot.c',
