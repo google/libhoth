@@ -1100,6 +1100,18 @@ static const struct htool_cmd CMDS[] = {
         .func = htool_payload_info,
     },
     {
+        .verbs = (const char*[]){"payload", "mauv", "compiled", NULL},
+        .desc = "Display compiled MAUV for the payload.",
+        .params = (const struct htool_param[]){{}},
+        .func = htool_get_compiled_payload_mauv,
+    },
+    {
+        .verbs = (const char*[]){"payload", "mauv", "effective", NULL},
+        .desc = "Display effective MAUV for the payload.",
+        .params = (const struct htool_param[]){{}},
+        .func = htool_get_effective_payload_mauv,
+    },
+    {
         .verbs = (const char*[]){"firmware_update",
                                  "update_from_flash_and_reset", NULL},
         .desc = "Installs a firmware update from a bundle staged in the "
