@@ -14,11 +14,34 @@
 
 #include "chipinfo.h"
 
+#include <string.h>
+
 #include "host_cmd.h"
 
 int libhoth_chipinfo(struct libhoth_device* dev,
                      struct hoth_response_chip_info* chipinfo) {
-  return libhoth_hostcmd_exec(
+  uint8_t resp_buf[32];  // Max size for new format
+  size_t resp_size;
+
+  int ret = libhoth_hostcmd_exec(
       dev, HOTH_CMD_BOARD_SPECIFIC_BASE + HOTH_PRV_CMD_HOTH_CHIP_INFO,
-      /*version=*/0, NULL, 0, chipinfo, sizeof(*chipinfo), NULL);
+      /*version=*/0, NULL, 0, resp_buf, sizeof(resp_buf), &resp_size);
+
+  if (ret != 0) {
+    return ret;
+  }
+  if (resp_size == 16) {
+    // Old format: haven/dauntless
+    chipinfo->version = 0;
+    memcpy(&chipinfo->data.haven_device_id, resp_buf, 16);
+  } else if (resp_size == 32) {
+    // New format: OpenTitan Device ID (32 bytes)
+    chipinfo->version = 1;
+    memcpy(&chipinfo->data.open_titan_device_id, resp_buf, 32);
+  } else {
+    // Unexpected size
+    return HTOOL_ERROR_HOST_COMMAND_START + HOTH_RES_INVALID_PARAM;
+  }
+
+  return 0;
 }
