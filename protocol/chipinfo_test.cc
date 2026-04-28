@@ -26,9 +26,10 @@ using ::testing::Return;
 TEST_F(LibHothTest, chipinfo_test) {
   struct hoth_response_chip_info chipinfo_exp = {};
 
-  chipinfo_exp.hardware_identity = 0xABCD1234;
-  chipinfo_exp.hardware_category = 1234;
-  chipinfo_exp.info_variant = 2;
+  chipinfo_exp.version = 0;
+  chipinfo_exp.data.haven_device_id.hardware_identity = 0xABCD1234;
+  chipinfo_exp.data.haven_device_id.hardware_category = 1234;
+  chipinfo_exp.data.haven_device_id.info_variant = 2;
 
   EXPECT_CALL(mock_, send(_,
                           UsesCommand(HOTH_CMD_BOARD_SPECIFIC_BASE +
@@ -43,7 +44,10 @@ TEST_F(LibHothTest, chipinfo_test) {
   struct hoth_response_chip_info chipinfo;
   EXPECT_EQ(libhoth_chipinfo(&hoth_dev_, &chipinfo), LIBHOTH_OK);
 
-  EXPECT_EQ(chipinfo_exp.hardware_identity, chipinfo.hardware_identity);
-  EXPECT_EQ(chipinfo_exp.hardware_category, chipinfo.hardware_category);
-  EXPECT_EQ(chipinfo_exp.info_variant, chipinfo.info_variant);
+  EXPECT_EQ(chipinfo_exp.data.haven_device_id.hardware_identity,
+            chipinfo.data.haven_device_id.hardware_identity);
+  EXPECT_EQ(chipinfo_exp.data.haven_device_id.hardware_category,
+            chipinfo.data.haven_device_id.hardware_category);
+  EXPECT_EQ(chipinfo_exp.data.haven_device_id.info_variant,
+            chipinfo.data.haven_device_id.info_variant);
 }
