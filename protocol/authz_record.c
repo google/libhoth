@@ -54,11 +54,14 @@ int libhoth_authz_record_build(struct libhoth_device* dev,
     return -1;
   }
   if (chipinfo_resp.version != 0) {
-    fprintf(stderr, "Unsupported chipinfo version: %d\n", chipinfo_resp.version);
+    fprintf(stderr, "Unsupported chipinfo version: %d\n",
+            chipinfo_resp.version);
     return -1;
   }
-  record->dev_id_0 = chipinfo_resp.data.haven_device_id.hardware_identity & 0xfffffffful;
-  record->dev_id_1 = (chipinfo_resp.data.haven_device_id.hardware_identity >> 32);
+  record->dev_id_0 =
+      chipinfo_resp.data.haven_device_id.hardware_identity & 0xfffffffful;
+  record->dev_id_1 =
+      (chipinfo_resp.data.haven_device_id.hardware_identity >> 32);
 
   struct hoth_authz_record_get_nonce_response nonce_resp;
   status = libhoth_hostcmd_exec(

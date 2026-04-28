@@ -78,8 +78,8 @@ TEST_F(LibHothTest, authz_read_test) {
 
 TEST_F(LibHothTest, authz_build_test) {
   struct hoth_response_chip_info chipinfo = {};
-  chipinfo.hardware_identity = 0xABCD;
-  chipinfo.hardware_identity |= (0x1234UL << 32);
+  chipinfo.data.haven_device_id.hardware_identity = 0xABCD;
+  chipinfo.data.haven_device_id.hardware_identity |= (0x1234UL << 32);
 
   struct hoth_authz_record_get_nonce_response nonce_resp = {};
   nonce_resp.ro_supported_key_id = 1;
@@ -116,8 +116,8 @@ TEST_F(LibHothTest, authz_build_test) {
 
 TEST_F(LibHothTest, authz_build_fail_test) {
   struct hoth_response_chip_info chipinfo = {};
-  chipinfo.hardware_identity = 0xABCD;
-  chipinfo.hardware_identity |= (0x1234UL << 32);
+  chipinfo.data.haven_device_id.hardware_identity = 0xABCD;
+  chipinfo.data.haven_device_id.hardware_identity |= (0x1234UL << 32);
 
   // key_id supported by RO and RW. These key_id's are expected to match one
   // another to successfully program an authorization record. key_id == 0 should
@@ -152,8 +152,8 @@ TEST_F(LibHothTest, authz_build_fail_test) {
 
 TEST_F(LibHothTest, authz_mismatch_key_id_test) {
   struct hoth_response_chip_info chipinfo = {};
-  chipinfo.hardware_identity = 0xABCD;
-  chipinfo.hardware_identity |= (0x1234UL << 32);
+  chipinfo.data.haven_device_id.hardware_identity = 0xABCD;
+  chipinfo.data.haven_device_id.hardware_identity |= (0x1234UL << 32);
 
   // key_id supported by RO and RW. These key_id's are expected to match one
   // another to successfully program an authorization record. key_id == 0 should
@@ -188,8 +188,8 @@ TEST_F(LibHothTest, authz_mismatch_key_id_test) {
 
 TEST_F(LibHothTest, authz_nonce_fail_test) {
   struct hoth_response_chip_info chipinfo = {};
-  chipinfo.hardware_identity = 0xABCD;
-  chipinfo.hardware_identity |= (0x1234UL << 32);
+  chipinfo.data.haven_device_id.hardware_identity = 0xABCD;
+  chipinfo.data.haven_device_id.hardware_identity |= (0x1234UL << 32);
 
   struct hoth_authz_record_get_nonce_response nonce_resp = {};
   nonce_resp.ro_supported_key_id = 0;

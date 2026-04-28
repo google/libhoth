@@ -122,8 +122,7 @@ static int command_show_chipinfo(const struct htool_invocation* inv) {
   printf("Chip Info:\n");
   if (response.version == 0) {
     printf("Hardware Identity: 0x%016llx\n",
-           (unsigned long long)
-               response.data.haven_device_id.hardware_identity);
+           (unsigned long long)response.data.haven_device_id.hardware_identity);
     printf("Hardware Category: %u\n",
            (unsigned)response.data.haven_device_id.hardware_category);
     printf("Info Variant: %lu\n",
@@ -143,30 +142,28 @@ static int command_show_chipinfo(const struct htool_invocation* inv) {
   }
   printf("\nGeneric Identifier:\n");
 
-  printf("  %-22s 0x%04x\n", "SI Creator ID:",
-         (uint16_t)(id[31]) | (id[30] << 8));
-  printf("  %-22s 0x%04x\n", "Product ID:",
-         (uint16_t)(id[29]) | (id[28] << 8));
+  printf("  %-22s 0x%04x\n",
+         "SI Creator ID:", (uint16_t)(id[31]) | (id[30] << 8));
+  printf("  %-22s 0x%04x\n", "Product ID:", (uint16_t)(id[29]) | (id[28] << 8));
   printf("  %-22s 200%u week %u%u\n", "Device Date:", id[27] & 0x0F,
          id[26] & 0x0F, id[27] >> 4);
-  printf("  %-22s %u%u%u\n", "Lot Number:", id[25] >> 4,
-         id[25] & 0x0F, id[26] >> 4);
-  printf("  %-22s %u%u\n", "Wafer Number:", id[24] >> 4,
-         id[24] & 0x0F);
-  printf("  %-22s %u%u%u\n", "Wafer X Coord:", id[22] & 0x0F,
-         id[23] >> 4, id[23] & 0x0F);
-  printf("  %-22s %u%u%u\n", "Wafer Y Coord:", id[21] >> 4,
-         id[21] & 0x0F, id[22] >> 4);
+  printf("  %-22s %u%u%u\n", "Lot Number:", id[25] >> 4, id[25] & 0x0F,
+         id[26] >> 4);
+  printf("  %-22s %u%u\n", "Wafer Number:", id[24] >> 4, id[24] & 0x0F);
+  printf("  %-22s %u%u%u\n", "Wafer X Coord:", id[22] & 0x0F, id[23] >> 4,
+         id[23] & 0x0F);
+  printf("  %-22s %u%u%u\n", "Wafer Y Coord:", id[21] >> 4, id[21] & 0x0F,
+         id[22] >> 4);
   printf("  %-22s 0x%02x\n", "Reserved DIN:", id[20]);
-  printf("  %-22s 0x%02x%02x%02x%02x\n", "Reserved:", id[16], id[17],
-         id[18], id[19]);
+  printf("  %-22s 0x%02x%02x%02x%02x\n", "Reserved:", id[16], id[17], id[18],
+         id[19]);
   printf("SKU-specific Identifier:\n");
   printf("  %-22s %u\n", "Package ID:", id[15]);
   printf("  %-22s %u\n", "AST Config Version:", id[14]);
   printf("  %-22s \"%c%c\"\n", "OTP ID:", id[12], id[13]);
   printf("  %-22s %u\n", "OTP Version:", id[11]);
-  printf("  %-22s \"%c%c%c%c\"\n", "SKU ID String:", id[4],
-         id[5], id[6], id[7]);
+  printf("  %-22s \"%c%c%c%c\"\n", "SKU ID String:", id[4], id[5], id[6],
+         id[7]);
   printf("  %-22s %u\n", "SKU Specific Version:", id[0]);
 
   return 0;
@@ -263,7 +260,8 @@ static int command_authz_host_command_build(
     return -1;
   }
   if (chipinfo_resp.version != 0) {
-    fprintf(stderr, "Unsupported chipinfo version: %d\n", chipinfo_resp.version);
+    fprintf(stderr, "Unsupported chipinfo version: %d\n",
+            chipinfo_resp.version);
     return -1;
   }
 
@@ -278,8 +276,8 @@ static int command_authz_host_command_build(
   }
 
   struct hoth_authorized_command_request request = authz_command_build_request(
-      chipinfo_resp.data.haven_device_id.hardware_identity, opcode, nonce_resp.supported_key_info,
-      nonce_resp.nonce);
+      chipinfo_resp.data.haven_device_id.hardware_identity, opcode,
+      nonce_resp.supported_key_info, nonce_resp.nonce);
   authz_command_print_request(&request);
   return 0;
 }
