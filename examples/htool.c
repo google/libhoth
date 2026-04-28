@@ -131,7 +131,7 @@ static int command_show_chipinfo(const struct htool_invocation* inv) {
   }
 
   if (response.version != 1) {
-    printf("Unsupported chipinfo version: %u\n", response.version);
+    printf("Unsupported chipinfo version: %lu\n", response.version);
     return -1;
   }
 
@@ -260,7 +260,7 @@ static int command_authz_host_command_build(
     return -1;
   }
   if (chipinfo_resp.version != 0) {
-    fprintf(stderr, "Unsupported chipinfo version: %d\n",
+    fprintf(stderr, "Unsupported chipinfo version: %lu\n",
             chipinfo_resp.version);
     return -1;
   }
