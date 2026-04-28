@@ -244,13 +244,15 @@ int htool_statistics(const struct htool_invocation* inv) {
   }
 
   if (stat.valid_words > STATISTIC_OFFSET(payload_update_failure_reason)) {
-    printf("Payload update failure reason: %s\n",
-           PayloadUpdateErrorToString(stat.payload_update_failure_reason));
+    printf("Payload update failure reason: %s (%u)\n",
+           PayloadUpdateErrorToString(stat.payload_update_failure_reason),
+           stat.payload_update_failure_reason);
   }
 
   if (stat.valid_words > STATISTIC_OFFSET(firmware_update_failure_reason)) {
-    printf("Firmware update failure reason: %s\n",
-           FirmwareUpdateErrorToString(stat.firmware_update_failure_reason));
+    printf("Firmware update failure reason: %s (%u)\n",
+           FirmwareUpdateErrorToString(stat.firmware_update_failure_reason),
+           stat.firmware_update_failure_reason);
   }
 
   if (stat.valid_words > STATISTIC_OFFSET(failed_firmware_minor_version)) {
@@ -275,9 +277,10 @@ int htool_statistics(const struct htool_invocation* inv) {
   if (stat.valid_words > STATISTIC_OFFSET(payload_update_confirmation_cookie)) {
     if (stat.payload_update_confirmation_cookie_failure_reason !=
         PAYLOAD_UPDATE_SUCCESS) {
-      printf("Payload Update Confirmation Cookie: failed with %s\n",
+      printf("Payload Update Confirmation Cookie: failed with %s (%u)\n",
              PayloadUpdateErrorToString(
-                 stat.payload_update_confirmation_cookie_failure_reason));
+                 stat.payload_update_confirmation_cookie_failure_reason),
+             stat.payload_update_confirmation_cookie_failure_reason);
     } else {
       printf("Payload Update Confirmation Cookie: %" PRIu64 "\n",
              stat.payload_update_confirmation_cookie);
