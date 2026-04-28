@@ -27,7 +27,7 @@ extern "C" {
 // Chipinfo response structure supporting both old structured format
 // (Haven/Dauntless) and new 256-bit format (OpenTitan).
 struct hoth_response_chip_info {
-  uint8_t version;  // 0: Haven/Dauntless, 1: OpenTitan
+  uint64_t version;  // 0: Haven/Dauntless, 1: OpenTitan
   union {
     struct {
       uint64_t hardware_identity;

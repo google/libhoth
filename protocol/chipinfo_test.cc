@@ -23,7 +23,7 @@ using ::testing::_;
 using ::testing::DoAll;
 using ::testing::Return;
 
-TEST_F(LibHothTest, chipinfo_test) {
+TEST_F(LibHothTest, haven_chipinfo_test) {
   struct hoth_response_chip_info chipinfo_exp = {};
 
   chipinfo_exp.version = 0;
@@ -38,16 +38,47 @@ TEST_F(LibHothTest, chipinfo_test) {
       .WillOnce(Return(LIBHOTH_OK));
 
   EXPECT_CALL(mock_, receive)
-      .WillOnce(DoAll(CopyResp(&chipinfo_exp, sizeof(chipinfo_exp)),
+      .WillOnce(DoAll(CopyResp(&(chipinfo_exp.data.haven_device_id),
+                               sizeof(chipinfo_exp.data.haven_device_id)),
                       Return(LIBHOTH_OK)));
 
   struct hoth_response_chip_info chipinfo;
   EXPECT_EQ(libhoth_chipinfo(&hoth_dev_, &chipinfo), LIBHOTH_OK);
 
+  EXPECT_EQ(chipinfo.version, chipinfo_exp.version);
   EXPECT_EQ(chipinfo_exp.data.haven_device_id.hardware_identity,
             chipinfo.data.haven_device_id.hardware_identity);
   EXPECT_EQ(chipinfo_exp.data.haven_device_id.hardware_category,
             chipinfo.data.haven_device_id.hardware_category);
   EXPECT_EQ(chipinfo_exp.data.haven_device_id.info_variant,
             chipinfo.data.haven_device_id.info_variant);
+}
+
+TEST_F(LibHothTest, opentitan_chipinfo_test) {
+  struct hoth_response_chip_info chipinfo_exp = {};
+
+  chipinfo_exp.version = 1;
+  memcpy(chipinfo_exp.data.open_titan_device_id,
+         "\x11\x22\x33\x44\x55\x66\x77\x88\x99\xAA\xBB\xCC\xDD\xEE\xFF\x00"
+         "\x11\x22\x33\x44\x55\x66\x77\x88\x99\xAA\xBB\xCC\xDD\xEE\x00",
+         32);
+
+  EXPECT_CALL(mock_, send(_,
+                          UsesCommand(HOTH_CMD_BOARD_SPECIFIC_BASE +
+                                      HOTH_PRV_CMD_HOTH_CHIP_INFO),
+                          _))
+      .WillOnce(Return(LIBHOTH_OK));
+
+  EXPECT_CALL(mock_, receive)
+      .WillOnce(DoAll(CopyResp(&(chipinfo_exp.data.open_titan_device_id),
+                               sizeof(chipinfo_exp.data.open_titan_device_id)),
+                      Return(LIBHOTH_OK)));
+
+  struct hoth_response_chip_info chipinfo;
+  EXPECT_EQ(libhoth_chipinfo(&hoth_dev_, &chipinfo), LIBHOTH_OK);
+
+  EXPECT_EQ(chipinfo.version, chipinfo_exp.version);
+  EXPECT_EQ(memcmp(chipinfo.data.open_titan_device_id,
+                   chipinfo_exp.data.open_titan_device_id, 32),
+            0);
 }

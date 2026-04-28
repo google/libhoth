@@ -97,8 +97,9 @@ TEST_F(LibHothTest, authz_build_test) {
                           _));
 
   EXPECT_CALL(mock_, receive)
-      .WillOnce(
-          DoAll(CopyResp(&chipinfo, sizeof(chipinfo)), Return(LIBHOTH_OK)))
+      .WillOnce(DoAll(CopyResp(&chipinfo.data.haven_device_id,
+                               sizeof(chipinfo.data.haven_device_id)),
+                      Return(LIBHOTH_OK)))
       .WillOnce(
           DoAll(CopyResp(&nonce_resp, sizeof(nonce_resp)), Return(LIBHOTH_OK)));
 
@@ -139,8 +140,9 @@ TEST_F(LibHothTest, authz_build_fail_test) {
                           _));
 
   EXPECT_CALL(mock_, receive)
-      .WillOnce(
-          DoAll(CopyResp(&chipinfo, sizeof(chipinfo)), Return(LIBHOTH_OK)))
+      .WillOnce(DoAll(CopyResp(&chipinfo.data.haven_device_id,
+                               sizeof(chipinfo.data.haven_device_id)),
+                      Return(LIBHOTH_OK)))
       .WillOnce(
           DoAll(CopyResp(&nonce_resp, sizeof(nonce_resp)), Return(LIBHOTH_OK)));
 
@@ -175,8 +177,9 @@ TEST_F(LibHothTest, authz_mismatch_key_id_test) {
                           _));
 
   EXPECT_CALL(mock_, receive)
-      .WillOnce(
-          DoAll(CopyResp(&chipinfo, sizeof(chipinfo)), Return(LIBHOTH_OK)))
+      .WillOnce(DoAll(CopyResp(&chipinfo.data.haven_device_id,
+                               sizeof(chipinfo.data.haven_device_id)),
+                      Return(LIBHOTH_OK)))
       .WillOnce(
           DoAll(CopyResp(&nonce_resp, sizeof(nonce_resp)), Return(LIBHOTH_OK)));
 
@@ -207,8 +210,9 @@ TEST_F(LibHothTest, authz_nonce_fail_test) {
                           _));
 
   EXPECT_CALL(mock_, receive)
-      .WillOnce(
-          DoAll(CopyResp(&chipinfo, sizeof(chipinfo)), Return(LIBHOTH_OK)))
+      .WillOnce(DoAll(CopyResp(&(chipinfo.data.haven_device_id),
+                               sizeof(chipinfo.data.haven_device_id)),
+                      Return(LIBHOTH_OK)))
       .WillOnce(
           DoAll(CopyResp(&nonce_resp, sizeof(nonce_resp)), Return(LIBHOTH_OK)));
 
