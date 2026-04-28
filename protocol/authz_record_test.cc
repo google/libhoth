@@ -77,9 +77,9 @@ TEST_F(LibHothTest, authz_read_test) {
 }
 
 TEST_F(LibHothTest, authz_build_test) {
-  struct hoth_response_chip_info chipinfo = {};
-  chipinfo.data.haven_device_id.hardware_identity = 0xABCD;
-  chipinfo.data.haven_device_id.hardware_identity |= (0x1234UL << 32);
+  struct libhoth_haven_device_id haven_data = {};
+  haven_data.hardware_identity = 0xABCD;
+  haven_data.hardware_identity |= (0x1234UL << 32);
 
   struct hoth_authz_record_get_nonce_response nonce_resp = {};
   nonce_resp.ro_supported_key_id = 1;
@@ -97,9 +97,8 @@ TEST_F(LibHothTest, authz_build_test) {
                           _));
 
   EXPECT_CALL(mock_, receive)
-      .WillOnce(DoAll(CopyResp(&chipinfo.data.haven_device_id,
-                               sizeof(chipinfo.data.haven_device_id)),
-                      Return(LIBHOTH_OK)))
+      .WillOnce(
+          DoAll(CopyResp(&haven_data, sizeof(haven_data)), Return(LIBHOTH_OK)))
       .WillOnce(
           DoAll(CopyResp(&nonce_resp, sizeof(nonce_resp)), Return(LIBHOTH_OK)));
 
@@ -116,9 +115,9 @@ TEST_F(LibHothTest, authz_build_test) {
 }
 
 TEST_F(LibHothTest, authz_build_fail_test) {
-  struct hoth_response_chip_info chipinfo = {};
-  chipinfo.data.haven_device_id.hardware_identity = 0xABCD;
-  chipinfo.data.haven_device_id.hardware_identity |= (0x1234UL << 32);
+  struct libhoth_haven_device_id haven_data = {};
+  haven_data.hardware_identity = 0xABCD;
+  haven_data.hardware_identity |= (0x1234UL << 32);
 
   // key_id supported by RO and RW. These key_id's are expected to match one
   // another to successfully program an authorization record. key_id == 0 should
@@ -140,9 +139,8 @@ TEST_F(LibHothTest, authz_build_fail_test) {
                           _));
 
   EXPECT_CALL(mock_, receive)
-      .WillOnce(DoAll(CopyResp(&chipinfo.data.haven_device_id,
-                               sizeof(chipinfo.data.haven_device_id)),
-                      Return(LIBHOTH_OK)))
+      .WillOnce(
+          DoAll(CopyResp(&haven_data, sizeof(haven_data)), Return(LIBHOTH_OK)))
       .WillOnce(
           DoAll(CopyResp(&nonce_resp, sizeof(nonce_resp)), Return(LIBHOTH_OK)));
 
@@ -153,9 +151,9 @@ TEST_F(LibHothTest, authz_build_fail_test) {
 }
 
 TEST_F(LibHothTest, authz_mismatch_key_id_test) {
-  struct hoth_response_chip_info chipinfo = {};
-  chipinfo.data.haven_device_id.hardware_identity = 0xABCD;
-  chipinfo.data.haven_device_id.hardware_identity |= (0x1234UL << 32);
+  struct libhoth_haven_device_id haven_data = {};
+  haven_data.hardware_identity = 0xABCD;
+  haven_data.hardware_identity |= (0x1234UL << 32);
 
   // key_id supported by RO and RW. These key_id's are expected to match one
   // another to successfully program an authorization record. key_id == 0 should
@@ -177,9 +175,8 @@ TEST_F(LibHothTest, authz_mismatch_key_id_test) {
                           _));
 
   EXPECT_CALL(mock_, receive)
-      .WillOnce(DoAll(CopyResp(&chipinfo.data.haven_device_id,
-                               sizeof(chipinfo.data.haven_device_id)),
-                      Return(LIBHOTH_OK)))
+      .WillOnce(
+          DoAll(CopyResp(&haven_data, sizeof(haven_data)), Return(LIBHOTH_OK)))
       .WillOnce(
           DoAll(CopyResp(&nonce_resp, sizeof(nonce_resp)), Return(LIBHOTH_OK)));
 
@@ -190,9 +187,9 @@ TEST_F(LibHothTest, authz_mismatch_key_id_test) {
 }
 
 TEST_F(LibHothTest, authz_nonce_fail_test) {
-  struct hoth_response_chip_info chipinfo = {};
-  chipinfo.data.haven_device_id.hardware_identity = 0xABCD;
-  chipinfo.data.haven_device_id.hardware_identity |= (0x1234UL << 32);
+  struct libhoth_haven_device_id haven_data = {};
+  haven_data.hardware_identity = 0xABCD;
+  haven_data.hardware_identity |= (0x1234UL << 32);
 
   struct hoth_authz_record_get_nonce_response nonce_resp = {};
   nonce_resp.ro_supported_key_id = 0;
@@ -210,9 +207,8 @@ TEST_F(LibHothTest, authz_nonce_fail_test) {
                           _));
 
   EXPECT_CALL(mock_, receive)
-      .WillOnce(DoAll(CopyResp(&(chipinfo.data.haven_device_id),
-                               sizeof(chipinfo.data.haven_device_id)),
-                      Return(LIBHOTH_OK)))
+      .WillOnce(
+          DoAll(CopyResp(&haven_data, sizeof(haven_data)), Return(LIBHOTH_OK)))
       .WillOnce(
           DoAll(CopyResp(&nonce_resp, sizeof(nonce_resp)), Return(LIBHOTH_OK)));
 

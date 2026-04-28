@@ -131,21 +131,25 @@ static int command_show_chipinfo(const struct htool_invocation* inv) {
   }
 
   if (response.version != 1) {
-    printf("Unsupported chipinfo version: %lu\n", response.version);
+    printf("Unsupported chipinfo version: %u\n", response.version);
     return -1;
   }
 
   uint8_t* id = response.data.open_titan_device_id;
-  printf("OpenTitan Device ID: 0x");
+  printf("OpenTitan iSerial: 0x");
+  for (int i = 0; i < 32; i++) {
+    printf("%02x", id[i]);
+  }
+  printf("\nOpenTitan Device ID: 0x");
   for (int i = 20; i < 32; i++) {
     printf("%02x", id[i]);
   }
-  printf("\nGeneric Identifier:\n");
+  printf("\n\nGeneric Identifier:\n");
 
   printf("  %-22s 0x%04x\n",
          "SI Creator ID:", (uint16_t)(id[31]) | (id[30] << 8));
   printf("  %-22s 0x%04x\n", "Product ID:", (uint16_t)(id[29]) | (id[28] << 8));
-  printf("  %-22s 200%u week %u%u\n", "Device Date:", id[27] & 0x0F,
+  printf("  %-22s 202%u week %u%u\n", "Device Date:", id[27] & 0x0F,
          id[26] & 0x0F, id[27] >> 4);
   printf("  %-22s %u%u%u\n", "Lot Number:", id[25] >> 4, id[25] & 0x0F,
          id[26] >> 4);
@@ -157,7 +161,7 @@ static int command_show_chipinfo(const struct htool_invocation* inv) {
   printf("  %-22s 0x%02x\n", "Reserved DIN:", id[20]);
   printf("  %-22s 0x%02x%02x%02x%02x\n", "Reserved:", id[16], id[17], id[18],
          id[19]);
-  printf("SKU-specific Identifier:\n");
+  printf("\nSKU-specific Identifier:\n");
   printf("  %-22s %u\n", "Package ID:", id[15]);
   printf("  %-22s %u\n", "AST Config Version:", id[14]);
   printf("  %-22s \"%c%c\"\n", "OTP ID:", id[12], id[13]);
@@ -260,7 +264,7 @@ static int command_authz_host_command_build(
     return -1;
   }
   if (chipinfo_resp.version != 0) {
-    fprintf(stderr, "Unsupported chipinfo version: %lu\n",
+    fprintf(stderr, "Unsupported chipinfo version: %u\n",
             chipinfo_resp.version);
     return -1;
   }

@@ -54,7 +54,7 @@ int libhoth_authz_record_build(struct libhoth_device* dev,
     return -1;
   }
   if (chipinfo_resp.version != 0) {
-    fprintf(stderr, "Unsupported chipinfo version: %lu\n",
+    fprintf(stderr, "Unsupported chipinfo version: %u\n",
             chipinfo_resp.version);
     return -1;
   }

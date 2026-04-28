@@ -24,21 +24,22 @@ extern "C" {
 #include "transports/libhoth_device.h"
 
 #define HOTH_PRV_CMD_HOTH_CHIP_INFO 0x0010
-// Chipinfo response structure supporting both old structured format
-// (Haven/Dauntless) and new 256-bit format (OpenTitan).
+struct libhoth_haven_device_id {
+  uint64_t hardware_identity;
+  uint16_t hardware_category;
+  uint16_t reserved0;
+  uint32_t info_variant;
+};
+
 struct hoth_response_chip_info {
-  uint64_t version;  // 0: Haven/Dauntless, 1: OpenTitan
+  uint32_t version;  // 0: Haven/Dauntless, 1: OpenTitan
+  uint32_t reserved;
   union {
-    struct {
-      uint64_t hardware_identity;
-      uint16_t hardware_category;
-      uint16_t reserved0;
-      uint32_t info_variant;
-    } haven_device_id;                 // Old format (16 bytes)
+    struct libhoth_haven_device_id haven_device_id;  // Old format (16 bytes)
     uint8_t open_titan_device_id[32];  // New format (32 bytes) - OpenTitan
                                        // Device ID
   } data;
-} __attribute__((packed, aligned(4)));
+};
 
 int libhoth_chipinfo(struct libhoth_device* dev,
                      struct hoth_response_chip_info* chipinfo);
