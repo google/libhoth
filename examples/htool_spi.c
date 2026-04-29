@@ -32,6 +32,7 @@ struct libhoth_device* htool_libhoth_spi_device(void) {
 
   int rv;
   const char* spidev_path_str;
+  const char* mode_str;
   uint32_t mailbox_location;
   bool atomic;
   uint32_t spidev_speed_hz;
@@ -39,6 +40,7 @@ struct libhoth_device* htool_libhoth_spi_device(void) {
   uint32_t spidev_device_busy_wait_check_interval;
   rv = htool_get_param_string(htool_global_flags(), "spidev_path",
                               &spidev_path_str) ||
+       htool_get_param_string(htool_global_flags(), "spidev_mode", &mode_str) ||
        htool_get_param_u32(htool_global_flags(), "mailbox_location",
                            &mailbox_location) ||
        htool_get_param_bool(htool_global_flags(), "spidev_atomic", &atomic) ||
@@ -51,6 +53,18 @@ struct libhoth_device* htool_libhoth_spi_device(void) {
                            "spidev_device_busy_wait_check_interval",
                            &spidev_device_busy_wait_check_interval);
   if (rv) {
+    return NULL;
+  }
+
+  enum libhoth_spi_mode operation_mode;
+  if (!strcmp(mode_str, "single")) {
+    operation_mode = LIBHOTH_SPI_MODE_SINGLE;
+  } else if (!strcmp(mode_str, "dual")) {
+    operation_mode = LIBHOTH_SPI_MODE_DUAL;
+  } else if (!strcmp(mode_str, "quad")) {
+    operation_mode = LIBHOTH_SPI_MODE_QUAD;
+  } else {
+    fprintf(stderr, "Invalid spidev mode: %s\n", mode_str);
     return NULL;
   }
 
@@ -78,6 +92,7 @@ struct libhoth_device* htool_libhoth_spi_device(void) {
       .mailbox = mailbox_location,
       .atomic = atomic,
       .speed = spidev_speed_hz,
+      .operation_mode = operation_mode,
       .device_busy_wait_timeout = spidev_device_busy_wait_timeout,
       .device_busy_wait_check_interval = spidev_device_busy_wait_check_interval,
       .timeout_us = timeout_us,
