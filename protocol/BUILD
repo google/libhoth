@@ -407,6 +407,28 @@ cc_test(
 )
 
 cc_library(
+    name = "gpio_drive_strength",
+    srcs = ["gpio_drive_strength.c"],
+    hdrs = ["gpio_drive_strength.h"],
+    deps = [
+        ":host_cmd",
+        "//transports:libhoth_device",
+    ],
+)
+
+cc_test(
+    name = "gpio_drive_strength_test",
+    srcs = ["gpio_drive_strength_test.cc"],
+    deps = [
+        ":gpio_drive_strength",
+        "//protocol/test:libhoth_device_mock",
+        "//transports:libhoth_device",
+        "@googletest//:gtest",
+        "@googletest//:gtest_main",
+    ],
+)
+
+cc_library(
     name = "opentitan_version",
     srcs = ["opentitan_version.c"],
     hdrs = [

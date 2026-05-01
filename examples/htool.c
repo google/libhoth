@@ -60,6 +60,7 @@
 #include "protocol/chipinfo.h"
 #include "protocol/console.h"
 #include "protocol/controlled_storage.h"
+#include "protocol/gpio_drive_strength.h"
 #include "protocol/hello.h"
 #include "protocol/opentitan_version.h"
 #include "protocol/progress.h"
@@ -757,6 +758,50 @@ int htool_controlled_storage_delete(const struct htool_invocation* inv) {
   }
 
   return libhoth_controlled_storage_delete(dev, slot);
+}
+
+static int command_set_gpio_drive_strength(const struct htool_invocation* inv) {
+  struct libhoth_device* dev = htool_libhoth_device();
+  if (!dev) {
+    return -1;
+  }
+
+  uint32_t strength;
+  if (htool_get_param_u32(inv, "strength", &strength)) {
+    return -1;
+  }
+
+  if (strength > MAX_GPIO_DRIVE_STRENGTH) {
+    fprintf(stderr, "Drive strength can only be up to 15.\n");
+    return -1;
+  }
+
+  bool has_dio = htool_has_param(inv, "dio");
+  bool has_mio = htool_has_param(inv, "mio");
+
+  if (!has_dio && !has_mio) {
+    fprintf(stderr, "Must specify either --dio or --mio.\n");
+    return -1;
+  }
+
+  if (has_dio && has_mio) {
+    fprintf(stderr, "Cannot specify both --dio and --mio.\n");
+    return -1;
+  }
+
+  uint32_t pad;
+  if (has_dio) {
+    if (htool_get_param_u32(inv, "dio", &pad)) {
+      return -1;
+    }
+    pad += LIBHOTH_GPIO_DIO_PAD_OFFSET;
+  } else {
+    if (htool_get_param_u32(inv, "mio", &pad)) {
+      return -1;
+    }
+  }
+
+  return libhoth_set_gpio_drive_strength(dev, (uint8_t)pad, (uint8_t)strength);
 }
 
 static int command_hello(const struct htool_invocation* inv) {
@@ -1564,6 +1609,39 @@ static const struct htool_cmd CMDS[] = {
                                                 .desc = "slot"},
                                                {}},
         .func = htool_controlled_storage_delete,
+    },
+    {
+        .verbs = (const char*[]){"gpio", "set_drive_strength", NULL},
+        .desc = "Set GPIO drive strength",
+        .params =
+            (const struct htool_param[]){
+                {.type = HTOOL_FLAG_VALUE,
+                 .ch = 's',
+                 .name = "strength",
+                 .default_value = NULL,
+                 .desc = "The drive strength to set from 0 - 15"},
+                {.type = HTOOL_FLAG_VALUE,
+                 .ch = 'd',
+                 .name = "dio",
+                 .default_value = NULL,
+                 .desc = "Configure the DIO pad with the given index. Values "
+                         "are:\n"
+                         "          (0 => USB_DP | 1 => USB_DN | 2-5 => "
+                         "SPI_HOST0_D0-3 |\n"
+                         "           6-9 => SPI_DEV_D0-3 | 12 => SPI_DEV_CLK | "
+                         "13 => SPI_DEV_CSB |\n"
+                         "           14 => SPI_HOST0_CLK | 15 => "
+                         "SPI_HOST0_CSB)."},
+                {.type = HTOOL_FLAG_VALUE,
+                 .ch = 'm',
+                 .name = "mio",
+                 .default_value = NULL,
+                 .desc = "Configure the MIO pad with the given index. Values "
+                         "are:\n"
+                         "          (0-8 => IOA0-8 | 9-21 => IOB0-12 | 22-34 "
+                         "=> IOC0-12 | 35-46 => IOR0-13)."},
+                {}},
+        .func = command_set_gpio_drive_strength,
     },
     {
         .verbs = (const char*[]){"hello", NULL},
