@@ -23,12 +23,11 @@ using ::testing::_;
 using ::testing::DoAll;
 using ::testing::Return;
 
-TEST_F(LibHothTest, chipinfo_test) {
-  struct hoth_response_chip_info chipinfo_exp = {};
-
-  chipinfo_exp.hardware_identity = 0xABCD1234;
-  chipinfo_exp.hardware_category = 1234;
-  chipinfo_exp.info_variant = 2;
+TEST_F(LibHothTest, haven_chipinfo_test) {
+  struct libhoth_haven_device_id haven_data = {};
+  haven_data.hardware_identity = 0xABCD1234;
+  haven_data.hardware_category = 1234;
+  haven_data.info_variant = 2;
 
   EXPECT_CALL(mock_, send(_,
                           UsesCommand(HOTH_CMD_BOARD_SPECIFIC_BASE +
@@ -37,13 +36,41 @@ TEST_F(LibHothTest, chipinfo_test) {
       .WillOnce(Return(LIBHOTH_OK));
 
   EXPECT_CALL(mock_, receive)
-      .WillOnce(DoAll(CopyResp(&chipinfo_exp, sizeof(chipinfo_exp)),
+      .WillOnce(
+          DoAll(CopyResp(&haven_data, sizeof(haven_data)), Return(LIBHOTH_OK)));
+
+  struct hoth_response_chip_info chipinfo;
+  EXPECT_EQ(libhoth_chipinfo(&hoth_dev_, &chipinfo), LIBHOTH_OK);
+
+  EXPECT_EQ(chipinfo.version, 0);
+  EXPECT_EQ(chipinfo.data.haven_device_id.hardware_identity,
+            haven_data.hardware_identity);
+  EXPECT_EQ(chipinfo.data.haven_device_id.hardware_category,
+            haven_data.hardware_category);
+  EXPECT_EQ(chipinfo.data.haven_device_id.info_variant,
+            haven_data.info_variant);
+}
+
+TEST_F(LibHothTest, opentitan_chipinfo_test) {
+  uint8_t opentitan_data[32];
+  memcpy(opentitan_data,
+         "\x11\x22\x33\x44\x55\x66\x77\x88\x99\xAA\xBB\xCC\xDD\xEE\xFF\x00"
+         "\x11\x22\x33\x44\x55\x66\x77\x88\x99\xAA\xBB\xCC\xDD\xEE\x00",
+         32);
+
+  EXPECT_CALL(mock_, send(_,
+                          UsesCommand(HOTH_CMD_BOARD_SPECIFIC_BASE +
+                                      HOTH_PRV_CMD_HOTH_CHIP_INFO),
+                          _))
+      .WillOnce(Return(LIBHOTH_OK));
+
+  EXPECT_CALL(mock_, receive)
+      .WillOnce(DoAll(CopyResp(opentitan_data, sizeof(opentitan_data)),
                       Return(LIBHOTH_OK)));
 
   struct hoth_response_chip_info chipinfo;
   EXPECT_EQ(libhoth_chipinfo(&hoth_dev_, &chipinfo), LIBHOTH_OK);
 
-  EXPECT_EQ(chipinfo_exp.hardware_identity, chipinfo.hardware_identity);
-  EXPECT_EQ(chipinfo_exp.hardware_category, chipinfo.hardware_category);
-  EXPECT_EQ(chipinfo_exp.info_variant, chipinfo.info_variant);
+  EXPECT_EQ(chipinfo.version, 1);
+  EXPECT_EQ(memcmp(chipinfo.data.open_titan_device_id, opentitan_data, 32), 0);
 }
