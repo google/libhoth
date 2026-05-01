@@ -37,20 +37,40 @@ static int libhoth_usb_fifo_run_transfers(struct libhoth_usb_device* dev,
   if (in) {
     int status = libusb_submit_transfer(drvdata->in_transfer);
     if (status != LIBUSB_SUCCESS) {
+      drvdata->all_transfers_completed = 1;
+      drvdata->in_transfer_completed = true;
+      drvdata->out_transfer_completed = true;
       return status;
     }
   }
   if (out) {
     int status = libusb_submit_transfer(drvdata->out_transfer);
     if (status != LIBUSB_SUCCESS) {
+      if (in) {
+        libusb_cancel_transfer(drvdata->in_transfer);
+        // We must still wait for the IN transfer to complete/cancel
+        while (drvdata->all_transfers_completed == 0) {
+          libusb_handle_events_completed(dev->ctx,
+                                         &drvdata->all_transfers_completed);
+        }
+      } else {
+        drvdata->all_transfers_completed = 1;
+        drvdata->out_transfer_completed = true;
+      }
       return status;
     }
   }
   while (drvdata->all_transfers_completed == 0) {
     int status = libusb_handle_events_completed(
         dev->ctx, &drvdata->all_transfers_completed);
-    if (status == LIBUSB_ERROR_INTERRUPTED) {
-      return status;
+    if (status != LIBUSB_SUCCESS && status != LIBUSB_ERROR_INTERRUPTED) {
+      // On a real error, try to cancel everything to speed up completion
+      if (!drvdata->in_transfer_completed) {
+        libusb_cancel_transfer(drvdata->in_transfer);
+      }
+      if (!drvdata->out_transfer_completed) {
+        libusb_cancel_transfer(drvdata->out_transfer);
+      }
     }
   }
   return LIBHOTH_OK;
@@ -159,6 +179,9 @@ int libhoth_usb_fifo_open(struct libhoth_usb_device* dev,
     goto err_out;
   }
   drvdata->prng_state = prng_seed;
+  drvdata->in_transfer_completed = true;
+  drvdata->out_transfer_completed = true;
+  drvdata->all_transfers_completed = 1;
   return LIBHOTH_OK;
 err_out:
   if (drvdata->in_buffer != NULL) free(drvdata->in_buffer);
