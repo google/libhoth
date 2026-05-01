@@ -243,6 +243,7 @@ cc_binary(
         "//protocol:authz_record",
         "//protocol:chipinfo",
         "//protocol:console",
+        "//protocol:gpio_drive_strength",
         "//protocol:controlled_storage",
         "//protocol:dfu_check",
         "//protocol:dfu_hostcmd",
