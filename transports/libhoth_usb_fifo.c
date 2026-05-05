@@ -29,31 +29,50 @@
 
 static int libhoth_usb_fifo_run_transfers(struct libhoth_usb_device* dev,
                                           bool out, bool in) {
+  int status;
   struct libhoth_usb_fifo* drvdata = &dev->driver_data.fifo;
-  drvdata->all_transfers_completed = 0;
-  drvdata->out_transfer_completed = !out;
-  drvdata->in_transfer_completed = !in;
+  drvdata->all_transfers_completed = 1;
+  drvdata->out_transfer_completed = true;
+  drvdata->in_transfer_completed = true;
 
   if (in) {
-    int status = libusb_submit_transfer(drvdata->in_transfer);
+    status = libusb_submit_transfer(drvdata->in_transfer);
     if (status != LIBUSB_SUCCESS) {
-      return status;
+      goto out;
     }
+    drvdata->all_transfers_completed = 0;
+    drvdata->in_transfer_completed = false;
   }
   if (out) {
-    int status = libusb_submit_transfer(drvdata->out_transfer);
+    status = libusb_submit_transfer(drvdata->out_transfer);
     if (status != LIBUSB_SUCCESS) {
-      return status;
+      goto out;
     }
+    drvdata->all_transfers_completed = 0;
+    drvdata->out_transfer_completed = false;
   }
   while (drvdata->all_transfers_completed == 0) {
-    int status = libusb_handle_events_completed(
-        dev->ctx, &drvdata->all_transfers_completed);
-    if (status == LIBUSB_ERROR_INTERRUPTED) {
-      return status;
+    status = libusb_handle_events_completed(dev->ctx,
+                                            &drvdata->all_transfers_completed);
+    if (status != LIBUSB_SUCCESS && status != LIBUSB_ERROR_INTERRUPTED) {
+      goto out;
     }
   }
-  return LIBHOTH_OK;
+  drvdata->in_transfer_completed = true;
+  drvdata->out_transfer_completed = true;
+  status = LIBHOTH_OK;
+
+out:
+  if (!drvdata->in_transfer_completed) {
+    libusb_cancel_transfer(drvdata->in_transfer);
+  }
+  if (!drvdata->out_transfer_completed) {
+    libusb_cancel_transfer(drvdata->out_transfer);
+  }
+  while (drvdata->all_transfers_completed == 0) {
+    libusb_handle_events_completed(dev->ctx, &drvdata->all_transfers_completed);
+  }
+  return status;
 }
 
 static void fifo_transfer_callback(struct libusb_transfer* transfer) {
@@ -63,6 +82,7 @@ static void fifo_transfer_callback(struct libusb_transfer* transfer) {
   if (transfer == drvdata->in_transfer) {
     drvdata->in_transfer_completed = true;
     if (transfer->status != LIBUSB_TRANSFER_COMPLETED &&
+        transfer->status != LIBUSB_TRANSFER_CANCELLED &&
         !drvdata->out_transfer_completed) {
       // Cancel pending OUT transfer so we don't get stuck waiting forever
       // inside libusb_handle_events_completed().
@@ -72,6 +92,7 @@ static void fifo_transfer_callback(struct libusb_transfer* transfer) {
   if (transfer == drvdata->out_transfer) {
     drvdata->out_transfer_completed = true;
     if (transfer->status != LIBUSB_TRANSFER_COMPLETED &&
+        transfer->status != LIBUSB_TRANSFER_CANCELLED &&
         !drvdata->in_transfer_completed) {
       // Cancel pending IN transfer so we don't get stuck waiting forever
       // inside libusb_handle_events_completed().
@@ -159,6 +180,9 @@ int libhoth_usb_fifo_open(struct libhoth_usb_device* dev,
     goto err_out;
   }
   drvdata->prng_state = prng_seed;
+  drvdata->in_transfer_completed = true;
+  drvdata->out_transfer_completed = true;
+  drvdata->all_transfers_completed = 1;
   return LIBHOTH_OK;
 err_out:
   if (drvdata->in_buffer != NULL) free(drvdata->in_buffer);
