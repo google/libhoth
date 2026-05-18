@@ -57,13 +57,10 @@ pub fn assert_eq_golden_impl(actual: &str, expected: &str, src_path: &Path, path
         "",
         3,
     );
-    for (key, value) in std::env::vars() {
-        println!("{key}={value:?}")
-    }
     if std::env::vars_os().any(|a| a.0 == "UPDATE_GOLDEN") {
-        let Ok(oldpwd) = std::env::var("OLDPWD") else {
-            panic!("OLDPWD env-var is not set; unable to update golden");
-        };
+        let oldpwd = std::env::var("BUILD_WORKSPACE_DIRECTORY")
+            .or_else(|_| std::env::var("OLDPWD"))
+            .expect("Neither BUILD_WORKSPACE_DIRECTORY nor OLDPWD env-var is set; unable to update golden");
         let Ok(manifest_dir) = std::env::var("CARGO_MANIFEST_DIR") else {
             panic!("CARGO_MANIFEST_DIR env-var is not set; unable to update golden");
         };

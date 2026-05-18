@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-load("@rules_rust//rust:defs.bzl", "rust_library", "rust_test")
+load("@rules_rust//rust:defs.bzl", "rust_binary", "rust_library", "rust_test")
 
 rust_library(
     name = "golden",
@@ -26,9 +26,27 @@ rust_library(
     ],
 )
 
+rust_binary(
+    name = "driver",
+    testonly = True,
+    srcs = ["driver.rs"],
+    edition = "2024",
+    visibility = ["//visibility:public"],
+    deps = [
+        ":golden",
+        "@crates_mutask//:argh",
+    ],
+)
+
 rust_test(
     name = "golden_test",
     compile_data = glob(["testdata/**"]),
     crate = ":golden",
+    edition = "2024",
+)
+
+rust_test(
+    name = "driver_test",
+    crate = ":driver",
     edition = "2024",
 )
