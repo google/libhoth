@@ -34,11 +34,16 @@ TEST_F(LibHothTest, opentitan_version_test) {
   mock_response.rom_ext.slots[0].minor = 123;
   mock_response.rom_ext.slots[1].major = 0;
   mock_response.rom_ext.slots[1].minor = 124;
+  mock_response.rom_ext.booted_slot = kOpentitanBootSlotB;
 
   mock_response.app.slots[0].major = 0;
   mock_response.app.slots[0].minor = 123;
   mock_response.app.slots[1].major = 0;
   mock_response.app.slots[1].minor = 124;
+  mock_response.app.booted_slot = kOpentitanBootSlotA;
+
+  mock_response.bl0_min_sec_ver = 5;
+  mock_response.primary_bl0_slot = kOpentitanBootSlotB;
 
   EXPECT_CALL(mock_, send(_, UsesCommand(HOTH_OPENTITAN_GET_VERSION), _))
       .WillOnce(Return(LIBHOTH_OK));
@@ -57,10 +62,16 @@ TEST_F(LibHothTest, opentitan_version_test) {
             mock_response.rom_ext.slots[1].major);
   EXPECT_EQ(response.rom_ext.slots[1].minor,
             mock_response.rom_ext.slots[1].minor);
+  EXPECT_EQ(response.rom_ext.booted_slot, mock_response.rom_ext.booted_slot);
+
   EXPECT_EQ(response.app.slots[0].major, mock_response.app.slots[0].major);
   EXPECT_EQ(response.app.slots[0].minor, mock_response.app.slots[0].minor);
   EXPECT_EQ(response.app.slots[1].major, mock_response.app.slots[1].major);
   EXPECT_EQ(response.app.slots[1].minor, mock_response.app.slots[1].minor);
+  EXPECT_EQ(response.app.booted_slot, mock_response.app.booted_slot);
+
+  EXPECT_EQ(response.bl0_min_sec_ver, mock_response.bl0_min_sec_ver);
+  EXPECT_EQ(response.primary_bl0_slot, mock_response.primary_bl0_slot);
 }
 
 TEST_F(LibHothTest, opentitan_image_version_eq_test) {
@@ -81,6 +92,12 @@ TEST_F(LibHothTest, opentitan_image_version_eq_test) {
   };
 
   EXPECT_TRUE(libhoth_ot_version_eq(&v1, &v2));
+
+  // Does not care about security version
+  v1.security_version = 2;
+  EXPECT_TRUE(libhoth_ot_version_eq(&v1, &v2));
+  v1.security_version = v2.security_version;
+
   v1.minor = 4;
   EXPECT_FALSE(libhoth_ot_version_eq(&v1, &v2));
 }
@@ -130,8 +147,10 @@ TEST_F(LibHothTest, opentitan_image_compare_test) {
 
   resp.rom_ext.slots[0].major = 6;
   resp.rom_ext.slots[0].minor = 111;
+  resp.rom_ext.slots[0].security_version = 2;
   resp.rom_ext.slots[1].major = 7;
   resp.rom_ext.slots[1].minor = 222;
+  resp.rom_ext.slots[1].security_version = 2;
 
   resp.app.slots[0].major = 8;
   resp.app.slots[0].minor = 333;
@@ -141,20 +160,95 @@ TEST_F(LibHothTest, opentitan_image_compare_test) {
   resp.rom_ext.booted_slot = kOpentitanBootSlotA;
   resp.app.booted_slot = kOpentitanBootSlotB;
 
-  EXPECT_TRUE(libhoth_ot_boot_slot_eq(&resp, libhoth_ot_boot_romext(&resp),
-                                      libhoth_ot_boot_app(&resp)));
-  EXPECT_FALSE(libhoth_ot_boot_slot_eq(&resp, libhoth_ot_staged_romext(&resp),
-                                       libhoth_ot_boot_app(&resp)));
-  EXPECT_FALSE(libhoth_ot_boot_slot_eq(&resp, libhoth_ot_boot_romext(&resp),
-                                       libhoth_ot_staged_app(&resp)));
+  // Case: Versions match exactly
+  EXPECT_TRUE(libhoth_ot_check_update_successful(
+      &resp, libhoth_ot_boot_romext(&resp), libhoth_ot_boot_app(&resp)));
+  EXPECT_TRUE(libhoth_ot_check_staged_slot_after_update(
+      &resp, libhoth_ot_staged_romext(&resp), libhoth_ot_staged_app(&resp)));
 
-  EXPECT_TRUE(libhoth_ot_staged_slot_eq(&resp, libhoth_ot_staged_romext(&resp),
-                                        libhoth_ot_staged_app(&resp)));
-  EXPECT_FALSE(libhoth_ot_staged_slot_eq(&resp, libhoth_ot_boot_romext(&resp),
-                                         libhoth_ot_staged_app(&resp)));
-  EXPECT_FALSE(libhoth_ot_staged_slot_eq(&resp, libhoth_ot_staged_romext(&resp),
-                                         libhoth_ot_boot_app(&resp)));
+  // Case: Desired ROM_EXT has greater major version but smaller security
+  // version
+  resp.rom_ext.slots[0].major = 6;
+  resp.rom_ext.slots[0].minor = 111;
+  resp.rom_ext.slots[0].security_version = 2;
+  resp.rom_ext.slots[1].major = 7;
+  resp.rom_ext.slots[1].minor = 111;
+  resp.rom_ext.slots[1].security_version = 1;
 
+  resp.app.slots[0].major = 8;
+  resp.app.slots[0].minor = 333;
+  resp.app.slots[1].major = 9;
+  resp.app.slots[1].minor = 444;
+
+  resp.rom_ext.booted_slot = kOpentitanBootSlotA;
+  resp.app.booted_slot = kOpentitanBootSlotB;
+
+  struct opentitan_image_version desired_rom_ext_ver = {
+      .major = 7,
+      .minor = 111,
+      .security_version = 1,
+  };
+
+  EXPECT_TRUE(libhoth_ot_check_update_successful(&resp, &desired_rom_ext_ver,
+                                                 libhoth_ot_boot_app(&resp)));
+  EXPECT_FALSE(libhoth_ot_check_update_successful(
+      &resp, &desired_rom_ext_ver, libhoth_ot_staged_app(&resp)));
+  EXPECT_TRUE(libhoth_ot_check_staged_slot_after_update(
+      &resp, &desired_rom_ext_ver, libhoth_ot_staged_app(&resp)));
+  EXPECT_FALSE(libhoth_ot_check_staged_slot_after_update(
+      &resp, &desired_rom_ext_ver, libhoth_ot_boot_app(&resp)));
+
+  // Assume that ROM_EXT update did not take place for some reason
+  resp.rom_ext.slots[1].major = 6;
+  resp.rom_ext.slots[1].minor = 111;
+  resp.rom_ext.slots[1].security_version = 2;
+
+  resp.rom_ext.booted_slot = kOpentitanBootSlotA;
+  resp.app.booted_slot = kOpentitanBootSlotB;
+
+  EXPECT_TRUE(libhoth_ot_check_update_successful(&resp, &desired_rom_ext_ver,
+                                                 libhoth_ot_boot_app(&resp)));
+  EXPECT_FALSE(libhoth_ot_check_update_successful(
+      &resp, &desired_rom_ext_ver, libhoth_ot_staged_app(&resp)));
+  EXPECT_FALSE(libhoth_ot_check_staged_slot_after_update(
+      &resp, &desired_rom_ext_ver, libhoth_ot_staged_app(&resp)));
+  EXPECT_FALSE(libhoth_ot_check_staged_slot_after_update(
+      &resp, &desired_rom_ext_ver, libhoth_ot_boot_app(&resp)));
+
+  // Case: Desired ROM_EXT has greater security version but smaller major
+  // version
+  resp.rom_ext.slots[0].major = 7;
+  resp.rom_ext.slots[0].minor = 111;
+  resp.rom_ext.slots[0].security_version = 2;
+  resp.rom_ext.slots[1].major = 7;
+  resp.rom_ext.slots[1].minor = 111;
+  resp.rom_ext.slots[1].security_version = 2;
+
+  resp.app.slots[0].major = 8;
+  resp.app.slots[0].minor = 333;
+  resp.app.slots[1].major = 9;
+  resp.app.slots[1].minor = 444;
+
+  resp.rom_ext.booted_slot = kOpentitanBootSlotA;
+  resp.app.booted_slot = kOpentitanBootSlotB;
+
+  desired_rom_ext_ver = {
+      .major = 6,
+      .minor = 111,
+      .security_version = 3,
+  };
+
+  EXPECT_FALSE(libhoth_ot_check_update_successful(&resp, &desired_rom_ext_ver,
+                                                  libhoth_ot_boot_app(&resp)));
+  EXPECT_FALSE(libhoth_ot_check_update_successful(
+      &resp, &desired_rom_ext_ver, libhoth_ot_staged_app(&resp)));
+  EXPECT_FALSE(libhoth_ot_check_staged_slot_after_update(
+      &resp, &desired_rom_ext_ver, libhoth_ot_staged_app(&resp)));
+  EXPECT_FALSE(libhoth_ot_check_staged_slot_after_update(
+      &resp, &desired_rom_ext_ver, libhoth_ot_boot_app(&resp)));
+}
+
+TEST_F(LibHothTest, TestLibhothUpdateComplete) {
   struct opentitan_image_version romext = {
       .major = 6,
       .minor = 111,
@@ -162,23 +256,145 @@ TEST_F(LibHothTest, opentitan_image_compare_test) {
       .timestamp = 1234,
       .measurement = {},
   };
+  struct opentitan_image_version romext_security_version_larger = {
+      .major = 5,
+      .minor = 111,
+      .security_version = 9,
+      .timestamp = 1234,
+      .measurement = {},
+  };
+  struct opentitan_image_version romext_major_version_larger = {
+      .major = 8,
+      .minor = 111,
+      .security_version = 7,
+      .timestamp = 1234,
+      .measurement = {},
+  };
+  struct opentitan_image_version romext_minor_version_larger = {
+      .major = 6,
+      .minor = 114,
+      .security_version = 7,
+      .timestamp = 1234,
+      .measurement = {},
+  };
+  struct opentitan_image_version romext_minor_version_smaller = {
+      .major = 6,
+      .minor = 110,
+      .security_version = 7,
+      .timestamp = 1234,
+      .measurement = {},
+  };
 
-  struct opentitan_image_version app = {
+  struct opentitan_image_version app_1 = {
       .major = 1,
       .minor = 116,
       .security_version = 2,
       .timestamp = 6789,
       .measurement = {},
   };
+  struct opentitan_image_version app_2 = {
+      .major = 1,
+      .minor = 115,
+      .security_version = 2,
+      .timestamp = 6789,
+      .measurement = {},
+  };
 
+  struct opentitan_get_version_resp resp = {};
+
+  // Case 1: Successful update of both halves
+  resp.rom_ext.booted_slot = kOpentitanBootSlotA;
+  resp.app.booted_slot = kOpentitanBootSlotA;
   resp.rom_ext.slots[0] = romext;
   resp.rom_ext.slots[1] = romext;
-  resp.app.slots[0] = app;
-  resp.app.slots[1] = app;
+  resp.app.slots[0] = app_1;
+  resp.app.slots[1] = app_1;
 
-  EXPECT_TRUE(libhoth_update_complete(&resp, &romext, &app));
-  EXPECT_FALSE(libhoth_update_complete(&resp, &romext, &romext));
-  EXPECT_FALSE(libhoth_update_complete(&resp, &app, &app));
+  EXPECT_TRUE(libhoth_update_complete(&resp, &romext, &app_1));
+
+  // Case 2: Active ROM_EXT did not change since running ROM_EXT had greater
+  // security version even when desired ROM_EXT had larger major version
+  resp.rom_ext.booted_slot = kOpentitanBootSlotA;
+  resp.app.booted_slot = kOpentitanBootSlotA;
+  resp.rom_ext.slots[0] = romext_security_version_larger;
+  resp.rom_ext.slots[1] = romext;
+  resp.app.slots[0] = app_1;
+  resp.app.slots[1] = app_1;
+  EXPECT_TRUE(libhoth_update_complete(&resp, &romext, &app_1));
+
+  // Case 3: Active ROM_EXT did not change since running ROM_EXT had greater
+  // major version
+  resp.rom_ext.booted_slot = kOpentitanBootSlotA;
+  resp.app.booted_slot = kOpentitanBootSlotA;
+  resp.rom_ext.slots[0] = romext_major_version_larger;
+  resp.rom_ext.slots[1] = romext;
+  resp.app.slots[0] = app_1;
+  resp.app.slots[1] = app_1;
+  EXPECT_TRUE(libhoth_update_complete(&resp, &romext, &app_1));
+
+  // Case 4: Active ROM_EXT did not change since running ROM_EXT had greater
+  // minor version
+  resp.rom_ext.booted_slot = kOpentitanBootSlotA;
+  resp.app.booted_slot = kOpentitanBootSlotA;
+  resp.rom_ext.slots[0] = romext_minor_version_larger;
+  resp.rom_ext.slots[1] = romext;
+  resp.app.slots[0] = app_1;
+  resp.app.slots[1] = app_1;
+  EXPECT_TRUE(libhoth_update_complete(&resp, &romext, &app_1));
+
+  // Case 5: ROM_EXT did not change due to some reason (something caused update
+  // failure)
+  resp.rom_ext.booted_slot = kOpentitanBootSlotA;
+  resp.app.booted_slot = kOpentitanBootSlotA;
+  resp.rom_ext.slots[0] = romext_minor_version_smaller;
+  resp.rom_ext.slots[1] = romext_minor_version_smaller;
+  resp.app.slots[0] = app_1;
+  resp.app.slots[1] = app_1;
+  EXPECT_FALSE(libhoth_update_complete(&resp, &romext, &app_1));
+
+  resp.rom_ext.booted_slot = kOpentitanBootSlotA;
+  resp.app.booted_slot = kOpentitanBootSlotA;
+  resp.rom_ext.slots[0] = romext;
+  resp.rom_ext.slots[1] = romext;
+  resp.app.slots[0] = app_1;
+  resp.app.slots[1] = app_1;
+  EXPECT_FALSE(
+      libhoth_update_complete(&resp, &romext_security_version_larger, &app_1));
+
+  resp.rom_ext.booted_slot = kOpentitanBootSlotA;
+  resp.app.booted_slot = kOpentitanBootSlotA;
+  resp.rom_ext.slots[0] = romext_security_version_larger;
+  resp.rom_ext.slots[1] = romext;
+  resp.app.slots[0] = app_1;
+  resp.app.slots[1] = app_1;
+  EXPECT_FALSE(
+      libhoth_update_complete(&resp, &romext_security_version_larger, &app_1));
+
+  resp.rom_ext.booted_slot = kOpentitanBootSlotA;
+  resp.app.booted_slot = kOpentitanBootSlotA;
+  resp.rom_ext.slots[0] = romext;
+  resp.rom_ext.slots[1] = romext_security_version_larger;
+  resp.app.slots[0] = app_1;
+  resp.app.slots[1] = app_1;
+  EXPECT_FALSE(
+      libhoth_update_complete(&resp, &romext_security_version_larger, &app_1));
+
+  // Case 6: Application firmware did not update due to some reason
+  resp.rom_ext.booted_slot = kOpentitanBootSlotA;
+  resp.app.booted_slot = kOpentitanBootSlotA;
+  resp.rom_ext.slots[0] = romext;
+  resp.rom_ext.slots[1] = romext;
+  resp.app.slots[0] = app_2;
+  resp.app.slots[1] = app_2;
+  EXPECT_FALSE(libhoth_update_complete(&resp, &romext, &app_1));
+
+  resp.app.slots[0] = app_1;
+  resp.app.slots[1] = app_2;
+  EXPECT_FALSE(libhoth_update_complete(&resp, &romext, &app_1));
+
+  resp.app.slots[0] = app_2;
+  resp.app.slots[1] = app_1;
+  EXPECT_FALSE(libhoth_update_complete(&resp, &romext, &app_1));
 }
 
 TEST_F(LibHothTest, ExtractOtBundleBoundsCheckLargeOffset) {
