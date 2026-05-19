@@ -76,17 +76,20 @@ int libhoth_extract_ot_bundle(const uint8_t* image, size_t image_size,
   static_assert(
       OPENTITAN_OFFSET_VERSION_MINOR >= OPENTITAN_OFFSET_VERSION_MAJOR,
       "Version minor offset must be >= major offset");
+  static_assert(
+      OPENTITAN_OFFSET_VERSION_SECURITY >= OPENTITAN_OFFSET_VERSION_MINOR,
+      "Security version offset must be >= minor version offset");
 
   // Checks that the image offset doesn't cause
   // the offset calculations to read beyond the image buffer.
-  if ((offset + OPENTITAN_OFFSET_APP_FW + OPENTITAN_OFFSET_VERSION_MINOR + 4) >
-      image_size) {
+  if ((offset + OPENTITAN_OFFSET_APP_FW + OPENTITAN_OFFSET_VERSION_SECURITY +
+       4) > image_size) {
     fprintf(stderr, "Image offset %u is invalid", offset);
     return -1;
   }
   // Checks that the image offset won't overflow the offset calculations
-  if ((offset + OPENTITAN_OFFSET_APP_FW + OPENTITAN_OFFSET_VERSION_MINOR + 4) <
-      offset) {
+  if ((offset + OPENTITAN_OFFSET_APP_FW + OPENTITAN_OFFSET_VERSION_SECURITY +
+       4) < offset) {
     fprintf(stderr, "Image offset %u caused integer overflow", offset);
     return -1;
   }
@@ -99,6 +102,11 @@ int libhoth_extract_ot_bundle(const uint8_t* image, size_t image_size,
                    image[offset + OPENTITAN_OFFSET_VERSION_MINOR + 1] << 8 |
                    image[offset + OPENTITAN_OFFSET_VERSION_MINOR + 2] << 16 |
                    image[offset + OPENTITAN_OFFSET_VERSION_MINOR + 3] << 24;
+  rom_ext->security_version =
+      image[offset + OPENTITAN_OFFSET_VERSION_SECURITY] |
+      image[offset + OPENTITAN_OFFSET_VERSION_SECURITY + 1] << 8 |
+      image[offset + OPENTITAN_OFFSET_VERSION_SECURITY + 2] << 16 |
+      image[offset + OPENTITAN_OFFSET_VERSION_SECURITY + 3] << 24;
 
   // Extract the offset that contains the APP version information
   // We will have the desired APP version be stored on slot index 0 and keep
@@ -112,6 +120,11 @@ int libhoth_extract_ot_bundle(const uint8_t* image, size_t image_size,
                image[offset_app + OPENTITAN_OFFSET_VERSION_MINOR + 1] << 8 |
                image[offset_app + OPENTITAN_OFFSET_VERSION_MINOR + 2] << 16 |
                image[offset_app + OPENTITAN_OFFSET_VERSION_MINOR + 3] << 24;
+  app->security_version =
+      image[offset_app + OPENTITAN_OFFSET_VERSION_SECURITY] |
+      image[offset_app + OPENTITAN_OFFSET_VERSION_SECURITY + 1] << 8 |
+      image[offset_app + OPENTITAN_OFFSET_VERSION_SECURITY + 2] << 16 |
+      image[offset_app + OPENTITAN_OFFSET_VERSION_SECURITY + 3] << 24;
 
   return 0;
 }
@@ -123,6 +136,33 @@ bool libhoth_ot_version_eq(const struct opentitan_image_version* a,
   } else {
     return false;
   }
+}
+
+int libhoth_ot_app_version_cmp_for_update(
+    const struct opentitan_image_version* a,
+    const struct opentitan_image_version* b) {
+  if (a->major != b->major) {
+    return (a->major > b->major) ? 1 : -1;
+  }
+  if (a->minor != b->minor) {
+    return (a->minor > b->minor) ? 1 : -1;
+  }
+  return 0;
+}
+
+int libhoth_ot_rom_ext_version_cmp_for_update(
+    const struct opentitan_image_version* a,
+    const struct opentitan_image_version* b) {
+  if (a->security_version != b->security_version) {
+    return (a->security_version > b->security_version) ? 1 : -1;
+  }
+  if (a->major != b->major) {
+    return (a->major > b->major) ? 1 : -1;
+  }
+  if (a->minor != b->minor) {
+    return (a->minor > b->minor) ? 1 : -1;
+  }
+  return 0;
 }
 
 void libhoth_print_ot_version(const char* prefix,
@@ -211,27 +251,34 @@ const struct opentitan_image_version* libhoth_ot_staged_romext(
   return &resp->rom_ext.slots[rom_ext_stage_slot];
 }
 
-bool libhoth_ot_boot_slot_eq(
+bool libhoth_ot_check_update_successful(
     const struct opentitan_get_version_resp* resp,
     const struct opentitan_image_version* desired_romext,
     const struct opentitan_image_version* desired_app) {
-  return libhoth_ot_version_eq(libhoth_ot_boot_romext(resp), desired_romext) &&
-         libhoth_ot_version_eq(libhoth_ot_boot_app(resp), desired_app);
+  return (libhoth_ot_app_version_cmp_for_update(libhoth_ot_boot_app(resp),
+                                                desired_app) == 0) &&
+         (libhoth_ot_rom_ext_version_cmp_for_update(
+              libhoth_ot_boot_romext(resp), desired_romext) >= 0);
 }
 
-bool libhoth_ot_staged_slot_eq(
+bool libhoth_ot_check_staged_slot_after_update(
     const struct opentitan_get_version_resp* resp,
     const struct opentitan_image_version* desired_romext,
     const struct opentitan_image_version* desired_app) {
-  return libhoth_ot_version_eq(libhoth_ot_staged_romext(resp),
-                               desired_romext) &&
-         libhoth_ot_version_eq(libhoth_ot_staged_app(resp), desired_app);
+  return (libhoth_ot_app_version_cmp_for_update(libhoth_ot_staged_app(resp),
+                                                desired_app) == 0) &&
+         // Staged ROM_EXT will be the same version as the firmware update
+         // package (including the security version)
+         (libhoth_ot_rom_ext_version_cmp_for_update(
+              libhoth_ot_staged_romext(resp), desired_romext) == 0);
 }
 
 bool libhoth_update_complete(
     const struct opentitan_get_version_resp* resp,
     const struct opentitan_image_version* desired_romext,
     const struct opentitan_image_version* desired_app) {
-  return libhoth_ot_boot_slot_eq(resp, desired_romext, desired_app) &&
-         libhoth_ot_staged_slot_eq(resp, desired_romext, desired_app);
+  return libhoth_ot_check_update_successful(resp, desired_romext,
+                                            desired_app) &&
+         libhoth_ot_check_staged_slot_after_update(resp, desired_romext,
+                                                   desired_app);
 }

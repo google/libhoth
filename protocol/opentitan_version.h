@@ -117,6 +117,23 @@ int libhoth_extract_ot_bundle(const uint8_t* image, size_t image_size,
 bool libhoth_ot_version_eq(const struct opentitan_image_version* a,
                            const struct opentitan_image_version* b);
 
+// Compare versions of application for firmware update logic.
+// Returns a value:
+//    > 0, if `a` > `b`
+//    < 0, if `a` < `b`
+//    = 0, if `a` == `b`
+int libhoth_ot_app_version_cmp_for_update(
+    const struct opentitan_image_version* a,
+    const struct opentitan_image_version* b);
+
+// Compare versions of ROM_EXT for firmware update logic.
+// Returns a value:
+//    > 0, if `a` > `b`
+//    < 0, if `a` < `b`
+//    = 0, if `a` == `b`
+int libhoth_ot_rom_ext_version_cmp_for_update(
+    const struct opentitan_image_version* a,
+    const struct opentitan_image_version* b);
 void libhoth_print_ot_version(const char* prefix,
                               const struct opentitan_image_version* ver);
 void libhoth_print_ot_version_resp(
@@ -132,11 +149,11 @@ const struct opentitan_image_version* libhoth_ot_staged_app(
     const struct opentitan_get_version_resp* resp);
 const struct opentitan_image_version* libhoth_ot_staged_romext(
     const struct opentitan_get_version_resp* resp);
-bool libhoth_ot_boot_slot_eq(
+bool libhoth_ot_check_update_successful(
     const struct opentitan_get_version_resp* resp,
     const struct opentitan_image_version* desired_romext,
     const struct opentitan_image_version* desired_app);
-bool libhoth_ot_staged_slot_eq(
+bool libhoth_ot_check_staged_slot_after_update(
     const struct opentitan_get_version_resp* resp,
     const struct opentitan_image_version* desired_romext,
     const struct opentitan_image_version* desired_app);

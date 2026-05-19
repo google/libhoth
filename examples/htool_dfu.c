@@ -47,8 +47,9 @@ static int dfu_update_count(struct opentitan_image_version* desired_romext,
   struct opentitan_image_version* staged_app = &resp->app.slots[app_stage_slot];
 
   bool booted_needs_update =
-      !libhoth_ot_version_eq(booted_app, desired_app) ||
-      !libhoth_ot_version_eq(booted_romext, desired_romext);
+      (libhoth_ot_app_version_cmp_for_update(booted_app, desired_app) != 0) ||
+      (libhoth_ot_rom_ext_version_cmp_for_update(booted_romext,
+                                                 desired_romext) < 0);
 
   if (booted_needs_update) {
     printf(
@@ -58,8 +59,9 @@ static int dfu_update_count(struct opentitan_image_version* desired_romext,
   }
 
   bool staging_needs_update =
-      !libhoth_ot_version_eq(staged_app, desired_app) ||
-      !libhoth_ot_version_eq(staged_romext, desired_romext);
+      (libhoth_ot_app_version_cmp_for_update(staged_app, desired_app) != 0) ||
+      (libhoth_ot_rom_ext_version_cmp_for_update(staged_romext,
+                                                 desired_romext) < 0);
 
   if (staging_needs_update) {
     printf(
@@ -152,6 +154,16 @@ int htool_dfu_update(const struct htool_invocation* inv) {
     goto cleanup2;
   }
 
+  if (!force && (desired_app.security_version < resp.bl0_min_sec_ver)) {
+    fprintf(
+        stderr,
+        "Desired application firmware security version %u is less than "
+        "currently enforced minimum application firmware security version %u\n",
+        desired_app.security_version, resp.bl0_min_sec_ver);
+    retval = -1;
+    goto cleanup2;
+  }
+
   int update_cnt =
       force ? 2 : dfu_update_count(&desired_rom_ext, &desired_app, &resp);
 
@@ -173,7 +185,8 @@ int htool_dfu_update(const struct htool_invocation* inv) {
       goto cleanup2;
     }
 
-    if (!libhoth_ot_boot_slot_eq(&resp, &desired_rom_ext, &desired_app)) {
+    if (!libhoth_ot_check_update_successful(&resp, &desired_rom_ext,
+                                            &desired_app)) {
       fprintf(stderr, "Boot slot is wrong after dfu update %d\n", i);
       libhoth_print_dfu_error(dev, &resp, LIBHOTH_OK);
       retval = -1;
