@@ -71,6 +71,28 @@
 #include "transports/libhoth_device.h"
 #include "transports/libhoth_spi.h"
 
+static void htool_report_error(const char* cmd_name, libhoth_error err) {
+  if (err == HOTH_SUCCESS) {
+    return;
+  }
+
+  uint32_t ctx = LIBHOTH_ERR_GET_CTX(err);
+  uint16_t space = LIBHOTH_ERR_GET_SPACE(err);
+  uint16_t code = LIBHOTH_ERR_GET_CODE(err);
+
+  fprintf(stderr, "Error: '%s' failed (0x%016lx)\n", cmd_name, err);
+  fprintf(stderr, "  Context: %u (%s)\n", ctx, libhoth_error_ctx_str(ctx));
+  fprintf(stderr, "  Space:   %u (%s)\n", space,
+          libhoth_error_space_str(space));
+
+  if (space == HOTH_HOST_SPACE_FW) {
+    fprintf(stderr, "  Code:    %u (%s)\n", code,
+            libhoth_error_code_fw_str(code));
+  } else {
+    fprintf(stderr, "  Code:    %u\n", code);
+  }
+}
+
 static int command_usb_list(const struct htool_invocation* inv) {
   return htool_usb_print_devices();
 }
@@ -816,9 +838,10 @@ static int command_hello(const struct htool_invocation* inv) {
   }
 
   uint32_t output = 0;
-  const int rv = libhoth_hello(dev, input, &output);
-  if (rv) {
-    return rv;
+  const libhoth_error err = libhoth_hello(dev, input, &output);
+  if (err != HOTH_SUCCESS) {
+    htool_report_error("hello", err);
+    return -1;
   }
 
   printf("output: 0x%08x\n", output);

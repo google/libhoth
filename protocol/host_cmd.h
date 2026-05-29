@@ -18,6 +18,7 @@
 #include <stdint.h>
 #include <stdio.h>
 
+#include "status.h"
 #include "transports/libhoth_device.h"
 
 #ifdef __cplusplus
@@ -105,6 +106,13 @@ int libhoth_hostcmd_exec(struct libhoth_device* dev, uint16_t command,
                          uint8_t version, const void* req_payload,
                          size_t req_payload_size, void* resp_buf,
                          size_t resp_buf_size, size_t* out_resp_size);
+
+libhoth_error libhoth_hostcmd_exec_v2(struct libhoth_device* dev,
+                                      uint16_t command, uint8_t version,
+                                      const void* req_payload,
+                                      size_t req_payload_size, void* resp_buf,
+                                      size_t resp_buf_size,
+                                      size_t* out_resp_size);
 
 uint8_t libhoth_calculate_checksum(const void* header, size_t header_size,
                                    const void* data, size_t data_size);

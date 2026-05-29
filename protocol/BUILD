@@ -4,10 +4,18 @@ load("@rules_cc//cc:cc_test.bzl", "cc_test")
 package(default_visibility = ["//visibility:public"])
 
 cc_library(
+    name = "libhoth_status",
+    srcs = ["status.c"],
+    hdrs = ["status.h"],
+    visibility = ["//visibility:public"],
+)
+
+cc_library(
     name = "host_cmd",
     srcs = ["host_cmd.c"],
     hdrs = ["host_cmd.h"],
     deps = [
+        ":libhoth_status",
         "//transports:libhoth_device",
     ],
 )

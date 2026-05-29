@@ -25,7 +25,8 @@ protocol_srcs = [
     'firmware_update.c',
     'util.c',
     'console.c',
-    'gpio_drive_strength.c'
+    'gpio_drive_strength.c',
+    'status.c'
 ]
 
 incdir = libhoth_include_dirs

@@ -1,8 +1,8 @@
 project('libhoth', 'c', 'cpp', license: 'Apache-2.0', version: '0.0.0')
 
-install_headers('include/libhoth/status.h', subdir: 'libhoth')
+# No public headers to install yet during refactor.
 
-libhoth_include_dirs = include_directories('include', '.')
+libhoth_include_dirs = include_directories('.')
 
 header_subdirs = ['libhoth']
 libhoth_objs = []
