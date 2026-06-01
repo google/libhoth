@@ -19,8 +19,9 @@
 
 #include "protocol/host_cmd.h"
 
-int libhoth_fetch_mauv(struct libhoth_device* dev, uint8_t state,
-                       uint8_t category, struct hoth_response_mauv* mauv) {
+libhoth_error libhoth_fetch_mauv(struct libhoth_device* dev, uint8_t state,
+                                 uint8_t category,
+                                 struct hoth_response_mauv* mauv) {
   struct mauv_request request = {
       .category = category,
       .state = state,
@@ -28,21 +29,35 @@ int libhoth_fetch_mauv(struct libhoth_device* dev, uint8_t state,
   };
 
   size_t rlen = 0;
-  int ret = libhoth_hostcmd_exec(
+  libhoth_error err = libhoth_hostcmd_exec_v2(
       dev, HOTH_CMD_BOARD_SPECIFIC_BASE + EC_PRV_CMD_HAVEN_MAUV, 0, &request,
       sizeof(request), mauv, sizeof(*mauv), &rlen);
-  if (ret != 0) {
-    return ret;
+  if (err != HOTH_SUCCESS) {
+    return err;
   }
 
   if (rlen == sizeof(uint32_t)) {
     // Old version response: only returns the version number.
-    return 0;
+    return HOTH_SUCCESS;
   }
 
   if (rlen != sizeof(struct hoth_response_mauv)) {
-    return -1;
+    return LIBHOTH_ERR_CONSTRUCT(HOTH_CTX_CMD_EXEC, HOTH_HOST_SPACE_LIBHOTH,
+                                 LIBHOTH_ERR_FAIL);
   }
 
-  return 0;
+  return HOTH_SUCCESS;
+}
+
+libhoth_error libhoth_update_mauv(struct libhoth_device* dev,
+                                  const void* record, size_t record_size) {
+  if (record_size > MAUV_MAX_RECORD_SIZE) {
+    return LIBHOTH_ERR_CONSTRUCT(HOTH_CTX_CMD_EXEC, HOTH_HOST_SPACE_LIBHOTH,
+                                 LIBHOTH_ERR_INVALID_PARAMETER);
+  }
+
+  size_t rlen = 0;
+  return libhoth_hostcmd_exec_v2(
+      dev, HOTH_CMD_BOARD_SPECIFIC_BASE + EC_PRV_CMD_UPDATE_MAUV, 0, record,
+      record_size, NULL, 0, &rlen);
 }

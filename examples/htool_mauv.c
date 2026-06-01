@@ -14,9 +14,15 @@
 
 #include "htool_mauv.h"
 
+#include <errno.h>
+#include <fcntl.h>
 #include <stdint.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
+#include <sys/stat.h>
+#include <sys/types.h>
+#include <unistd.h>
 
 #include "htool.h"
 #include "protocol/mauv.h"
@@ -45,9 +51,10 @@ int htool_mauv_compiled(const struct htool_invocation* inv) {
   }
 
   struct hoth_response_mauv mauv;
-  int ret = libhoth_fetch_mauv(dev, MAUV_STATE_COMPILED, HAVEN_MAUV, &mauv);
-  if (ret != 0) {
-    fprintf(stderr, "Failed to get compiled firmware MAUV: %d\n", ret);
+  libhoth_error err =
+      libhoth_fetch_mauv(dev, MAUV_STATE_COMPILED, HAVEN_MAUV, &mauv);
+  if (err != HOTH_SUCCESS) {
+    htool_report_error("fetch_mauv", err);
     return -1;
   }
 
@@ -57,5 +64,67 @@ int htool_mauv_compiled(const struct htool_invocation* inv) {
 
 int htool_mauv_effective(const struct htool_invocation* inv) {
   // TODO: support FW MAUV effective once it's implemented in firmware.
+  return 0;
+}
+
+int htool_mauv_update(const struct htool_invocation* inv) {
+  struct libhoth_device* dev = htool_libhoth_device();
+  if (!dev) {
+    return -1;
+  }
+
+  const char* record_file;
+  if (htool_get_param_string(inv, "record-file", &record_file)) {
+    return -1;
+  }
+
+  int fd = open(record_file, O_RDONLY);
+  if (fd == -1) {
+    fprintf(stderr, "Error opening file %s: %s\n", record_file,
+            strerror(errno));
+    return -1;
+  }
+
+  struct stat statbuf;
+  if (fstat(fd, &statbuf)) {
+    fprintf(stderr, "fstat error: %s\n", strerror(errno));
+    close(fd);
+    return -1;
+  }
+
+  if (statbuf.st_size > MAUV_MAX_RECORD_SIZE) {
+    fprintf(stderr,
+            "Error: MAUV record file is too large (%ld bytes, max %d)\n",
+            statbuf.st_size, MAUV_MAX_RECORD_SIZE);
+    close(fd);
+    return -1;
+  }
+
+  uint8_t* record_data = malloc(statbuf.st_size);
+  if (!record_data) {
+    fprintf(stderr, "Memory allocation failed\n");
+    close(fd);
+    return -1;
+  }
+
+  ssize_t bytes_read = read(fd, record_data, statbuf.st_size);
+  if (bytes_read != statbuf.st_size) {
+    fprintf(stderr, "Error reading file: %s\n", strerror(errno));
+    free(record_data);
+    close(fd);
+    return -1;
+  }
+  close(fd);
+
+  printf("Sending MAUV update record (%zd bytes)...\n", bytes_read);
+  libhoth_error err = libhoth_update_mauv(dev, record_data, bytes_read);
+  free(record_data);
+
+  if (err != HOTH_SUCCESS) {
+    htool_report_error("update_mauv", err);
+    return -1;
+  }
+
+  printf("MAUV update successful!\n");
   return 0;
 }

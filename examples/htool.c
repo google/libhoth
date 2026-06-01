@@ -71,7 +71,7 @@
 #include "transports/libhoth_device.h"
 #include "transports/libhoth_spi.h"
 
-static void htool_report_error(const char* cmd_name, libhoth_error err) {
+void htool_report_error(const char* cmd_name, libhoth_error err) {
   if (err == HOTH_SUCCESS) {
     return;
   }
@@ -1983,6 +1983,17 @@ static const struct htool_cmd CMDS[] = {
         .params = (const struct htool_param[]){{}},
         .func = htool_mauv_effective,
     },
+    {
+        .verbs = (const char*[]){"mauv", "update", NULL},
+        .desc = "Update MAUV using a signed MAUV record file.",
+        .params =
+            (const struct htool_param[]){
+                {HTOOL_POSITIONAL, .name = "record-file",
+                 .desc = "A signed MAUV record file."},
+                {}},
+        .func = htool_mauv_update,
+    },
+
     {
         .verbs = (const char*[]){"tpm", "get_mode", NULL},
         .desc = "Get the current TPM mode.",

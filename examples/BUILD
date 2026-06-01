@@ -46,6 +46,9 @@ cc_library(
 cc_library(
     name = "htool_header",
     hdrs = ["htool.h"],
+    deps = [
+        "//protocol:libhoth_status",
+    ],
 )
 
 cc_library(
@@ -253,6 +256,7 @@ cc_binary(
         "//protocol:i2c",
         "//protocol:jtag",
         "//protocol:key_rotation",
+        "//protocol:libhoth_status",
         "//protocol:mauv",
         "//protocol:opentitan_version",
         "//protocol:panic",

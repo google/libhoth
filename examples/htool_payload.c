@@ -298,10 +298,10 @@ int htool_get_compiled_payload_mauv(const struct htool_invocation* inv) {
   }
 
   struct hoth_response_mauv mauv_resp = {0};
-  int ret =
+  libhoth_error err =
       libhoth_fetch_mauv(dev, MAUV_STATE_COMPILED, IMAGE_MAUV, &mauv_resp);
-  if (ret != 0) {
-    fprintf(stderr, "libhoth_fetch_mauv error: %d\n", ret);
+  if (err != HOTH_SUCCESS) {
+    htool_report_error("fetch_mauv", err);
     return -1;
   }
 
