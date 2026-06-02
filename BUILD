@@ -20,6 +20,17 @@ genrule(
     tools = [":print_version_header.sh"],
 )
 
+cc_library(
+    name = "libhoth",
+    deps = [
+        "//transports:libhoth_device",
+        "//transports:libhoth_usb",
+        "//transports:libhoth_spi",
+        "//transports:libhoth_mtd",
+    ],
+    visibility = ["//visibility:public"],
+)
+
 alias(
     name = "libusb",
     actual = "@libusb//:libusb",

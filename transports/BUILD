@@ -6,17 +6,20 @@ cc_library(
     name = "libhoth_device",
     srcs = ["libhoth_device.c"],
     hdrs = ["libhoth_device.h"],
+    include_prefix = "transports",
 )
 
 cc_library(
     name = "libhoth_ec",
     hdrs = ["libhoth_ec.h"],
+    include_prefix = "transports",
 )
 
 cc_library(
     name = "libhoth_mtd",
     srcs = ["libhoth_mtd.c"],
     hdrs = ["libhoth_mtd.h"],
+    include_prefix = "transports",
     deps = [
         ":libhoth_device",
         ":libhoth_ec",
@@ -27,6 +30,7 @@ cc_library(
     name = "libhoth_spi",
     srcs = ["libhoth_spi.c"],
     hdrs = ["libhoth_spi.h"],
+    include_prefix = "transports",
     deps = [
         ":libhoth_device",
         ":libhoth_ec",
@@ -37,6 +41,7 @@ cc_library(
     name = "libhoth_usb",
     srcs = ["libhoth_usb.c"],
     hdrs = ["libhoth_usb.h"],
+    include_prefix = "transports",
     deps = [
         ":libhoth_device",
         ":libhoth_usb_device",
@@ -49,6 +54,7 @@ cc_library(
     name = "libhoth_dbus",
     srcs = ["libhoth_dbus.c"],
     hdrs = ["libhoth_dbus.h"],
+    include_prefix = "transports",
     defines = ["DBUS_BACKEND"],
     linkopts = ["-lsystemd"],
     deps = [":libhoth_device"],
@@ -61,6 +67,7 @@ cc_library(
         "libhoth_usb_mailbox.c",
     ],
     hdrs = ["libhoth_usb_device.h"],
+    include_prefix = "transports",
     deps = [
         ":libhoth_device",
         ":libhoth_ec",
