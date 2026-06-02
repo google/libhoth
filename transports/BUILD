@@ -67,3 +67,8 @@ cc_library(
         "@libusb",
     ],
 )
+
+filegroup(
+  name = "headers",
+  srcs = glob(["*.h"])
+)

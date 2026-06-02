@@ -4,7 +4,7 @@ project('libhoth', 'c', 'cpp', license: 'Apache-2.0', version: '0.0.0')
 
 libhoth_include_dirs = include_directories('.')
 
-header_subdirs = ['libhoth']
+header_subdirs = ['libhoth', '.']
 libhoth_objs = []
 libhoth_deps = []
 subdir('transports')
