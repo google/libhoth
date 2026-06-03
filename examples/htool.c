@@ -1661,20 +1661,25 @@ static const struct htool_cmd CMDS[] = {
                  .default_value = NULL,
                  .desc = "Configure the DIO pad with the given index. Values "
                          "are:\n"
-                         "          (0 => USB_DP | 1 => USB_DN | 2-5 => "
-                         "SPI_HOST0_D0-3 |\n"
-                         "           6-9 => SPI_DEV_D0-3 | 12 => SPI_DEV_CLK | "
-                         "13 => SPI_DEV_CSB |\n"
-                         "           14 => SPI_HOST0_CLK | 15 => "
-                         "SPI_HOST0_CSB)."},
+                         "          0 => USB_DP\n"
+                         "          1 => USB_DN\n"
+                         "          2-5 => SPI_HOST0_D0-3\n"
+                         "          6-9 => SPI_DEV_D0-3\n"
+                         "          12 => SPI_DEV_CLK\n"
+                         "          13 => SPI_DEV_CSB\n"
+                         "          14 => SPI_HOST0_CLK\n"
+                         "          15 => SPI_HOST0_CSB"},
                 {.type = HTOOL_FLAG_VALUE,
                  .ch = 'm',
                  .name = "mio",
                  .default_value = NULL,
                  .desc = "Configure the MIO pad with the given index. Values "
                          "are:\n"
-                         "          (0-8 => IOA0-8 | 9-21 => IOB0-12 | 22-34 "
-                         "=> IOC0-12 | 35-46 => IOR0-13)."},
+                         "          0-8 => IOA0-8\n"
+                         "          9-21 => IOB0-12\n"
+                         "          22-34 => IOC0-12\n"
+                         "          35-41 => IOR0-7\n"
+                         "          42-46 => IOR10-13"},
                 {}},
         .func = command_set_gpio_drive_strength,
     },
