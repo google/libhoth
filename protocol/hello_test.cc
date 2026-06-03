@@ -39,6 +39,6 @@ TEST_F(LibHothTest, hello_test) {
 
   const uint32_t input = 0xa0b0c0d0;
   uint32_t output = 0;
-  EXPECT_EQ(libhoth_hello(&hoth_dev_, input, &output), LIBHOTH_OK);
+  EXPECT_EQ(libhoth_hello(&hoth_dev_, input, &output), HOTH_SUCCESS);
   EXPECT_EQ(output, response.output);
 }

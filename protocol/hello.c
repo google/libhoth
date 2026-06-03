@@ -16,15 +16,17 @@
 
 #include <stdint.h>
 
-int libhoth_hello(struct libhoth_device* const dev, const uint32_t input,
-                  uint32_t* const output) {
+libhoth_error libhoth_hello(struct libhoth_device* const dev,
+                            const uint32_t input, uint32_t* const output) {
   const struct hoth_request_hello request = {
       .input = input,
   };
   struct hoth_response_hello response;
-  const int rv =
-      libhoth_hostcmd_exec(dev, HOTH_CMD_HELLO, /*version=*/0, &request,
-                           sizeof(request), &response, sizeof(response), NULL);
-  *output = response.output;
+  const libhoth_error rv = libhoth_hostcmd_exec_v2(
+      dev, HOTH_CMD_HELLO, /*version=*/0, &request, sizeof(request), &response,
+      sizeof(response), NULL);
+  if (rv == HOTH_SUCCESS) {
+    *output = response.output;
+  }
   return rv;
 }

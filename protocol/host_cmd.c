@@ -162,10 +162,47 @@ static int validate_ec_response_header(
   return 0;
 }
 
+// libhoth_hostcmd_exec is a compatibility wrapper that converts the new
+// 64-bit libhoth_error into the legacy 32-bit int return type. This allows
+// existing callers to remain unchanged while we incrementally migrate the
+// library to the more descriptive libhoth_error system.
 int libhoth_hostcmd_exec(struct libhoth_device* dev, uint16_t command,
                          uint8_t version, const void* req_payload,
                          size_t req_payload_size, void* resp_buf,
                          size_t resp_buf_size, size_t* out_resp_size) {
+  // We use this temporary variable to capture the rich 64-bit error from the
+  // new implementation before downgrading it to the legacy format.
+  libhoth_error err = libhoth_hostcmd_exec_v2(
+      dev, command, version, req_payload, req_payload_size, resp_buf,
+      resp_buf_size, out_resp_size);
+
+  if (err == HOTH_SUCCESS) {
+    return 0;
+  }
+
+  uint32_t space = LIBHOTH_ERR_GET_SPACE(err);
+  uint32_t code = LIBHOTH_ERR_GET_CODE(err);
+
+  if (space == HOTH_HOST_SPACE_FW) {
+    return HTOOL_ERROR_HOST_COMMAND_START + code;
+  }
+
+  if (space == HOTH_HOST_SPACE_FW_EARLGREY) {
+    return (int)code;
+  }
+
+  return -1;
+}
+
+// libhoth_hostcmd_exec_v2 is the new core implementation that returns a
+// rich 64-bit libhoth_error. It should be used for all new commands and
+// when migrating existing commands to the centralized status reporting system.
+libhoth_error libhoth_hostcmd_exec_v2(struct libhoth_device* dev,
+                                      uint16_t command, uint8_t version,
+                                      const void* req_payload,
+                                      size_t req_payload_size, void* resp_buf,
+                                      size_t resp_buf_size,
+                                      size_t* out_resp_size) {
   struct {
     struct hoth_host_request hdr;
     uint8_t
@@ -174,7 +211,8 @@ int libhoth_hostcmd_exec(struct libhoth_device* dev, uint16_t command,
   if (req_payload_size > sizeof(req.payload_buf)) {
     fprintf(stderr, "req_payload_size too large: %d > %d\n",
             (int)req_payload_size, (int)sizeof(req.payload_buf));
-    return -1;
+    return LIBHOTH_ERR_CONSTRUCT(HOTH_CTX_CMD_EXEC, HOTH_HOST_SPACE_LIBHOTH,
+                                 LIBHOTH_ERR_OUT_UNDERFLOW);
   }
   if (req_payload) {
     memcpy(req.payload_buf, req_payload, req_payload_size);
@@ -183,12 +221,14 @@ int libhoth_hostcmd_exec(struct libhoth_device* dev, uint16_t command,
                                           req_payload_size, &req.hdr);
   if (status != 0) {
     fprintf(stderr, "populate_ec_request_header() failed: %d\n", status);
-    return -1;
+    return LIBHOTH_ERR_CONSTRUCT(HOTH_CTX_CMD_EXEC, HOTH_HOST_SPACE_POSIX,
+                                 -status);
   }
   status = libhoth_send_request(dev, &req, sizeof(req.hdr) + req_payload_size);
   if (status != LIBHOTH_OK) {
     fprintf(stderr, "libhoth_send_request() failed: %d\n", status);
-    return -1;
+    return LIBHOTH_ERR_CONSTRUCT(HOTH_CTX_CMD_EXEC, HOTH_HOST_SPACE_LIBHOTH,
+                                 status);
   }
   struct {
     struct hoth_host_response hdr;
@@ -200,12 +240,14 @@ int libhoth_hostcmd_exec(struct libhoth_device* dev, uint16_t command,
                                     HOTH_CMD_TIMEOUT_MS_DEFAULT);
   if (status != LIBHOTH_OK) {
     fprintf(stderr, "libhoth_receive_response() failed: %d\n", status);
-    return -1;
+    return LIBHOTH_ERR_CONSTRUCT(HOTH_CTX_CMD_EXEC, HOTH_HOST_SPACE_LIBHOTH,
+                                 status);
   }
   status = validate_ec_response_header(&resp.hdr, resp.payload_buf, resp_size);
   if (status != 0) {
     fprintf(stderr, "EC response header invalid: %d\n", status);
-    return -1;
+    return LIBHOTH_ERR_CONSTRUCT(HOTH_CTX_CMD_EXEC, HOTH_HOST_SPACE_POSIX,
+                                 -status);
   }
   if (resp.hdr.result != HOTH_RES_SUCCESS) {
     fprintf(stderr, "EC response contained error: %d", resp.hdr.result);
@@ -213,10 +255,13 @@ int libhoth_hostcmd_exec(struct libhoth_device* dev, uint16_t command,
       uint32_t error_code;
       memcpy(&error_code, resp.payload_buf, sizeof(error_code));
       fprintf(stderr, " (extended: 0x%08x)\n", error_code);
+      return LIBHOTH_ERR_CONSTRUCT(HOTH_CTX_CMD_EXEC,
+                                   HOTH_HOST_SPACE_FW_EARLGREY, error_code);
     } else {
       fprintf(stderr, "\n");
     }
-    return HTOOL_ERROR_HOST_COMMAND_START + resp.hdr.result;
+    return LIBHOTH_ERR_CONSTRUCT(HOTH_CTX_CMD_EXEC, HOTH_HOST_SPACE_FW,
+                                 resp.hdr.result);
   }
 
   size_t resp_payload_size = resp_size - sizeof(struct hoth_host_response);
@@ -226,14 +271,16 @@ int libhoth_hostcmd_exec(struct libhoth_device* dev, uint16_t command,
           stderr,
           "Response payload too large to fit in supplied buffer: %zu > %zu\n",
           resp_payload_size, resp_buf_size);
-      return -1;
+      return LIBHOTH_ERR_CONSTRUCT(HOTH_CTX_CMD_EXEC, HOTH_HOST_SPACE_LIBHOTH,
+                                   LIBHOTH_ERR_RESPONSE_BUFFER_OVERFLOW);
     }
   } else {
     if (resp_payload_size != resp_buf_size) {
       fprintf(stderr,
               "Unexpected response payload size: got %zu expected %zu\n",
               resp_payload_size, resp_buf_size);
-      return -1;
+      return LIBHOTH_ERR_CONSTRUCT(HOTH_CTX_CMD_EXEC, HOTH_HOST_SPACE_LIBHOTH,
+                                   LIBHOTH_ERR_FAIL);
     }
   }
   if (resp_buf) {
@@ -242,5 +289,5 @@ int libhoth_hostcmd_exec(struct libhoth_device* dev, uint16_t command,
   if (out_resp_size) {
     *out_resp_size = resp_payload_size;
   }
-  return 0;
+  return HOTH_SUCCESS;
 }
