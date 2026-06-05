@@ -19,5 +19,6 @@
 
 int htool_mauv_compiled(const struct htool_invocation* inv);
 int htool_mauv_effective(const struct htool_invocation* inv);
+int htool_mauv_update(const struct htool_invocation* inv);
 
 #endif  // _LIBHOTH_EXAMPLES_HTOOL_MAUV_H_

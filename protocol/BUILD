@@ -577,3 +577,16 @@ cc_library(
         "//transports:libhoth_device",
     ],
 )
+
+cc_test(
+    name = "mauv_test",
+    srcs = ["mauv_test.cc"],
+    deps = [
+        ":mauv",
+        "//protocol/test:libhoth_device_mock",
+        "//transports:libhoth_device",
+        "@googletest//:gtest",
+        "@googletest//:gtest_main",
+    ],
+)
+

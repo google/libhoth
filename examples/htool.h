@@ -18,11 +18,15 @@
 #include <stddef.h>
 #include <stdint.h>
 
+#include "protocol/status.h"
+
 #define HTOOL_ERROR_HOST_COMMAND_START 537200
 
 #ifdef __cplusplus
 extern "C" {
 #endif
+
+void htool_report_error(const char* cmd_name, libhoth_error err);
 
 struct libhoth_device;
 

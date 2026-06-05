@@ -31,6 +31,10 @@
  */
 
 #define EC_PRV_CMD_HAVEN_MAUV 0x000B
+#define EC_PRV_CMD_UPDATE_MAUV 0x0057
+
+// Maximum allowed size for an incoming MAUV update record (1016 bytes).
+#define MAUV_MAX_RECORD_SIZE 1016
 
 // Current version of the `haven_mauv` struct.
 #define HAVEN_MAUV_STRUCT_VERSION 1
@@ -187,8 +191,12 @@ struct hoth_response_mauv {
   };
 } __attribute__((packed));
 
-int libhoth_fetch_mauv(struct libhoth_device* dev, uint8_t state,
-                       uint8_t category, struct hoth_response_mauv* mauv);
+libhoth_error libhoth_fetch_mauv(struct libhoth_device* dev, uint8_t state,
+                                 uint8_t category,
+                                 struct hoth_response_mauv* mauv);
+
+libhoth_error libhoth_update_mauv(struct libhoth_device* dev,
+                                  const void* record, size_t record_size);
 
 #ifdef __cplusplus
 }
