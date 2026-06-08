@@ -37,6 +37,14 @@ TEST_F(LibHothTest, command_version_test) {
 
   uint32_t version_mask;
   EXPECT_EQ(libhoth_get_command_versions(&hoth_dev_, 0x3, &version_mask),
-            LIBHOTH_OK);
+            HOTH_SUCCESS);
   EXPECT_EQ(version_mask, version_mask_exp);
+}
+
+TEST_F(LibHothTest, command_version_null_param_test) {
+  libhoth_error err = libhoth_get_command_versions(&hoth_dev_, 0x3, nullptr);
+  EXPECT_NE(err, HOTH_SUCCESS);
+  EXPECT_EQ(LIBHOTH_ERR_GET_CTX(err), HOTH_CTX_CMD_EXEC);
+  EXPECT_EQ(LIBHOTH_ERR_GET_SPACE(err), HOTH_HOST_SPACE_LIBHOTH);
+  EXPECT_EQ(LIBHOTH_ERR_GET_CODE(err), LIBHOTH_ERR_INVALID_PARAMETER);
 }
