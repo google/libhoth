@@ -14,21 +14,26 @@
 
 #include "chipinfo.h"
 
+#include <stddef.h>
 #include <string.h>
 
 #include "host_cmd.h"
 
-int libhoth_chipinfo(struct libhoth_device* dev,
-                     struct hoth_response_chip_info* chipinfo) {
-  uint8_t resp_buf[OPENTITAN_DEVICE_ID_LEN];  // Max size for new format
-  size_t resp_size;
+libhoth_error libhoth_chipinfo(struct libhoth_device* dev,
+                               struct hoth_response_chip_info* chipinfo) {
+  if (chipinfo == NULL) {
+    return LIBHOTH_ERR_CONSTRUCT(HOTH_CTX_CMD_EXEC, HOTH_HOST_SPACE_LIBHOTH,
+                                 LIBHOTH_ERR_INVALID_PARAMETER);
+  }
 
-  int ret = libhoth_hostcmd_exec(
+  uint8_t resp_buf[OPENTITAN_DEVICE_ID_LEN];  // Max size for new format
+  size_t resp_size = 0;
+
+  libhoth_error err = libhoth_hostcmd_exec_v2(
       dev, HOTH_CMD_BOARD_SPECIFIC_BASE + HOTH_PRV_CMD_HOTH_CHIP_INFO,
       /*version=*/0, NULL, 0, resp_buf, sizeof(resp_buf), &resp_size);
-
-  if (ret != 0) {
-    return ret;
+  if (err != HOTH_SUCCESS) {
+    return err;
   }
 
   if (resp_size == sizeof(struct hoth_device_id)) {
@@ -43,10 +48,11 @@ int libhoth_chipinfo(struct libhoth_device* dev,
            OPENTITAN_DEVICE_ID_LEN);
   } else {
     // Unexpected size
-    return HTOOL_ERROR_HOST_COMMAND_START + HOTH_RES_INVALID_PARAM;
+    return LIBHOTH_ERR_CONSTRUCT(HOTH_CTX_CMD_EXEC, HOTH_HOST_SPACE_LIBHOTH,
+                                 LIBHOTH_ERR_FAIL);
   }
 
-  return 0;
+  return HOTH_SUCCESS;
 }
 
 int parse_opentitan_device_id(const uint8_t* src,

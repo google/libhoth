@@ -21,6 +21,7 @@ extern "C" {
 
 #include <stdint.h>
 
+#include "protocol/status.h"
 #include "transports/libhoth_device.h"
 
 #define HOTH_PRV_CMD_HOTH_CHIP_INFO 0x0010
@@ -66,8 +67,8 @@ struct hoth_response_chip_info {
   } data;
 };
 
-int libhoth_chipinfo(struct libhoth_device* dev,
-                     struct hoth_response_chip_info* chipinfo);
+libhoth_error libhoth_chipinfo(struct libhoth_device* dev,
+                               struct hoth_response_chip_info* chipinfo);
 
 #ifdef __cplusplus
 }

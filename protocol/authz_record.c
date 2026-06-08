@@ -59,15 +59,15 @@ libhoth_error libhoth_authz_record_build(struct libhoth_device* dev,
   *(uint32_t*)record->capabilities = capabilities;
 
   struct hoth_response_chip_info chipinfo_resp;
-  int status = libhoth_chipinfo(dev, &chipinfo_resp);
-  if (status != 0) {
-    return LIBHOTH_ERR_CONSTRUCT(HOTH_CTX_CMD_EXEC, HOTH_HOST_SPACE_LIBHOTH,
-                                 status);
+  libhoth_error err = libhoth_chipinfo(dev, &chipinfo_resp);
+  if (err != HOTH_SUCCESS) {
+    return err;
   }
   if (chipinfo_resp.version != 0) {
     fprintf(stderr, "Unsupported chipinfo version: %u\n",
             chipinfo_resp.version);
-    return -1;
+    return LIBHOTH_ERR_CONSTRUCT(HOTH_CTX_CMD_EXEC, HOTH_HOST_SPACE_LIBHOTH,
+                                 LIBHOTH_ERR_FAIL);
   }
   record->dev_id_0 =
       chipinfo_resp.data.hoth_device_id.hardware_identity & 0xfffffffful;
@@ -75,7 +75,7 @@ libhoth_error libhoth_authz_record_build(struct libhoth_device* dev,
       (chipinfo_resp.data.hoth_device_id.hardware_identity >> 32);
 
   struct hoth_authz_record_get_nonce_response nonce_resp;
-  libhoth_error err = libhoth_hostcmd_exec_v2(
+  err = libhoth_hostcmd_exec_v2(
       dev,
       HOTH_CMD_BOARD_SPECIFIC_BASE + HOTH_PRV_CMD_HOTH_GET_AUTHZ_RECORD_NONCE,
       /*version=*/0, NULL, 0, &nonce_resp, sizeof(nonce_resp), NULL);

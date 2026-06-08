@@ -144,8 +144,9 @@ static int command_show_chipinfo(const struct htool_invocation* inv) {
   }
 
   struct hoth_response_chip_info response;
-  int status = libhoth_chipinfo(dev, &response);
-  if (status != 0) {
+  libhoth_error err = libhoth_chipinfo(dev, &response);
+  if (err != HOTH_SUCCESS) {
+    htool_report_error("chipinfo", err);
     return -1;
   }
 
@@ -301,9 +302,9 @@ static int command_authz_host_command_build(
   }
 
   struct hoth_response_chip_info chipinfo_resp;
-  int status = libhoth_chipinfo(dev, &chipinfo_resp);
-  if (status != 0) {
-    fprintf(stderr, "Failed to get chip ID. status=%d\n", status);
+  libhoth_error err = libhoth_chipinfo(dev, &chipinfo_resp);
+  if (err != HOTH_SUCCESS) {
+    htool_report_error("chipinfo", err);
     return -1;
   }
   if (chipinfo_resp.version != 0) {
@@ -313,7 +314,7 @@ static int command_authz_host_command_build(
   }
 
   struct hoth_authorized_command_get_nonce_response nonce_resp;
-  status = libhoth_hostcmd_exec(
+  int status = libhoth_hostcmd_exec(
       dev,
       HOTH_CMD_BOARD_SPECIFIC_BASE + HOTH_PRV_CMD_HOTH_GET_AUTHZ_COMMAND_NONCE,
       /*version=*/0, NULL, 0, &nonce_resp, sizeof(nonce_resp), NULL);
