@@ -52,12 +52,13 @@ void libhoth_print_boot_log(
 }
 
 void libhoth_print_dfu_error(struct libhoth_device* const dev,
-                             struct opentitan_get_version_resp* resp, int err) {
+                             struct opentitan_get_version_resp* resp,
+                             libhoth_error err) {
   printf("tool_failure_code: -1\n");
   printf("notes: \"");
 
-  if (!err) {
-    printf("dfu failed with error code %d\n", err);
+  if (err != HOTH_SUCCESS) {
+    printf("dfu failed with error code 0x%016lx\n", err);
   }
 
   if (resp != NULL) {
@@ -76,9 +77,14 @@ void libhoth_print_dfu_error(struct libhoth_device* const dev,
   printf("\"\n");
 }
 
-int libhoth_dfu_check(struct libhoth_device* const dev, const uint8_t* image,
-                      size_t image_size,
-                      struct opentitan_get_version_resp* resp) {
+libhoth_error libhoth_dfu_check(struct libhoth_device* const dev,
+                                const uint8_t* image, size_t image_size,
+                                struct opentitan_get_version_resp* resp) {
+  if (image == NULL || resp == NULL) {
+    return LIBHOTH_ERR_CONSTRUCT(HOTH_CTX_CMD_EXEC, HOTH_HOST_SPACE_LIBHOTH,
+                                 LIBHOTH_ERR_INVALID_PARAMETER);
+  }
+
   int retval = 0;
   struct opentitan_image_version desired_rom_ext = {0};
   struct opentitan_image_version desired_app = {0};
@@ -89,19 +95,23 @@ int libhoth_dfu_check(struct libhoth_device* const dev, const uint8_t* image,
 
   if (retval != 0) {
     fprintf(stderr, "Error: Failed to extract bundle with code %d\n", retval);
+    return LIBHOTH_ERR_CONSTRUCT(HOTH_CTX_INIT, HOTH_HOST_SPACE_LIBHOTH,
+                                 LIBHOTH_ERR_FAIL);
   }
 
   // Always print out on non-error OR error the installed and active version for
   // parsing purpose
   libhoth_print_boot_log(resp, &desired_rom_ext, &desired_app);
 
-  if (!libhoth_update_complete(resp, &desired_rom_ext, &desired_app)) {
+  libhoth_error update_err =
+      libhoth_update_complete(resp, &desired_rom_ext, &desired_app);
+  if (update_err != HOTH_SUCCESS) {
     fprintf(
         stderr,
         "Error: Mismatch detected between the current and desired versions.\n");
-    libhoth_print_dfu_error(dev, resp, LIBHOTH_OK);
-    return -1;
+    libhoth_print_dfu_error(dev, resp, update_err);
+    return update_err;
   }
 
-  return 0;
+  return HOTH_SUCCESS;
 }

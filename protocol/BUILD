@@ -447,6 +447,7 @@ cc_library(
     deps = [
         ":console",
         ":host_cmd",
+        ":libhoth_status",
         "//transports:libhoth_device",
     ],
 )
@@ -540,6 +541,7 @@ cc_library(
     ],
     deps = [
         ":console",
+        ":libhoth_status",
         ":opentitan_version",
         "//transports:libhoth_device",
     ],

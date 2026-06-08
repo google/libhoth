@@ -74,7 +74,7 @@ TEST_F(LibHothTest, dfu_check_test) {
 
   EXPECT_EQ(
       libhoth_dfu_check(&hoth_dev_, image.data, image.size, &mock_response),
-      LIBHOTH_OK);
+      HOTH_SUCCESS);
 }
 
 TEST_F(LibHothTest, dfu_check_fail) {
@@ -95,5 +95,21 @@ TEST_F(LibHothTest, dfu_check_fail) {
 
   EXPECT_EQ(
       libhoth_dfu_check(&hoth_dev_, image.data, image.size, &mock_response),
-      -1);
+      LIBHOTH_ERR_CONSTRUCT(HOTH_CTX_CMD_EXEC, HOTH_HOST_SPACE_LIBHOTH,
+                            LIBHOTH_ERR_DFU_APP_MISMATCH));
+}
+
+TEST_F(LibHothTest, dfu_check_extract_bundle_fail) {
+  uint8_t bad_image[64] = {0};
+  struct opentitan_get_version_resp mock_response = {};
+  EXPECT_EQ(libhoth_dfu_check(&hoth_dev_, bad_image, sizeof(bad_image),
+                              &mock_response),
+            LIBHOTH_ERR_CONSTRUCT(HOTH_CTX_INIT, HOTH_HOST_SPACE_LIBHOTH,
+                                  LIBHOTH_ERR_FAIL));
+}
+
+TEST_F(LibHothTest, dfu_check_null_param_test) {
+  EXPECT_EQ(libhoth_dfu_check(&hoth_dev_, nullptr, 0, nullptr),
+            LIBHOTH_ERR_CONSTRUCT(HOTH_CTX_CMD_EXEC, HOTH_HOST_SPACE_LIBHOTH,
+                                  LIBHOTH_ERR_INVALID_PARAMETER));
 }
