@@ -194,12 +194,14 @@ int htool_dfu_update(const struct htool_invocation* inv) {
     }
   }
 
-  if (!libhoth_update_complete(&resp, &desired_rom_ext, &desired_app)) {
+  libhoth_error update_err =
+      libhoth_update_complete(&resp, &desired_rom_ext, &desired_app);
+  if (update_err != HOTH_SUCCESS) {
     fprintf(stderr,
             "DFU update failed, running image does not match expected after %d "
             "dfu updates\n",
             update_cnt);
-    libhoth_print_dfu_error(dev, &resp, LIBHOTH_OK);
+    libhoth_print_dfu_error(dev, &resp, update_err);
     retval = -1;
     goto cleanup2;
   }
@@ -264,7 +266,9 @@ int htool_dfu_check(const struct htool_invocation* inv) {
     goto cleanup2;
   }
 
-  if (libhoth_dfu_check(dev, image, statbuf.st_size, &resp) != 0) {
+  libhoth_error err = libhoth_dfu_check(dev, image, statbuf.st_size, &resp);
+  if (err != HOTH_SUCCESS) {
+    htool_report_error("dfu_check", err);
     fprintf(stderr, "error: DFU check failed.\n");
     goto cleanup2;
   }

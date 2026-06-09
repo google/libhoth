@@ -19,21 +19,23 @@
 #include <stdint.h>
 
 #include "protocol/opentitan_version.h"
+#include "protocol/status.h"
 #include "transports/libhoth_device.h"
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-int libhoth_dfu_check(struct libhoth_device* const dev, const uint8_t* image,
-                      size_t image_size,
-                      struct opentitan_get_version_resp* resp);
+libhoth_error libhoth_dfu_check(struct libhoth_device* const dev,
+                                const uint8_t* image, size_t image_size,
+                                struct opentitan_get_version_resp* resp);
 void libhoth_print_boot_log(
     const struct opentitan_get_version_resp* resp,
     const struct opentitan_image_version* desired_rom_ext,
     const struct opentitan_image_version* desired_app);
 void libhoth_print_dfu_error(struct libhoth_device* const dev,
-                             struct opentitan_get_version_resp* resp, int err);
+                             struct opentitan_get_version_resp* resp,
+                             libhoth_error err);
 
 #ifdef __cplusplus
 }

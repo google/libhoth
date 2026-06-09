@@ -310,7 +310,7 @@ TEST_F(LibHothTest, TestLibhothUpdateComplete) {
   resp.app.slots[0] = app_1;
   resp.app.slots[1] = app_1;
 
-  EXPECT_TRUE(libhoth_update_complete(&resp, &romext, &app_1));
+  EXPECT_EQ(libhoth_update_complete(&resp, &romext, &app_1), HOTH_SUCCESS);
 
   // Case 2: Active ROM_EXT did not change since running ROM_EXT had greater
   // security version even when desired ROM_EXT had larger major version
@@ -320,7 +320,7 @@ TEST_F(LibHothTest, TestLibhothUpdateComplete) {
   resp.rom_ext.slots[1] = romext;
   resp.app.slots[0] = app_1;
   resp.app.slots[1] = app_1;
-  EXPECT_TRUE(libhoth_update_complete(&resp, &romext, &app_1));
+  EXPECT_EQ(libhoth_update_complete(&resp, &romext, &app_1), HOTH_SUCCESS);
 
   // Case 3: Active ROM_EXT did not change since running ROM_EXT had greater
   // major version
@@ -330,7 +330,7 @@ TEST_F(LibHothTest, TestLibhothUpdateComplete) {
   resp.rom_ext.slots[1] = romext;
   resp.app.slots[0] = app_1;
   resp.app.slots[1] = app_1;
-  EXPECT_TRUE(libhoth_update_complete(&resp, &romext, &app_1));
+  EXPECT_EQ(libhoth_update_complete(&resp, &romext, &app_1), HOTH_SUCCESS);
 
   // Case 4: Active ROM_EXT did not change since running ROM_EXT had greater
   // minor version
@@ -340,7 +340,7 @@ TEST_F(LibHothTest, TestLibhothUpdateComplete) {
   resp.rom_ext.slots[1] = romext;
   resp.app.slots[0] = app_1;
   resp.app.slots[1] = app_1;
-  EXPECT_TRUE(libhoth_update_complete(&resp, &romext, &app_1));
+  EXPECT_EQ(libhoth_update_complete(&resp, &romext, &app_1), HOTH_SUCCESS);
 
   // Case 5: ROM_EXT did not change due to some reason (something caused update
   // failure)
@@ -350,7 +350,9 @@ TEST_F(LibHothTest, TestLibhothUpdateComplete) {
   resp.rom_ext.slots[1] = romext_minor_version_smaller;
   resp.app.slots[0] = app_1;
   resp.app.slots[1] = app_1;
-  EXPECT_FALSE(libhoth_update_complete(&resp, &romext, &app_1));
+  EXPECT_EQ(libhoth_update_complete(&resp, &romext, &app_1),
+            LIBHOTH_ERR_CONSTRUCT(HOTH_CTX_CMD_EXEC, HOTH_HOST_SPACE_LIBHOTH,
+                                  LIBHOTH_ERR_DFU_ROMEXT_MISMATCH));
 
   resp.rom_ext.booted_slot = kOpentitanBootSlotA;
   resp.app.booted_slot = kOpentitanBootSlotA;
@@ -358,8 +360,10 @@ TEST_F(LibHothTest, TestLibhothUpdateComplete) {
   resp.rom_ext.slots[1] = romext;
   resp.app.slots[0] = app_1;
   resp.app.slots[1] = app_1;
-  EXPECT_FALSE(
-      libhoth_update_complete(&resp, &romext_security_version_larger, &app_1));
+  EXPECT_EQ(
+      libhoth_update_complete(&resp, &romext_security_version_larger, &app_1),
+      LIBHOTH_ERR_CONSTRUCT(HOTH_CTX_CMD_EXEC, HOTH_HOST_SPACE_LIBHOTH,
+                            LIBHOTH_ERR_DFU_ROMEXT_MISMATCH));
 
   resp.rom_ext.booted_slot = kOpentitanBootSlotA;
   resp.app.booted_slot = kOpentitanBootSlotA;
@@ -367,8 +371,10 @@ TEST_F(LibHothTest, TestLibhothUpdateComplete) {
   resp.rom_ext.slots[1] = romext;
   resp.app.slots[0] = app_1;
   resp.app.slots[1] = app_1;
-  EXPECT_FALSE(
-      libhoth_update_complete(&resp, &romext_security_version_larger, &app_1));
+  EXPECT_EQ(
+      libhoth_update_complete(&resp, &romext_security_version_larger, &app_1),
+      LIBHOTH_ERR_CONSTRUCT(HOTH_CTX_CMD_EXEC, HOTH_HOST_SPACE_LIBHOTH,
+                            LIBHOTH_ERR_DFU_ROMEXT_MISMATCH));
 
   resp.rom_ext.booted_slot = kOpentitanBootSlotA;
   resp.app.booted_slot = kOpentitanBootSlotA;
@@ -376,8 +382,10 @@ TEST_F(LibHothTest, TestLibhothUpdateComplete) {
   resp.rom_ext.slots[1] = romext_security_version_larger;
   resp.app.slots[0] = app_1;
   resp.app.slots[1] = app_1;
-  EXPECT_FALSE(
-      libhoth_update_complete(&resp, &romext_security_version_larger, &app_1));
+  EXPECT_EQ(
+      libhoth_update_complete(&resp, &romext_security_version_larger, &app_1),
+      LIBHOTH_ERR_CONSTRUCT(HOTH_CTX_CMD_EXEC, HOTH_HOST_SPACE_LIBHOTH,
+                            LIBHOTH_ERR_DFU_ROMEXT_MISMATCH));
 
   // Case 6: Application firmware did not update due to some reason
   resp.rom_ext.booted_slot = kOpentitanBootSlotA;
@@ -386,15 +394,21 @@ TEST_F(LibHothTest, TestLibhothUpdateComplete) {
   resp.rom_ext.slots[1] = romext;
   resp.app.slots[0] = app_2;
   resp.app.slots[1] = app_2;
-  EXPECT_FALSE(libhoth_update_complete(&resp, &romext, &app_1));
+  EXPECT_EQ(libhoth_update_complete(&resp, &romext, &app_1),
+            LIBHOTH_ERR_CONSTRUCT(HOTH_CTX_CMD_EXEC, HOTH_HOST_SPACE_LIBHOTH,
+                                  LIBHOTH_ERR_DFU_APP_MISMATCH));
 
   resp.app.slots[0] = app_1;
   resp.app.slots[1] = app_2;
-  EXPECT_FALSE(libhoth_update_complete(&resp, &romext, &app_1));
+  EXPECT_EQ(libhoth_update_complete(&resp, &romext, &app_1),
+            LIBHOTH_ERR_CONSTRUCT(HOTH_CTX_CMD_EXEC, HOTH_HOST_SPACE_LIBHOTH,
+                                  LIBHOTH_ERR_DFU_APP_MISMATCH));
 
   resp.app.slots[0] = app_2;
   resp.app.slots[1] = app_1;
-  EXPECT_FALSE(libhoth_update_complete(&resp, &romext, &app_1));
+  EXPECT_EQ(libhoth_update_complete(&resp, &romext, &app_1),
+            LIBHOTH_ERR_CONSTRUCT(HOTH_CTX_CMD_EXEC, HOTH_HOST_SPACE_LIBHOTH,
+                                  LIBHOTH_ERR_DFU_APP_MISMATCH));
 }
 
 TEST_F(LibHothTest, ExtractOtBundleBoundsCheckLargeOffset) {

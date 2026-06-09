@@ -17,6 +17,8 @@
 #include <stdbool.h>
 #include <stddef.h>
 
+#include "protocol/status.h"
+
 int libhoth_opentitan_version(struct libhoth_device* dev,
                               struct opentitan_get_version_resp* output) {
   uint32_t request = 0;
@@ -273,12 +275,23 @@ bool libhoth_ot_check_staged_slot_after_update(
               libhoth_ot_staged_romext(resp), desired_romext) == 0);
 }
 
-bool libhoth_update_complete(
+libhoth_error libhoth_update_complete(
     const struct opentitan_get_version_resp* resp,
     const struct opentitan_image_version* desired_romext,
     const struct opentitan_image_version* desired_app) {
-  return libhoth_ot_check_update_successful(resp, desired_romext,
-                                            desired_app) &&
-         libhoth_ot_check_staged_slot_after_update(resp, desired_romext,
-                                                   desired_app);
+  if (libhoth_ot_app_version_cmp_for_update(libhoth_ot_boot_app(resp),
+                                            desired_app) != 0 ||
+      libhoth_ot_app_version_cmp_for_update(libhoth_ot_staged_app(resp),
+                                            desired_app) != 0) {
+    return LIBHOTH_ERR_CONSTRUCT(HOTH_CTX_CMD_EXEC, HOTH_HOST_SPACE_LIBHOTH,
+                                 LIBHOTH_ERR_DFU_APP_MISMATCH);
+  }
+  if (libhoth_ot_rom_ext_version_cmp_for_update(libhoth_ot_boot_romext(resp),
+                                                desired_romext) < 0 ||
+      libhoth_ot_rom_ext_version_cmp_for_update(libhoth_ot_staged_romext(resp),
+                                                desired_romext) != 0) {
+    return LIBHOTH_ERR_CONSTRUCT(HOTH_CTX_CMD_EXEC, HOTH_HOST_SPACE_LIBHOTH,
+                                 LIBHOTH_ERR_DFU_ROMEXT_MISMATCH);
+  }
+  return HOTH_SUCCESS;
 }

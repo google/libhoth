@@ -21,6 +21,7 @@
 
 #include "host_cmd.h"
 #include "protocol/console.h"
+#include "protocol/status.h"
 #include "transports/libhoth_device.h"
 
 #ifdef __cplusplus
@@ -157,7 +158,7 @@ bool libhoth_ot_check_staged_slot_after_update(
     const struct opentitan_get_version_resp* resp,
     const struct opentitan_image_version* desired_romext,
     const struct opentitan_image_version* desired_app);
-bool libhoth_update_complete(
+libhoth_error libhoth_update_complete(
     const struct opentitan_get_version_resp* resp,
     const struct opentitan_image_version* desired_romext,
     const struct opentitan_image_version* desired_app);
