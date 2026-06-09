@@ -164,6 +164,7 @@ cc_library(
     hdrs = ["reboot.h"],
     deps = [
         ":host_cmd",
+        ":libhoth_status",
         "//transports:libhoth_device",
     ],
 )

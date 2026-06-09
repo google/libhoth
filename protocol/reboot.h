@@ -21,7 +21,8 @@ extern "C" {
 
 #include <stdint.h>
 
-#include "host_cmd.h"
+#include "protocol/host_cmd.h"
+#include "protocol/status.h"
 #include "transports/libhoth_device.h"
 
 #define HOTH_CMD_REBOOT_EC 0x00D2
@@ -38,7 +39,8 @@ struct hoth_params_reboot_ec {
   uint8_t flags;
 } __hoth_align1;
 
-int libhoth_reboot(struct libhoth_device* dev, enum hoth_reboot_cmd cmd);
+libhoth_error libhoth_reboot(struct libhoth_device* dev,
+                             enum hoth_reboot_cmd cmd);
 
 #ifdef __cplusplus
 }
