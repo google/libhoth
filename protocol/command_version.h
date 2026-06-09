@@ -21,12 +21,14 @@ extern "C" {
 
 #include <stdint.h>
 
+#include "protocol/status.h"
 #include "transports/libhoth_device.h"
 
 #define HOTH_CMD_GET_CMD_VERSIONS 0x0008
 
-int libhoth_get_command_versions(struct libhoth_device* dev, uint16_t command,
-                                 uint32_t* version_mask);
+libhoth_error libhoth_get_command_versions(struct libhoth_device* dev,
+                                           uint16_t command,
+                                           uint32_t* version_mask);
 
 #ifdef __cplusplus
 }

@@ -14,17 +14,20 @@
 
 #include "command_version.h"
 
+#include <stddef.h>
 #include <stdint.h>
 
 #include "host_cmd.h"
 #include "transports/libhoth_device.h"
 
-int libhoth_get_command_versions(struct libhoth_device* dev, uint16_t command,
-                                 uint32_t* version_mask) {
+libhoth_error libhoth_get_command_versions(struct libhoth_device* dev,
+                                           uint16_t command,
+                                           uint32_t* version_mask) {
   if (version_mask == NULL) {
-    return -1;
+    return LIBHOTH_ERR_CONSTRUCT(HOTH_CTX_CMD_EXEC, HOTH_HOST_SPACE_LIBHOTH,
+                                 LIBHOTH_ERR_INVALID_PARAMETER);
   }
-  return libhoth_hostcmd_exec(dev, HOTH_CMD_GET_CMD_VERSIONS,
-                              /*version=*/1, &command, sizeof(command),
-                              version_mask, sizeof(*version_mask), NULL);
+  return libhoth_hostcmd_exec_v2(dev, HOTH_CMD_GET_CMD_VERSIONS,
+                                 /*version=*/1, &command, sizeof(command),
+                                 version_mask, sizeof(*version_mask), NULL);
 }

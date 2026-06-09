@@ -53,18 +53,19 @@ static int send_payload_update_request_with_command(struct libhoth_device* dev,
 static int get_payload_update_version(struct libhoth_device* dev,
                                       uint8_t* version) {
   uint32_t version_mask = 0;
-  const int status = libhoth_get_command_versions(
+  const libhoth_error err = libhoth_get_command_versions(
       dev, HOTH_CMD_BOARD_SPECIFIC_BASE + HOTH_PRV_CMD_HOTH_PAYLOAD_UPDATE,
       &version_mask);
   const bool get_version_unsupported =
-      (status == HTOOL_ERROR_HOST_COMMAND_START + HOTH_RES_INVALID_COMMAND);
-  const bool is_version_0 = (status == 0 && (version_mask & 0x2) == 0);
+      (err == LIBHOTH_ERR_CONSTRUCT(HOTH_CTX_CMD_EXEC, HOTH_HOST_SPACE_FW,
+                                    HOTH_RES_INVALID_COMMAND));
+  const bool is_version_0 = (err == HOTH_SUCCESS && (version_mask & 0x2) == 0);
   if (get_version_unsupported || is_version_0) {
     *version = 0;
     return 0;
   }
-  if (status != 0) {
-    return status;
+  if (err != HOTH_SUCCESS) {
+    return -1;
   }
   *version = 1;
   return 0;
