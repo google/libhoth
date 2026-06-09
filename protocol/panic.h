@@ -22,6 +22,7 @@ extern "C" {
 #include <stdbool.h>
 #include <stdint.h>
 
+#include "protocol/status.h"
 #include "transports/libhoth_device.h"
 
 #define HOTH_PRV_CMD_HOTH_PERSISTENT_PANIC_INFO 0x0014
@@ -132,9 +133,10 @@ enum panic_arch {
 /* Already reported via host event */
 #define PANIC_DATA_FLAG_OLD_HOSTEVENT (1 << 3)
 
-int libhoth_get_panic(struct libhoth_device* dev,
-                      struct hoth_response_persistent_panic_info* panic_data);
-int libhoth_clear_persistent_panic_info(struct libhoth_device* dev);
+libhoth_error libhoth_get_panic(
+    struct libhoth_device* dev,
+    struct hoth_response_persistent_panic_info* panic_data);
+libhoth_error libhoth_clear_persistent_panic_info(struct libhoth_device* dev);
 void libhoth_print_panic_info(
     const struct hoth_response_persistent_panic_info* panic);
 

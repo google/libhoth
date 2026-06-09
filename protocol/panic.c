@@ -14,6 +14,7 @@
 
 #include "panic.h"
 
+#include <stddef.h>
 #include <stdlib.h>
 
 #include "host_cmd.h"
@@ -180,8 +181,14 @@ static int check_expected_response_length(uint16_t length, uint16_t expected) {
   return 0;
 }
 
-int libhoth_get_panic(struct libhoth_device* dev,
-                      struct hoth_response_persistent_panic_info* panic_data) {
+libhoth_error libhoth_get_panic(
+    struct libhoth_device* dev,
+    struct hoth_response_persistent_panic_info* panic_data) {
+  if (panic_data == NULL) {
+    return LIBHOTH_ERR_CONSTRUCT(HOTH_CTX_CMD_EXEC, HOTH_HOST_SPACE_LIBHOTH,
+                                 LIBHOTH_ERR_INVALID_PARAMETER);
+  }
+
   const uint16_t cmd =
       HOTH_CMD_BOARD_SPECIFIC_BASE + HOTH_PRV_CMD_HOTH_PERSISTENT_PANIC_INFO;
   uint8_t* dest = (uint8_t*)panic_data;
@@ -198,22 +205,23 @@ int libhoth_get_panic(struct libhoth_device* dev,
         .index = i,
     };
 
-    int ret = libhoth_hostcmd_exec(dev, cmd, 0, &req, sizeof(req), dest,
-                                   chunk_size, &rlen);
+    libhoth_error err = libhoth_hostcmd_exec_v2(dev, cmd, 0, &req, sizeof(req),
+                                                dest, chunk_size, &rlen);
 
-    if (ret) {
-      return -1;
+    if (err != HOTH_SUCCESS) {
+      return err;
     }
 
     if (check_expected_response_length(rlen, chunk_size)) {
-      return -1;
+      return LIBHOTH_ERR_CONSTRUCT(HOTH_CTX_CMD_EXEC, HOTH_HOST_SPACE_LIBHOTH,
+                                   LIBHOTH_ERR_FAIL);
     }
   }
 
-  return 0;
+  return HOTH_SUCCESS;
 }
 
-int libhoth_clear_persistent_panic_info(struct libhoth_device* dev) {
+libhoth_error libhoth_clear_persistent_panic_info(struct libhoth_device* dev) {
   size_t rlen;
 
   struct hoth_request_persistent_panic_info req = {
@@ -222,15 +230,19 @@ int libhoth_clear_persistent_panic_info(struct libhoth_device* dev) {
   const uint16_t cmd =
       HOTH_CMD_BOARD_SPECIFIC_BASE + HOTH_PRV_CMD_HOTH_PERSISTENT_PANIC_INFO;
 
-  if (libhoth_hostcmd_exec(dev, cmd, 0, &req, sizeof(req), NULL, 0, &rlen)) {
-    return -1;
+  libhoth_error err =
+      libhoth_hostcmd_exec_v2(dev, cmd, 0, &req, sizeof(req), NULL, 0, &rlen);
+
+  if (err != HOTH_SUCCESS) {
+    return err;
   }
 
   if (check_expected_response_length(rlen, 0)) {
-    return -1;
+    return LIBHOTH_ERR_CONSTRUCT(HOTH_CTX_CMD_EXEC, HOTH_HOST_SPACE_LIBHOTH,
+                                 LIBHOTH_ERR_FAIL);
   }
 
-  return 0;
+  return HOTH_SUCCESS;
 }
 
 void libhoth_print_panic_info(

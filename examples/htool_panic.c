@@ -63,13 +63,20 @@ int htool_panic_get_panic(const struct htool_invocation* inv) {
 
   if (clear) {
     printf("Clearing panic log from flash.\n");
-    return libhoth_clear_persistent_panic_info(dev);
+    libhoth_error err = libhoth_clear_persistent_panic_info(dev);
+    if (err != HOTH_SUCCESS) {
+      htool_report_error("clear_persistent_panic_info", err);
+      return -1;
+    }
+    return 0;
   }
 
   struct hoth_response_persistent_panic_info panic;
   memset(&panic, 0, sizeof(panic));
 
-  if (libhoth_get_panic(dev, &panic)) {
+  libhoth_error err = libhoth_get_panic(dev, &panic);
+  if (err != HOTH_SUCCESS) {
+    htool_report_error("get_panic", err);
     return -1;
   }
 
