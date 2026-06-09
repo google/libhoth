@@ -18,15 +18,20 @@
 
 #include "host_cmd.h"
 
-int libhoth_payload_status(struct libhoth_device* dev,
-                           struct payload_status* payload_status) {
+libhoth_error libhoth_payload_status(struct libhoth_device* dev,
+                                     struct payload_status* payload_status) {
+  if (payload_status == NULL) {
+    return LIBHOTH_ERR_CONSTRUCT(HOTH_CTX_CMD_EXEC, HOTH_HOST_SPACE_LIBHOTH,
+                                 LIBHOTH_ERR_INVALID_PARAMETER);
+  }
+
   size_t rlen = 0;
-  int ret = libhoth_hostcmd_exec(
+  libhoth_error err = libhoth_hostcmd_exec_v2(
       dev, HOTH_CMD_BOARD_SPECIFIC_BASE + HOTH_PRV_CMD_HOTH_PAYLOAD_STATUS, 0,
       NULL, 0, payload_status, sizeof(*payload_status), &rlen);
 
-  if (ret != 0) {
-    return ret;
+  if (err != HOTH_SUCCESS) {
+    return err;
   }
 
   size_t expected_rlen = sizeof(struct payload_status_response_header) +
@@ -34,10 +39,11 @@ int libhoth_payload_status(struct libhoth_device* dev,
                              sizeof(struct payload_region_state);
 
   if (rlen != expected_rlen) {
-    return -1;
+    return LIBHOTH_ERR_CONSTRUCT(HOTH_CTX_CMD_EXEC, HOTH_HOST_SPACE_LIBHOTH,
+                                 LIBHOTH_ERR_FAIL);
   }
 
-  return ret;
+  return HOTH_SUCCESS;
 }
 
 const char* libhoth_sps_eeprom_lockdown_status_string(uint8_t st) {

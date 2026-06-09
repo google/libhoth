@@ -74,7 +74,7 @@ TEST_F(LibHothTest, payload_status_test) {
                 Return(LIBHOTH_OK)));
 
   struct payload_status status;
-  EXPECT_EQ(libhoth_payload_status(&hoth_dev_, &status), LIBHOTH_OK);
+  EXPECT_EQ(libhoth_payload_status(&hoth_dev_, &status), HOTH_SUCCESS);
 
   EXPECT_TRUE(std::memcmp(&kDefaultPayloadStatus, &status, sizeof(status)) ==
               0);
@@ -95,7 +95,15 @@ TEST_F(LibHothTest, payload_status_bad_region_count) {
           DoAll(CopyResp(&bad_status, sizeof(bad_status)), Return(LIBHOTH_OK)));
 
   struct payload_status status;
-  EXPECT_EQ(libhoth_payload_status(&hoth_dev_, &status), -1);
+  EXPECT_NE(libhoth_payload_status(&hoth_dev_, &status), HOTH_SUCCESS);
+}
+
+TEST_F(LibHothTest, payload_status_null_param_test) {
+  libhoth_error err = libhoth_payload_status(&hoth_dev_, nullptr);
+  EXPECT_NE(err, HOTH_SUCCESS);
+  EXPECT_EQ(LIBHOTH_ERR_GET_CTX(err), HOTH_CTX_CMD_EXEC);
+  EXPECT_EQ(LIBHOTH_ERR_GET_SPACE(err), HOTH_HOST_SPACE_LIBHOTH);
+  EXPECT_EQ(LIBHOTH_ERR_GET_CODE(err), LIBHOTH_ERR_INVALID_PARAMETER);
 }
 
 TEST_F(LibHothTest, lockdown_status_string) {

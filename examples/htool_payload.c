@@ -151,9 +151,9 @@ int htool_payload_status(const struct htool_invocation* inv) {
   }
 
   struct payload_status ps;
-  int ret = libhoth_payload_status(dev, &ps);
-  if (ret != 0) {
-    fprintf(stderr, "HOTH_PAYLOAD_STATUS error code: %d\n", ret);
+  libhoth_error err = libhoth_payload_status(dev, &ps);
+  if (err != HOTH_SUCCESS) {
+    htool_report_error("payload_status", err);
     return -1;
   }
 
