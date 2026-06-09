@@ -256,6 +256,7 @@ cc_library(
     deps = [
         ":chipinfo",
         ":host_cmd",
+        ":libhoth_status",
         "//transports:libhoth_device",
     ],
 )

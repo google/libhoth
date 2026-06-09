@@ -211,9 +211,10 @@ static int command_authz_record_read(const struct htool_invocation* inv) {
   }
 
   struct hoth_authz_record_get_response response;
-  int status = libhoth_authz_record_read(dev, &response);
-  if (status != 0) {
-    return status;
+  libhoth_error err = libhoth_authz_record_read(dev, &response);
+  if (err != HOTH_SUCCESS) {
+    htool_report_error("authz_record_read", err);
+    return -1;
   }
 
   printf("Index: %d \n", response.index);
@@ -229,7 +230,12 @@ static int command_authz_record_erase(const struct htool_invocation* inv) {
     return -1;
   }
 
-  return libhoth_authz_record_erase(dev);
+  libhoth_error err = libhoth_authz_record_erase(dev);
+  if (err != HOTH_SUCCESS) {
+    htool_report_error("authz_record_erase", err);
+    return -1;
+  }
+  return 0;
 }
 
 static int command_authz_record_build(const struct htool_invocation* inv) {
@@ -244,9 +250,10 @@ static int command_authz_record_build(const struct htool_invocation* inv) {
   }
 
   struct authorization_record record;
-  int status = libhoth_authz_record_build(dev, caps, &record);
-  if (status != 0) {
-    return status;
+  libhoth_error err = libhoth_authz_record_build(dev, caps, &record);
+  if (err != HOTH_SUCCESS) {
+    htool_report_error("authz_record_build", err);
+    return -1;
   }
 
   printf("Record:\n");
@@ -273,7 +280,12 @@ static int command_authz_record_set(const struct htool_invocation* inv) {
     return -1;
   }
 
-  return libhoth_authz_record_set(dev, &record);
+  libhoth_error err = libhoth_authz_record_set(dev, &record);
+  if (err != HOTH_SUCCESS) {
+    htool_report_error("authz_record_set", err);
+    return -1;
+  }
+  return 0;
 }
 
 static int command_authz_host_command_build(
