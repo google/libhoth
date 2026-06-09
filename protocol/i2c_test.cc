@@ -49,7 +49,7 @@ TEST_F(LibHothTest, i2c_detect_test) {
       .end_address = 0x7F,
   };
   struct hoth_response_i2c_detect resp;
-  EXPECT_EQ(libhoth_i2c_detect(&hoth_dev_, &req, &resp), LIBHOTH_OK);
+  EXPECT_EQ(libhoth_i2c_detect(&hoth_dev_, &req, &resp), HOTH_SUCCESS);
 
   EXPECT_EQ(resp.bus_response, ex_resp.bus_response);
   EXPECT_EQ(resp.devices_count, ex_resp.devices_count);
@@ -87,7 +87,7 @@ TEST_F(LibHothTest, i2c_transfer_test) {
   };
 
   struct hoth_response_i2c_transfer resp;
-  EXPECT_EQ(libhoth_i2c_transfer(&hoth_dev_, &xfer, &resp), LIBHOTH_OK);
+  EXPECT_EQ(libhoth_i2c_transfer(&hoth_dev_, &xfer, &resp), HOTH_SUCCESS);
 
   EXPECT_EQ(resp.bus_response, ex_resp.bus_response);
   // EXPECT_EQ does funny things with its arguments and may cause them to
@@ -95,4 +95,22 @@ TEST_F(LibHothTest, i2c_transfer_test) {
   // access, so we explicitly add casts here.
   EXPECT_EQ(static_cast<uint16_t>(resp.read_bytes),
             static_cast<uint16_t>(ex_resp.read_bytes));
+}
+
+TEST_F(LibHothTest, i2c_detect_null_param_test) {
+  struct hoth_response_i2c_detect resp;
+  libhoth_error err = libhoth_i2c_detect(&hoth_dev_, nullptr, &resp);
+  EXPECT_NE(err, HOTH_SUCCESS);
+  EXPECT_EQ(LIBHOTH_ERR_GET_CTX(err), HOTH_CTX_CMD_EXEC);
+  EXPECT_EQ(LIBHOTH_ERR_GET_SPACE(err), HOTH_HOST_SPACE_LIBHOTH);
+  EXPECT_EQ(LIBHOTH_ERR_GET_CODE(err), LIBHOTH_ERR_INVALID_PARAMETER);
+}
+
+TEST_F(LibHothTest, i2c_transfer_null_param_test) {
+  struct hoth_response_i2c_transfer resp;
+  libhoth_error err = libhoth_i2c_transfer(&hoth_dev_, nullptr, &resp);
+  EXPECT_NE(err, HOTH_SUCCESS);
+  EXPECT_EQ(LIBHOTH_ERR_GET_CTX(err), HOTH_CTX_CMD_EXEC);
+  EXPECT_EQ(LIBHOTH_ERR_GET_SPACE(err), HOTH_HOST_SPACE_LIBHOTH);
+  EXPECT_EQ(LIBHOTH_ERR_GET_CODE(err), LIBHOTH_ERR_INVALID_PARAMETER);
 }

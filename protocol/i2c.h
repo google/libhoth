@@ -21,6 +21,7 @@ extern "C" {
 
 #include <stdint.h>
 
+#include "protocol/status.h"
 #include "transports/libhoth_device.h"
 
 /*
@@ -50,9 +51,9 @@ struct hoth_response_i2c_detect {
   uint8_t devices_mask[I2C_DETECT_DATA_MAX_SIZE_BYTES];
 } __attribute__((packed, aligned(4)));
 
-int libhoth_i2c_detect(struct libhoth_device* dev,
-                       struct hoth_request_i2c_detect* req,
-                       struct hoth_response_i2c_detect* resp);
+libhoth_error libhoth_i2c_detect(struct libhoth_device* dev,
+                                 struct hoth_request_i2c_detect* req,
+                                 struct hoth_response_i2c_detect* resp);
 
 // Converts the above devices_mask into a list of devices addresses
 // The first `devices_count` entries of `device_list` will be populated
@@ -106,9 +107,9 @@ struct hoth_response_i2c_transfer {
   uint8_t resp_bytes[I2C_TRANSFER_DATA_MAX_SIZE_BYTES];
 } __attribute__((packed, aligned(4)));
 
-int libhoth_i2c_transfer(struct libhoth_device* dev,
-                         struct hoth_request_i2c_transfer* req,
-                         struct hoth_response_i2c_transfer* resp);
+libhoth_error libhoth_i2c_transfer(struct libhoth_device* dev,
+                                   struct hoth_request_i2c_transfer* req,
+                                   struct hoth_response_i2c_transfer* resp);
 
 #ifdef __cplusplus
 }

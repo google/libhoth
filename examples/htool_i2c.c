@@ -44,9 +44,10 @@ static int i2c_detect(struct libhoth_device* dev,
   request.end_address = (uint8_t)(end_addr & 0x7F);
 
   struct hoth_response_i2c_detect response;
-  int ret = libhoth_i2c_detect(dev, &request, &response);
-  if (ret != 0) {
-    return ret;
+  libhoth_error err = libhoth_i2c_detect(dev, &request, &response);
+  if (err != HOTH_SUCCESS) {
+    htool_report_error("i2c_detect", err);
+    return -1;
   }
 
   printf("Detected %u devices on bus.\n", response.devices_count);
@@ -96,9 +97,10 @@ static int i2c_read(struct libhoth_device* dev,
   }
 
   struct hoth_response_i2c_transfer response;
-  int ret = libhoth_i2c_transfer(dev, &request, &response);
-  if (ret != 0) {
-    return ret;
+  libhoth_error err = libhoth_i2c_transfer(dev, &request, &response);
+  if (err != HOTH_SUCCESS) {
+    htool_report_error("i2c_transfer", err);
+    return -1;
   }
 
   if (offset != UINT32_MAX) {
@@ -167,9 +169,10 @@ static int i2c_write(struct libhoth_device* dev,
   request.size_write = idx;
 
   struct hoth_response_i2c_transfer response;
-  int ret = libhoth_i2c_transfer(dev, &request, &response);
-  if (ret != 0) {
-    return ret;
+  libhoth_error err = libhoth_i2c_transfer(dev, &request, &response);
+  if (err != HOTH_SUCCESS) {
+    htool_report_error("i2c_transfer", err);
+    return -1;
   }
 
   if (offset != UINT32_MAX) {
