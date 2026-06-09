@@ -28,10 +28,10 @@ int htool_secure_boot_get_enforcement(const struct htool_invocation* inv) {
   }
   enum secure_boot_enforcement_status enforcement =
       SECURE_BOOT_ENFORCEMENT_DISABLED;
-  int ret = libhoth_secure_boot_get_enforcement(dev, &enforcement);
-  if (ret != 0) {
-    fprintf(stderr, "Failed to get secure boot enforcement: %d\n", ret);
-    return ret;
+  libhoth_error err = libhoth_secure_boot_get_enforcement(dev, &enforcement);
+  if (err != HOTH_SUCCESS) {
+    htool_report_error("secure_boot_get_enforcement", err);
+    return -1;
   }
   printf(
       "Secure boot enforcement: %s\n",
@@ -44,10 +44,10 @@ int htool_secure_boot_enable_enforcement(const struct htool_invocation* inv) {
   if (dev == NULL) {
     return -1;
   }
-  int ret = libhoth_secure_boot_enable_enforcement(dev);
-  if (ret) {
-    fprintf(stderr, "Failed to enable secure boot enforcement: %d\n", ret);
-    return ret;
+  libhoth_error err = libhoth_secure_boot_enable_enforcement(dev);
+  if (err != HOTH_SUCCESS) {
+    htool_report_error("secure_boot_enable_enforcement", err);
+    return -1;
   }
   printf("Secure boot enforcement enabled\n");
   return 0;

@@ -20,37 +20,40 @@
 #include "protocol/host_cmd.h"
 #include "transports/libhoth_device.h"
 
-int libhoth_secure_boot_get_enforcement(
+libhoth_error libhoth_secure_boot_get_enforcement(
     struct libhoth_device* dev,
     enum secure_boot_enforcement_status* enforcement) {
+  if (enforcement == NULL) {
+    return LIBHOTH_ERR_CONSTRUCT(HOTH_CTX_CMD_EXEC, HOTH_HOST_SPACE_LIBHOTH,
+                                 LIBHOTH_ERR_INVALID_PARAMETER);
+  }
+
   struct secure_boot_enforcement_state response;
   size_t rlen = 0;
-  int ret =
-      libhoth_hostcmd_exec(dev,
-                           HOTH_CMD_BOARD_SPECIFIC_BASE +
-                               HOTH_PRV_CMD_HOTH_GET_SECURE_BOOT_ENFORCEMENT,
-                           0, NULL, 0, &response, sizeof(response), &rlen);
-  if (ret != 0) {
-    return ret;
+  libhoth_error err =
+      libhoth_hostcmd_exec_v2(dev,
+                              HOTH_CMD_BOARD_SPECIFIC_BASE +
+                                  HOTH_PRV_CMD_HOTH_GET_SECURE_BOOT_ENFORCEMENT,
+                              0, NULL, 0, &response, sizeof(response), &rlen);
+  if (err != HOTH_SUCCESS) {
+    return err;
   }
   if (rlen != sizeof(response)) {
-    return -1;
+    return LIBHOTH_ERR_CONSTRUCT(HOTH_CTX_CMD_EXEC, HOTH_HOST_SPACE_LIBHOTH,
+                                 LIBHOTH_ERR_FAIL);
   }
   *enforcement = response.enabled;
-  return 0;
+  return HOTH_SUCCESS;
 }
 
-int libhoth_secure_boot_enable_enforcement(struct libhoth_device* dev) {
+libhoth_error libhoth_secure_boot_enable_enforcement(
+    struct libhoth_device* dev) {
   struct secure_boot_enforcement_state request = {
       .enabled = SECURE_BOOT_ENFORCEMENT_ENABLED};
   size_t rlen = 0;
-  int ret =
-      libhoth_hostcmd_exec(dev,
-                           HOTH_CMD_BOARD_SPECIFIC_BASE +
-                               HOTH_PRV_CMD_HOTH_SET_SECURE_BOOT_ENFORCEMENT,
-                           0, &request, sizeof(request), NULL, 0, &rlen);
-  if (ret != 0) {
-    return ret;
-  }
-  return 0;
+  return libhoth_hostcmd_exec_v2(
+      dev,
+      HOTH_CMD_BOARD_SPECIFIC_BASE +
+          HOTH_PRV_CMD_HOTH_SET_SECURE_BOOT_ENFORCEMENT,
+      0, &request, sizeof(request), NULL, 0, &rlen);
 }

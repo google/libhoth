@@ -495,6 +495,7 @@ cc_library(
     hdrs = ["secure_boot.h"],
     deps = [
         ":host_cmd",
+        ":libhoth_status",
         "//transports:libhoth_device",
     ],
 )
