@@ -21,6 +21,7 @@ extern "C" {
 
 #include <stdint.h>
 
+#include "protocol/status.h"
 #include "transports/libhoth_device.h"
 
 /* Get various statistics */
@@ -129,8 +130,8 @@ struct hoth_response_statistics {
   uint32_t reserved[42];
 } __attribute__((packed));
 
-int libhoth_get_statistics(struct libhoth_device* dev,
-                           struct hoth_response_statistics* stats);
+libhoth_error libhoth_get_statistics(struct libhoth_device* dev,
+                                     struct hoth_response_statistics* stats);
 
 #ifdef __cplusplus
 }

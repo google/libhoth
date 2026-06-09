@@ -186,9 +186,9 @@ int htool_statistics(const struct htool_invocation* inv) {
   }
 
   struct hoth_response_statistics stat;
-  int ret = libhoth_get_statistics(dev, &stat);
-  if (ret != 0) {
-    fprintf(stderr, "HOTH_STATISTICS error code: %d\n", ret);
+  libhoth_error err = libhoth_get_statistics(dev, &stat);
+  if (err != HOTH_SUCCESS) {
+    htool_report_error("get_statistics", err);
     return -1;
   }
 

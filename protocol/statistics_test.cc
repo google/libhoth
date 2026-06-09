@@ -42,9 +42,17 @@ TEST_F(LibHothTest, statistics_test) {
           DoAll(CopyResp(&exp_stat, sizeof(exp_stat)), Return(LIBHOTH_OK)));
 
   struct hoth_response_statistics stat = {};
-  EXPECT_EQ(libhoth_get_statistics(&hoth_dev_, &stat), LIBHOTH_OK);
+  EXPECT_EQ(libhoth_get_statistics(&hoth_dev_, &stat), HOTH_SUCCESS);
 
   EXPECT_EQ(exp_stat.valid_words, stat.valid_words);
   EXPECT_EQ(exp_stat.time_since_hoth_boot_us, stat.time_since_hoth_boot_us);
   EXPECT_EQ(exp_stat.scratch_value, stat.scratch_value);
+}
+
+TEST_F(LibHothTest, statistics_null_param_test) {
+  libhoth_error err = libhoth_get_statistics(&hoth_dev_, nullptr);
+  EXPECT_NE(err, HOTH_SUCCESS);
+  EXPECT_EQ(LIBHOTH_ERR_GET_CTX(err), HOTH_CTX_CMD_EXEC);
+  EXPECT_EQ(LIBHOTH_ERR_GET_SPACE(err), HOTH_HOST_SPACE_LIBHOTH);
+  EXPECT_EQ(LIBHOTH_ERR_GET_CODE(err), LIBHOTH_ERR_INVALID_PARAMETER);
 }
