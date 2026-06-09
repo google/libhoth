@@ -15,7 +15,8 @@
 #ifndef _LIBHOTH_PROTOCOL_ROT_FIRMWARE_VERSION_H_
 #define _LIBHOTH_PROTOCOL_ROT_FIRMWARE_VERSION_H_
 
-#include "host_cmd.h"
+#include "protocol/host_cmd.h"
+#include "protocol/status.h"
 #include "transports/libhoth_device.h"
 
 #ifdef __cplusplus
@@ -37,8 +38,8 @@ struct hoth_response_get_version {
   uint32_t current_image;
 } __hoth_align4;
 
-int libhoth_get_rot_fw_version(struct libhoth_device* dev,
-                               struct hoth_response_get_version* ver);
+libhoth_error libhoth_get_rot_fw_version(struct libhoth_device* dev,
+                                         struct hoth_response_get_version* ver);
 
 #ifdef __cplusplus
 }
