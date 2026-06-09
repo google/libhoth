@@ -20,34 +20,41 @@
 #include "protocol/host_cmd.h"
 #include "transports/libhoth_device.h"
 
-int libhoth_firmware_update_from_flash_and_reset(struct libhoth_device* dev,
-                                                 uint32_t offset) {
+libhoth_error libhoth_firmware_update_from_flash_and_reset(
+    struct libhoth_device* dev, uint32_t offset) {
   const struct hoth_request_firmware_update request = {
       .operation = HOTH_FIRMWARE_UPDATE_OP_UPDATE_AND_RESET,
       .flags = 0,
       .offset = offset,
   };
-  const int rv =
-      libhoth_hostcmd_exec(dev, HOTH_CMD_FIRMWARE_UPDATE, /*version=*/0,
-                           &request, sizeof(request), NULL, 0, NULL);
-  if (rv == 0) {
+  const libhoth_error err =
+      libhoth_hostcmd_exec_v2(dev, HOTH_CMD_FIRMWARE_UPDATE, /*version=*/0,
+                              &request, sizeof(request), NULL, 0, NULL);
+  if (err == HOTH_SUCCESS) {
     fprintf(stderr,
             "Skipped update package at flash offset 0x%x containing same "
             "version as running. Chip is not reset.\n",
             offset);
-    return 0;
+    return HOTH_SUCCESS;
   }
-  if (rv > HTOOL_ERROR_HOST_COMMAND_START) {
+  if (LIBHOTH_ERR_GET_SPACE(err) == HOTH_HOST_SPACE_FW ||
+      LIBHOTH_ERR_GET_SPACE(err) == HOTH_HOST_SPACE_FW_EARLGREY) {
     fprintf(stderr,
             "Firmware update from flash offset 0x%x failed with error code: "
-            "%d. Aborting.\n",
-            offset, rv);
-    return rv;
+            "0x%016lx. Aborting.\n",
+            offset, err);
+    return err;
   }
 
-  fprintf(stderr,
-          "Lost connection after firmware update command (error code %d). "
-          "This is expected if the device reset. Attempting to reconnect...\n",
-          rv);
-  return libhoth_device_reconnect(dev);
+  fprintf(
+      stderr,
+      "Lost connection after firmware update command (error code 0x%016lx). "
+      "This is expected if the device reset. Attempting to reconnect...\n",
+      err);
+  int ret = libhoth_device_reconnect(dev);
+  if (ret != LIBHOTH_OK) {
+    return LIBHOTH_ERR_CONSTRUCT(HOTH_CTX_CMD_EXEC, HOTH_HOST_SPACE_LIBHOTH,
+                                 ret);
+  }
+  return HOTH_SUCCESS;
 }

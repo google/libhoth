@@ -29,5 +29,10 @@ int htool_firmware_update(const struct htool_invocation* inv) {
   if (htool_get_param_u32(inv, "offset", &offset)) {
     return -1;
   }
-  return libhoth_firmware_update_from_flash_and_reset(dev, offset);
+  libhoth_error err = libhoth_firmware_update_from_flash_and_reset(dev, offset);
+  if (err != HOTH_SUCCESS) {
+    htool_report_error("firmware_update_from_flash", err);
+    return -1;
+  }
+  return 0;
 }
