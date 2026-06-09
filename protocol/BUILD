@@ -536,6 +536,7 @@ cc_library(
     hdrs = ["dfu_hostcmd.h"],
     deps = [
         ":host_cmd",
+        ":libhoth_status",
         "//transports:libhoth_device",
     ],
 )

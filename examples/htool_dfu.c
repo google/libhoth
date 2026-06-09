@@ -168,11 +168,13 @@ int htool_dfu_update(const struct htool_invocation* inv) {
       force ? 2 : dfu_update_count(&desired_rom_ext, &desired_app, &resp);
 
   for (int i = 0; i < update_cnt; i++) {
-    retval = libhoth_dfu_update(dev, image, statbuf.st_size, complete_flags);
+    libhoth_error err =
+        libhoth_dfu_update(dev, image, statbuf.st_size, complete_flags);
 
-    if (retval != 0) {
-      fprintf(stderr, "DFU update failed (%d)\n", retval);
-      libhoth_print_dfu_error(dev, NULL, retval);
+    if (err != HOTH_SUCCESS) {
+      htool_report_error("dfu_update", err);
+      fprintf(stderr, "DFU update failed (0x%016lx)\n", err);
+      libhoth_print_dfu_error(dev, NULL, (int)err);
       retval = -1;
       goto cleanup2;
     }

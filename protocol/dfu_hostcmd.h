@@ -22,6 +22,7 @@
 #include <stdint.h>
 
 #include "protocol/host_cmd.h"
+#include "protocol/status.h"
 #include "transports/libhoth_device.h"
 
 #ifdef __cplusplus
@@ -99,8 +100,9 @@ static_assert(sizeof(struct hoth_dfu_complete_request) == 16, "");
  *                       e.g., HOTH_DFU_COMPLETE_FLAGS_COLD_RESTART.
  * @return 0 on success, -1 on failure.
  */
-int libhoth_dfu_update(struct libhoth_device* dev, const uint8_t* image,
-                       size_t image_size, uint32_t complete_flags);
+libhoth_error libhoth_dfu_update(struct libhoth_device* dev,
+                                 const uint8_t* image, size_t image_size,
+                                 uint32_t complete_flags);
 
 #ifdef __cplusplus
 }

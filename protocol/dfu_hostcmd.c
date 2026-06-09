@@ -24,14 +24,21 @@ static int generate_random_nonce(struct hoth_dfu_session_id* session_id) {
   return 0;
 }
 
-int libhoth_dfu_update(struct libhoth_device* dev, const uint8_t* image,
-                       size_t image_size, uint32_t complete_flags) {
+libhoth_error libhoth_dfu_update(struct libhoth_device* dev,
+                                 const uint8_t* image, size_t image_size,
+                                 uint32_t complete_flags) {
+  if (image == NULL) {
+    return LIBHOTH_ERR_CONSTRUCT(HOTH_CTX_CMD_EXEC, HOTH_HOST_SPACE_LIBHOTH,
+                                 LIBHOTH_ERR_INVALID_PARAMETER);
+  }
+
   struct hoth_dfu_session_id session_id = {
       .target = HOTH_DFU_TARGET_EARLGREY_FW_UPDATE,
   };
   if (generate_random_nonce(&session_id) != 0) {
     fprintf(stderr, "Failed to generate random nonce.\n");
-    return -1;
+    return LIBHOTH_ERR_CONSTRUCT(HOTH_CTX_CMD_EXEC, HOTH_HOST_SPACE_POSIX,
+                                 LIBHOTH_ERR_FAIL);
   }
 
   struct {
@@ -48,17 +55,18 @@ int libhoth_dfu_update(struct libhoth_device* dev, const uint8_t* image,
     memcpy(request.data, &image[bytes_sent], chunk_len);
 
     size_t response_len;
-    int ret = libhoth_hostcmd_exec(dev, HOTH_CMD_DFU_WRITE, 0, &request,
-                                   sizeof(request.hdr) + chunk_len, NULL, 0,
-                                   &response_len);
-    if (ret != 0) {
-      fprintf(stderr, "DFU write failed with error code: %d\n", ret);
-      return -1;
+    libhoth_error err = libhoth_hostcmd_exec_v2(
+        dev, HOTH_CMD_DFU_WRITE, 0, &request, sizeof(request.hdr) + chunk_len,
+        NULL, 0, &response_len);
+    if (err != HOTH_SUCCESS) {
+      fprintf(stderr, "DFU write failed with error code: 0x%016lx\n", err);
+      return err;
     }
     if (response_len != 0) {
       fprintf(stderr, "DFU write expected 0 response bytes, got %zu\n",
               response_len);
-      return -1;
+      return LIBHOTH_ERR_CONSTRUCT(HOTH_CTX_CMD_EXEC, HOTH_HOST_SPACE_LIBHOTH,
+                                   LIBHOTH_ERR_FAIL);
     }
     bytes_sent += chunk_len;
   }
@@ -72,17 +80,22 @@ int libhoth_dfu_update(struct libhoth_device* dev, const uint8_t* image,
       .flags = complete_flags,
   };
   size_t response_len = 0;
-  int ret =
-      libhoth_hostcmd_exec(dev, HOTH_CMD_DFU_COMPLETE, 0, &complete_request,
-                           sizeof(complete_request), NULL, 0, &response_len);
-  if (ret != 0) {
+  libhoth_error err =
+      libhoth_hostcmd_exec_v2(dev, HOTH_CMD_DFU_COMPLETE, 0, &complete_request,
+                              sizeof(complete_request), NULL, 0, &response_len);
+  if (err != HOTH_SUCCESS) {
     fprintf(stderr,
-            "DFU complete failed with error code: %d; ignoring as the "
+            "DFU complete failed with error code: 0x%016lx; ignoring as the "
             "chip may have already restarted.\n",
-            ret);
+            err);
   }
 
   // TODO: Wait for chip to come back and confirm version
   usleep(LIBHOTH_REBOOT_DELAY_MS * 1000);
-  return libhoth_device_reconnect(dev);
+  int ret = libhoth_device_reconnect(dev);
+  if (ret != LIBHOTH_OK) {
+    return LIBHOTH_ERR_CONSTRUCT(HOTH_CTX_CMD_EXEC, HOTH_HOST_SPACE_LIBHOTH,
+                                 ret);
+  }
+  return HOTH_SUCCESS;
 }
