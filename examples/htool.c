@@ -136,16 +136,65 @@ static int command_show_chipinfo(const struct htool_invocation* inv) {
   if (!dev) {
     return -1;
   }
+
   struct hoth_response_chip_info response;
   int status = libhoth_chipinfo(dev, &response);
   if (status != 0) {
     return -1;
   }
+
   printf("Chip Info:\n");
-  printf("Hardware Identity: 0x%016llx\n",
-         (unsigned long long)response.hardware_identity);
-  printf("Hardware Category: %d\n", response.hardware_category);
-  printf("Info Variant: %lu\n", (unsigned long)response.info_variant);
+  if (response.version == 0) {
+    printf("Hardware Identity: 0x%016llx\n",
+           (unsigned long long)response.data.hoth_device_id.hardware_identity);
+    printf("Hardware Category: %u\n",
+           (unsigned)response.data.hoth_device_id.hardware_category);
+    printf("Info Variant: %lu\n",
+           (unsigned long)response.data.hoth_device_id.info_variant);
+    return 0;
+  }
+
+  if (response.version != 1) {
+    printf("Unsupported chipinfo version: %u\n", response.version);
+    return -1;
+  }
+
+  uint8_t* id = response.data.open_titan_device_id;
+  struct opentitan_device_id parsed_id;
+  if (parse_opentitan_device_id(id, &parsed_id) != 0) {
+    printf("Failed to parse OpenTitan Device ID\n");
+    return -1;
+  }
+
+  printf("OpenTitan iSerial: 0x");
+  for (int i = 0; i < 32; i++) {
+    printf("%02x", id[i]);
+  }
+  printf("\nOpenTitan Device ID: 0x");
+  for (int i = 20; i < 32; i++) {
+    printf("%02x", id[i]);
+  }
+  printf("\n\nGeneric Identifier:\n");
+
+  printf("  %-22s 0x%04x\n", "SI Creator ID:", parsed_id.creator_id);
+  printf("  %-22s 0x%04x\n", "Product ID:", parsed_id.product_id);
+  printf("  %-22s %u week %02u\n", "Device Date:", parsed_id.device_year,
+         parsed_id.device_week);
+  printf("  %-22s %u\n", "Lot Number:", parsed_id.lot_number);
+  printf("  %-22s %u\n", "Wafer Number:", parsed_id.wafer_number);
+  printf("  %-22s %u\n", "Wafer X Coord:", parsed_id.wafer_x);
+  printf("  %-22s %u\n", "Wafer Y Coord:", parsed_id.wafer_y);
+  printf("  %-22s 0x%02x\n", "Reserved DIN:", parsed_id.reserved_din);
+  printf("  %-22s 0x%08x\n", "Reserved:", parsed_id.reserved);
+  printf("\nSKU-specific Identifier:\n");
+  printf("  %-22s %u\n", "Package ID:", parsed_id.package_id);
+  printf("  %-22s %u\n", "AST Config Version:", parsed_id.ast_config_version);
+  printf("  %-22s \"%s\"\n", "OTP ID:", parsed_id.otp_id);
+  printf("  %-22s %u\n", "OTP Version:", parsed_id.otp_version);
+  printf("  %-22s \"%s\"\n", "SKU ID String:", parsed_id.sku_id_string);
+  printf("  %-22s %u\n",
+         "SKU Specific Version:", parsed_id.sku_specific_version);
+
   return 0;
 }
 
@@ -239,6 +288,11 @@ static int command_authz_host_command_build(
     fprintf(stderr, "Failed to get chip ID. status=%d\n", status);
     return -1;
   }
+  if (chipinfo_resp.version != 0) {
+    fprintf(stderr, "Unsupported chipinfo version: %u\n",
+            chipinfo_resp.version);
+    return -1;
+  }
 
   struct hoth_authorized_command_get_nonce_response nonce_resp;
   status = libhoth_hostcmd_exec(
@@ -251,8 +305,8 @@ static int command_authz_host_command_build(
   }
 
   struct hoth_authorized_command_request request = authz_command_build_request(
-      chipinfo_resp.hardware_identity, opcode, nonce_resp.supported_key_info,
-      nonce_resp.nonce);
+      chipinfo_resp.data.hoth_device_id.hardware_identity, opcode,
+      nonce_resp.supported_key_info, nonce_resp.nonce);
   authz_command_print_request(&request);
   return 0;
 }
