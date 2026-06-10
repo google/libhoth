@@ -75,12 +75,25 @@ Available subcommands: (append --help to subcommand for details)
   target reset on - Put the target device into reset.
   target reset off - Take the target device out of reset
   target reset pulse - Quickly put the target device in and out of reset
+  target debug enable - Enable target debug.
+  target debug disable - Disable target debug.
+  target debug get - Get target debug status.
   console - Open a console for communicating with the RoT or devices attached to the RoT.
   payload getstatus - Show the current payload update status
+  payload verify - Verify the staging side.
   payload status - Show payload status
   payload update - Perform payload update protocol for Titan images.
+  payload confirm - Finish a payload update confirmation.
+  payload get_timeout - Get the current payload update confirmation timeout.
+  payload timeout_enable - Enable/Disable the timeout mechanism for payload update confirm
   payload read - Read content of staging flash for Titan images.
+  payload erase - Erase a range on the staging side.
+  payload activate - Activate a payload side for next boot.
+  payload info all - Display detailed payload info for a Titan image, including region details.
+  payload info nonstatic - Print non-static regions in a Titan image.
   payload info - Display payload info for a Titan image.
+  payload mauv compiled - Display compiled MAUV for the payload.
+  payload mauv effective - Display effective MAUV for the payload.
   firmware_update update_from_flash_and_reset - Installs a firmware update from a bundle staged in the external flash.
   dfu update - Directly install a PIE-RoT fwupdate.
   dfu check - Check that the device is running firmware matching a fwupdate bundle.
@@ -119,6 +132,7 @@ Available subcommands: (append --help to subcommand for details)
   storage read - Read from the controlled storage
   storage write - Write to the controlled storage
   storage delete - Delete from the controlled storage
+  gpio set_drive_strength - Set GPIO drive strength
   hello - A test function to send and receive an integer
   opentitan_version - Get OpenTitan version
   extract_ot_bundle - Get OpenTitan version
@@ -143,6 +157,12 @@ Available subcommands: (append --help to subcommand for details)
   security get_attestation_pub_cert - Get the Attestation Public Cert
   security get_signed_attestation_pub_cert - Get the Signed Attestation Public Cert
   security attestation - Fetch attestation information, including tokens and certificates.
+  mauv compiled - Get compiled MAUV
+  mauv effective - Get effective MAUV
+  tpm get_mode - Get the current TPM mode.
+  tpm set_mode disabled - Set the TPM mode to DISABLED.
+  tpm set_mode tpm_spi - Set the TPM mode to TPM_SPI.
+  tpm set_mode spi_nor_mailbox - Set the TPM mode to SPI_NOR_MAILBOX.
 
 Global flags:
   --transport (default: "")
@@ -161,8 +181,8 @@ Global flags:
         Maximum duration (in microseconds) to wait when SPI device indicates that it is busy
   --spidev_device_busy_wait_check_interval (default: "100")
         Interval duration (in microseconds) to wait before checking SPI device status again when it indicates that the device is busy
-  --quadmode (default: "auto")
-        Enable Quad SPI mode (auto|on|force|off). Default: auto
+  --spidev_mode (default: "single")
+        SPI mode toggles (single|dual|quad).
   --mtddev_path (default: "")
         The full MTD path of the RoT mailbox; for example '/dev/mtd0'. If unspecified, will attempt to detect the correct device automatically
   --mtddev_name (default: "hoth-mailbox")
