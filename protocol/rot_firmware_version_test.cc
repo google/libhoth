@@ -38,9 +38,17 @@ TEST_F(LibHothTest, firmware_version_test) {
       .WillOnce(DoAll(CopyResp(&exp_ver, sizeof(exp_ver)), Return(LIBHOTH_OK)));
 
   struct hoth_response_get_version ver;
-  EXPECT_EQ(libhoth_get_rot_fw_version(&hoth_dev_, &ver), LIBHOTH_OK);
+  EXPECT_EQ(libhoth_get_rot_fw_version(&hoth_dev_, &ver), HOTH_SUCCESS);
 
   ASSERT_THAT(exp_ver.version_string_ro, StrEq(ver.version_string_ro));
   ASSERT_THAT(exp_ver.version_string_rw, StrEq(ver.version_string_rw));
   EXPECT_EQ(exp_ver.current_image, ver.current_image);
+}
+
+TEST_F(LibHothTest, firmware_version_null_param_test) {
+  libhoth_error err = libhoth_get_rot_fw_version(&hoth_dev_, nullptr);
+  EXPECT_NE(err, HOTH_SUCCESS);
+  EXPECT_EQ(LIBHOTH_ERR_GET_CTX(err), HOTH_CTX_CMD_EXEC);
+  EXPECT_EQ(LIBHOTH_ERR_GET_SPACE(err), HOTH_HOST_SPACE_LIBHOTH);
+  EXPECT_EQ(LIBHOTH_ERR_GET_CODE(err), LIBHOTH_ERR_INVALID_PARAMETER);
 }

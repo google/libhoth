@@ -118,9 +118,10 @@ static int command_get_version(const struct htool_invocation* inv) {
   }
 
   struct hoth_response_get_version response;
-  int status = libhoth_get_rot_fw_version(dev, &response);
+  libhoth_error err = libhoth_get_rot_fw_version(dev, &response);
 
-  if (status) {
+  if (err != HOTH_SUCCESS) {
+    htool_report_error("get_rot_fw_version", err);
     return -1;
   }
   printf("version_string_ro: %.*s\n", (int)sizeof(response.version_string_ro),
