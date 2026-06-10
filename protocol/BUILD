@@ -61,6 +61,7 @@ cc_library(
     hdrs = ["payload_status.h"],
     deps = [
         ":host_cmd",
+        ":libhoth_status",
         "//transports:libhoth_device",
     ],
 )

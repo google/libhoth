@@ -17,6 +17,7 @@
 
 #include <stdint.h>
 
+#include "protocol/status.h"
 #include "transports/libhoth_device.h"
 
 #ifdef __cplusplus
@@ -64,8 +65,8 @@ const char* libhoth_payload_validation_state_string(uint8_t s);
 const char* libhoth_payload_validation_failure_reason_string(uint8_t r);
 const char* libhoth_image_type_string(uint8_t type);
 
-int libhoth_payload_status(struct libhoth_device* dev,
-                           struct payload_status* payload_state);
+libhoth_error libhoth_payload_status(struct libhoth_device* dev,
+                                     struct payload_status* payload_state);
 
 #ifdef __cplusplus
 }
