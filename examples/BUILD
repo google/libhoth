@@ -239,6 +239,7 @@ cc_binary(
         "htool_usb.c",
         "htool_usb.h",
     ],
+    features = ["-fully_static_link"],
     deps = [
         ":host_commands",
         ":srtm",
