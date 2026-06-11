@@ -140,6 +140,7 @@ cc_library(
     hdrs = ["statistics.h"],
     deps = [
         ":host_cmd",
+        ":libhoth_status",
         "//transports:libhoth_device",
     ],
 )

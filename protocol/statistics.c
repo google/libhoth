@@ -14,12 +14,18 @@
 
 #include "statistics.h"
 
+#include <stddef.h>
+
 #include "host_cmd.h"
 
-int libhoth_get_statistics(struct libhoth_device* dev,
-                           struct hoth_response_statistics* stats) {
+libhoth_error libhoth_get_statistics(struct libhoth_device* dev,
+                                     struct hoth_response_statistics* stats) {
+  if (stats == NULL) {
+    return LIBHOTH_ERR_CONSTRUCT(HOTH_CTX_CMD_EXEC, HOTH_HOST_SPACE_LIBHOTH,
+                                 LIBHOTH_ERR_INVALID_PARAMETER);
+  }
   size_t rlen = 0;
-  return libhoth_hostcmd_exec(
+  return libhoth_hostcmd_exec_v2(
       dev, HOTH_CMD_BOARD_SPECIFIC_BASE + HOTH_PRV_CMD_HOTH_GET_STATISTICS, 0,
       NULL, 0, stats, sizeof(*stats), &rlen);
 }
