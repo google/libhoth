@@ -43,7 +43,8 @@ TEST_F(LibHothTest, GetSecureBootEnforcementSuccess) {
   enum secure_boot_enforcement_status actual_enforcement =
       SECURE_BOOT_ENFORCEMENT_DISABLED;
   EXPECT_EQ(
-      libhoth_secure_boot_get_enforcement(&hoth_dev_, &actual_enforcement), 0);
+      libhoth_secure_boot_get_enforcement(&hoth_dev_, &actual_enforcement),
+      HOTH_SUCCESS);
   EXPECT_EQ(actual_enforcement, expected_enforcement.enabled);
 }
 
@@ -57,7 +58,15 @@ TEST_F(LibHothTest, EnableSecureBootEnforcementSuccess) {
   uint32_t dummy;
   EXPECT_CALL(mock_, receive)
       .WillOnce(DoAll(CopyResp(&dummy, 0), Return(LIBHOTH_OK)));
-  EXPECT_EQ(libhoth_secure_boot_enable_enforcement(&hoth_dev_), 0);
+  EXPECT_EQ(libhoth_secure_boot_enable_enforcement(&hoth_dev_), HOTH_SUCCESS);
+}
+
+TEST_F(LibHothTest, GetSecureBootEnforcementNullParam) {
+  libhoth_error err = libhoth_secure_boot_get_enforcement(&hoth_dev_, nullptr);
+  EXPECT_NE(err, HOTH_SUCCESS);
+  EXPECT_EQ(LIBHOTH_ERR_GET_CTX(err), HOTH_CTX_CMD_EXEC);
+  EXPECT_EQ(LIBHOTH_ERR_GET_SPACE(err), HOTH_HOST_SPACE_LIBHOTH);
+  EXPECT_EQ(LIBHOTH_ERR_GET_CODE(err), LIBHOTH_ERR_INVALID_PARAMETER);
 }
 
 }  // namespace

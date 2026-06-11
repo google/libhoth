@@ -17,6 +17,7 @@
 
 #include <stdint.h>
 
+#include "protocol/status.h"
 #include "transports/libhoth_device.h"
 
 #ifdef __cplusplus
@@ -37,13 +38,14 @@ struct secure_boot_enforcement_state {
 } __attribute__((packed));
 
 // Get the current state of target secure boot enforcement.
-int libhoth_secure_boot_get_enforcement(
+libhoth_error libhoth_secure_boot_get_enforcement(
     struct libhoth_device* dev,
     enum secure_boot_enforcement_status* enforcement);
 
 // Enable secure boot enforcement. Disabling is done via a different,
 // authorized, command.
-int libhoth_secure_boot_enable_enforcement(struct libhoth_device* dev);
+libhoth_error libhoth_secure_boot_enable_enforcement(
+    struct libhoth_device* dev);
 
 #ifdef __cplusplus
 }
