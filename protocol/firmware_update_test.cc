@@ -36,7 +36,7 @@ TEST_F(LibHothTest, firmware_update_test_skipped) {
   EXPECT_CALL(mock_, reconnect).Times(0);
   EXPECT_EQ(
       libhoth_firmware_update_from_flash_and_reset(&hoth_dev_, /*offset=*/0),
-      0);
+      HOTH_SUCCESS);
 }
 
 TEST_F(LibHothTest, firmware_update_test_rebooting) {
@@ -47,7 +47,7 @@ TEST_F(LibHothTest, firmware_update_test_rebooting) {
   EXPECT_CALL(mock_, reconnect).WillOnce(Return(LIBHOTH_OK));
   EXPECT_EQ(
       libhoth_firmware_update_from_flash_and_reset(&hoth_dev_, /*offset=*/0),
-      0);
+      HOTH_SUCCESS);
 }
 
 TEST_F(LibHothTest, firmware_update_test_failed_without_rebooting) {
@@ -64,5 +64,6 @@ TEST_F(LibHothTest, firmware_update_test_failed_without_rebooting) {
   EXPECT_CALL(mock_, reconnect).Times(0);
   EXPECT_EQ(
       libhoth_firmware_update_from_flash_and_reset(&hoth_dev_, /*offset=*/0),
-      HTOOL_ERROR_HOST_COMMAND_START + HOTH_RES_UNAVAILABLE);
+      LIBHOTH_ERR_CONSTRUCT(HOTH_CTX_CMD_EXEC, HOTH_HOST_SPACE_FW,
+                            HOTH_RES_UNAVAILABLE));
 }

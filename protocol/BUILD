@@ -361,6 +361,7 @@ cc_library(
     hdrs = ["firmware_update.h"],
     deps = [
         ":host_cmd",
+        ":libhoth_status",
         "//transports:libhoth_device",
     ],
 )
