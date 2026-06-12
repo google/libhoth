@@ -68,7 +68,7 @@ TEST_F(LibHothTest, opentitan_chipinfo_test) {
                       Return(LIBHOTH_OK)));
 
   struct hoth_response_chip_info chipinfo;
-  EXPECT_EQ(libhoth_chipinfo(&hoth_dev_, &chipinfo), LIBHOTH_OK);
+  EXPECT_EQ(libhoth_chipinfo(&hoth_dev_, &chipinfo), HOTH_SUCCESS);
 
   EXPECT_EQ(chipinfo.version, 1);
   EXPECT_EQ(memcmp(chipinfo.data.open_titan_device_id, opentitan_data,
@@ -124,4 +124,12 @@ TEST(ChipInfoTest, ParseOpenTitanDeviceId) {
   EXPECT_EQ(parsed.otp_version, 0xDD);
   EXPECT_STREQ(parsed.sku_id_string, "1234");
   EXPECT_EQ(parsed.sku_specific_version, 0xEE);
+}
+
+TEST_F(LibHothTest, chipinfo_null_param_test) {
+  libhoth_error err = libhoth_chipinfo(&hoth_dev_, nullptr);
+  EXPECT_NE(err, HOTH_SUCCESS);
+  EXPECT_EQ(LIBHOTH_ERR_GET_CTX(err), HOTH_CTX_CMD_EXEC);
+  EXPECT_EQ(LIBHOTH_ERR_GET_SPACE(err), HOTH_HOST_SPACE_LIBHOTH);
+  EXPECT_EQ(LIBHOTH_ERR_GET_CODE(err), LIBHOTH_ERR_INVALID_PARAMETER);
 }
