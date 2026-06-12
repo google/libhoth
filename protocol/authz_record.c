@@ -14,32 +14,42 @@
 
 #include "authz_record.h"
 
+#include <stddef.h>
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
 #include "chipinfo.h"
 
-int libhoth_authz_record_erase(struct libhoth_device* dev) {
+libhoth_error libhoth_authz_record_erase(struct libhoth_device* dev) {
   struct hoth_authz_record_set_request request = {
       .index = 0,
       .erase = 1,
   };
-  return libhoth_hostcmd_exec(
+  return libhoth_hostcmd_exec_v2(
       dev, HOTH_CMD_BOARD_SPECIFIC_BASE + HOTH_PRV_CMD_HOTH_SET_AUTHZ_RECORD,
       /*version=*/0, &request, sizeof(request), NULL, 0, NULL);
 }
 
-int libhoth_authz_record_read(struct libhoth_device* dev,
-                              struct hoth_authz_record_get_response* resp) {
+libhoth_error libhoth_authz_record_read(
+    struct libhoth_device* dev, struct hoth_authz_record_get_response* resp) {
+  if (resp == NULL) {
+    return LIBHOTH_ERR_CONSTRUCT(HOTH_CTX_CMD_EXEC, HOTH_HOST_SPACE_LIBHOTH,
+                                 LIBHOTH_ERR_INVALID_PARAMETER);
+  }
   struct hoth_authz_record_get_request request = {.index = 0};
-  return libhoth_hostcmd_exec(
+  return libhoth_hostcmd_exec_v2(
       dev, HOTH_CMD_BOARD_SPECIFIC_BASE + HOTH_PRV_CMD_HOTH_GET_AUTHZ_RECORD,
       /*version=*/0, &request, sizeof(request), resp, sizeof(*resp), NULL);
 }
 
-int libhoth_authz_record_build(struct libhoth_device* dev,
-                               uint32_t capabilities,
-                               struct authorization_record* record) {
+libhoth_error libhoth_authz_record_build(struct libhoth_device* dev,
+                                         uint32_t capabilities,
+                                         struct authorization_record* record) {
+  if (record == NULL) {
+    return LIBHOTH_ERR_CONSTRUCT(HOTH_CTX_CMD_EXEC, HOTH_HOST_SPACE_LIBHOTH,
+                                 LIBHOTH_ERR_INVALID_PARAMETER);
+  }
   memset(record, 0, sizeof(*record));
   memcpy(&record->magic, AUTHORIZATION_RECORD_MAGIC, sizeof(record->magic));
   record->version = 1;
@@ -51,7 +61,8 @@ int libhoth_authz_record_build(struct libhoth_device* dev,
   struct hoth_response_chip_info chipinfo_resp;
   int status = libhoth_chipinfo(dev, &chipinfo_resp);
   if (status != 0) {
-    return -1;
+    return LIBHOTH_ERR_CONSTRUCT(HOTH_CTX_CMD_EXEC, HOTH_HOST_SPACE_LIBHOTH,
+                                 status);
   }
   if (chipinfo_resp.version != 0) {
     fprintf(stderr, "Unsupported chipinfo version: %u\n",
@@ -64,24 +75,26 @@ int libhoth_authz_record_build(struct libhoth_device* dev,
       (chipinfo_resp.data.hoth_device_id.hardware_identity >> 32);
 
   struct hoth_authz_record_get_nonce_response nonce_resp;
-  status = libhoth_hostcmd_exec(
+  libhoth_error err = libhoth_hostcmd_exec_v2(
       dev,
       HOTH_CMD_BOARD_SPECIFIC_BASE + HOTH_PRV_CMD_HOTH_GET_AUTHZ_RECORD_NONCE,
       /*version=*/0, NULL, 0, &nonce_resp, sizeof(nonce_resp), NULL);
-  if (status != 0) {
-    return status;
+  if (err != HOTH_SUCCESS) {
+    return err;
   }
   if (nonce_resp.ro_supported_key_id == 0) {
     fprintf(stderr,
             "ro_supported_key_id = 0. Please reset the chip and retry\n");
-    return -1;
+    return LIBHOTH_ERR_CONSTRUCT(HOTH_CTX_CMD_EXEC, HOTH_HOST_SPACE_LIBHOTH,
+                                 LIBHOTH_ERR_FAIL);
   }
   if (nonce_resp.ro_supported_key_id != nonce_resp.rw_supported_key_id) {
     fprintf(
         stderr,
         "RO and RW supported key_ids do not match: (RO) 0x%x != (RW) 0x%x\n",
         nonce_resp.ro_supported_key_id, nonce_resp.rw_supported_key_id);
-    return -1;
+    return LIBHOTH_ERR_CONSTRUCT(HOTH_CTX_CMD_EXEC, HOTH_HOST_SPACE_LIBHOTH,
+                                 LIBHOTH_ERR_FAIL);
   }
   record->key_id = nonce_resp.ro_supported_key_id;
   if (sizeof(record->authorization_nonce) !=
@@ -89,16 +102,21 @@ int libhoth_authz_record_build(struct libhoth_device* dev,
     fprintf(stderr, "Nonce size does not match. Expecting %ld, got %ld",
             sizeof(nonce_resp.authorization_nonce),
             sizeof(record->authorization_nonce));
-    return -1;
+    return LIBHOTH_ERR_CONSTRUCT(HOTH_CTX_CMD_EXEC, HOTH_HOST_SPACE_LIBHOTH,
+                                 LIBHOTH_ERR_FAIL);
   }
   memcpy(record->authorization_nonce, nonce_resp.authorization_nonce,
          sizeof(record->authorization_nonce));
 
-  return 0;
+  return HOTH_SUCCESS;
 }
 
-int libhoth_authz_record_set(struct libhoth_device* dev,
-                             const struct authorization_record* record) {
+libhoth_error libhoth_authz_record_set(
+    struct libhoth_device* dev, const struct authorization_record* record) {
+  if (record == NULL) {
+    return LIBHOTH_ERR_CONSTRUCT(HOTH_CTX_CMD_EXEC, HOTH_HOST_SPACE_LIBHOTH,
+                                 LIBHOTH_ERR_INVALID_PARAMETER);
+  }
   struct hoth_authz_record_set_request request = {
       .index = 0,
       .erase = 0,
@@ -106,7 +124,7 @@ int libhoth_authz_record_set(struct libhoth_device* dev,
 
   memcpy(&request.record, record, sizeof(struct authorization_record));
 
-  return libhoth_hostcmd_exec(
+  return libhoth_hostcmd_exec_v2(
       dev, HOTH_CMD_BOARD_SPECIFIC_BASE + HOTH_PRV_CMD_HOTH_SET_AUTHZ_RECORD,
       /*version=*/0, &request, sizeof(request), NULL, 0, NULL);
 }
