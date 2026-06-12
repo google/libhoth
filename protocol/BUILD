@@ -84,6 +84,7 @@ cc_library(
     hdrs = ["panic.h"],
     deps = [
         ":host_cmd",
+        ":libhoth_status",
         "//transports:libhoth_device",
     ],
 )

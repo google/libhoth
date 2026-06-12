@@ -85,7 +85,7 @@ TEST_F(LibHothTest, panic_test) {
   }
 
   struct hoth_response_persistent_panic_info panic_record;
-  EXPECT_EQ(libhoth_get_panic(&hoth_dev_, &panic_record), LIBHOTH_OK);
+  EXPECT_EQ(libhoth_get_panic(&hoth_dev_, &panic_record), HOTH_SUCCESS);
 
   EXPECT_EQ(exp_panic_record.rw_version.epoch, panic_record.rw_version.epoch);
   EXPECT_EQ(exp_panic_record.rw_version.major, panic_record.rw_version.major);
@@ -104,5 +104,13 @@ TEST_F(LibHothTest, clear_panic_test) {
   EXPECT_CALL(mock_, receive)
       .WillOnce(DoAll(CopyResp(&dummy, 0), Return(LIBHOTH_OK)));
 
-  EXPECT_EQ(libhoth_clear_persistent_panic_info(&hoth_dev_), LIBHOTH_OK);
+  EXPECT_EQ(libhoth_clear_persistent_panic_info(&hoth_dev_), HOTH_SUCCESS);
+}
+
+TEST_F(LibHothTest, panic_null_param_test) {
+  libhoth_error err = libhoth_get_panic(&hoth_dev_, nullptr);
+  EXPECT_NE(err, HOTH_SUCCESS);
+  EXPECT_EQ(LIBHOTH_ERR_GET_CTX(err), HOTH_CTX_CMD_EXEC);
+  EXPECT_EQ(LIBHOTH_ERR_GET_SPACE(err), HOTH_HOST_SPACE_LIBHOTH);
+  EXPECT_EQ(LIBHOTH_ERR_GET_CODE(err), LIBHOTH_ERR_INVALID_PARAMETER);
 }
