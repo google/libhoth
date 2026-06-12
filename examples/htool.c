@@ -108,7 +108,13 @@ static int command_reboot(const struct htool_invocation* inv) {
     return -1;
   }
 
-  return libhoth_reboot(dev, warm ? HOTH_REBOOT_WARM : HOTH_REBOOT_COLD);
+  libhoth_error err =
+      libhoth_reboot(dev, warm ? HOTH_REBOOT_WARM : HOTH_REBOOT_COLD);
+  if (err != HOTH_SUCCESS) {
+    htool_report_error("reboot", err);
+    return -1;
+  }
+  return 0;
 }
 
 static int command_get_version(const struct htool_invocation* inv) {
