@@ -14,30 +14,31 @@
 
 #include "i2c.h"
 
+#include <stddef.h>
 #include <stdio.h>
 
 #include "host_cmd.h"
 
-int libhoth_i2c_detect(struct libhoth_device* dev,
-                       struct hoth_request_i2c_detect* req,
-                       struct hoth_response_i2c_detect* resp) {
+libhoth_error libhoth_i2c_detect(struct libhoth_device* dev,
+                                 struct hoth_request_i2c_detect* req,
+                                 struct hoth_response_i2c_detect* resp) {
+  if (req == NULL || resp == NULL) {
+    return LIBHOTH_ERR_CONSTRUCT(HOTH_CTX_CMD_EXEC, HOTH_HOST_SPACE_LIBHOTH,
+                                 LIBHOTH_ERR_INVALID_PARAMETER);
+  }
   size_t rLen = 0;
-  int ret = libhoth_hostcmd_exec(
+  libhoth_error err = libhoth_hostcmd_exec_v2(
       dev, HOTH_CMD_BOARD_SPECIFIC_BASE + HOTH_PRV_CMD_HOTH_I2C_DETECT, 0, req,
       sizeof(*req), resp, sizeof(*resp), &rLen);
-  if (ret != 0) {
-    fprintf(stderr, "HOTH_I2C_DETECT error code: %d\n", ret);
-    return -1;
+  if (err != HOTH_SUCCESS) {
+    return err;
   }
   if (rLen != sizeof(*resp)) {
-    fprintf(stderr,
-            "HOTH_I2C_DETECT expected exactly %ld response "
-            "bytes, got %ld\n",
-            sizeof(*resp), rLen);
-    return -1;
+    return LIBHOTH_ERR_CONSTRUCT(HOTH_CTX_CMD_EXEC, HOTH_HOST_SPACE_LIBHOTH,
+                                 LIBHOTH_ERR_FAIL);
   }
 
-  return ret;
+  return HOTH_SUCCESS;
 }
 
 void libhoth_i2c_device_list(uint8_t* devices_mask, uint32_t devices_count,
@@ -63,24 +64,24 @@ void libhoth_i2c_device_list(uint8_t* devices_mask, uint32_t devices_count,
   return;
 }
 
-int libhoth_i2c_transfer(struct libhoth_device* dev,
-                         struct hoth_request_i2c_transfer* req,
-                         struct hoth_response_i2c_transfer* resp) {
+libhoth_error libhoth_i2c_transfer(struct libhoth_device* dev,
+                                   struct hoth_request_i2c_transfer* req,
+                                   struct hoth_response_i2c_transfer* resp) {
+  if (req == NULL || resp == NULL) {
+    return LIBHOTH_ERR_CONSTRUCT(HOTH_CTX_CMD_EXEC, HOTH_HOST_SPACE_LIBHOTH,
+                                 LIBHOTH_ERR_INVALID_PARAMETER);
+  }
   size_t rLen = 0;
-  int ret = libhoth_hostcmd_exec(
+  libhoth_error err = libhoth_hostcmd_exec_v2(
       dev, HOTH_CMD_BOARD_SPECIFIC_BASE + HOTH_PRV_CMD_HOTH_I2C_TRANSFER, 0,
       req, sizeof(*req), resp, sizeof(*resp), &rLen);
-  if (ret != 0) {
-    fprintf(stderr, "HOTH_I2C_TRANSFER error code: %d\n", ret);
-    return -1;
+  if (err != HOTH_SUCCESS) {
+    return err;
   }
   if (rLen != sizeof(*resp)) {
-    fprintf(stderr,
-            "HOTH_I2C_TRANSFER expected exactly %ld response "
-            "bytes, got %ld\n",
-            sizeof(*resp), rLen);
-    return -1;
+    return LIBHOTH_ERR_CONSTRUCT(HOTH_CTX_CMD_EXEC, HOTH_HOST_SPACE_LIBHOTH,
+                                 LIBHOTH_ERR_FAIL);
   }
 
-  return ret;
+  return HOTH_SUCCESS;
 }
