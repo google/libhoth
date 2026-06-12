@@ -878,7 +878,13 @@ static int command_set_gpio_drive_strength(const struct htool_invocation* inv) {
     }
   }
 
-  return libhoth_set_gpio_drive_strength(dev, (uint8_t)pad, (uint8_t)strength);
+  libhoth_error err =
+      libhoth_set_gpio_drive_strength(dev, (uint8_t)pad, (uint8_t)strength);
+  if (err != HOTH_SUCCESS) {
+    htool_report_error("set_gpio_drive_strength", err);
+    return -1;
+  }
+  return 0;
 }
 
 static int command_hello(const struct htool_invocation* inv) {

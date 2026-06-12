@@ -19,13 +19,19 @@
 
 #include "protocol/host_cmd.h"
 
-int libhoth_set_gpio_drive_strength(struct libhoth_device* const dev,
-                                    const uint8_t pad, const uint8_t strength) {
+libhoth_error libhoth_set_gpio_drive_strength(struct libhoth_device* const dev,
+                                              const uint8_t pad,
+                                              const uint8_t strength) {
+  if (strength > MAX_GPIO_DRIVE_STRENGTH) {
+    return LIBHOTH_ERR_CONSTRUCT(HOTH_CTX_CMD_EXEC, HOTH_HOST_SPACE_LIBHOTH,
+                                 LIBHOTH_ERR_INVALID_PARAMETER);
+  }
+
   const struct hoth_request_set_gpio_drive_strength request = {
       .pad = pad,
       .strength = strength,
   };
-  return libhoth_hostcmd_exec(dev, HOTH_CMD_SET_GPIO_DRIVE_STRENGTH,
-                              /*version=*/0, &request, sizeof(request),
-                              /*response=*/NULL, /*response_size=*/0, NULL);
+  return libhoth_hostcmd_exec_v2(dev, HOTH_CMD_SET_GPIO_DRIVE_STRENGTH,
+                                 /*version=*/0, &request, sizeof(request),
+                                 /*response=*/NULL, /*response_size=*/0, NULL);
 }

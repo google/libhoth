@@ -425,6 +425,7 @@ cc_library(
     hdrs = ["gpio_drive_strength.h"],
     deps = [
         ":host_cmd",
+        ":libhoth_status",
         "//transports:libhoth_device",
     ],
 )

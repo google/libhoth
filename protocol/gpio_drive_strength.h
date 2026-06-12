@@ -18,6 +18,7 @@
 #include <stdint.h>
 
 #include "protocol/host_cmd.h"
+#include "protocol/status.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -32,8 +33,8 @@ struct hoth_request_set_gpio_drive_strength {
   uint8_t strength;
 } __hoth_align1;
 
-int libhoth_set_gpio_drive_strength(struct libhoth_device* dev, uint8_t pad,
-                                    uint8_t strength);
+libhoth_error libhoth_set_gpio_drive_strength(struct libhoth_device* dev,
+                                              uint8_t pad, uint8_t strength);
 
 #ifdef __cplusplus
 }
