@@ -10,18 +10,17 @@
 #include "protocol/host_cmd.h"
 #include "transports/libhoth_device.h"
 
-// Marks `bytes` as consumed in `buffer` and sets `output` to the start of
-// the allocated region.
-static int consume_bytes(struct security_v2_buffer* buffer, uint16_t bytes,
-                         uint8_t** output) {
+// Marks `bytes` as consumed in `buffer` and returns a pointer to the start of
+// the allocated region. Returns NULL if there are insufficient bytes.
+static void* consume_bytes(struct security_v2_buffer* buffer, uint16_t bytes) {
   if (buffer->bytes_consumed > buffer->size ||
       buffer->size - buffer->bytes_consumed < bytes) {
-    return -1;
+    return NULL;
   }
 
-  *output = buffer->data + buffer->bytes_consumed;
+  void* output = buffer->data + buffer->bytes_consumed;
   buffer->bytes_consumed += bytes;
-  return 0;
+  return output;
 }
 
 int htool_exec_security_v2_cmd(struct libhoth_device* dev, uint8_t major,
@@ -32,35 +31,31 @@ int htool_exec_security_v2_cmd(struct libhoth_device* dev, uint8_t major,
                                struct security_v2_buffer* response_buffer,
                                struct security_v2_param* response_params,
                                uint16_t response_param_count) {
-  struct hoth_security_v2_request_header* request_header;
-  int status = consume_bytes(request_buffer, sizeof(*request_header),
-                             (uint8_t**)&request_header);
-  if (status != 0) {
+  struct hoth_security_v2_request_header* request_header =
+      consume_bytes(request_buffer, sizeof(*request_header));
+  if (!request_header) {
     fprintf(stderr, "insufficient bytes for request header\n");
-    return status;
+    return -1;
   }
   request_header->major_command = major;
   request_header->minor_command = minor;
   request_header->param_count = request_param_count;
 
   for (int i = 0; i < request_param_count; ++i) {
-    struct hoth_security_v2_parameter* request_param;
-    status = consume_bytes(request_buffer, sizeof(*request_param),
-                           (uint8_t**)&request_param);
-    if (status != 0) {
+    struct hoth_security_v2_parameter* request_param =
+        consume_bytes(request_buffer, sizeof(*request_param));
+    if (!request_param) {
       fprintf(stderr, "insufficient bytes for request param %d\n", i);
-      return status;
+      return -1;
     }
     request_param->size = request_params[i].size;
 
-    uint8_t* request_param_value;
-    status = consume_bytes(
+    uint8_t* request_param_value = consume_bytes(
         request_buffer,
-        request_params[i].size + padding_size(request_params[i].size),
-        &request_param_value);
-    if (status != 0) {
+        request_params[i].size + padding_size(request_params[i].size));
+    if (!request_param_value) {
       fprintf(stderr, "insufficient bytes for request param %d\n", i);
-      return status;
+      return -1;
     }
     memcpy(request_param_value, request_params[i].data, request_params[i].size);
   }
@@ -68,9 +63,9 @@ int htool_exec_security_v2_cmd(struct libhoth_device* dev, uint8_t major,
   // May need to remove bytes_read and replace it with Null in
   // libhoth_hostcmd_exec
   size_t bytes_read;
-  status = libhoth_hostcmd_exec(dev, base_command, 0, request_buffer->data,
-                                request_buffer->size, response_buffer->data,
-                                response_buffer->size, &bytes_read);
+  int status = libhoth_hostcmd_exec(dev, base_command, 0, request_buffer->data,
+                                    request_buffer->size, response_buffer->data,
+                                    response_buffer->size, &bytes_read);
   if (status != 0) {
     // htool_exec_hostcmd logs to stderr, don't repeat here.
     return status;
@@ -82,12 +77,11 @@ int htool_exec_security_v2_cmd(struct libhoth_device* dev, uint8_t major,
     return 0;
   }
 
-  struct hoth_security_v2_response_header* response_header;
-  status = consume_bytes(response_buffer, sizeof(*response_header),
-                         (uint8_t**)&response_header);
-  if (status != 0) {
+  struct hoth_security_v2_response_header* response_header =
+      consume_bytes(response_buffer, sizeof(*response_header));
+  if (!response_header) {
     fprintf(stderr, "insufficient bytes for response header\n");
-    return status;
+    return -1;
   }
   if (response_header->param_count != response_param_count) {
     fprintf(stderr,
@@ -99,12 +93,11 @@ int htool_exec_security_v2_cmd(struct libhoth_device* dev, uint8_t major,
   // We're intentionally lax here and not checking for 0s in reserved
   // fields/padding.
   for (int i = 0; i < response_param_count; ++i) {
-    struct hoth_security_v2_parameter* response_param;
-    status = consume_bytes(response_buffer, sizeof(*response_param),
-                           (uint8_t**)&response_param);
-    if (status != 0) {
+    struct hoth_security_v2_parameter* response_param =
+        consume_bytes(response_buffer, sizeof(*response_param));
+    if (!response_param) {
       fprintf(stderr, "insufficient bytes for response param %d\n", i);
-      return status;
+      return -1;
     }
     if (response_param->size != response_params[i].size) {
       fprintf(stderr,
@@ -113,14 +106,12 @@ int htool_exec_security_v2_cmd(struct libhoth_device* dev, uint8_t major,
       return -1;
     }
 
-    uint8_t* response_param_value;
-    status = consume_bytes(
+    uint8_t* response_param_value = consume_bytes(
         response_buffer,
-        response_params[i].size + padding_size(response_params[i].size),
-        &response_param_value);
-    if (status != 0) {
+        response_params[i].size + padding_size(response_params[i].size));
+    if (!response_param_value) {
       fprintf(stderr, "insufficient bytes for response param %d\n", i);
-      return status;
+      return -1;
     }
     memcpy(response_params[i].data, response_param_value,
            response_params[i].size);
@@ -140,10 +131,9 @@ static int read_security_v2_serialized_header(
   }
 
   // Read the response's header.
-  int status =
-      consume_bytes(buffer, sizeof(struct security_v2_serialized_response_hdr),
-                    (uint8_t**)&response_header);
-  if (status != 0 || !response_header) {
+  response_header =
+      consume_bytes(buffer, sizeof(struct security_v2_serialized_response_hdr));
+  if (!response_header) {
     fprintf(stderr, "Failed to initialize response, cannot read header.");
     return -1;
   }
@@ -172,9 +162,9 @@ static int validate_param_padding(
 
   // If the parameter value's length requires padding, we need
   // to read the padding bytes and ensure they are all zero.
-  int status = consume_bytes(buffer, param_padding_size, (uint8_t**)&padding);
+  padding = consume_bytes(buffer, param_padding_size);
 
-  if (status != 0 || !padding) {
+  if (!padding) {
     fprintf(stderr,
             "Failed to validate param padding, could not read padding data.\n");
     return -1;
@@ -202,8 +192,8 @@ static int read_security_v2_serialized_params(
   }
 
   // Read the parameter's header.
-  int status = consume_bytes(buffer, sizeof(**param), (uint8_t**)param);
-  if (status != 0 || !*param) {
+  *param = consume_bytes(buffer, sizeof(**param));
+  if (!*param) {
     fprintf(stderr, "Failed to read response param header.\n");
     return -1;
   }
@@ -214,13 +204,13 @@ static int read_security_v2_serialized_params(
   }
 
   // Read the parameter's value.
-  status = consume_bytes(buffer, (*param)->size, (uint8_t**)&value);
-  if (status != 0 || !value) {
+  value = consume_bytes(buffer, (*param)->size);
+  if (!value) {
     fprintf(stderr, "Failed to read response param data.\n");
     return -1;
   }
 
-  status = validate_param_padding(buffer, *param);
+  int status = validate_param_padding(buffer, *param);
   if (status != 0) {
     return status;
   }
