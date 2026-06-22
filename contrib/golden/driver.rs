@@ -55,7 +55,7 @@ fn redact_content(s: &str, redact_prefixes: &[String]) -> String {
 fn main() {
     let cli: Cli = argh::from_env();
 
-    if cli.pairs.len() % 2 != 0 {
+    if !cli.pairs.len().is_multiple_of(2) {
         eprintln!("Error: Positional arguments must come in pairs (actual_path, golden_path)");
         std::process::exit(1);
     }
