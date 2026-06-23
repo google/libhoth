@@ -402,7 +402,7 @@ int libhoth_get_usb_loc(libusb_device* dev, struct libhoth_usb_loc* result) {
 int libhoth_usb_get_device(libusb_context* ctx,
                            const struct libhoth_usb_loc* usb_loc,
                            libusb_device** out) {
-  if (ctx == NULL || usb_loc == NULL || out == NULL) {
+  if (ctx == NULL || out == NULL) {
     return LIBUSB_ERROR_INVALID_PARAM;
   }
 
@@ -416,17 +416,19 @@ int libhoth_usb_get_device(libusb_context* ctx,
   }
 
   for (ssize_t i = 0; i < num_devices; i++) {
-    int rev = libhoth_get_usb_loc(device[i], &loc);
-    if (rev) {
-      continue;
-    }
+    if (usb_loc != NULL) {
+      int rev = libhoth_get_usb_loc(device[i], &loc);
+      if (rev) {
+        continue;
+      }
 
-    bool loc_matches = (loc.bus == usb_loc->bus) &&
-                       (loc.num_ports == usb_loc->num_ports) &&
-                       (memcmp(loc.ports, usb_loc->ports, loc.num_ports) == 0);
+      bool loc_matches =
+          (loc.bus == usb_loc->bus) && (loc.num_ports == usb_loc->num_ports) &&
+          (memcmp(loc.ports, usb_loc->ports, loc.num_ports) == 0);
 
-    if (!loc_matches) {
-      continue;
+      if (!loc_matches) {
+        continue;
+      }
     }
 
     struct libusb_device_descriptor device_descriptor;
