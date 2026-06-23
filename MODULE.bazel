@@ -11,4 +11,23 @@ libusb_ext = use_extension("//:libusb_extension.bzl", "libusb_extension")
 use_repo(libusb_ext, "libusb")
 
 bazel_dep(name = "googletest", version = "1.15.2")
-bazel_dep(name = "rules_cc", version = "0.1.4")
+bazel_dep(name = "rules_cc", version = "0.2.17")
+bazel_dep(name = "platforms", version = "1.0.0")
+
+bazel_dep(name = "gcc_toolchain", version = "0.10.0", dev_dependency = True)
+
+gcc_toolchains = use_extension(
+    "@gcc_toolchain//toolchain:module_extensions.bzl",
+    "gcc_toolchains",
+    dev_dependency = True,
+)
+gcc_toolchains.toolchain(
+    name = "gcc_toolchain_aarch64",
+    target_arch = "aarch64",
+)
+use_repo(gcc_toolchains, "gcc_toolchain_aarch64")
+
+register_toolchains(
+    "@gcc_toolchain_aarch64//:cc_toolchain",
+    dev_dependency = True,
+)

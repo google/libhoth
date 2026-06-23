@@ -56,3 +56,11 @@ alias(
     actual = "@libusb//:libusb",
     visibility = ["//visibility:public"],
 )
+
+platform(
+    name = "aarch64_linux",
+    constraint_values = [
+        "@platforms//cpu:aarch64",
+        "@platforms//os:linux",
+    ],
+)
