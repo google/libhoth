@@ -20,6 +20,8 @@
 #include <stdio.h>
 #include <string.h>
 
+#include "status.h"
+
 void hex_dump(FILE* out, const void* buffer, size_t size) {
   if (!buffer || !size) {
     fprintf(stderr, "hex_dump with null or empty buffer.\n");
@@ -74,23 +76,23 @@ uint8_t libhoth_calculate_checksum(const void* header, size_t header_size,
   return 0x100 - sum;
 }
 
-static int populate_ec_request_header(
+static libhoth_status populate_ec_request_header(
     uint16_t command, uint8_t command_version, const void* request,
     size_t request_size, struct hoth_host_request* request_header) {
   if (!request_header) {
     fprintf(stderr, "Request header argument cannot be NULL\n");
-    return -EINVAL;
+    return LIBHOTH_ERR_INVALID_PARAMETER;
   }
 
   if (request_size > 0 && !request) {
     fprintf(stderr, "Request data argument cannot be NULL with size > 0\n");
-    return -EINVAL;
+    return LIBHOTH_ERR_INVALID_PARAMETER;
   }
 
   if (request_size > UINT16_MAX) {
     fprintf(stderr, "Error, request_size (%lu) > max (%lu)\n",
             (unsigned long)request_size, (unsigned long)UINT16_MAX);
-    return -EINVAL;
+    return LIBHOTH_ERR_INVALID_PARAMETER;
   }
 
   request_header->struct_version = HOTH_HOST_REQUEST_VERSION;
@@ -106,33 +108,33 @@ static int populate_ec_request_header(
   return 0;
 }
 
-static int validate_ec_response_header(
+static libhoth_status validate_ec_response_header(
     const struct hoth_host_response* response_header,
     const void* response_payload, size_t response_header_and_payload_size) {
   uint8_t response_checksum;
 
   if (!response_header) {
     fprintf(stderr, "response_header cannot be NULL\n");
-    return -EINVAL;
+    return LIBHOTH_ERR_INVALID_PARAMETER;
   }
 
   if (response_header_and_payload_size < sizeof(*response_header)) {
     fprintf(stderr, "Partial response header (size %zu)\n",
             response_header_and_payload_size);
-    return -EINVAL;
+    return LIBHOTH_ERR_INVALID_PARAMETER;
   }
 
   if (!response_payload && response_header->data_len > 0) {
     fprintf(
         stderr,
         "response cannot be NULL if the response data_len is greater than 0\n");
-    return -EINVAL;
+    return LIBHOTH_ERR_INVALID_PARAMETER;
   }
 
   if (response_header->struct_version != HOTH_HOST_RESPONSE_VERSION) {
     fprintf(stderr, "Error: unexpected struct_version. Got %u, expected %u\n",
             response_header->struct_version, HOTH_HOST_RESPONSE_VERSION);
-    return -EINVAL;
+    return LIBHOTH_ERR_INVALID_PARAMETER;
   }
 
   if (response_header->data_len !=
@@ -141,7 +143,7 @@ static int validate_ec_response_header(
             "Error: Incorrect response data length. Have %u, need %zu\n",
             response_header->data_len,
             response_header_and_payload_size - sizeof(*response_header));
-    return -EINVAL;
+    return LIBHOTH_ERR_INVALID_PARAMETER;
   }
 
   response_checksum =
@@ -156,10 +158,10 @@ static int validate_ec_response_header(
     hex_dump(stderr, response_header, sizeof(*response_header));
     fprintf(stderr, "Response body:\n");
     hex_dump(stderr, response_payload, response_header->data_len);
-    return -EINVAL;
+    return LIBHOTH_ERR_INVALID_PARAMETER;
   }
 
-  return 0;
+  return LIBHOTH_OK;
 }
 
 // libhoth_hostcmd_exec is a compatibility wrapper that converts the new
@@ -183,11 +185,11 @@ int libhoth_hostcmd_exec(struct libhoth_device* dev, uint16_t command,
   uint32_t space = LIBHOTH_ERR_GET_SPACE(err);
   uint32_t code = LIBHOTH_ERR_GET_CODE(err);
 
-  if (space == HOTH_HOST_SPACE_FW) {
+  if (space == HOTH_HOST_SPACE_EC) {
     return HTOOL_ERROR_HOST_COMMAND_START + code;
   }
 
-  if (space == HOTH_HOST_SPACE_FW_EARLGREY) {
+  if (space == HOTH_HOST_SPACE_PIEROT_ERR) {
     return (int)code;
   }
 
@@ -217,12 +219,12 @@ libhoth_error libhoth_hostcmd_exec_v2(struct libhoth_device* dev,
   if (req_payload) {
     memcpy(req.payload_buf, req_payload, req_payload_size);
   }
-  int status = populate_ec_request_header(command, version, req.payload_buf,
-                                          req_payload_size, &req.hdr);
-  if (status != 0) {
+  libhoth_status status = populate_ec_request_header(
+      command, version, req.payload_buf, req_payload_size, &req.hdr);
+  if (status != LIBHOTH_OK) {
     fprintf(stderr, "populate_ec_request_header() failed: %d\n", status);
-    return LIBHOTH_ERR_CONSTRUCT(HOTH_CTX_CMD_EXEC, HOTH_HOST_SPACE_POSIX,
-                                 -status);
+    return LIBHOTH_ERR_CONSTRUCT(HOTH_CTX_CMD_EXEC, HOTH_HOST_SPACE_LIBHOTH,
+                                 status);
   }
   status = libhoth_send_request(dev, &req, sizeof(req.hdr) + req_payload_size);
   if (status != LIBHOTH_OK) {
@@ -244,10 +246,10 @@ libhoth_error libhoth_hostcmd_exec_v2(struct libhoth_device* dev,
                                  status);
   }
   status = validate_ec_response_header(&resp.hdr, resp.payload_buf, resp_size);
-  if (status != 0) {
+  if (status != LIBHOTH_OK) {
     fprintf(stderr, "EC response header invalid: %d\n", status);
-    return LIBHOTH_ERR_CONSTRUCT(HOTH_CTX_CMD_EXEC, HOTH_HOST_SPACE_POSIX,
-                                 -status);
+    return LIBHOTH_ERR_CONSTRUCT(HOTH_CTX_CMD_EXEC, HOTH_HOST_SPACE_LIBHOTH,
+                                 status);
   }
   if (resp.hdr.result != HOTH_RES_SUCCESS) {
     fprintf(stderr, "EC response contained error: %d", resp.hdr.result);
@@ -256,11 +258,11 @@ libhoth_error libhoth_hostcmd_exec_v2(struct libhoth_device* dev,
       memcpy(&error_code, resp.payload_buf, sizeof(error_code));
       fprintf(stderr, " (extended: 0x%08x)\n", error_code);
       return LIBHOTH_ERR_CONSTRUCT(HOTH_CTX_CMD_EXEC,
-                                   HOTH_HOST_SPACE_FW_EARLGREY, error_code);
+                                   HOTH_HOST_SPACE_PIEROT_ERR, error_code);
     } else {
       fprintf(stderr, "\n");
     }
-    return LIBHOTH_ERR_CONSTRUCT(HOTH_CTX_CMD_EXEC, HOTH_HOST_SPACE_FW,
+    return LIBHOTH_ERR_CONSTRUCT(HOTH_CTX_CMD_EXEC, HOTH_HOST_SPACE_EC,
                                  resp.hdr.result);
   }
 

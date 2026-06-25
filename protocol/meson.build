@@ -31,10 +31,19 @@ protocol_srcs = [
 
 incdir = libhoth_include_dirs
 
+protocol_deps = []
+protocol_copts = []
+if libusb.found()
+    protocol_deps += libusb
+    protocol_copts += '-DLIBHOTH_SUPPORT_LIBUSB'
+endif
+
 libhoth_protocol = static_library(
     'hoth_protocols',
     protocol_srcs,
     include_directories: libhoth_include_dirs,
+    dependencies: protocol_deps,
+    c_args: protocol_copts,
     link_with: [libhoth_transport],
 )
 libhoth_objs += [libhoth_protocol.extract_all_objects(recursive: false)]

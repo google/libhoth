@@ -18,6 +18,7 @@
 #include <stdio.h>
 
 #include "protocol/host_cmd.h"
+#include "status.h"
 #include "transports/libhoth_device.h"
 
 libhoth_error libhoth_firmware_update_from_flash_and_reset(
@@ -37,8 +38,8 @@ libhoth_error libhoth_firmware_update_from_flash_and_reset(
             offset);
     return HOTH_SUCCESS;
   }
-  if (LIBHOTH_ERR_GET_SPACE(err) == HOTH_HOST_SPACE_FW ||
-      LIBHOTH_ERR_GET_SPACE(err) == HOTH_HOST_SPACE_FW_EARLGREY) {
+  if (LIBHOTH_ERR_GET_SPACE(err) == HOTH_HOST_SPACE_EC ||
+      LIBHOTH_ERR_GET_SPACE(err) == HOTH_HOST_SPACE_PIEROT_ERR) {
     fprintf(stderr,
             "Firmware update from flash offset 0x%x failed with error code: "
             "0x%016lx. Aborting.\n",

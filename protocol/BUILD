@@ -7,7 +7,21 @@ cc_library(
     name = "libhoth_status",
     srcs = ["status.c"],
     hdrs = ["status.h"],
+    defines = ["LIBHOTH_SUPPORT_LIBUSB"],
+    deps = [
+      "@libusb//:libusb",
+    ],
     visibility = ["//visibility:public"],
+)
+
+cc_test(
+    name = "status_test",
+    srcs = ["status_test.cc"],
+    deps = [
+        ":libhoth_status",
+        "@googletest//:gtest",
+        "@googletest//:gtest_main",
+    ],
 )
 
 cc_library(
@@ -114,6 +128,7 @@ cc_library(
         ":payload_info",
         ":progress",
         ":util",
+        ":libhoth_status",
         "//transports:libhoth_device",
     ],
 )

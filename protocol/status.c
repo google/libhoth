@@ -14,6 +14,11 @@
 
 #include "status.h"
 
+#ifdef LIBHOTH_SUPPORT_LIBUSB
+#include <libusb.h>
+#endif
+#include <string.h>
+
 const char* libhoth_error_ctx_str(uint32_t ctx) {
   switch (ctx) {
     case HOTH_CTX_NONE:
@@ -33,64 +38,103 @@ const char* libhoth_error_ctx_str(uint32_t ctx) {
 
 const char* libhoth_error_space_str(uint16_t space) {
   switch (space) {
-    case HOTH_HOST_SPACE_FW:
-      return "FW";
-    case HOTH_HOST_SPACE_POSIX:
-      return "POSIX";
+    case HOTH_HOST_SPACE_EC:
+      return "EC_RES";
+    case HOTH_HOST_SPACE_MTD:
+      return "MTD";
     case HOTH_HOST_SPACE_LIBUSB:
       return "LIBUSB";
+    case HOTH_HOST_SPACE_SPIDEV:
+      return "SPIDEV";
     case HOTH_HOST_SPACE_LIBHOTH:
       return "LIBHOTH";
+    case HOTH_HOST_SPACE_PIEROT_ERR:
+      return "PIE_ROT";
     default:
       return "UNKNOWN";
   }
 }
 
-const char* libhoth_error_code_fw_str(uint16_t code) {
+const char* libhoth_error_ec_str(uint16_t code) {
   switch (code) {
-    case HOTH_FW_SUCCESS:
+    case HOTH_RES_SUCCESS:
       return "SUCCESS";
-    case HOTH_FW_INVALID_COMMAND:
+    case HOTH_RES_INVALID_COMMAND:
       return "INVALID_COMMAND";
-    case HOTH_FW_ERROR:
+    case HOTH_RES_ERROR:
       return "ERROR";
-    case HOTH_FW_INVALID_PARAM:
+    case HOTH_RES_INVALID_PARAM:
       return "INVALID_PARAM";
-    case HOTH_FW_ACCESS_DENIED:
+    case HOTH_RES_ACCESS_DENIED:
       return "ACCESS_DENIED";
-    case HOTH_FW_INVALID_RESPONSE:
+    case HOTH_RES_INVALID_RESPONSE:
       return "INVALID_RESPONSE";
-    case HOTH_FW_INVALID_VERSION:
+    case HOTH_RES_INVALID_VERSION:
       return "INVALID_VERSION";
-    case HOTH_FW_INVALID_CHECKSUM:
+    case HOTH_RES_INVALID_CHECKSUM:
       return "INVALID_CHECKSUM";
-    case HOTH_FW_IN_PROGRESS:
+    case HOTH_RES_IN_PROGRESS:
       return "IN_PROGRESS";
-    case HOTH_FW_UNAVAILABLE:
+    case HOTH_RES_UNAVAILABLE:
       return "UNAVAILABLE";
-    case HOTH_FW_TIMEOUT:
+    case HOTH_RES_TIMEOUT:
       return "TIMEOUT";
-    case HOTH_FW_OVERFLOW:
+    case HOTH_RES_OVERFLOW:
       return "OVERFLOW";
-    case HOTH_FW_INVALID_HEADER:
+    case HOTH_RES_INVALID_HEADER:
       return "INVALID_HEADER";
-    case HOTH_FW_REQUEST_TRUNCATED:
+    case HOTH_RES_REQUEST_TRUNCATED:
       return "REQUEST_TRUNCATED";
-    case HOTH_FW_RESPONSE_TOO_BIG:
+    case HOTH_RES_RESPONSE_TOO_BIG:
       return "RESPONSE_TOO_BIG";
-    case HOTH_FW_BUS_ERROR:
+    case HOTH_RES_BUS_ERROR:
       return "BUS_ERROR";
-    case HOTH_FW_BUSY:
+    case HOTH_RES_BUSY:
       return "BUSY";
-    case HOTH_FW_INVALID_HEADER_VERSION:
+    case HOTH_RES_INVALID_HEADER_VERSION:
       return "INVALID_HEADER_VERSION";
-    case HOTH_FW_INVALID_HEADER_CRC:
+    case HOTH_RES_INVALID_HEADER_CRC:
       return "INVALID_HEADER_CRC";
-    case HOTH_FW_INVALID_DATA_CRC:
+    case HOTH_RES_INVALID_DATA_CRC:
       return "INVALID_DATA_CRC";
-    case HOTH_FW_DUP_UNAVAILABLE:
+    case HOTH_RES_DUP_UNAVAILABLE:
       return "DUP_UNAVAILABLE";
     default:
       return "UNKNOWN";
+  }
+}
+
+void libhoth_log_err(FILE* stream, libhoth_error err) {
+  if (err == HOTH_SUCCESS) {
+    return;
+  }
+
+  uint32_t ctx = LIBHOTH_ERR_GET_CTX(err);
+  uint16_t space = LIBHOTH_ERR_GET_SPACE(err);
+  uint32_t code = LIBHOTH_ERR_GET_CODE(err);
+
+  const char* ctx_str = libhoth_error_ctx_str(ctx);
+  const char* space_str = libhoth_error_space_str(space);
+  const char* code_str = NULL;
+
+  switch (space) {
+#ifdef LIBHOTH_SUPPORT_LIBUSB
+    case HOTH_HOST_SPACE_LIBUSB:
+      code_str = libusb_strerror(code);
+      break;
+#endif
+    case HOTH_HOST_SPACE_MTD:
+    case HOTH_HOST_SPACE_SPIDEV:
+      code_str = strerror(code);
+      break;
+    case HOTH_HOST_SPACE_EC:
+      code_str = libhoth_error_ec_str(code);
+      break;
+  }
+
+  if (code_str == NULL) {
+    fprintf(stream, "[%s][%s][0x%08X]\n", ctx_str, space_str, code);
+  } else {
+    fprintf(stream, "[%s][%s][%s]\n", ctx_str, space_str, code_str);
   }
 }

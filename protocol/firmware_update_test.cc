@@ -64,6 +64,6 @@ TEST_F(LibHothTest, firmware_update_test_failed_without_rebooting) {
   EXPECT_CALL(mock_, reconnect).Times(0);
   EXPECT_EQ(
       libhoth_firmware_update_from_flash_and_reset(&hoth_dev_, /*offset=*/0),
-      LIBHOTH_ERR_CONSTRUCT(HOTH_CTX_CMD_EXEC, HOTH_HOST_SPACE_FW,
+      LIBHOTH_ERR_CONSTRUCT(HOTH_CTX_CMD_EXEC, HOTH_HOST_SPACE_EC,
                             HOTH_RES_UNAVAILABLE));
 }
