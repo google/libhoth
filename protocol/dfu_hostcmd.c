@@ -14,6 +14,7 @@
 #include <unistd.h>
 
 #include "protocol/host_cmd.h"
+#include "protocol/status.h"
 
 static int generate_random_nonce(struct hoth_dfu_session_id* session_id) {
   ssize_t ret = getrandom(&session_id->nonce, sizeof(session_id->nonce), 0);
@@ -37,7 +38,7 @@ libhoth_error libhoth_dfu_update(struct libhoth_device* dev,
   };
   if (generate_random_nonce(&session_id) != 0) {
     fprintf(stderr, "Failed to generate random nonce.\n");
-    return LIBHOTH_ERR_CONSTRUCT(HOTH_CTX_CMD_EXEC, HOTH_HOST_SPACE_POSIX,
+    return LIBHOTH_ERR_CONSTRUCT(HOTH_CTX_CMD_EXEC, HOTH_HOST_SPACE_LIBHOTH,
                                  LIBHOTH_ERR_FAIL);
   }
 

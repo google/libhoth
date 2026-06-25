@@ -76,21 +76,8 @@ void htool_report_error(const char* cmd_name, libhoth_error err) {
     return;
   }
 
-  uint32_t ctx = LIBHOTH_ERR_GET_CTX(err);
-  uint16_t space = LIBHOTH_ERR_GET_SPACE(err);
-  uint16_t code = LIBHOTH_ERR_GET_CODE(err);
-
-  fprintf(stderr, "Error: '%s' failed (0x%016lx)\n", cmd_name, err);
-  fprintf(stderr, "  Context: %u (%s)\n", ctx, libhoth_error_ctx_str(ctx));
-  fprintf(stderr, "  Space:   %u (%s)\n", space,
-          libhoth_error_space_str(space));
-
-  if (space == HOTH_HOST_SPACE_FW) {
-    fprintf(stderr, "  Code:    %u (%s)\n", code,
-            libhoth_error_code_fw_str(code));
-  } else {
-    fprintf(stderr, "  Code:    %u\n", code);
-  }
+  fprintf(stderr, "Error: '%s' failed (0x%016lX): ", cmd_name, err);
+  libhoth_log_err(stderr, err);
 }
 
 static int command_usb_list(const struct htool_invocation* inv) {

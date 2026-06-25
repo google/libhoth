@@ -80,7 +80,7 @@ TEST_F(LibHothTest, response_failure_legacy_v2) {
                               sizeof(resp_buf), &out_resp_size);
   EXPECT_NE(err, HOTH_SUCCESS);
   EXPECT_EQ(LIBHOTH_ERR_GET_CTX(err), HOTH_CTX_CMD_EXEC);
-  EXPECT_EQ(LIBHOTH_ERR_GET_SPACE(err), HOTH_HOST_SPACE_FW);
+  EXPECT_EQ(LIBHOTH_ERR_GET_SPACE(err), HOTH_HOST_SPACE_EC);
   EXPECT_EQ(LIBHOTH_ERR_GET_CODE(err), 2);
 }
 
@@ -99,6 +99,6 @@ TEST_F(LibHothTest, response_failure_extended_v2) {
                               sizeof(resp_buf), &out_resp_size);
   EXPECT_NE(err, HOTH_SUCCESS);
   EXPECT_EQ(LIBHOTH_ERR_GET_CTX(err), HOTH_CTX_CMD_EXEC);
-  EXPECT_EQ(LIBHOTH_ERR_GET_SPACE(err), HOTH_HOST_SPACE_FW_EARLGREY);
+  EXPECT_EQ(LIBHOTH_ERR_GET_SPACE(err), HOTH_HOST_SPACE_PIEROT_ERR);
   EXPECT_EQ(LIBHOTH_ERR_GET_CODE(err), 0x89c70005);
 }

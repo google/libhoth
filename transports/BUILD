@@ -6,6 +6,9 @@ cc_library(
     name = "libhoth_device",
     srcs = ["libhoth_device.c"],
     hdrs = ["libhoth_device.h"],
+    deps = [
+        "//protocol:libhoth_status",
+    ],
 )
 
 cc_library(

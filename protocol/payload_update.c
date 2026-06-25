@@ -24,6 +24,7 @@
 #include "host_cmd.h"
 #include "payload_info.h"
 #include "progress.h"
+#include "status.h"
 #include "transports/libhoth_device.h"
 #include "util.h"
 
@@ -57,7 +58,7 @@ static int get_payload_update_version(struct libhoth_device* dev,
       dev, HOTH_CMD_BOARD_SPECIFIC_BASE + HOTH_PRV_CMD_HOTH_PAYLOAD_UPDATE,
       &version_mask);
   const bool get_version_unsupported =
-      (err == LIBHOTH_ERR_CONSTRUCT(HOTH_CTX_CMD_EXEC, HOTH_HOST_SPACE_FW,
+      (err == LIBHOTH_ERR_CONSTRUCT(HOTH_CTX_CMD_EXEC, HOTH_HOST_SPACE_EC,
                                     HOTH_RES_INVALID_COMMAND));
   const bool is_version_0 = (err == HOTH_SUCCESS && (version_mask & 0x2) == 0);
   if (get_version_unsupported || is_version_0) {
