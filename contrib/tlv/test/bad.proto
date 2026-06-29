@@ -1,0 +1,331 @@
+// Copyright 2026 Google LLC
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+syntax = "proto3";
+
+package openprot.tlv.test.bad;
+
+import "contrib/tlv/options.proto";
+
+message NestedMsg {
+  option (openprot.tlv.tlv_fourcc) = "NEST";
+  uint32 dummy = 1 [(openprot.tlv.offset) = 0];
+}
+
+// 1. Message with an unaligned offset for a 4-byte integer (offset 3 is not aligned to 4)
+message MessageUnalignedOffset {
+  option (openprot.tlv.tlv_fourcc) = "UNAL";
+  uint32 val = 1 [(openprot.tlv.offset) = 3];
+}
+
+// 2. Message with overlapping fields in the fixed struct (both naturally aligned, but overlapping)
+message MessageOverlappingFields {
+  option (openprot.tlv.tlv_fourcc) = "OVER";
+  uint64 val1 = 1 [(openprot.tlv.offset) = 0];  // Bytes 0-7 (aligned at 0)
+  uint32 val2 = 2 [(openprot.tlv.offset) = 4];  // Bytes 4-7 (aligned at 4, overlaps!)
+}
+
+// 4. Message with a primitive field missing the offset option
+message MessageMissingOffset {
+  option (openprot.tlv.tlv_fourcc) = "MOFF";
+  uint32 val = 1;  // Primitive integer missing offset
+}
+
+// 5. Message with a string field having an offset but missing explicit type
+message MessageMissingTypeOption {
+  option (openprot.tlv.tlv_fourcc) = "MSIZ";
+  string name = 1 [(openprot.tlv.offset) = 0];  // Missing type
+}
+
+// 6. Message with an invalid type override (u24 is invalid in Rust)
+message MessageInvalidTypeOption {
+  option (openprot.tlv.tlv_fourcc) = "ITYP";
+  uint32 val = 1 [
+    (openprot.tlv.offset) = 0,
+    (openprot.tlv.type) = "u24"
+  ];
+}
+
+// 7. Message with an unsupported field type (e.g. string without offset)
+message MessageUnsupportedFieldType {
+  option (openprot.tlv.tlv_fourcc) = "UNSP";
+  string name = 1;  // String without offset
+}
+
+// 8. Message with a missing bit_range option on a field in a bit-packed message
+message MessageMissingBitRange {
+  option (openprot.tlv.bit_packed) = "u32";
+  uint32 val1 = 1 [(openprot.tlv.bit_range) = "4:0"];
+  uint32 val2 = 2;  // Missing bit_range!
+}
+
+// 9. Message with offset or size options in a bit-packed message
+message MessageOffsetOrSizeInBitPacked {
+  option (openprot.tlv.bit_packed) = "u32";
+  uint32 val = 1 [
+    (openprot.tlv.bit_range) = "4:0",
+    (openprot.tlv.offset) = 0  // Not allowed in bit-packed!
+  ];
+}
+
+// 9b. Message with a type option in a bit-packed message
+message MessageTypeInBitPacked {
+  option (openprot.tlv.bit_packed) = "u32";
+  uint32 val = 1 [
+    (openprot.tlv.bit_range) = "4:0",
+    (openprot.tlv.type) = "u8"  // Not allowed in bit-packed!
+  ];
+}
+
+// 10. Message with bit_range on a non-packable type (string) in a bit-packed message
+message MessageBitRangeOnNonPackableType {
+  option (openprot.tlv.bit_packed) = "u32";
+  string name = 1 [(openprot.tlv.bit_range) = "7:0"];  // Non-packable!
+}
+
+// 11. Message with an invalid bit_range format
+message MessageInvalidBitRangeFormat {
+  option (openprot.tlv.bit_packed) = "u32";
+  uint32 val = 1 [(openprot.tlv.bit_range) = "7-0"];  // Invalid format!
+}
+
+// 11b. Message with an invalid bit_range order (high < low)
+message MessageInvalidBitRangeOrder {
+  option (openprot.tlv.bit_packed) = "u32";
+  uint32 val = 1 [(openprot.tlv.bit_range) = "3:4"];  // Invalid order!
+}
+
+// 11c. Message with bit-level overlapping fields inside the register
+message MessageOverlappingBits {
+  option (openprot.tlv.bit_packed) = "u32";
+  uint32 val1 = 1 [(openprot.tlv.bit_range) = "15:0"];
+  uint32 val2 = 2 [(openprot.tlv.bit_range) = "16:15"];  // Overlaps on bit 15!
+}
+
+message NestedMsgWithTlv {
+  option (openprot.tlv.tlv_fourcc) = "DYN_";
+  NestedMsg sub = 1;  // Dynamic sub-TLV!
+}
+
+// 12. Message with a nested message that has an offset but is not packable (it has a dynamic sub-TLV)
+message MessageNestedMessageNotPackable {
+  option (openprot.tlv.tlv_fourcc) = "NNPK";
+  NestedMsgWithTlv nested = 1 [(openprot.tlv.offset) = 0];
+}
+
+message LargeNestedMsg {
+  uint32 val1 = 1 [(openprot.tlv.offset) = 0];
+  uint32 val2 = 2 [(openprot.tlv.offset) = 4];
+  uint32 val3 = 3 [(openprot.tlv.offset) = 8];
+  uint32 val4 = 4 [(openprot.tlv.offset) = 12];
+}
+
+// 13. Message with a field overlapping an inline nested standard struct (fixed sub-message)
+message MessageOverlapFixedSubMessage {
+  option (openprot.tlv.tlv_fourcc) = "OLFS";
+  LargeNestedMsg sub = 1 [(openprot.tlv.offset) = 0];  // Range 0..16
+  uint32 val = 2 [(openprot.tlv.offset) = 12];         // Range 12..16, overlaps sub!
+}
+
+message LargePackedRegister {
+  option (openprot.tlv.bit_packed) = "u32";
+  uint32 val1 = 1 [(openprot.tlv.bit_range) = "15:0"];
+  uint32 val2 = 2 [(openprot.tlv.bit_range) = "31:16"];
+}
+
+// 14. Message with a field overlapping an inline nested bit-packed message
+message MessageOverlapBitPacked {
+  option (openprot.tlv.tlv_fourcc) = "OLBP";
+  LargePackedRegister reg = 1 [(openprot.tlv.offset) = 0];  // Range 0..4
+  uint32 val = 2 [(openprot.tlv.offset) = 0];               // Range 0..4, overlaps reg!
+}
+
+// 15. Message with bit_range high bit out of bounds for backing width (8 is out of bounds for u8/8-bit!)
+message MessageBitPackedWidthExceeded {
+  option (openprot.tlv.bit_packed) = "u8";
+  uint32 val1 = 1 [(openprot.tlv.bit_range) = "4:0"];
+  uint32 val2 = 2 [(openprot.tlv.bit_range) = "8:5"];  // High bit 8 is out of bounds!
+}
+
+// 16. Message with an invalid bit_packed backing type string
+message MessageInvalidBitPackedType {
+  option (openprot.tlv.bit_packed) = "u64";  // Invalid backing type!
+  uint32 val = 1 [(openprot.tlv.bit_range) = "7:0"];
+}
+
+// 17. Message with a bit-packed message nested without offset (invalid, cannot be tlv!)
+message MessageBitPackedAsTlv {
+  option (openprot.tlv.tlv_fourcc) = "BPTL";
+  LargePackedRegister reg = 1;  // Missing offset!
+}
+
+// 18. Message that is bit-packed and specifies a tlv_fourcc option (invalid!)
+message MessageBitPackedWithFourcc {
+  option (openprot.tlv.bit_packed) = "u32";
+  option (openprot.tlv.tlv_fourcc) = "BPFC";
+  uint32 val = 1 [(openprot.tlv.bit_range) = "7:0"];
+}
+
+// 19. Message with an unaligned nested bit-packed message (size 4, offset 2)
+message MessageUnalignedBitPacked {
+  option (openprot.tlv.tlv_fourcc) = "UNBP";
+  LargePackedRegister reg = 1 [(openprot.tlv.offset) = 2];
+}
+
+// 20. Message with an unaligned nested standard struct (max_align 4, offset 2)
+message MessageUnalignedNestedStruct {
+  option (openprot.tlv.tlv_fourcc) = "UNNS";
+  LargeNestedMsg sub = 1 [(openprot.tlv.offset) = 2];
+}
+
+// 21. Message with an inline string of size 0
+message MessageZeroSizeInlineString {
+  option (openprot.tlv.tlv_fourcc) = "ZSTR";
+  string name = 1 [
+    (openprot.tlv.offset) = 0,
+    (openprot.tlv.type) = "[u8; 0]"
+  ];
+}
+
+// 22. Message with a nested message inside a bit-packed message (invalid!)
+message MessageNestedMessageInBitPacked {
+  option (openprot.tlv.bit_packed) = "u32";
+  NestedMsg nested = 1 [(openprot.tlv.bit_range) = "7:0"];
+}
+
+// 23. Message with a float inside a bit-packed message (invalid!)
+message MessageFloatInBitPacked {
+  option (openprot.tlv.bit_packed) = "u32";
+  float val = 1 [(openprot.tlv.bit_range) = "7:0"];
+}
+
+// 24. Message with an unaligned inline string (size 16, type [u32; 4], offset 3 is not aligned to 4)
+message MessageUnalignedInlineString {
+  option (openprot.tlv.tlv_fourcc) = "UNST";
+  string name = 1 [
+    (openprot.tlv.offset) = 3,
+    (openprot.tlv.type) = "[u32; 4]"
+  ];
+}
+
+// 25. Message with an unaligned inline bytes (size 16, type [u32; 4], offset 3 is not aligned to 4)
+message MessageUnalignedInlineBytes {
+  option (openprot.tlv.tlv_fourcc) = "UNBY";
+  bytes data = 1 [
+    (openprot.tlv.offset) = 3,
+    (openprot.tlv.type) = "[u32; 4]"
+  ];
+}
+
+// 26. Message with a standalone boolean field (not allowed, cannot derive FromBytes)
+message MessageStandaloneBool {
+  option (openprot.tlv.tlv_fourcc) = "BOOL";
+  bool val = 1 [(openprot.tlv.offset) = 0];
+}
+
+// 27. Message with signedness mismatch: signed proto type mapped to unsigned TLV type
+message MessageSignednessMismatchSignedToUnsigned {
+  option (openprot.tlv.tlv_fourcc) = "MSM1";
+  sint32 val = 1 [
+    (openprot.tlv.offset) = 0,
+    (openprot.tlv.type) = "u8"
+  ];
+}
+
+// 28. Message with signedness mismatch: unsigned proto type mapped to signed TLV type
+message MessageSignednessMismatchUnsignedToSigned {
+  option (openprot.tlv.tlv_fourcc) = "MSM2";
+  uint32 val = 1 [
+    (openprot.tlv.offset) = 0,
+    (openprot.tlv.type) = "i8"
+  ];
+}
+
+// 29. Message with float-to-integer mismatch
+message MessageFloatToIntegerMismatch {
+  option (openprot.tlv.tlv_fourcc) = "FIM1";
+  float val = 1 [
+    (openprot.tlv.offset) = 0,
+    (openprot.tlv.type) = "i32"
+  ];
+}
+
+// 30. Message with integer-to-float mismatch
+message MessageIntegerToFloatMismatch {
+  option (openprot.tlv.tlv_fourcc) = "FIM2";
+  int32 val = 1 [
+    (openprot.tlv.offset) = 0,
+    (openprot.tlv.type) = "f32"
+  ];
+}
+
+// 31. Message with a boolean array (not allowed)
+message MessageBooleanArray {
+  option (openprot.tlv.tlv_fourcc) = "BAR1";
+  bytes val = 1 [
+    (openprot.tlv.offset) = 0,
+    (openprot.tlv.type) = "[bool; 4]"
+  ];
+}
+
+// 32. Message with a repeated field that has a custom offset option (not allowed)
+message MessageRepeatedFieldWithOffset {
+  option (openprot.tlv.tlv_fourcc) = "REPO";
+  repeated uint32 values = 1 [(openprot.tlv.offset) = 0];
+}
+
+// 33. Message with a oneof field that has a custom offset option (not allowed)
+message MessageOneofFieldWithOffset {
+  option (openprot.tlv.tlv_fourcc) = "ONEO";
+  oneof my_oneof {
+    uint32 val = 1 [(openprot.tlv.offset) = 0];
+  }
+}
+// 34. Message with a nested message acting as a dynamic sub-TLV, but the nested message lacks a tlv_fourcc option
+message MissingFourccSub {
+  uint32 val = 1 [(openprot.tlv.offset) = 0];
+}
+
+message MessageWithMissingFourccSub {
+  option (openprot.tlv.tlv_fourcc) = "MFOU";
+  MissingFourccSub sub = 1;
+}
+
+// 35. Message with duplicate sub-TLV tags (FakeGpu and FakeNpu share the same tag ACCL)
+message FakeGpu {
+  option (openprot.tlv.tlv_fourcc) = "ACCL";
+  uint32 cores = 1 [(openprot.tlv.offset) = 0];
+}
+
+message FakeNpu {
+  option (openprot.tlv.tlv_fourcc) = "ACCL";
+  uint32 tops = 1 [(openprot.tlv.offset) = 0];
+}
+
+message MessageWithDuplicateTlvTags {
+  option (openprot.tlv.tlv_fourcc) = "DUPL";
+  FakeGpu gpu = 1;
+  FakeNpu npu = 2;
+}
+
+// 36. Circular inline nested messages (CircularA contains CircularB inline, CircularB contains CircularA inline)
+message CircularA {
+  option (openprot.tlv.tlv_fourcc) = "CIRA";
+  CircularB b = 1 [(openprot.tlv.offset) = 0];
+}
+
+message CircularB {
+  option (openprot.tlv.tlv_fourcc) = "CIRB";
+  CircularA a = 1 [(openprot.tlv.offset) = 0];
+}
