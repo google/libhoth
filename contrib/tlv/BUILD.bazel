@@ -12,7 +12,15 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-load("@rules_rust//rust:defs.bzl", "rust_library", "rust_test")
+load("@protobuf//bazel:proto_library.bzl", "proto_library")
+load("@rules_rust//rust:defs.bzl", "rust_binary", "rust_library", "rust_test")
+
+proto_library(
+    name = "options_proto",
+    srcs = ["options.proto"],
+    visibility = ["//visibility:public"],
+    deps = ["@protobuf//:descriptor_proto"],
+)
 
 rust_library(
     name = "tlv",
@@ -31,8 +39,102 @@ rust_library(
     ],
 )
 
+rust_library(
+    name = "proto_conv",
+    srcs = ["proto_conv.rs"],
+    crate_name = "mutask_tlv_proto_conv",
+    edition = "2024",
+    visibility = ["//visibility:public"],
+    deps = [
+        ":proto_meta",
+        ":tlv",
+        "//contrib/proto:descriptor_rust_proto",
+        "//contrib/proto:reader",
+        "//contrib/proto:reflect",
+        "//third_party:zerocopy",
+        "@protobuf//rust:protobuf",
+    ],
+)
+
+rust_library(
+    name = "proto_meta",
+    srcs = ["proto_meta.rs"],
+    compile_data = ["//contrib/tlv/test:bad_proto"],
+    crate_name = "mutask_tlv_proto_meta",
+    data = ["//contrib/tlv/test:bad_proto"],
+    edition = "2024",
+    rustc_env = {
+        "BAD_PROTO_DESCRIPTOR_SET": "$(location //contrib/tlv/test:bad_proto)",
+    },
+    visibility = ["//visibility:public"],
+    deps = [
+        "//contrib/proto:descriptor_rust_proto",
+        "//contrib/proto:reader",
+        "//contrib/proto:reflect",
+        "@protobuf//rust:protobuf",
+    ],
+)
+
+rust_test(
+    name = "proto_conv_test",
+    crate = ":proto_conv",
+    edition = "2024",
+    deps = [
+        "//contrib/tlv/test:edge_cases_rust_proto",
+        "//contrib/tlv/test:edge_cases_tlv",
+        "//contrib/tlv/test:soc_rust_proto",
+        "//contrib/tlv/test:soc_tlv",
+    ],
+)
+
+rust_test(
+    name = "proto_meta_test",
+    crate = ":proto_meta",
+    edition = "2024",
+    deps = [
+        "//contrib/tlv/test:bad_rust_proto",
+        "//contrib/tlv/test:edge_cases_rust_proto",
+    ],
+)
+
 rust_test(
     name = "tlv_test",
     crate = ":tlv",
+    edition = "2024",
+)
+
+rust_binary(
+    name = "codegen",
+    srcs = ["codegen.rs"],
+    edition = "2024",
+    visibility = ["//visibility:public"],
+    deps = [
+        ":proto_meta",
+        "//contrib/proto:descriptor_rust_proto",
+        "//contrib/proto:reflect",
+        "//third_party:anyhow",
+        "//third_party:argh",
+        "//third_party:proc_macro2",
+        "//third_party:quote",
+        "@protobuf//rust:protobuf",
+    ],
+)
+
+rust_test(
+    name = "codegen_test",
+    srcs = [
+        "codegen_test.rs",
+    ],
+    edition = "2024",
+    deps = [
+        ":tlv",
+        "//contrib/tlv/test:edge_cases_tlv",
+        "//contrib/tlv/test:soc_tlv",
+    ],
+)
+
+rust_test(
+    name = "codegen_unit_test",
+    crate = ":codegen",
     edition = "2024",
 )
