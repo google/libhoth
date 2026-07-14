@@ -23,6 +23,7 @@ extern "C" {
 
 #define HOTH_PRV_CMD_SET_TPM_MODE 0x0051
 #define HOTH_PRV_CMD_GET_TPM_MODE 0x0052
+#define HOTH_PRV_CMD_HOTH_TPM 0x0033
 
 enum ec_tpm_mode {
   TPM_MODE_DISABLED = 0,  // Turn the TPM off: typically used to turn off one
@@ -38,6 +39,7 @@ struct tpm_mode {
 
 int htool_set_tpm_mode(const struct htool_invocation* inv);
 int htool_get_tpm_mode(const struct htool_invocation* inv);
+int htool_security_startup(const struct htool_invocation* inv);
 
 #ifdef __cplusplus
 }

@@ -2039,6 +2039,12 @@ static const struct htool_cmd CMDS[] = {
                 {}},
     },
     {
+        .verbs = (const char*[]){"security", "startup", NULL},
+        .desc = "Send TPM2_Startup(CLEAR) command to initialize the TPM.",
+        .params = (const struct htool_param[]){{}},
+        .func = htool_security_startup,
+    },
+    {
         .verbs = (const char*[]){"mauv", "compiled", NULL},
         .desc = "Get compiled MAUV",
         .params = (const struct htool_param[]){{}},

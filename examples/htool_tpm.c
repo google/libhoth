@@ -21,6 +21,7 @@
 #include "host_commands.h"
 #include "htool.h"
 #include "htool_cmd.h"
+#include "htool_security_version.h"
 #include "transports/libhoth_device.h"
 
 int htool_set_tpm_mode(const struct htool_invocation* inv) {
@@ -85,4 +86,44 @@ int htool_get_tpm_mode(const struct htool_invocation* inv) {
   printf("TPM mode: %s (%u)\n", mode_str, resp.mode);
 
   return 0;
+}
+
+int htool_security_startup(const struct htool_invocation* inv) {
+  struct libhoth_device* dev = htool_libhoth_device();
+  if (!dev) {
+    return -1;
+  }
+
+  libhoth_security_version sv = htool_get_security_version(dev);
+  switch (sv) {
+    case LIBHOTH_SECURITY_V2: {
+      fprintf(stderr, "security startup is not supported on Security V2\n");
+      return 0;
+    }
+    case LIBHOTH_SECURITY_V3: {
+      // Standard 12-byte TPM2_Startup(CLEAR) command packet
+      static const uint8_t req[12] = {
+          0x80, 0x01,              // TPM_ST_NO_SESSIONS
+          0x00, 0x00, 0x00, 0x0c,  // paramSize = 12
+          0x00, 0x00, 0x01, 0x44,  // TPM_CC_Startup
+          0x00, 0x00               // TPM_SU_CLEAR
+      };
+
+      uint8_t resp[32];
+      size_t resp_size = 0;
+      int ret = libhoth_hostcmd_exec(
+          dev, HOTH_CMD_BOARD_SPECIFIC_BASE + HOTH_PRV_CMD_HOTH_TPM, 0, req,
+          sizeof(req), resp, sizeof(resp), &resp_size);
+      if (ret) {
+        htool_report_error("security startup", ret);
+        return ret;
+      }
+
+      printf("TPM2_Startup(CLEAR) sent successfully.\n");
+      return 0;
+    }
+    default: {
+      return -1;
+    }
+  }
 }
