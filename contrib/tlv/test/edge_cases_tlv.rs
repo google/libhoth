@@ -16,6 +16,7 @@
 // To regenerate, run:
 //     bazel run //contrib/tlv/test:edge_cases_tlv_update
 
+#![no_std]
 #![allow(non_camel_case_types)]
 #![allow(non_snake_case)]
 #![allow(unused_imports)]

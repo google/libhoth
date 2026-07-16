@@ -97,6 +97,7 @@ fn main() -> Result<()> {
         ));
     }
     out.push('\n');
+    out.push_str("#![no_std]\n");
     out.push_str("#![allow(non_camel_case_types)]\n");
     out.push_str("#![allow(non_snake_case)]\n");
     out.push_str("#![allow(unused_imports)]\n");
