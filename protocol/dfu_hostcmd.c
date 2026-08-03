@@ -13,7 +13,10 @@
 #include <time.h>
 #include <unistd.h>
 
+#include "protocol/dfu_check.h"
+#include "protocol/dfu_hostcmd.h"
 #include "protocol/host_cmd.h"
+#include "protocol/opentitan_version.h"
 #include "protocol/status.h"
 
 static int generate_random_nonce(struct hoth_dfu_session_id* session_id) {
@@ -98,5 +101,126 @@ libhoth_error libhoth_dfu_update(struct libhoth_device* dev,
     return LIBHOTH_ERR_CONSTRUCT(HOTH_CTX_CMD_EXEC, HOTH_HOST_SPACE_LIBHOTH,
                                  ret);
   }
+  return HOTH_SUCCESS;
+}
+
+static int dfu_update_count(
+    const struct opentitan_image_version* desired_romext,
+    const struct opentitan_image_version* desired_app,
+    const struct opentitan_get_version_resp* resp) {
+  uint32_t rom_ext_boot_slot = bootslot_int(resp->rom_ext.booted_slot);
+  uint32_t rom_ext_stage_slot = rom_ext_boot_slot == 0 ? 1 : 0;
+  uint32_t app_boot_slot = bootslot_int(resp->app.booted_slot);
+  uint32_t app_stage_slot = app_boot_slot == 0 ? 1 : 0;
+
+  const struct opentitan_image_version* booted_romext =
+      &resp->rom_ext.slots[rom_ext_boot_slot];
+  const struct opentitan_image_version* staged_romext =
+      &resp->rom_ext.slots[rom_ext_stage_slot];
+  const struct opentitan_image_version* booted_app =
+      &resp->app.slots[app_boot_slot];
+  const struct opentitan_image_version* staged_app =
+      &resp->app.slots[app_stage_slot];
+
+  bool booted_needs_update =
+      (libhoth_ot_app_version_cmp_for_update(booted_app, desired_app) != 0) ||
+      (libhoth_ot_rom_ext_version_cmp_for_update(booted_romext,
+                                                 desired_romext) < 0);
+
+  if (booted_needs_update) {
+    printf(
+        "The current bootslot is not the desired version. Performing DFU "
+        "update x2...\n");
+    return 2;
+  }
+
+  bool staging_needs_update =
+      (libhoth_ot_app_version_cmp_for_update(staged_app, desired_app) != 0) ||
+      (libhoth_ot_rom_ext_version_cmp_for_update(staged_romext,
+                                                 desired_romext) < 0);
+
+  if (staging_needs_update) {
+    printf(
+        "Only the staging slot needs updating. Performing DFU update x1...\n");
+    return 1;
+  }
+
+  printf("Device is already at the desired version. No DFU update needed.\n");
+  return 0;
+}
+
+libhoth_error libhoth_dfu_install_firmware(struct libhoth_device* dev,
+                                           const uint8_t* image,
+                                           size_t image_size,
+                                           uint32_t complete_flags) {
+  if (dev == NULL || image == NULL) {
+    return LIBHOTH_ERR_CONSTRUCT(HOTH_CTX_CMD_EXEC, HOTH_HOST_SPACE_LIBHOTH,
+                                 LIBHOTH_ERR_INVALID_PARAMETER);
+  }
+
+  struct opentitan_image_version desired_rom_ext = {0};
+  struct opentitan_image_version desired_app = {0};
+  struct opentitan_get_version_resp resp = {0};
+
+  int retval = libhoth_extract_ot_bundle(image, image_size, &desired_rom_ext,
+                                         &desired_app);
+  if (retval != 0) {
+    fprintf(stderr, "Failed to extract bundle (%d)\n", retval);
+    return LIBHOTH_ERR_CONSTRUCT(HOTH_CTX_CMD_EXEC, HOTH_HOST_SPACE_LIBHOTH,
+                                 retval);
+  }
+
+  retval = libhoth_opentitan_version(dev, &resp);
+  if (retval != 0) {
+    fprintf(stderr, "Failed to get current version (%d)\n", retval);
+    return LIBHOTH_ERR_CONSTRUCT(HOTH_CTX_CMD_EXEC, HOTH_HOST_SPACE_LIBHOTH,
+                                 retval);
+  }
+
+  if (desired_app.security_version < resp.bl0_min_sec_ver) {
+    fprintf(
+        stderr,
+        "Desired application firmware security version %u is less than "
+        "currently enforced minimum application firmware security version %u\n",
+        desired_app.security_version, resp.bl0_min_sec_ver);
+    return LIBHOTH_ERR_CONSTRUCT(HOTH_CTX_CMD_EXEC, HOTH_HOST_SPACE_LIBHOTH,
+                                 LIBHOTH_ERR_INVALID_PARAMETER);
+  }
+
+  int update_cnt = dfu_update_count(&desired_rom_ext, &desired_app, &resp);
+
+  for (int i = 0; i < update_cnt; i++) {
+    libhoth_error err =
+        libhoth_dfu_update(dev, image, image_size, complete_flags);
+    if (err != HOTH_SUCCESS) {
+      return err;
+    }
+
+    retval = libhoth_opentitan_version(dev, &resp);
+    if (retval != 0) {
+      fprintf(stderr, "Failed to get ot version after dfu update (%d)\n",
+              retval);
+      return LIBHOTH_ERR_CONSTRUCT(HOTH_CTX_CMD_EXEC, HOTH_HOST_SPACE_LIBHOTH,
+                                   retval);
+    }
+
+    if (!libhoth_ot_check_update_successful(&resp, &desired_rom_ext,
+                                            &desired_app)) {
+      fprintf(stderr, "Boot slot is wrong after dfu update %d\n", i);
+      return LIBHOTH_ERR_CONSTRUCT(HOTH_CTX_CMD_EXEC, HOTH_HOST_SPACE_LIBHOTH,
+                                   LIBHOTH_ERR_FAIL);
+    }
+  }
+
+  libhoth_error update_err =
+      libhoth_update_complete(&resp, &desired_rom_ext, &desired_app);
+  if (update_err != HOTH_SUCCESS) {
+    fprintf(stderr,
+            "DFU update failed, running image does not match expected after %d "
+            "dfu updates\n",
+            update_cnt);
+    return update_err;
+  }
+
   return HOTH_SUCCESS;
 }

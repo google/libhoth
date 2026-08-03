@@ -104,6 +104,24 @@ libhoth_error libhoth_dfu_update(struct libhoth_device* dev,
                                  const uint8_t* image, size_t image_size,
                                  uint32_t complete_flags);
 
+/**
+ * @brief Install firmware onto the device using DFU host commands.
+ *
+ * Performs whatever updates are necessary to ensure that both internal A/B
+ * partitions match the provided firmware image.
+ *
+ * @param dev The libhoth device handle.
+ * @param image A pointer to the firmware image data.
+ * @param image_size The size of the firmware image in bytes.
+ * @param complete_flags Flags to be passed to the DFU complete command,
+ *                       e.g., HOTH_DFU_COMPLETE_FLAGS_COLD_RESTART.
+ * @return HOTH_SUCCESS on success, or a libhoth_error code on failure.
+ */
+libhoth_error libhoth_dfu_install_firmware(struct libhoth_device* dev,
+                                           const uint8_t* image,
+                                           size_t image_size,
+                                           uint32_t complete_flags);
+
 #ifdef __cplusplus
 }
 #endif

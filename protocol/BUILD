@@ -552,8 +552,10 @@ cc_library(
     srcs = ["dfu_hostcmd.c"],
     hdrs = ["dfu_hostcmd.h"],
     deps = [
+        ":dfu_check",
         ":host_cmd",
         ":libhoth_status",
+        ":opentitan_version",
         "//transports:libhoth_device",
     ],
 )
