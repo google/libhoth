@@ -622,3 +622,7 @@ cc_test(
     ],
 )
 
+filegroup(
+  name = "headers",
+  srcs = glob(["*.h"])
+)
