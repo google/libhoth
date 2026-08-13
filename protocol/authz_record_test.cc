@@ -49,7 +49,7 @@ TEST_F(LibHothTest, authz_erase_test) {
       .WillOnce(DoAll(CopyResp(&dummy, 0), Return(LIBHOTH_ERR_TIMEOUT)));
 
   EXPECT_EQ(libhoth_authz_record_erase(&hoth_dev_),
-            LIBHOTH_ERR_CONSTRUCT(HOTH_CTX_CMD_EXEC, HOTH_HOST_SPACE_LIBHOTH,
+            LIBHOTH_ERR_CONSTRUCT(HOTH_CTX_NONE, HOTH_HOST_SPACE_LIBHOTH,
                                   LIBHOTH_ERR_TIMEOUT));
 }
 

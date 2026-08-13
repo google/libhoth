@@ -38,6 +38,17 @@ struct libhoth_device {
   int (*reconnect)(struct libhoth_device* dev);
 
   void* user_ctx;
+
+  // --- New Interface (V2) ---
+  libhoth_error (*send_v2)(struct libhoth_device* dev, const void* request,
+                           size_t request_size);
+  libhoth_error (*receive_v2)(struct libhoth_device* dev, void* response,
+                              size_t max_response_size, size_t* actual_size,
+                              int timeout_ms);
+  libhoth_error (*close_v2)(struct libhoth_device* dev);
+  libhoth_error (*claim_v2)(struct libhoth_device* dev);
+  libhoth_error (*release_v2)(struct libhoth_device* dev);
+  libhoth_error (*reconnect_v2)(struct libhoth_device* dev);
 };
 
 // Request is a buffer containing the EC request header and trailing payload.
@@ -68,6 +79,24 @@ int libhoth_device_close(struct libhoth_device* dev);
 int libhoth_claim_device(struct libhoth_device* dev, uint32_t timeout_us);
 
 int libhoth_release_device(struct libhoth_device* dev);
+
+// --- New V2 Helper Functions ---
+libhoth_error libhoth_send_request_v2(struct libhoth_device* dev,
+                                      const void* request, size_t request_size);
+
+libhoth_error libhoth_receive_response_v2(struct libhoth_device* dev,
+                                          void* response,
+                                          size_t max_response_size,
+                                          size_t* actual_size, int timeout_ms);
+
+libhoth_error libhoth_device_reconnect_v2(struct libhoth_device* dev);
+
+libhoth_error libhoth_device_close_v2(struct libhoth_device* dev);
+
+libhoth_error libhoth_claim_device_v2(struct libhoth_device* dev,
+                                      uint32_t timeout_us);
+
+libhoth_error libhoth_release_device_v2(struct libhoth_device* dev);
 
 #ifdef __cplusplus
 }

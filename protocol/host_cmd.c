@@ -226,11 +226,12 @@ libhoth_error libhoth_hostcmd_exec_v2(struct libhoth_device* dev,
     return LIBHOTH_ERR_CONSTRUCT(HOTH_CTX_CMD_EXEC, HOTH_HOST_SPACE_LIBHOTH,
                                  status);
   }
-  status = libhoth_send_request(dev, &req, sizeof(req.hdr) + req_payload_size);
-  if (status != LIBHOTH_OK) {
-    fprintf(stderr, "libhoth_send_request() failed: %d\n", status);
-    return LIBHOTH_ERR_CONSTRUCT(HOTH_CTX_CMD_EXEC, HOTH_HOST_SPACE_LIBHOTH,
-                                 status);
+  libhoth_error err =
+      libhoth_send_request_v2(dev, &req, sizeof(req.hdr) + req_payload_size);
+  if (err != HOTH_SUCCESS) {
+    fprintf(stderr, "libhoth_send_request_v2() failed: 0x%016llx\n",
+            (unsigned long long)err);
+    return err;
   }
   struct {
     struct hoth_host_response hdr;
@@ -238,12 +239,12 @@ libhoth_error libhoth_hostcmd_exec_v2(struct libhoth_device* dev,
         payload_buf[LIBHOTH_MAILBOX_SIZE - sizeof(struct hoth_host_response)];
   } resp;
   size_t resp_size = 0;
-  status = libhoth_receive_response(dev, &resp, sizeof(resp), &resp_size,
+  err = libhoth_receive_response_v2(dev, &resp, sizeof(resp), &resp_size,
                                     HOTH_CMD_TIMEOUT_MS_DEFAULT);
-  if (status != LIBHOTH_OK) {
-    fprintf(stderr, "libhoth_receive_response() failed: %d\n", status);
-    return LIBHOTH_ERR_CONSTRUCT(HOTH_CTX_CMD_EXEC, HOTH_HOST_SPACE_LIBHOTH,
-                                 status);
+  if (err != HOTH_SUCCESS) {
+    fprintf(stderr, "libhoth_receive_response_v2() failed: 0x%016llx\n",
+            (unsigned long long)err);
+    return err;
   }
   status = validate_ec_response_header(&resp.hdr, resp.payload_buf, resp_size);
   if (status != LIBHOTH_OK) {

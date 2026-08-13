@@ -20,6 +20,7 @@ static int reconnect(struct libhoth_device* dev) {
 }
 
 LibHothTest::LibHothTest() {
+  std::memset(&hoth_dev_, 0, sizeof(hoth_dev_));
   hoth_dev_.user_ctx = &mock_;
   hoth_dev_.send = send;
   hoth_dev_.receive = receive;
