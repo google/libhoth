@@ -25,6 +25,12 @@ extern "C" {
 
 struct libhoth_device;
 
+enum libhoth_spi_mode {
+  LIBHOTH_SPI_MODE_SINGLE = 0,
+  LIBHOTH_SPI_MODE_DUAL,
+  LIBHOTH_SPI_MODE_QUAD,
+};
+
 struct libhoth_spi_device_init_options {
   // The device filepath to open
   const char* path;
@@ -34,6 +40,7 @@ struct libhoth_spi_device_init_options {
   int mode;
   int speed;
   int atomic;
+  enum libhoth_spi_mode operation_mode;
   uint32_t device_busy_wait_timeout;
   uint32_t device_busy_wait_check_interval;
   uint32_t timeout_us;
@@ -43,6 +50,8 @@ struct libhoth_spi_device {
   int fd;
   unsigned int mailbox_address;
   bool address_mode_4b;
+  enum libhoth_spi_mode mode;
+  uint32_t original_mode;
 
   void* buffered_request;
   size_t buffered_request_size;
@@ -55,7 +64,10 @@ enum {
   SPI_NOR_OPCODE_READ_STATUS = 0x05,
   SPI_NOR_OPCODE_WRITE_ENABLE = 0x06,
   SPI_NOR_OPCODE_PAGE_PROGRAM = 0x02,
+  SPI_NOR_OPCODE_QUAD_PAGE_PROGRAM = 0x38,
   SPI_NOR_OPCODE_SLOW_READ = 0x03,
+  SPI_NOR_OPCODE_DUAL_READ = 0x3B,
+  SPI_NOR_OPCODE_QUAD_READ = 0x6B,
   SPI_NOR_FLASH_PAGE_SIZE = 256,  // in bytes
 };
 
