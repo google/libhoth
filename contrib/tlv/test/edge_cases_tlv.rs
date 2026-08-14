@@ -455,3 +455,100 @@ impl ::mutask_tlv::TlvObject for SiblingInlineParent {
         ::mutask_tlv::unpad(header, extra)
     }
 }
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, FromBytes, IntoBytes, Immutable, KnownLayout)]
+#[repr(C)]
+pub struct RawBytesExtensionTest {}
+const _: () = {
+    assert!(::core::mem::align_of::<RawBytesExtensionTest>() <= 4);
+    assert!(::core::mem::size_of::<RawBytesExtensionTest>() == 0usize);
+};
+impl ::core::default::Default for RawBytesExtensionTest {
+    fn default() -> Self {
+        ::zerocopy::FromZeros::new_zeroed()
+    }
+}
+impl ::mutask_tlv::TlvObject for RawBytesExtensionTest {
+    type Extension = [u8];
+    const TAG: u32 = u32::from_le_bytes(*b"RBXT");
+    fn make_ext<'a>(header: &::mutask_tlv::TlvHeader, extra: &'a [u32]) -> &'a Self::Extension {
+        ::mutask_tlv::unpad(header, extra)
+    }
+}
+pub trait RawBytesExtensionTestExt<'a> {
+    fn payload(&self) -> &'a [u8];
+}
+impl<'a> RawBytesExtensionTestExt<'a> for ::mutask_tlv::TlvItem<'a, RawBytesExtensionTest> {
+    fn payload(&self) -> &'a [u8] {
+        use ::mutask_tlv::TlvQuery;
+        self.ext()
+    }
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, FromBytes, IntoBytes, Immutable, KnownLayout)]
+#[repr(C)]
+pub struct StringExtensionTest {}
+const _: () = {
+    assert!(::core::mem::align_of::<StringExtensionTest>() <= 4);
+    assert!(::core::mem::size_of::<StringExtensionTest>() == 0usize);
+};
+impl ::core::default::Default for StringExtensionTest {
+    fn default() -> Self {
+        ::zerocopy::FromZeros::new_zeroed()
+    }
+}
+impl ::mutask_tlv::TlvObject for StringExtensionTest {
+    type Extension = [u8];
+    const TAG: u32 = u32::from_le_bytes(*b"SEXT");
+    fn make_ext<'a>(header: &::mutask_tlv::TlvHeader, extra: &'a [u32]) -> &'a Self::Extension {
+        ::mutask_tlv::unpad(header, extra)
+    }
+}
+pub trait StringExtensionTestExt<'a> {
+    fn text(&self) -> &'a ::bstr::BStr;
+}
+impl<'a> StringExtensionTestExt<'a> for ::mutask_tlv::TlvItem<'a, StringExtensionTest> {
+    fn text(&self) -> &'a ::bstr::BStr {
+        use ::mutask_tlv::TlvQuery;
+        ::bstr::BStr::new(self.ext())
+    }
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, FromBytes, IntoBytes, Immutable, KnownLayout)]
+#[repr(C)]
+pub struct ExtensionContainer {
+    pub id: u32,
+}
+const _: () = {
+    assert!(::core::mem::offset_of!(ExtensionContainer, id) == 0usize);
+    assert!(::core::mem::align_of::<ExtensionContainer>() <= 4);
+    assert!(::core::mem::size_of::<ExtensionContainer>() == 4usize);
+};
+impl ::core::default::Default for ExtensionContainer {
+    fn default() -> Self {
+        ::zerocopy::FromZeros::new_zeroed()
+    }
+}
+impl ::mutask_tlv::TlvObject for ExtensionContainer {
+    type Extension = ::mutask_tlv::TlvData;
+    const TAG: u32 = u32::from_le_bytes(*b"EXCT");
+    fn make_ext<'a>(_header: &::mutask_tlv::TlvHeader, extra: &'a [u32]) -> &'a Self::Extension {
+        ::mutask_tlv::TlvData::overlay(extra)
+    }
+}
+pub trait ExtensionContainerExt<'a> {
+    fn child_ext(&self) -> Option<::mutask_tlv::TlvItem<'a, RawBytesExtensionTest>>;
+    fn next_child(&self) -> Option<::mutask_tlv::TlvItem<'a, RegisterContainer>>;
+}
+impl<'a> ExtensionContainerExt<'a> for ::mutask_tlv::TlvItem<'a, ExtensionContainer> {
+    fn child_ext(&self) -> Option<::mutask_tlv::TlvItem<'a, RawBytesExtensionTest>> {
+        ::mutask_tlv::TlvQuery::ext(self)
+            .iter::<RawBytesExtensionTest>()
+            .next()
+    }
+    fn next_child(&self) -> Option<::mutask_tlv::TlvItem<'a, RegisterContainer>> {
+        ::mutask_tlv::TlvQuery::ext(self)
+            .iter::<RegisterContainer>()
+            .next()
+    }
+}

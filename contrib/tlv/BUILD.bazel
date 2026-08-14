@@ -84,6 +84,7 @@ rust_test(
         "//contrib/tlv/test:edge_cases_tlv",
         "//contrib/tlv/test:soc_rust_proto",
         "//contrib/tlv/test:soc_tlv",
+        "//third_party:bstr",
     ],
 )
 
@@ -130,6 +131,7 @@ rust_test(
         ":tlv",
         "//contrib/tlv/test:edge_cases_tlv",
         "//contrib/tlv/test:soc_tlv",
+        "//third_party:bstr",
     ],
 )
 
