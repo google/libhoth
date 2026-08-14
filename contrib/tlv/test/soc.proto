@@ -137,6 +137,10 @@ message NpuAccelerator {
 message CryptoAccelerator {
   option (openprot.tlv.tlv_fourcc) = "CRYP";
   uint32 key_size_bits = 1 [(openprot.tlv.offset) = 0];
+  bytes supported_ciphers = 2 [
+    (openprot.tlv.extra_data) = true,
+    (openprot.tlv.type) = "[u8]"
+  ];
 }
 
 message Accelerator {

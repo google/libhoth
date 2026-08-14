@@ -324,6 +324,15 @@ impl ::mutask_tlv::TlvObject for CryptoAccelerator {
         ::mutask_tlv::unpad(header, extra)
     }
 }
+pub trait CryptoAcceleratorExt<'a> {
+    fn supported_ciphers(&self) -> &'a [u8];
+}
+impl<'a> CryptoAcceleratorExt<'a> for ::mutask_tlv::TlvItem<'a, CryptoAccelerator> {
+    fn supported_ciphers(&self) -> &'a [u8] {
+        use ::mutask_tlv::TlvQuery;
+        self.ext()
+    }
+}
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, FromBytes, IntoBytes, Immutable, KnownLayout)]
 #[repr(C)]

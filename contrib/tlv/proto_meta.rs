@@ -26,6 +26,7 @@ const BIT_PACKED_OPTION_NUMBER: u32 = 12346;
 const OFFSET_OPTION_NUMBER: u32 = 12345;
 const TYPE_OPTION_NUMBER: u32 = 12346;
 const BIT_RANGE_OPTION_NUMBER: u32 = 12347;
+const EXTRA_DATA_OPTION_NUMBER: u32 = 12348;
 
 pub use ::protobuf::__internal::runtime::__unstable::DescriptorInfo;
 /// Re-export the Type enum so clients of proto_meta can easily use it.
@@ -266,6 +267,28 @@ pub enum TlvLayoutErrorKind {
         /// The name of the message that triggered the cycle.
         type_name: String,
     },
+    /// A field with `extra_data` option specified an explicit `offset` option.
+    ExtraDataWithOffset,
+    /// A field with `extra_data` option is missing an explicit `type` option.
+    ExtraDataMissingTypeOption,
+    /// A field with `extra_data` option specified an unsupported `type` option value.
+    ExtraDataUnsupportedType {
+        /// The invalid type option string specified.
+        value: String,
+    },
+    /// A field with `extra_data` option is not a string or bytes field.
+    ExtraDataOnNonStringOrBytes {
+        /// The Protobuf type of the field.
+        kind: Type,
+    },
+    /// Multiple fields in the same message specified the `extra_data` option.
+    MultipleExtraDataFields,
+    /// A message contains both an `extra_data` field and dynamic sub-TLVs.
+    ExtraDataWithSubTlvs,
+    /// A repeated field specified the `extra_data` option.
+    RepeatedFieldCannotHaveExtraData,
+    /// A field inside a `oneof` specified the `extra_data` option.
+    OneofFieldCannotHaveExtraData,
 }
 
 struct VerilogRange(std::ops::RangeInclusive<usize>);
@@ -524,6 +547,53 @@ impl std::fmt::Display for TlvLayoutErrorKind {
                     "fields inside a 'oneof' are not allowed to specify a custom 'offset' option because they are mutually exclusive. They must be serialized as dynamic sub-TLVs (omit the 'offset' option)."
                 )
             }
+            Self::ExtraDataWithOffset => {
+                write!(
+                    f,
+                    "field with 'extra_data' option cannot specify a custom 'offset' option."
+                )
+            }
+            Self::ExtraDataMissingTypeOption => {
+                write!(
+                    f,
+                    "field with 'extra_data' option must explicitly specify a 'type' option (e.g., `[(openprot.tlv.type) = \"[u8]\"]`)."
+                )
+            }
+            Self::ExtraDataUnsupportedType { value } => {
+                write!(
+                    f,
+                    "'extra_data' option currently only supports type '[u8]' (got '{}').",
+                    value
+                )
+            }
+            Self::ExtraDataOnNonStringOrBytes { kind } => {
+                write!(
+                    f,
+                    "'extra_data' option is only supported on 'string' or 'bytes' fields (got '{:?}').",
+                    kind
+                )
+            }
+            Self::MultipleExtraDataFields => {
+                write!(
+                    f,
+                    "message cannot have more than one field with 'extra_data' option."
+                )
+            }
+            Self::ExtraDataWithSubTlvs => {
+                write!(
+                    f,
+                    "message with an 'extra_data' field cannot also contain dynamic sub-TLVs."
+                )
+            }
+            Self::RepeatedFieldCannotHaveExtraData => {
+                write!(f, "field with 'extra_data' option cannot be 'repeated'.")
+            }
+            Self::OneofFieldCannotHaveExtraData => {
+                write!(
+                    f,
+                    "field with 'extra_data' option cannot be inside a 'oneof'."
+                )
+            }
         }
     }
 }
@@ -576,6 +646,8 @@ pub enum FieldLayout {
         /// The 4-character TLV tag.
         tag: [u8; 4],
     },
+    /// The field is stored as the unpadded raw extra data payload of the TLV record.
+    ExtraData,
 }
 
 /// Fully resolved and validated TLV layout for a message descriptor.
@@ -852,6 +924,9 @@ fn tlv_layout_rec(
         let mut max_offset_plus_size = 0;
         let mut tag_to_field = std::collections::HashMap::new();
 
+        let mut extra_data_count = 0;
+        let mut tlv_count = 0;
+
         for field in msg.field() {
             let field_number = field.number() as u32;
             let layout =
@@ -862,6 +937,13 @@ fn tlv_layout_rec(
                         kind,
                     }
                 })?;
+
+            if matches!(layout, FieldLayout::ExtraData) {
+                extra_data_count += 1;
+            }
+            if matches!(layout, FieldLayout::Tlv { .. }) {
+                tlv_count += 1;
+            }
 
             if let FieldLayout::Tlv { tag, .. } = &layout {
                 let field_name = field.name_str().to_string();
@@ -891,6 +973,21 @@ fn tlv_layout_rec(
                 }
             }
             fields.insert(field_number, layout);
+        }
+
+        if extra_data_count > 1 {
+            return Err(TlvLayoutError {
+                message_name: msg_name.clone(),
+                field_name: None,
+                kind: TlvLayoutErrorKind::MultipleExtraDataFields,
+            });
+        }
+        if extra_data_count > 0 && tlv_count > 0 {
+            return Err(TlvLayoutError {
+                message_name: msg_name.clone(),
+                field_name: None,
+                kind: TlvLayoutErrorKind::ExtraDataWithSubTlvs,
+            });
         }
 
         // Validate overlapping fields
@@ -1166,6 +1263,9 @@ pub trait FieldDescriptorProtoTlvExt {
     /// Returns the `bit_range` custom option value of this field as a String, if present.
     fn bit_range(&self) -> Option<String>;
 
+    /// Returns true if the `extra_data` custom option is set to true on this field.
+    fn extra_data(&self) -> bool;
+
     /// Resolves and validates the `FieldLayout` for this field.
     fn tlv_layout(
         &self,
@@ -1201,6 +1301,14 @@ impl<'a> FieldDescriptorProtoTlvExt for FieldDescriptorProtoView<'a> {
         }
     }
 
+    fn extra_data(&self) -> bool {
+        let Ok(opt_bytes) = self.options().serialize() else {
+            return false;
+        };
+        let reader = ProtoReader::new(&opt_bytes);
+        matches!(reader.find_field(EXTRA_DATA_OPTION_NUMBER), Some(Record::Varint(val)) if val != 0)
+    }
+
     fn tlv_layout(
         &self,
         desc_set: &descriptor_rust_proto::FileDescriptorSet,
@@ -1216,6 +1324,29 @@ fn field_tlv_layout_rec(
     active_resolves: &mut std::collections::HashSet<String>,
 ) -> Result<FieldLayout, TlvLayoutErrorKind> {
     use descriptor_rust_proto::field_descriptor_proto::Label;
+
+    if field.extra_data() {
+        if field.offset().is_some() {
+            return Err(TlvLayoutErrorKind::ExtraDataWithOffset);
+        }
+        if field.label() == Label::Repeated {
+            return Err(TlvLayoutErrorKind::RepeatedFieldCannotHaveExtraData);
+        }
+        if field.has_oneof_index() {
+            return Err(TlvLayoutErrorKind::OneofFieldCannotHaveExtraData);
+        }
+        let kind = field.r#type();
+        if !matches!(kind, Type::String | Type::Bytes) {
+            return Err(TlvLayoutErrorKind::ExtraDataOnNonStringOrBytes { kind });
+        }
+        let Some(type_opt) = field.type_option() else {
+            return Err(TlvLayoutErrorKind::ExtraDataMissingTypeOption);
+        };
+        if type_opt != "[u8]" {
+            return Err(TlvLayoutErrorKind::ExtraDataUnsupportedType { value: type_opt });
+        }
+        return Ok(FieldLayout::ExtraData);
+    }
 
     if field.label() == Label::Repeated && field.offset().is_some() {
         return Err(TlvLayoutErrorKind::RepeatedFieldCannotHaveOffset);
@@ -2155,6 +2286,102 @@ mod tests {
         assert_eq!(
             err.to_string(),
             "Invalid TLV layout on field 'b' of message 'CircularA': circular dependency detected: message 'openprot.tlv.test.bad.CircularA' directly or indirectly contains itself inline, which requires infinite struct size."
+        );
+    }
+
+    #[test]
+    fn test_multiple_extra_data_fields() {
+        let desc_set = get_bad_desc_set();
+        let msg = find_msg_descriptor(&desc_set, "MessageMultipleExtraDataFields");
+        let err = msg.tlv_layout(&desc_set).unwrap_err();
+
+        assert_eq!(
+            err.to_string(),
+            "Invalid TLV layout in message 'MessageMultipleExtraDataFields': message cannot have more than one field with 'extra_data' option."
+        );
+    }
+
+    #[test]
+    fn test_extra_data_with_sub_tlvs() {
+        let desc_set = get_bad_desc_set();
+        let msg = find_msg_descriptor(&desc_set, "MessageExtraDataWithSubTlvs");
+        let err = msg.tlv_layout(&desc_set).unwrap_err();
+
+        assert_eq!(
+            err.to_string(),
+            "Invalid TLV layout in message 'MessageExtraDataWithSubTlvs': message with an 'extra_data' field cannot also contain dynamic sub-TLVs."
+        );
+    }
+
+    #[test]
+    fn test_extra_data_on_invalid_type() {
+        let desc_set = get_bad_desc_set();
+        let msg = find_msg_descriptor(&desc_set, "MessageExtraDataOnInvalidType");
+        let err = msg.tlv_layout(&desc_set).unwrap_err();
+
+        assert_eq!(
+            err.to_string(),
+            "Invalid TLV layout on field 'val' of message 'MessageExtraDataOnInvalidType': 'extra_data' option is only supported on 'string' or 'bytes' fields (got 'Type::Uint32')."
+        );
+    }
+
+    #[test]
+    fn test_extra_data_with_offset() {
+        let desc_set = get_bad_desc_set();
+        let msg = find_msg_descriptor(&desc_set, "MessageExtraDataWithOffset");
+        let err = msg.tlv_layout(&desc_set).unwrap_err();
+
+        assert_eq!(
+            err.to_string(),
+            "Invalid TLV layout on field 'ext' of message 'MessageExtraDataWithOffset': field with 'extra_data' option cannot specify a custom 'offset' option."
+        );
+    }
+
+    #[test]
+    fn test_repeated_extra_data() {
+        let desc_set = get_bad_desc_set();
+        let msg = find_msg_descriptor(&desc_set, "MessageRepeatedExtraData");
+        let err = msg.tlv_layout(&desc_set).unwrap_err();
+
+        assert_eq!(
+            err.to_string(),
+            "Invalid TLV layout on field 'chunks' of message 'MessageRepeatedExtraData': field with 'extra_data' option cannot be 'repeated'."
+        );
+    }
+
+    #[test]
+    fn test_oneof_extra_data() {
+        let desc_set = get_bad_desc_set();
+        let msg = find_msg_descriptor(&desc_set, "MessageOneofExtraData");
+        let err = msg.tlv_layout(&desc_set).unwrap_err();
+
+        assert_eq!(
+            err.to_string(),
+            "Invalid TLV layout on field 'ext' of message 'MessageOneofExtraData': field with 'extra_data' option cannot be inside a 'oneof'."
+        );
+    }
+
+    #[test]
+    fn test_extra_data_missing_type_option() {
+        let desc_set = get_bad_desc_set();
+        let msg = find_msg_descriptor(&desc_set, "MessageExtraDataMissingType");
+        let err = msg.tlv_layout(&desc_set).unwrap_err();
+
+        assert_eq!(
+            err.to_string(),
+            "Invalid TLV layout on field 'ext' of message 'MessageExtraDataMissingType': field with 'extra_data' option must explicitly specify a 'type' option (e.g., `[(openprot.tlv.type) = \"[u8]\"]`)."
+        );
+    }
+
+    #[test]
+    fn test_extra_data_unsupported_type() {
+        let desc_set = get_bad_desc_set();
+        let msg = find_msg_descriptor(&desc_set, "MessageExtraDataUnsupportedType");
+        let err = msg.tlv_layout(&desc_set).unwrap_err();
+
+        assert_eq!(
+            err.to_string(),
+            "Invalid TLV layout on field 'ext' of message 'MessageExtraDataUnsupportedType': 'extra_data' option currently only supports type '[u8]' (got '[u32]')."
         );
     }
 }

@@ -220,7 +220,7 @@ fn encode_message<'a>(
     // Reserve space for the header using TlvHeader directly (2 words)
     out.resize(out.len() + 2, 0);
 
-    encode_message_body(
+    let body_end_bytes = encode_message_body(
         desc_set,
         msg_desc,
         proto_bytes,
@@ -228,7 +228,6 @@ fn encode_message<'a>(
         header_start_bytes + header_len,
     )?;
 
-    let body_end_bytes = out.len() * 4;
     let raw_body_len = body_end_bytes - header_start_bytes - header_len;
     let padded_body_len = (raw_body_len + 3) & !3;
     let padding_bytes = (padded_body_len - raw_body_len) as u8;
@@ -260,13 +259,14 @@ fn encode_message<'a>(
 }
 
 /// Encodes only the raw body of a message (fixed struct and dynamic TLVs), without any TLV header.
+/// Returns the exact end position in bytes of the unpadded body payload.
 fn encode_message_body<'a>(
     desc_set: &'a FileDescriptorSet,
     msg_desc: descriptor_rust_proto::DescriptorProtoView<'a>,
     proto_bytes: &[u8],
     out: &mut Vec<u32>,
     body_start: usize,
-) -> Result<(), ProtoConvError> {
+) -> Result<usize, ProtoConvError> {
     // 1. Resolve and validate the entire message layout upfront
     let layout = msg_desc.tlv_layout(desc_set)?;
 
@@ -276,6 +276,7 @@ fn encode_message_body<'a>(
     if required_words > out.len() {
         out.resize(required_words, 0);
     }
+    let mut exact_body_end = fixed_struct_end;
 
     // 3. Parse and encode the message based on its layout strategy!
     match layout {
@@ -407,6 +408,33 @@ fn encode_message_body<'a>(
 
                         // Recursive call to encode_message (since it's a dynamic sub-TLV, it must have a header!)
                         encode_message(desc_set, child_desc, child_bytes, out)?;
+                        exact_body_end = out.len() * 4;
+                    }
+                    FieldLayout::ExtraData => {
+                        let child_bytes = match record {
+                            Record::LengthDelimited(bytes) => bytes,
+                            _ => {
+                                return Err(ProtoConvError::UnsupportedWireType(
+                                    record.wire_type_u8(),
+                                ));
+                            }
+                        };
+                        let start_pos = fixed_struct_end;
+                        let src_len = child_bytes.len();
+                        let target_end = start_pos
+                            .checked_add(src_len)
+                            .ok_or(ProtoConvError::VarintDecodeError)?;
+                        let target_words = target_end.div_ceil(4);
+                        out.truncate(target_words);
+                        if target_words > out.len() {
+                            out.resize(target_words, 0);
+                        }
+                        let out_bytes = out.as_mut_bytes();
+                        out_bytes[start_pos..start_pos + src_len].copy_from_slice(child_bytes);
+                        if target_end < target_words * 4 {
+                            out_bytes[target_end..target_words * 4].fill(0);
+                        }
+                        exact_body_end = target_end;
                     }
                 }
             }
@@ -448,9 +476,10 @@ fn encode_message_body<'a>(
             let out_bytes = out.as_mut_bytes();
             out_bytes[body_start..body_start + total_size]
                 .copy_from_slice(&backing_bytes[..total_size]);
+            exact_body_end = body_start + total_size;
         }
     }
-    Ok(())
+    Ok(exact_body_end)
 }
 
 fn mask_for_bits(bit_len: usize) -> u64 {
@@ -594,7 +623,10 @@ mod tests {
                     npu: soc_rust_proto::NpuAccelerator { tops: 42 }
                 }),
                 protobuf::proto!(soc_rust_proto::Accelerator {
-                    crypto: soc_rust_proto::CryptoAccelerator { key_size_bits: 256 }
+                    crypto: soc_rust_proto::CryptoAccelerator {
+                        key_size_bits: 256,
+                        supported_ciphers: b"AES,RSA".to_vec(),
+                    }
                 }),
             ],
         });
@@ -608,7 +640,7 @@ mod tests {
 
         // --- System Header ---
         expected.extend_from_slice(b"SYS_"); // tag
-        expected.extend_from_slice(&[0x33, 0x00, 0x00, 0x00]); // word_len: 51, reserved: 0, flags: 0
+        expected.extend_from_slice(&[0x35, 0x00, 0x00, 0x00]); // word_len: 53, reserved: 0, flags: 0
 
         // --- System Fixed Struct (44 bytes) ---
         expected.extend_from_slice(&32898u32.to_le_bytes()); // vendor_id (offset 0)
@@ -682,12 +714,13 @@ mod tests {
         expected.extend_from_slice(&[0x01, 0x00, 0x00, 0x00]); // word_len: 1, reserved: 0, flags: 0
         expected.extend_from_slice(&42u32.to_le_bytes()); // tops
 
-        // --- Third Accelerator Sub-TLV: Crypto (20 bytes) ---
+        // --- Third Accelerator Sub-TLV: Crypto (28 bytes) ---
         expected.extend_from_slice(b"ACCL"); // tag
-        expected.extend_from_slice(&[0x03, 0x00, 0x00, 0x00]); // word_len: 3, reserved: 0, flags: 0
+        expected.extend_from_slice(&[0x05, 0x00, 0x00, 0x00]); // word_len: 5, reserved: 0, flags: 0
         expected.extend_from_slice(b"CRYP"); // tag
-        expected.extend_from_slice(&[0x01, 0x00, 0x00, 0x00]); // word_len: 1, reserved: 0, flags: 0
+        expected.extend_from_slice(&[0x03, 0x00, 0x00, 0x01]); // word_len: 3, reserved: 0, flags: 1
         expected.extend_from_slice(&256u32.to_le_bytes()); // key_size_bits
+        expected.extend_from_slice(b"AES,RSA\0"); // supported_ciphers
 
         assert_eq!(tlv_words.as_bytes(), expected);
 
@@ -793,6 +826,7 @@ mod tests {
         match accel_crypto.config().unwrap() {
             AcceleratorConfig::Crypto(crypto_item) => {
                 assert_eq!(crypto_item.data.key_size_bits, 256);
+                assert_eq!(crypto_item.supported_ciphers(), b"AES,RSA");
             }
             _ => panic!("Expected Crypto variant"),
         }
@@ -876,6 +910,55 @@ mod tests {
             err.to_string(),
             "Value for field 'system_name' is too long (length is 36 bytes, but target packed size in the fixed struct is only 16 bytes)."
         );
+    }
+
+    #[test]
+    fn test_proto_to_tlv_string_utf8_fixed() {
+        use soc_tlv::System;
+
+        let system = protobuf::proto!(soc_rust_proto::System {
+            vendor_id: 32898,
+            product_id: 4660,
+            total_mem_mib: 65536,
+            system_name: "MySystém".to_string(), // UTF-8 string (9 bytes in UTF-8)
+            system_uuid: vec![0xAA, 0xBB, 0xCC, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+        });
+
+        let tlv_words = message_to_tlv(&CONTRIB_TLV_TEST_SOC_DESCRIPTOR_INFO, &system)
+            .expect("Should cleanly convert inline UTF-8 string without error!");
+
+        let tlv_data = mutask_tlv::TlvData::overlay(&tlv_words);
+        let system_tlv = tlv_data.iter::<System>().next().unwrap();
+
+        let mut expected_name = [0u8; 16];
+        expected_name[..9].copy_from_slice("MySystém".as_bytes());
+        assert_eq!(system_tlv.data.system_name, expected_name);
+    }
+
+    #[test]
+    fn test_proto_to_tlv_string_extension_bstr_utf8() {
+        use bstr::ByteSlice;
+        use edge_cases_rust_proto::__unstable::CONTRIB_TLV_TEST_EDGE_CASES_DESCRIPTOR_INFO;
+        use edge_cases_tlv::StringExtensionTestExt;
+
+        let msg = protobuf::proto!(edge_cases_rust_proto::StringExtensionTest {
+            text: "hello bstr 🌍".to_string(), // valid UTF-8 string including emoji
+        });
+
+        let tlv_words = message_to_tlv(&CONTRIB_TLV_TEST_EDGE_CASES_DESCRIPTOR_INFO, &msg)
+            .expect("Failed to convert StringExtensionTest with UTF-8 to TLV!");
+
+        let tlv_data = mutask_tlv::TlvData::overlay(&tlv_words);
+        let item = tlv_data
+            .iter::<edge_cases_tlv::StringExtensionTest>()
+            .next()
+            .expect("Should decode StringExtensionTest item");
+
+        // 1. Assert direct comparison with string literal (zero-cost, works directly with UTF-8!)
+        assert_eq!(item.text(), "hello bstr 🌍");
+
+        // 2. A willing user can opt-in to validation or conversions using bstr methods
+        assert_eq!(item.text().to_str().expect("Valid UTF-8"), "hello bstr 🌍");
     }
 
     #[test]
@@ -970,6 +1053,181 @@ mod tests {
         expected.push(0); // body padding to 8 bytes
 
         assert_eq!(tlv_words.as_bytes(), expected);
+    }
+
+    #[test]
+    fn test_proto_to_tlv_extra_data() {
+        use edge_cases_rust_proto::__unstable::CONTRIB_TLV_TEST_EDGE_CASES_DESCRIPTOR_INFO;
+        use edge_cases_tlv::RawBytesExtensionTestExt;
+
+        let version_msg = protobuf::proto!(edge_cases_rust_proto::RawBytesExtensionTest {
+            payload: b"1.2.3".to_vec(),
+        });
+
+        let tlv_words = message_to_tlv(&CONTRIB_TLV_TEST_EDGE_CASES_DESCRIPTOR_INFO, &version_msg)
+            .expect("Failed to convert RawBytesExtensionTest to TLV!");
+
+        // Expected header:
+        // Tag: 'RBXT'
+        // word_len: 2 words (8 bytes)
+        // flags: padding_bytes = 3 (8 - 5 = 3)
+        let mut expected = Vec::new();
+        expected.extend_from_slice(b"RBXT");
+        expected.extend_from_slice(&[0x02, 0x00, 0x00, 0x03]);
+        expected.extend_from_slice(b"1.2.3\0\0\0");
+
+        assert_eq!(tlv_words.as_bytes(), expected);
+
+        // Verify overlay & accessor round-trip decoding
+        let tlv_data = mutask_tlv::TlvData::overlay(&tlv_words);
+        let item = tlv_data
+            .iter::<edge_cases_tlv::RawBytesExtensionTest>()
+            .next()
+            .expect("Should decode RawBytesExtensionTest item");
+
+        assert_eq!(item.payload(), b"1.2.3");
+    }
+
+    #[test]
+    fn test_proto_to_tlv_extra_data_nonzero_offset() {
+        use soc_rust_proto::__unstable::CONTRIB_TLV_TEST_SOC_DESCRIPTOR_INFO;
+        use soc_tlv::CryptoAcceleratorExt;
+
+        let msg = protobuf::proto!(soc_rust_proto::CryptoAccelerator {
+            key_size_bits: 512,
+            supported_ciphers: b"CHACHA20-POLY1305".to_vec(),
+        });
+
+        let tlv_words = message_to_tlv(&CONTRIB_TLV_TEST_SOC_DESCRIPTOR_INFO, &msg)
+            .expect("Failed to convert CryptoAccelerator to TLV!");
+
+        // Expected header:
+        // Tag: 'CRYP'
+        // Fixed field key_size_bits: 4 bytes (offset 0..4).
+        // supported_ciphers: 17 bytes (offset 4..21).
+        // Total unpadded payload: 21 bytes. Padded: 24 bytes (6 words). Padding bytes: 3.
+        let mut expected = Vec::new();
+        expected.extend_from_slice(b"CRYP");
+        expected.extend_from_slice(&[0x06, 0x00, 0x00, 0x03]); // word_len: 6, reserved: 0, flags: 3
+        expected.extend_from_slice(&512u32.to_le_bytes());
+        expected.extend_from_slice(b"CHACHA20-POLY1305\0\0\0");
+
+        assert_eq!(tlv_words.as_bytes(), expected);
+
+        let tlv_data = mutask_tlv::TlvData::overlay(&tlv_words);
+        let item = tlv_data
+            .iter::<soc_tlv::CryptoAccelerator>()
+            .next()
+            .expect("Should decode CryptoAccelerator item");
+
+        assert_eq!(item.data.key_size_bits, 512);
+        assert_eq!(item.supported_ciphers(), b"CHACHA20-POLY1305");
+    }
+
+    #[test]
+    fn test_proto_to_tlv_nested_unaligned_extra_data() {
+        use edge_cases_rust_proto::__unstable::CONTRIB_TLV_TEST_EDGE_CASES_DESCRIPTOR_INFO;
+        use edge_cases_tlv::*;
+
+        let container_msg = protobuf::proto!(edge_cases_rust_proto::ExtensionContainer {
+            id: 42,
+            child_ext: protobuf::proto!(edge_cases_rust_proto::RawBytesExtensionTest {
+                payload: b"1.2.3-unaligned_suffix".to_vec(), // 22 bytes (22 % 4 == 2)
+            }),
+            next_child: protobuf::proto!(edge_cases_rust_proto::RegisterContainer {
+                reg: protobuf::proto!(edge_cases_rust_proto::PackedRegister {
+                    enabled: true,
+                    mode: 5,
+                    status: 9,
+                    val: 123456,
+                }),
+                reg16: protobuf::proto!(edge_cases_rust_proto::Packed16Register {
+                    flag: true,
+                    mode: 6,
+                    val: 1000,
+                }),
+                reg8: protobuf::proto!(edge_cases_rust_proto::Packed8Register {
+                    flag: true,
+                    status: 45,
+                }),
+            }),
+        });
+
+        let tlv_words =
+            message_to_tlv(&CONTRIB_TLV_TEST_EDGE_CASES_DESCRIPTOR_INFO, &container_msg)
+                .expect("Failed to convert ExtensionContainer to TLV!");
+
+        // Overlay TlvData and parse top-level container
+        let tlv_data = mutask_tlv::TlvData::overlay(&tlv_words);
+        let container_item = tlv_data
+            .iter::<ExtensionContainer>()
+            .next()
+            .expect("Should decode ExtensionContainer");
+
+        assert_eq!(container_item.data.id, 42);
+
+        // Parse child RawBytesExtensionTest
+        let child_ext_item = container_item
+            .child_ext()
+            .expect("Should decode RawBytesExtensionTest");
+
+        // Assert unpadded raw bytes match exact 22 bytes
+        assert_eq!(child_ext_item.payload(), b"1.2.3-unaligned_suffix");
+
+        // Assert RegisterContainer sub-TLV following RawBytesExtensionTest is correctly word-aligned and decoded
+        let next_child_item = container_item
+            .next_child()
+            .expect("Should decode RegisterContainer sub-TLV after RawBytesExtensionTest");
+
+        // Explicitly assert pointer alignment of next_child_item's struct
+        let next_child_ptr = (&next_child_item.data as *const _) as usize;
+        assert_eq!(
+            next_child_ptr % 4,
+            0,
+            "Next child pointer must be 4-byte aligned!"
+        );
+
+        assert_eq!(next_child_item.data.reg.val(), 123456);
+        assert_eq!(next_child_item.data.reg16.val(), 1000);
+        assert_eq!(next_child_item.data.reg8.status(), 45);
+    }
+
+    #[test]
+    fn test_proto_to_tlv_extra_data_duplicate_field() {
+        use edge_cases_rust_proto::__unstable::CONTRIB_TLV_TEST_EDGE_CASES_DESCRIPTOR_INFO;
+        use edge_cases_tlv::RawBytesExtensionTestExt;
+        use mutask_tlv_proto_meta::collect_descriptor_set;
+        use mutask_tlv_proto_meta::find_message_descriptor;
+
+        let desc_set =
+            collect_descriptor_set(&CONTRIB_TLV_TEST_EDGE_CASES_DESCRIPTOR_INFO).unwrap();
+        let msg_desc = find_message_descriptor(
+            &desc_set,
+            "openprot.tlv.test.edge_cases.RawBytesExtensionTest",
+        )
+        .unwrap();
+
+        // Wire tag for field #1 with length-delimited wire type 2: (1 << 3) | 2 = 0x0A
+        let mut duplicate_wire_bytes = Vec::new();
+        // First occurrence: payload = "v1"
+        duplicate_wire_bytes.extend_from_slice(&[0x0A, 0x02, b'v', b'1']);
+        // Second occurrence (duplicate): payload = "v2"
+        duplicate_wire_bytes.extend_from_slice(&[0x0A, 0x02, b'v', b'2']);
+
+        let mut tlv_words = Vec::new();
+        encode_message(&desc_set, msg_desc, &duplicate_wire_bytes, &mut tlv_words)
+            .expect("Failed to encode duplicate wire bytes!");
+
+        // Overlay TlvData and parse
+        let tlv_data = mutask_tlv::TlvData::overlay(&tlv_words);
+        let item = tlv_data
+            .iter::<edge_cases_tlv::RawBytesExtensionTest>()
+            .next()
+            .expect("Should decode RawBytesExtensionTest item");
+
+        // Protobuf spec rule: last occurrence wins.
+        // Expected payload is b"v2" of length 2.
+        assert_eq!(item.payload(), b"v2");
     }
 
     #[test]
