@@ -31,6 +31,10 @@ extend google.protobuf.FieldOptions {
   // The bit range of a field in a bit-packed message using Verilog notation.
   // Can be a multi-bit range (e.g., "7:3") or a single bit (e.g., "0").
   string bit_range = 12347;
+
+  // Indicates that a string or bytes field is stored as the unpadded variable-length
+  // extra data following the fixed payload fields of the TLV record.
+  bool extra_data = 12348;
 }
 
 extend google.protobuf.MessageOptions {

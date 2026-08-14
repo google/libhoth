@@ -195,6 +195,7 @@ def tlv_codegen(name, proto, src = None, visibility = None, **kwargs):
         compile_data = compile_data,
         deps = [
             "//contrib/tlv",
+            "//third_party:bstr",
             "//third_party:zerocopy",
             "//types",
         ],

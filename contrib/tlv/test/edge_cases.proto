@@ -196,3 +196,26 @@ message SiblingInlineParent {
   SiblingInlineChild child1 = 1 [(openprot.tlv.offset) = 0];
   SiblingInlineChild child2 = 2 [(openprot.tlv.offset) = 4];
 }
+
+message RawBytesExtensionTest {
+  option (openprot.tlv.tlv_fourcc) = "RBXT";
+  bytes payload = 1 [
+    (openprot.tlv.extra_data) = true,
+    (openprot.tlv.type) = "[u8]"
+  ];
+}
+
+message StringExtensionTest {
+  option (openprot.tlv.tlv_fourcc) = "SEXT";
+  string text = 1 [
+    (openprot.tlv.extra_data) = true,
+    (openprot.tlv.type) = "[u8]"
+  ];
+}
+
+message ExtensionContainer {
+  option (openprot.tlv.tlv_fourcc) = "EXCT";
+  uint32 id = 1 [(openprot.tlv.offset) = 0];
+  RawBytesExtensionTest child_ext = 2;
+  RegisterContainer next_child = 3;
+}

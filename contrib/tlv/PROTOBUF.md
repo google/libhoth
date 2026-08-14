@@ -71,6 +71,12 @@ in [options.proto](options.proto). These options direct the code generator and t
 * **`bit_range` (string):** Specifies the bit range of a field in a bit-packed
   message using Verilog notation (e.g., `"0"` for a single bit, or `"7:3"` for
   a multi-bit range).
+* **`extra_data` (bool):** Indicates that a `string` or `bytes` field is
+  stored as the unpadded variable-length extra data following the fixed payload
+  fields of the TLV record, rather than an inline fixed struct field or dynamic
+  sub-TLV. Must be accompanied by an explicit `type` option (e.g.
+  `[(openprot.tlv.type) = "[u8]"]`). Fields marked with `extra_data` cannot specify
+  an `offset` option.
 
 ### 3. Enum Options
 
@@ -95,11 +101,21 @@ A Protobuf message annotated for TLV is split into a **Fixed Struct** and a
   a bitfield message (annotated with `bit_packed`) or a plain struct without a
   `tlv_fourcc`.
 
-### The Variable-Length Extension (Nested TLVs)
-* Any field **without** a `[(openprot.tlv.offset)]` is excluded from the fixed
-  struct.
-* These fields are automatically serialized as **nested TLV records** inside the
-  parent TLV's variable-length extension.
+### The Variable-Length Extension
+
+The payload words following the fixed struct carry the variable-length extension,
+which can be either **Extra Data** or **Nested Sub-TLVs** (mutually exclusive):
+
+#### 1. Extra Data (`extra_data`)
+* A `string` or `bytes` field annotated with `[(openprot.tlv.extra_data) = true]`
+  is stored directly as the unpadded variable-length extra data trailing the fixed struct.
+* Must specify an explicit slice `type` option (at the moment, only `[(openprot.tlv.type) = "[u8]"]` is supported).
+* A message may have at most **one** field marked with `extra_data`.
+* A message with `extra_data` cannot also contain dynamic sub-TLVs.
+
+#### 2. Nested Sub-TLVs (Dynamic TLVs)
+* Any message field **without** a `[(openprot.tlv.offset)]` is serialized as a
+  **nested TLV record** inside the parent TLV's extension.
 * This applies to:
   * `repeated` fields of other TLV messages (serialized as a sequence of nested
     records).
@@ -120,6 +136,9 @@ The code generator (`tlv_codegen`) processes compiled Protobuf descriptor sets
 3. Bitfield structs using `bitfield_struct::bitfield` (for messages with
    `bit_packed`).
 4. Open enum wrappers (for enums with `raw_type`).
+5. Accessor traits (`<Message>Ext`) implemented on `TlvItem<'a, <Message>>` providing:
+   * Typed iterators and getters for nested sub-TLVs (e.g., `components()`).
+   * Zero-copy slice or string accessors for `extra_data` fields (`&'a [u8]`, `&'a [T]`, or `&'a bstr::BStr`).
 
 All generated structs automatically derive the necessary `zerocopy` traits
 (`FromBytes`, `IntoBytes`, `Immutable`, `KnownLayout`).

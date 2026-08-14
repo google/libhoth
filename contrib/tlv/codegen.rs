@@ -604,34 +604,64 @@ fn generate_sub_tlv_accessors(
     let mut accessors = Vec::new();
     for field in msg.field() {
         let num = field.number() as u32;
-        if let Some(FieldLayout::Tlv { .. }) = fields.get(&num) {
-            let field_ident = get_ident(field.name_str());
+        if let Some(layout) = fields.get(&num) {
+            match layout {
+                FieldLayout::Tlv { .. } => {
+                    let field_ident = get_ident(field.name_str());
 
-            let type_name_raw = field.type_name().to_str().unwrap_or("");
-            let type_name = type_name_raw.strip_prefix('.').unwrap_or(type_name_raw);
-            let child_struct_name = get_rust_struct_name(type_name, desc_set);
-            let child_ident = get_ident(&child_struct_name);
+                    let type_name_raw = field.type_name().to_str().unwrap_or("");
+                    let type_name = type_name_raw.strip_prefix('.').unwrap_or(type_name_raw);
+                    let child_struct_name = get_rust_struct_name(type_name, desc_set);
+                    let child_ident = get_ident(&child_struct_name);
 
-            let is_repeated = field.label() == Label::Repeated;
+                    let is_repeated = field.label() == Label::Repeated;
 
-            if is_repeated {
-                signatures.push(quote::quote! {
-                    fn #field_ident(&self) -> ::mutask_tlv::TlvIterator<'a, #child_ident>;
-                });
-                accessors.push(quote::quote! {
-                    fn #field_ident(&self) -> ::mutask_tlv::TlvIterator<'a, #child_ident> {
-                        ::mutask_tlv::TlvQuery::ext(self).iter::<#child_ident>()
+                    if is_repeated {
+                        signatures.push(quote::quote! {
+                            fn #field_ident(&self) -> ::mutask_tlv::TlvIterator<'a, #child_ident>;
+                        });
+                        accessors.push(quote::quote! {
+                            fn #field_ident(&self) -> ::mutask_tlv::TlvIterator<'a, #child_ident> {
+                                ::mutask_tlv::TlvQuery::ext(self).iter::<#child_ident>()
+                            }
+                        });
+                    } else {
+                        signatures.push(quote::quote! {
+                            fn #field_ident(&self) -> Option<::mutask_tlv::TlvItem<'a, #child_ident>>;
+                        });
+                        accessors.push(quote::quote! {
+                            fn #field_ident(&self) -> Option<::mutask_tlv::TlvItem<'a, #child_ident>> {
+                                ::mutask_tlv::TlvQuery::ext(self).iter::<#child_ident>().next()
+                            }
+                        });
                     }
-                });
-            } else {
-                signatures.push(quote::quote! {
-                    fn #field_ident(&self) -> Option<::mutask_tlv::TlvItem<'a, #child_ident>>;
-                });
-                accessors.push(quote::quote! {
-                    fn #field_ident(&self) -> Option<::mutask_tlv::TlvItem<'a, #child_ident>> {
-                        ::mutask_tlv::TlvQuery::ext(self).iter::<#child_ident>().next()
+                }
+                FieldLayout::ExtraData => {
+                    let field_ident = get_ident(field.name_str());
+                    let kind = field.r#type();
+                    if kind == descriptor_rust_proto::field_descriptor_proto::Type::String {
+                        signatures.push(quote::quote! {
+                            fn #field_ident(&self) -> &'a ::bstr::BStr;
+                        });
+                        accessors.push(quote::quote! {
+                            fn #field_ident(&self) -> &'a ::bstr::BStr {
+                                use ::mutask_tlv::TlvQuery;
+                                ::bstr::BStr::new(self.ext())
+                            }
+                        });
+                    } else {
+                        signatures.push(quote::quote! {
+                            fn #field_ident(&self) -> &'a [u8];
+                        });
+                        accessors.push(quote::quote! {
+                            fn #field_ident(&self) -> &'a [u8] {
+                                use ::mutask_tlv::TlvQuery;
+                                self.ext()
+                            }
+                        });
                     }
-                });
+                }
+                _ => {}
             }
         }
     }

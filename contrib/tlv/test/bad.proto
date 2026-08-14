@@ -329,3 +329,80 @@ message CircularB {
   option (openprot.tlv.tlv_fourcc) = "CIRB";
   CircularA a = 1 [(openprot.tlv.offset) = 0];
 }
+
+// 37. Message with multiple extra_data fields
+message MessageMultipleExtraDataFields {
+  option (openprot.tlv.tlv_fourcc) = "MEDF";
+  bytes ext1 = 1 [
+    (openprot.tlv.extra_data) = true,
+    (openprot.tlv.type) = "[u8]"
+  ];
+  bytes ext2 = 2 [
+    (openprot.tlv.extra_data) = true,
+    (openprot.tlv.type) = "[u8]"
+  ];
+}
+
+// 38. Message with extra_data field AND dynamic sub-TLVs
+message MessageExtraDataWithSubTlvs {
+  option (openprot.tlv.tlv_fourcc) = "EDST";
+  bytes ext = 1 [
+    (openprot.tlv.extra_data) = true,
+    (openprot.tlv.type) = "[u8]"
+  ];
+  NestedMsg sub = 2;
+}
+
+// 39. Message with extra_data on a non-string/bytes type (uint32)
+message MessageExtraDataOnInvalidType {
+  option (openprot.tlv.tlv_fourcc) = "EDIT";
+  uint32 val = 1 [
+    (openprot.tlv.extra_data) = true,
+    (openprot.tlv.type) = "[u8]"
+  ];
+}
+
+// 40. Message with extra_data AND offset option
+message MessageExtraDataWithOffset {
+  option (openprot.tlv.tlv_fourcc) = "EDWO";
+  bytes ext = 1 [
+    (openprot.tlv.offset) = 0,
+    (openprot.tlv.extra_data) = true,
+    (openprot.tlv.type) = "[u8]"
+  ];
+}
+
+// 41. Message with repeated field marked as extra_data
+message MessageRepeatedExtraData {
+  option (openprot.tlv.tlv_fourcc) = "MRED";
+  repeated bytes chunks = 1 [
+    (openprot.tlv.extra_data) = true,
+    (openprot.tlv.type) = "[u8]"
+  ];
+}
+
+// 42. Message with extra_data field inside a oneof
+message MessageOneofExtraData {
+  option (openprot.tlv.tlv_fourcc) = "MOED";
+  oneof payload {
+    bytes ext = 1 [
+      (openprot.tlv.extra_data) = true,
+      (openprot.tlv.type) = "[u8]"
+    ];
+  }
+}
+
+// 43. Message with extra_data field missing type option
+message MessageExtraDataMissingType {
+  option (openprot.tlv.tlv_fourcc) = "EDMT";
+  bytes ext = 1 [(openprot.tlv.extra_data) = true];
+}
+
+// 44. Message with extra_data field having unsupported type option (not [u8])
+message MessageExtraDataUnsupportedType {
+  option (openprot.tlv.tlv_fourcc) = "EDUT";
+  bytes ext = 1 [
+    (openprot.tlv.extra_data) = true,
+    (openprot.tlv.type) = "[u32]"
+  ];
+}
