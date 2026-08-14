@@ -85,7 +85,7 @@ impl<'a> TlvBuilder<'a> {
         let remaining = core::mem::take(&mut self.remaining);
         let struct_words = crate::word_size_of::<T>();
         let ext_len = ext_bytes.len();
-        let padded_ext_len = (ext_len + 3) & !3;
+        let padded_ext_len = ext_len.checked_add(3).map(|n| n & !3).ok_or(TlvError)?;
         let ext_words = padded_ext_len / 4;
         let padding = u8::try_from(padded_ext_len - ext_len).unwrap();
 
