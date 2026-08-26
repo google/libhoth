@@ -25,6 +25,7 @@ extern "C" {
 #endif
 
 #define HOTH_CMD_SET_GPIO_DRIVE_STRENGTH 0x3E56
+#define HOTH_CMD_GET_GPIO_DRIVE_STRENGTH 0x3E59
 #define MAX_GPIO_DRIVE_STRENGTH 0xF
 #define LIBHOTH_GPIO_DIO_PAD_OFFSET 128
 
@@ -33,8 +34,19 @@ struct hoth_request_set_gpio_drive_strength {
   uint8_t strength;
 } __hoth_align1;
 
+struct hoth_request_get_gpio_drive_strength {
+  uint8_t pad;
+} __hoth_align1;
+
+struct hoth_response_get_gpio_drive_strength {
+  uint8_t strength;
+} __hoth_align1;
+
 libhoth_error libhoth_set_gpio_drive_strength(struct libhoth_device* dev,
                                               uint8_t pad, uint8_t strength);
+
+libhoth_error libhoth_get_gpio_drive_strength(struct libhoth_device* dev,
+                                              uint8_t pad, uint8_t* strength);
 
 #ifdef __cplusplus
 }

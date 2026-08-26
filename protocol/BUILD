@@ -8,10 +8,10 @@ cc_library(
     srcs = ["status.c"],
     hdrs = ["status.h"],
     defines = ["LIBHOTH_SUPPORT_LIBUSB"],
-    deps = [
-      "@libusb//:libusb",
-    ],
     visibility = ["//visibility:public"],
+    deps = [
+        "@libusb",
+    ],
 )
 
 cc_test(
@@ -125,10 +125,10 @@ cc_library(
     deps = [
         ":command_version",
         ":host_cmd",
+        ":libhoth_status",
         ":payload_info",
         ":progress",
         ":util",
-        ":libhoth_status",
         "//transports:libhoth_device",
     ],
 )
@@ -583,8 +583,8 @@ cc_test(
         "//protocol/test:test_data",
     ],
     deps = [
-        ":host_cmd",
         ":dfu_check",
+        ":host_cmd",
         ":opentitan_version",
         "//protocol/test:libhoth_device_mock",
         "//transports:libhoth_device",
@@ -592,7 +592,6 @@ cc_test(
         "@googletest//:gtest_main",
     ],
 )
-
 
 cc_library(
     name = "util",
@@ -621,4 +620,3 @@ cc_test(
         "@googletest//:gtest_main",
     ],
 )
-

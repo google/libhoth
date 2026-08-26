@@ -35,3 +35,25 @@ libhoth_error libhoth_set_gpio_drive_strength(struct libhoth_device* const dev,
                                  /*version=*/0, &request, sizeof(request),
                                  /*response=*/NULL, /*response_size=*/0, NULL);
 }
+
+libhoth_error libhoth_get_gpio_drive_strength(struct libhoth_device* const dev,
+                                              const uint8_t pad,
+                                              uint8_t* const strength) {
+  if (strength == NULL) {
+    return LIBHOTH_ERR_CONSTRUCT(HOTH_CTX_CMD_EXEC, HOTH_HOST_SPACE_LIBHOTH,
+                                 LIBHOTH_ERR_INVALID_PARAMETER);
+  }
+
+  const struct hoth_request_get_gpio_drive_strength request = {
+      .pad = pad,
+  };
+  struct hoth_response_get_gpio_drive_strength response;
+  const libhoth_error err = libhoth_hostcmd_exec_v2(
+      dev, HOTH_CMD_GET_GPIO_DRIVE_STRENGTH, /*version=*/0, &request,
+      sizeof(request), &response, sizeof(response), /*out_resp_size=*/NULL);
+  if (err != HOTH_SUCCESS) {
+    return err;
+  }
+  *strength = response.strength;
+  return HOTH_SUCCESS;
+}

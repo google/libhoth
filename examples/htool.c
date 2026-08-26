@@ -16,6 +16,7 @@
 
 #include <errno.h>
 #include <fcntl.h>
+#include <inttypes.h>
 #include <stdbool.h>
 #include <stddef.h>
 #include <stdint.h>
@@ -893,6 +894,59 @@ static int command_set_gpio_drive_strength(const struct htool_invocation* inv) {
   return 0;
 }
 
+static int command_get_gpio_drive_strength(const struct htool_invocation* inv) {
+  struct libhoth_device* dev = htool_libhoth_device();
+  if (!dev) {
+    return -1;
+  }
+
+  bool has_dio = htool_has_param(inv, "dio");
+  bool has_mio = htool_has_param(inv, "mio");
+
+  if (!has_dio && !has_mio) {
+    fprintf(stderr, "Must specify either --dio or --mio.\n");
+    return -1;
+  }
+
+  if (has_dio && has_mio) {
+    fprintf(stderr, "Cannot specify both --dio and --mio.\n");
+    return -1;
+  }
+
+  uint32_t pad;
+  uint8_t dio_index = 0;
+  uint8_t mio_index = 0;
+  if (has_dio) {
+    uint32_t dio;
+    if (htool_get_param_u32(inv, "dio", &dio)) {
+      return -1;
+    }
+    dio_index = (uint8_t)dio;
+    pad = dio + LIBHOTH_GPIO_DIO_PAD_OFFSET;
+  } else {
+    uint32_t mio;
+    if (htool_get_param_u32(inv, "mio", &mio)) {
+      return -1;
+    }
+    mio_index = (uint8_t)mio;
+    pad = mio;
+  }
+
+  uint8_t strength = 0;
+  libhoth_error err =
+      libhoth_get_gpio_drive_strength(dev, (uint8_t)pad, &strength);
+  if (err != HOTH_SUCCESS) {
+    htool_report_error("get_gpio_drive_strength", err);
+    return -1;
+  }
+  if (has_dio) {
+    printf("DIO %" PRIu8 " drive strength: %" PRIu8 "\n", dio_index, strength);
+  } else {
+    printf("MIO %" PRIu8 " drive strength: %" PRIu8 "\n", mio_index, strength);
+  }
+  return 0;
+}
+
 static int command_hello(const struct htool_invocation* inv) {
   struct libhoth_device* dev = htool_libhoth_device();
   if (!dev) {
@@ -1749,6 +1803,37 @@ static const struct htool_cmd CMDS[] = {
                          "          42-46 => IOR10-13"},
                 {}},
         .func = command_set_gpio_drive_strength,
+    },
+    {
+        .verbs = (const char*[]){"gpio", "get_drive_strength", NULL},
+        .desc = "Get GPIO drive strength",
+        .params =
+            (const struct htool_param[]){
+                {.type = HTOOL_FLAG_VALUE,
+                 .ch = 'd',
+                 .name = "dio",
+                 .default_value = NULL,
+                 .desc = "The DIO pad with the given index. Values are:\n"
+                         "          0 => USB_DP\n"
+                         "          1 => USB_DN\n"
+                         "          2-5 => SPI_HOST0_D0-3\n"
+                         "          6-9 => SPI_DEV_D0-3\n"
+                         "          12 => SPI_DEV_CLK\n"
+                         "          13 => SPI_DEV_CSB\n"
+                         "          14 => SPI_HOST0_CLK\n"
+                         "          15 => SPI_HOST0_CSB"},
+                {.type = HTOOL_FLAG_VALUE,
+                 .ch = 'm',
+                 .name = "mio",
+                 .default_value = NULL,
+                 .desc = "The MIO pad with the given index. Values are:\n"
+                         "          0-8 => IOA0-8\n"
+                         "          9-21 => IOB0-12\n"
+                         "          22-34 => IOC0-12\n"
+                         "          35-41 => IOR0-7\n"
+                         "          42-46 => IOR10-13"},
+                {}},
+        .func = command_get_gpio_drive_strength,
     },
     {
         .verbs = (const char*[]){"hello", NULL},

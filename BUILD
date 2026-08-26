@@ -23,7 +23,7 @@ genrule(
 cc_library(
     name = "libhoth_transports_headers",
     hdrs = [
-      "//transports:headers",
+        "//transports:headers",
     ],
     include_prefix = "libhoth/transports",
     strip_include_prefix = "transports",
@@ -32,7 +32,7 @@ cc_library(
 cc_library(
     name = "libhoth_transports_headers_legacy",
     hdrs = [
-      "//transports:headers",
+        "//transports:headers",
     ],
     include_prefix = "transports",
     strip_include_prefix = "transports",
@@ -40,15 +40,15 @@ cc_library(
 
 cc_library(
     name = "libhoth",
+    visibility = ["//visibility:public"],
     deps = [
-        "//transports:libhoth_device",
-        "//transports:libhoth_usb",
-        "//transports:libhoth_spi",
-        "//transports:libhoth_mtd",
         ":libhoth_transports_headers",
         ":libhoth_transports_headers_legacy",
+        "//transports:libhoth_device",
+        "//transports:libhoth_mtd",
+        "//transports:libhoth_spi",
+        "//transports:libhoth_usb",
     ],
-    visibility = ["//visibility:public"],
 )
 
 alias(

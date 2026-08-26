@@ -41,3 +41,27 @@ TEST_F(LibHothTest, set_gpio_drive_strength_invalid_param) {
   EXPECT_EQ(LIBHOTH_ERR_GET_SPACE(err), HOTH_HOST_SPACE_LIBHOTH);
   EXPECT_EQ(LIBHOTH_ERR_GET_CODE(err), LIBHOTH_ERR_INVALID_PARAMETER);
 }
+
+TEST_F(LibHothTest, get_gpio_drive_strength_success) {
+  EXPECT_CALL(mock_, send(_, UsesCommand(HOTH_CMD_GET_GPIO_DRIVE_STRENGTH), _))
+      .WillOnce(Return(LIBHOTH_OK));
+
+  struct hoth_response_get_gpio_drive_strength resp = {
+      .strength = 7,
+  };
+  EXPECT_CALL(mock_, receive)
+      .WillOnce(DoAll(CopyResp(&resp, sizeof(resp)), Return(LIBHOTH_OK)));
+
+  uint8_t strength = 0;
+  EXPECT_EQ(libhoth_get_gpio_drive_strength(&hoth_dev_, 10, &strength),
+            HOTH_SUCCESS);
+  EXPECT_EQ(strength, 7);
+}
+
+TEST_F(LibHothTest, get_gpio_drive_strength_null_param) {
+  libhoth_error err = libhoth_get_gpio_drive_strength(&hoth_dev_, 10, nullptr);
+  EXPECT_NE(err, HOTH_SUCCESS);
+  EXPECT_EQ(LIBHOTH_ERR_GET_CTX(err), HOTH_CTX_CMD_EXEC);
+  EXPECT_EQ(LIBHOTH_ERR_GET_SPACE(err), HOTH_HOST_SPACE_LIBHOTH);
+  EXPECT_EQ(LIBHOTH_ERR_GET_CODE(err), LIBHOTH_ERR_INVALID_PARAMETER);
+}

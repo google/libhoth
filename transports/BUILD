@@ -78,6 +78,6 @@ cc_library(
 )
 
 filegroup(
-  name = "headers",
-  srcs = glob(["*.h"])
+    name = "headers",
+    srcs = glob(["*.h"]),
 )
