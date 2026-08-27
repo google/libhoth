@@ -207,7 +207,7 @@ impl ::mutask_tlv::TlvObject for FloatTest {
 #[repr(C)]
 pub struct U64AlignmentTest {
     pub val32: u32,
-    pub val64: ::mutask_types::U64Align4,
+    pub val64: ::mutask_aligned::U64Align4,
 }
 const _: () = {
     assert!(::core::mem::offset_of!(U64AlignmentTest, val32) == 0usize);
@@ -261,7 +261,7 @@ pub struct AllTypesTest {
     pub uint64_u32: u32,
     pub int64_i32: i32,
     pub sint64_i64: ::zerocopy::byteorder::native_endian::I64,
-    pub uint64_u64: ::mutask_types::U64Align4,
+    pub uint64_u64: ::mutask_aligned::U64Align4,
     pub int64_i64: ::zerocopy::byteorder::native_endian::I64,
     pub double_val: ::zerocopy::byteorder::native_endian::F64,
 }

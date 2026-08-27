@@ -716,14 +716,14 @@ fn generate_plain_struct(
 fn to_aligned_rust_type(pt: &PackedType) -> String {
     match pt {
         PackedType::Primitive(prim) => match prim {
-            PackedPrimitiveType::U64 => "::mutask_types::U64Align4".to_string(),
+            PackedPrimitiveType::U64 => "::mutask_aligned::U64Align4".to_string(),
             PackedPrimitiveType::I64 => "::zerocopy::byteorder::native_endian::I64".to_string(),
             PackedPrimitiveType::F64 => "::zerocopy::byteorder::native_endian::F64".to_string(),
             _ => prim.to_string(),
         },
         PackedType::Array { elem, len } => {
             let elem_str = match elem {
-                PackedPrimitiveType::U64 => "::mutask_types::U64Align4".to_string(),
+                PackedPrimitiveType::U64 => "::mutask_aligned::U64Align4".to_string(),
                 PackedPrimitiveType::I64 => "::zerocopy::byteorder::native_endian::I64".to_string(),
                 PackedPrimitiveType::F64 => "::zerocopy::byteorder::native_endian::F64".to_string(),
                 _ => elem.to_string(),
