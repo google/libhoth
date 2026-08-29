@@ -312,6 +312,7 @@ cc_library(
     hdrs = ["spi_proxy.h"],
     deps = [
         ":host_cmd",
+        ":libhoth_status",
         ":progress",
         "//transports:libhoth_device",
     ],
@@ -321,6 +322,7 @@ cc_test(
     name = "spi_proxy_test",
     srcs = ["spi_proxy_test.cc"],
     deps = [
+        ":libhoth_status",
         ":spi_proxy",
         "//protocol/test:libhoth_device_mock",
         "//transports:libhoth_device",

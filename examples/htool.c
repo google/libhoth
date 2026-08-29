@@ -398,8 +398,10 @@ static int command_spi_read(const struct htool_invocation* inv) {
     goto cleanup1;
   }
   struct libhoth_spi_proxy spi;
-  status = libhoth_spi_proxy_init(&spi, dev, is_4_byte, enter_exit_4b);
-  if (status) {
+  libhoth_error err =
+      libhoth_spi_proxy_init(&spi, dev, is_4_byte, enter_exit_4b);
+  if (err != HOTH_SUCCESS) {
+    htool_report_error("spi_proxy init", err);
     goto cleanup1;
   }
 
@@ -411,8 +413,9 @@ static int command_spi_read(const struct htool_invocation* inv) {
   while (len_remaining > 0) {
     uint8_t buf[65536];
     size_t read_size = MIN(len_remaining, sizeof(buf));
-    status = libhoth_spi_proxy_read(&spi, addr, buf, read_size);
-    if (status) {
+    err = libhoth_spi_proxy_read(&spi, addr, buf, read_size);
+    if (err != HOTH_SUCCESS) {
+      htool_report_error("spi_proxy read", err);
       goto cleanup1;
     }
     status = libhoth_force_write(fd, buf, read_size);
@@ -480,25 +483,29 @@ static int command_spi_update(const struct htool_invocation* inv) {
     goto cleanup1;
   }
   struct libhoth_spi_proxy spi;
-  status = libhoth_spi_proxy_init(&spi, dev, is_4_byte, enter_exit_4b);
-  if (status) {
+  libhoth_error err =
+      libhoth_spi_proxy_init(&spi, dev, is_4_byte, enter_exit_4b);
+  if (err != HOTH_SUCCESS) {
+    htool_report_error("spi_proxy init", err);
     goto cleanup2;
   }
 
   struct libhoth_progress_stderr progress;
   libhoth_progress_stderr_init(&progress, "Erasing/Programming");
-  status = libhoth_spi_proxy_update(&spi, args.start, file_data, file_size,
-                                    &progress.progress);
-  if (status) {
+  err = libhoth_spi_proxy_update(&spi, args.start, file_data, file_size,
+                                 &progress.progress);
+  if (err != HOTH_SUCCESS) {
+    htool_report_error("spi_proxy update", err);
     goto cleanup2;
   }
 
   if (args.verify) {
     struct libhoth_progress_stderr progress;
     libhoth_progress_stderr_init(&progress, "Verifying");
-    status = libhoth_spi_proxy_verify(&spi, args.start, file_data, file_size,
-                                      &progress.progress);
-    if (status) {
+    err = libhoth_spi_proxy_verify(&spi, args.start, file_data, file_size,
+                                   &progress.progress);
+    if (err != HOTH_SUCCESS) {
+      htool_report_error("spi_proxy verify", err);
       goto cleanup2;
     }
   }
