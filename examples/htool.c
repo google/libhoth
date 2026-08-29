@@ -571,11 +571,17 @@ static int command_console(const struct htool_invocation* inv) {
     return -1;
   }
 
+  libhoth_error err = HOTH_SUCCESS;
   if (opts.snapshot) {
-    return htool_console_snapshot(dev, &opts);
+    err = htool_console_snapshot(dev, &opts);
   } else {
-    return htool_console_run(dev, &opts);
+    err = htool_console_run(dev, &opts);
   }
+  if (err != HOTH_SUCCESS) {
+    htool_report_error("console", err);
+    return -1;
+  }
+  return 0;
 }
 
 static int command_flash_spi_info(const struct htool_invocation* inv) {
