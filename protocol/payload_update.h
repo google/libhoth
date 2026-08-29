@@ -23,6 +23,7 @@ extern "C" {
 #include <stdbool.h>
 #include <stdint.h>
 
+#include "protocol/status.h"
 #include "transports/libhoth_device.h"
 
 #define HOTH_PRV_CMD_HOTH_PAYLOAD_UPDATE 0x0005
@@ -116,19 +117,6 @@ static_assert(offsetof(struct payload_update_status, next_half) == 3,
 static_assert(offsetof(struct payload_update_status, persistent_half) == 4,
               "Unexpected offset for persistent_half");
 
-enum payload_update_err {
-  PAYLOAD_UPDATE_OK = 0,
-  PAYLOAD_UPDATE_BAD_IMG,
-  PAYLOAD_UPDATE_INITIATE_FAIL,
-  PAYLOAD_UPDATE_FLASH_FAIL,
-  PAYLOAD_UPDATE_FINALIZE_FAIL,
-  PAYLOAD_UPDATE_READ_FAIL,
-  PAYLOAD_UPDATE_IMAGE_NOT_SECTOR_ALIGNED,
-  PAYLOAD_UPDATE_ERASE_FAIL,
-  PAYLOAD_UPDATE_INVALID_ARGS,
-  PAYLOAD_UPDATE_ACTIVATE_FAIL,
-};
-
 struct payload_update_packet {
   uint32_t offset; /* image offset */
   uint32_t len;    /* packet length excluding this header */
@@ -168,27 +156,27 @@ struct payload_update_activate_response_v1 {
   uint8_t pld_needs_reinitialization;
 } __attribute__((packed));
 
-enum payload_update_err libhoth_payload_update(struct libhoth_device* dev,
-                                               uint8_t* image, size_t len,
-                                               bool skip_erase,
-                                               bool binary_file);
-int libhoth_payload_update_getstatus(
+libhoth_error libhoth_payload_update(struct libhoth_device* dev, uint8_t* image,
+                                     size_t len, bool skip_erase,
+                                     bool binary_file);
+libhoth_error libhoth_payload_update_getstatus(
     struct libhoth_device* dev, struct payload_update_status* update_status);
-enum payload_update_err libhoth_payload_update_read_chunk(
-    struct libhoth_device* dev, int fd, size_t len, size_t offset);
-enum payload_update_err libhoth_payload_update_erase(struct libhoth_device* dev,
-                                                     uint32_t offset,
-                                                     uint32_t len);
-enum payload_update_err libhoth_payload_update_activate(
+libhoth_error libhoth_payload_update_read_chunk(struct libhoth_device* dev,
+                                                int fd, size_t len,
+                                                size_t offset);
+libhoth_error libhoth_payload_update_erase(struct libhoth_device* dev,
+                                           uint32_t offset, uint32_t len);
+libhoth_error libhoth_payload_update_activate(
     struct libhoth_device* dev, uint8_t half,
     uint8_t* pld_needs_reinitialization);
-int libhoth_payload_update_verify(struct libhoth_device* dev);
-int libhoth_payload_update_verify_descriptor(struct libhoth_device* dev);
-int libhoth_payload_update_confirm(struct libhoth_device* dev);
-int libhoth_payload_update_confirm_enable(struct libhoth_device* dev,
-                                          bool enable,
-                                          uint32_t timeout_seconds);
-int libhoth_payload_update_confirm_get_staged_timeout(
+libhoth_error libhoth_payload_update_verify(struct libhoth_device* dev);
+libhoth_error libhoth_payload_update_verify_descriptor(
+    struct libhoth_device* dev);
+libhoth_error libhoth_payload_update_confirm(struct libhoth_device* dev);
+libhoth_error libhoth_payload_update_confirm_enable(struct libhoth_device* dev,
+                                                    bool enable,
+                                                    uint32_t timeout_seconds);
+libhoth_error libhoth_payload_update_confirm_get_staged_timeout(
     struct libhoth_device* dev,
     payload_update_confirm_response_t* timeout_seconds);
 
