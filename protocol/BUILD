@@ -502,6 +502,7 @@ cc_library(
     hdrs = ["key_rotation.h"],
     deps = [
         ":host_cmd",
+        ":libhoth_status",
         "//transports:libhoth_device",
     ],
 )
@@ -512,6 +513,7 @@ cc_test(
     deps = [
         ":host_cmd",
         ":key_rotation",
+        ":libhoth_status",
         "//protocol/test:libhoth_device_mock",
         "//transports:libhoth_device",
         "@googletest//:gtest",
