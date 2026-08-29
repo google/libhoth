@@ -12,21 +12,22 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "payload_update.h"
+#include "protocol/payload_update.h"
 
+#include <errno.h>
 #include <inttypes.h>
 #include <stdbool.h>
 #include <stdint.h>
 #include <string.h>
 #include <unistd.h>
 
-#include "command_version.h"
-#include "host_cmd.h"
-#include "payload_info.h"
-#include "progress.h"
-#include "status.h"
+#include "protocol/command_version.h"
+#include "protocol/host_cmd.h"
+#include "protocol/payload_info.h"
+#include "protocol/progress.h"
+#include "protocol/status.h"
+#include "protocol/util.h"
 #include "transports/libhoth_device.h"
-#include "util.h"
 
 #define PAYLOAD_UPDATE_CONFIRM_OP_ENABLE 0
 #define PAYLOAD_UPDATE_CONFIRM_OP_ENABLE_WITH_TIMEOUT 1
@@ -34,25 +35,25 @@
 #define PAYLOAD_UPDATE_CONFIRM_OP_CONFIRM 3
 #define PAYLOAD_UPDATE_CONFIRM_OP_GET_STAGED_TIMEOUT_VALUES 4
 
-static int send_payload_update_request_with_command(struct libhoth_device* dev,
-                                                    uint8_t command) {
+static libhoth_error send_payload_update_request_with_command(
+    struct libhoth_device* dev, uint8_t command) {
   struct payload_update_packet request;
   request.type = command;
   request.offset = 0;
   request.len = 0;
 
-  int ret = libhoth_hostcmd_exec(
+  libhoth_error ret = libhoth_hostcmd_exec_v2(
       dev, HOTH_CMD_BOARD_SPECIFIC_BASE + HOTH_PRV_CMD_HOTH_PAYLOAD_UPDATE, 0,
       &request, sizeof(request), NULL, 0, NULL);
-  if (ret != 0) {
-    fprintf(stderr, "Error code from hoth: %d\n", ret);
-    return -1;
+  if (ret != HOTH_SUCCESS) {
+    fprintf(stderr, "Error code from hoth: 0x%016" PRIx64 "\n", ret);
+    return ret;
   }
-  return 0;
+  return HOTH_SUCCESS;
 }
 
-static int get_payload_update_version(struct libhoth_device* dev,
-                                      uint8_t* version) {
+static libhoth_error get_payload_update_version(struct libhoth_device* dev,
+                                                uint8_t* version) {
   uint32_t version_mask = 0;
   const libhoth_error err = libhoth_get_command_versions(
       dev, HOTH_CMD_BOARD_SPECIFIC_BASE + HOTH_PRV_CMD_HOTH_PAYLOAD_UPDATE,
@@ -63,24 +64,26 @@ static int get_payload_update_version(struct libhoth_device* dev,
   const bool is_version_0 = (err == HOTH_SUCCESS && (version_mask & 0x2) == 0);
   if (get_version_unsupported || is_version_0) {
     *version = 0;
-    return 0;
+    return HOTH_SUCCESS;
   }
   if (err != HOTH_SUCCESS) {
-    return -1;
+    return err;
   }
   *version = 1;
-  return 0;
+  return HOTH_SUCCESS;
 }
 
-static int libhoth_payload_update_finalize(
+static libhoth_error libhoth_payload_update_finalize(
     struct libhoth_device* dev, uint8_t* pld_needs_reinitialization) {
   uint8_t version;
-  int status = get_payload_update_version(dev, &version);
+  libhoth_error status = get_payload_update_version(dev, &version);
 
-  if (status != 0) {
-    fprintf(stderr,
-            "Checking supported command version got unexpected error: %d\n",
-            status);
+  if (status != HOTH_SUCCESS) {
+    fprintf(
+        stderr,
+        "Checking supported command version got unexpected error: 0x%016" PRIx64
+        "\n",
+        status);
     return status;
   }
 
@@ -97,34 +100,34 @@ static int libhoth_payload_update_finalize(
       .type = PAYLOAD_UPDATE_FINALIZE,
   };
   struct payload_update_finalize_response_v1 response = {0};
-  status = libhoth_hostcmd_exec(
+  status = libhoth_hostcmd_exec_v2(
       dev, HOTH_CMD_BOARD_SPECIFIC_BASE + HOTH_PRV_CMD_HOTH_PAYLOAD_UPDATE,
       /*version=*/1, &request, sizeof(request), &response, sizeof(response),
       NULL);
-  if (status != 0) {
+  if (status != HOTH_SUCCESS) {
     return status;
   }
   if (pld_needs_reinitialization != NULL) {
     *pld_needs_reinitialization = response.pld_needs_reinitialization;
   }
-  return 0;
+  return HOTH_SUCCESS;
 }
 
-static int payload_update_erase_chunk(struct libhoth_device* const dev,
-                                      const uint32_t offset,
-                                      const uint32_t len) {
+static libhoth_error payload_update_erase_chunk(
+    struct libhoth_device* const dev, const uint32_t offset,
+    const uint32_t len) {
   struct payload_update_packet request;
   request.type = PAYLOAD_UPDATE_ERASE;
   request.offset = offset;
   request.len = len;
-  return libhoth_hostcmd_exec(
+  return libhoth_hostcmd_exec_v2(
       dev, HOTH_CMD_BOARD_SPECIFIC_BASE + HOTH_PRV_CMD_HOTH_PAYLOAD_UPDATE, 0,
       &request, sizeof(request), NULL, 0, NULL);
 }
 
-enum payload_update_err libhoth_payload_update_erase(
-    struct libhoth_device* const dev, const uint32_t offset,
-    const uint32_t len) {
+libhoth_error libhoth_payload_update_erase(struct libhoth_device* const dev,
+                                           const uint32_t offset,
+                                           const uint32_t len) {
   struct libhoth_progress_stderr erase_progress;
   libhoth_progress_stderr_init(&erase_progress, "Erase staging side");
 
@@ -136,19 +139,22 @@ enum payload_update_err libhoth_payload_update_erase(
             "error: erase length (0x%" PRIx32
             ") is zero or not sector-aligned.\n",
             len);
-    return PAYLOAD_UPDATE_IMAGE_NOT_SECTOR_ALIGNED;
+    return LIBHOTH_ERR_CONSTRUCT(HOTH_CTX_CMD_EXEC, HOTH_HOST_SPACE_LIBHOTH,
+                                 LIBHOTH_ERR_IMAGE_NOT_SECTOR_ALIGNED);
   }
   if ((offset % sector_erase) != 0) {
     fprintf(stderr, "error: offset (0x%" PRIx32 ") is not sector-aligned.\n",
             offset);
-    return PAYLOAD_UPDATE_IMAGE_NOT_SECTOR_ALIGNED;
+    return LIBHOTH_ERR_CONSTRUCT(HOTH_CTX_CMD_EXEC, HOTH_HOST_SPACE_LIBHOTH,
+                                 LIBHOTH_ERR_IMAGE_NOT_SECTOR_ALIGNED);
   }
   if (UINT32_MAX - offset < len) {
     fprintf(stderr,
             "error: invalid erase range (offset 0x%" PRIx32 ", len 0x%" PRIx32
             ")\n",
             offset, len);
-    return PAYLOAD_UPDATE_INVALID_ARGS;
+    return LIBHOTH_ERR_CONSTRUCT(HOTH_CTX_CMD_EXEC, HOTH_HOST_SPACE_LIBHOTH,
+                                 LIBHOTH_ERR_INVALID_PARAMETER);
   }
 
   uint32_t erased = 0;
@@ -160,30 +166,32 @@ enum payload_update_err libhoth_payload_update_erase(
     const bool send_block_erase =
         (current_offset % block_erase == 0) && (remaining >= block_erase);
     const uint32_t chunk_size = send_block_erase ? block_erase : sector_erase;
-    const int ret = payload_update_erase_chunk(dev, current_offset, chunk_size);
-    if (ret != 0) {
-      fprintf(stderr, "error: erase chunk offset 0x%" PRIx32 " err: %d\n",
+    const libhoth_error ret =
+        payload_update_erase_chunk(dev, current_offset, chunk_size);
+    if (ret != HOTH_SUCCESS) {
+      fprintf(stderr,
+              "error: erase chunk offset 0x%" PRIx32 " err: 0x%016" PRIx64 "\n",
               current_offset, ret);
-      return PAYLOAD_UPDATE_ERASE_FAIL;
+      return ret;
     }
     erased += chunk_size;
   }
 
   erase_progress.progress.func(erase_progress.progress.param, len, len);
-  return PAYLOAD_UPDATE_OK;
+  return HOTH_SUCCESS;
 }
 
-enum payload_update_err libhoth_payload_update(struct libhoth_device* dev,
-                                               uint8_t* image, size_t size,
-                                               bool skip_erase,
-                                               bool binary_file) {
+libhoth_error libhoth_payload_update(struct libhoth_device* dev, uint8_t* image,
+                                     size_t size, bool skip_erase,
+                                     bool binary_file) {
   if (!binary_file && (libhoth_find_image_descriptor(image, size) == NULL)) {
-    return PAYLOAD_UPDATE_BAD_IMG;
+    return LIBHOTH_ERR_CONSTRUCT(HOTH_CTX_CMD_EXEC, HOTH_HOST_SPACE_LIBHOTH,
+                                 LIBHOTH_ERR_BAD_IMAGE);
   }
 
   if (!skip_erase) {
-    enum payload_update_err err = libhoth_payload_update_erase(dev, 0, size);
-    if (err != PAYLOAD_UPDATE_OK) {
+    libhoth_error err = libhoth_payload_update_erase(dev, 0, size);
+    if (err != HOTH_SUCCESS) {
       return err;
     }
   }
@@ -224,12 +232,12 @@ enum payload_update_err libhoth_payload_update(struct libhoth_device* dev,
     memcpy(buffer, &request, sizeof(request));
     memcpy(buffer + sizeof(request), image + offset, chunk_size);
 
-    int ret = libhoth_hostcmd_exec(
+    libhoth_error ret = libhoth_hostcmd_exec_v2(
         dev, HOTH_CMD_BOARD_SPECIFIC_BASE + HOTH_PRV_CMD_HOTH_PAYLOAD_UPDATE, 0,
         buffer, sizeof(request) + chunk_size, NULL, 0, NULL);
-    if (ret != 0) {
-      fprintf(stderr, "Error code from hoth: %d\n", ret);
-      return PAYLOAD_UPDATE_FLASH_FAIL;
+    if (ret != HOTH_SUCCESS) {
+      fprintf(stderr, "Error code from hoth: 0x%016" PRIx64 "\n", ret);
+      return ret;
     }
 
     offset += chunk_size - 1;
@@ -242,19 +250,20 @@ enum payload_update_err libhoth_payload_update(struct libhoth_device* dev,
   if (!binary_file) {
     fprintf(stderr, "Finalizing payload update.\n");
     uint8_t pld_needs_reinitialization = 0;
-    if (libhoth_payload_update_finalize(dev, &pld_needs_reinitialization) !=
-        0) {
-      return PAYLOAD_UPDATE_FINALIZE_FAIL;
+    libhoth_error finalize_err =
+        libhoth_payload_update_finalize(dev, &pld_needs_reinitialization);
+    if (finalize_err != HOTH_SUCCESS) {
+      return finalize_err;
     }
     if (pld_needs_reinitialization != 0) {
       fprintf(stderr, "PLD updated. Re-initialization needed.\n");
     }
   }
 
-  return PAYLOAD_UPDATE_OK;
+  return HOTH_SUCCESS;
 }
 
-int libhoth_payload_update_getstatus(
+libhoth_error libhoth_payload_update_getstatus(
     struct libhoth_device* dev, struct payload_update_status* update_status) {
   struct payload_update_packet request;
   request.type = PAYLOAD_UPDATE_GET_STATUS;
@@ -262,28 +271,32 @@ int libhoth_payload_update_getstatus(
   request.len = 0;
 
   size_t rlen = 0;
-  int ret = libhoth_hostcmd_exec(
+  libhoth_error ret = libhoth_hostcmd_exec_v2(
       dev, HOTH_CMD_BOARD_SPECIFIC_BASE + HOTH_PRV_CMD_HOTH_PAYLOAD_UPDATE, 0,
       &request, sizeof(request), update_status, sizeof(*update_status), &rlen);
 
-  if (ret != 0) {
-    fprintf(stderr, "HOTH_PAYLOAD_UPDATE_GET_STATUS error code: %d\n", ret);
+  if (ret != HOTH_SUCCESS) {
+    fprintf(stderr,
+            "HOTH_PAYLOAD_UPDATE_GET_STATUS error code: 0x%016" PRIx64 "\n",
+            ret);
     return ret;
   }
 
   if (rlen != sizeof(*update_status)) {
     fprintf(stderr,
-            "HOTH_PAYLOAD_UPDATE_GET_STATUS expected exactly %ld response "
-            "bytes, got %ld\n",
+            "HOTH_PAYLOAD_UPDATE_GET_STATUS expected exactly %zu response "
+            "bytes, got %zu\n",
             sizeof(*update_status), rlen);
-    return -1;
+    return LIBHOTH_ERR_CONSTRUCT(HOTH_CTX_CMD_EXEC, HOTH_HOST_SPACE_LIBHOTH,
+                                 LIBHOTH_ERR_FAIL);
   }
 
-  return 0;
+  return HOTH_SUCCESS;
 }
 
-enum payload_update_err libhoth_payload_update_read_chunk(
-    struct libhoth_device* dev, int fd, size_t len, size_t offset) {
+libhoth_error libhoth_payload_update_read_chunk(struct libhoth_device* dev,
+                                                int fd, size_t len,
+                                                size_t offset) {
   const size_t max_chunk_size =
       LIBHOTH_MAILBOX_SIZE - sizeof(struct hoth_host_response);
   uint8_t buffer[LIBHOTH_MAILBOX_SIZE];
@@ -298,73 +311,80 @@ enum payload_update_err libhoth_payload_update_read_chunk(
     pkt.offset = offset;
     pkt.len = chunk_size;
 
-    int ret = libhoth_hostcmd_exec(
+    libhoth_error ret = libhoth_hostcmd_exec_v2(
         dev, HOTH_CMD_BOARD_SPECIFIC_BASE + HOTH_PRV_CMD_HOTH_PAYLOAD_UPDATE, 0,
-        &pkt, sizeof(pkt), &buffer, chunk_size, NULL);
+        &pkt, sizeof(pkt), buffer, chunk_size, NULL);
 
-    if (ret != 0) {
-      fprintf(stderr, "Payload read failed, err code: %d\n", ret);
-      return PAYLOAD_UPDATE_READ_FAIL;
+    if (ret != HOTH_SUCCESS) {
+      fprintf(stderr, "Payload read failed, err code: 0x%016" PRIx64 "\n", ret);
+      return ret;
     }
 
-    ret = libhoth_force_write(fd, buffer, chunk_size);
-    if (ret != 0) {
+    int write_errno = libhoth_force_write(fd, buffer, chunk_size);
+    if (write_errno != 0) {
       fprintf(stderr,
               "Failed to write payload during payload read, err code: %d\n",
-              ret);
-      return PAYLOAD_UPDATE_READ_FAIL;
+              write_errno);
+      return LIBHOTH_ERR_CONSTRUCT(HOTH_CTX_CMD_EXEC, HOTH_HOST_SPACE_POSIX,
+                                   write_errno);
     }
 
     len -= chunk_size;
     offset += chunk_size;
   }
 
-  return PAYLOAD_UPDATE_OK;
+  return HOTH_SUCCESS;
 }
 
 // Version 0 does not return a response.
-static enum payload_update_err libhoth_payload_update_activate_v0(
+static libhoth_error libhoth_payload_update_activate_v0(
     struct libhoth_device* dev,
     struct payload_update_activate_request* request) {
-  int status = libhoth_hostcmd_exec(
+  libhoth_error status = libhoth_hostcmd_exec_v2(
       dev, HOTH_CMD_BOARD_SPECIFIC_BASE + HOTH_PRV_CMD_HOTH_PAYLOAD_UPDATE,
       /*version=*/0, request, sizeof(*request), NULL, 0, NULL);
-  if (status != 0) {
-    fprintf(stderr, "HOTH_PAYLOAD_UPDATE_ACTIVATE v0 error code: %d\n", status);
-    return PAYLOAD_UPDATE_ACTIVATE_FAIL;
+  if (status != HOTH_SUCCESS) {
+    fprintf(stderr,
+            "HOTH_PAYLOAD_UPDATE_ACTIVATE v0 error code: 0x%016" PRIx64 "\n",
+            status);
+    return status;
   }
-  return PAYLOAD_UPDATE_OK;
+  return HOTH_SUCCESS;
 }
 
 // Version 1 returns a response indicating if the PLD needs to be reinitialized.
-static enum payload_update_err libhoth_payload_update_activate_v1(
+static libhoth_error libhoth_payload_update_activate_v1(
     struct libhoth_device* dev, struct payload_update_activate_request* request,
     uint8_t* pld_needs_reinitialization) {
   struct payload_update_activate_response_v1 response = {0};
-  int status = libhoth_hostcmd_exec(
+  libhoth_error status = libhoth_hostcmd_exec_v2(
       dev, HOTH_CMD_BOARD_SPECIFIC_BASE + HOTH_PRV_CMD_HOTH_PAYLOAD_UPDATE,
       /*version=*/1, request, sizeof(*request), &response, sizeof(response),
       NULL);
-  if (status != 0) {
-    fprintf(stderr, "HOTH_PAYLOAD_UPDATE_ACTIVATE v1 error code: %d\n", status);
-    return PAYLOAD_UPDATE_ACTIVATE_FAIL;
+  if (status != HOTH_SUCCESS) {
+    fprintf(stderr,
+            "HOTH_PAYLOAD_UPDATE_ACTIVATE v1 error code: 0x%016" PRIx64 "\n",
+            status);
+    return status;
   }
   if (pld_needs_reinitialization != NULL) {
     *pld_needs_reinitialization = response.pld_needs_reinitialization;
   }
-  return PAYLOAD_UPDATE_OK;
+  return HOTH_SUCCESS;
 }
 
-enum payload_update_err libhoth_payload_update_activate(
+libhoth_error libhoth_payload_update_activate(
     struct libhoth_device* dev, uint8_t half,
     uint8_t* pld_needs_reinitialization) {
   uint8_t version;
-  int status = get_payload_update_version(dev, &version);
-  if (status != 0) {
-    fprintf(stderr,
-            "Checking supported command version got unexpected error: %d\n",
-            status);
-    return PAYLOAD_UPDATE_ACTIVATE_FAIL;
+  libhoth_error status = get_payload_update_version(dev, &version);
+  if (status != HOTH_SUCCESS) {
+    fprintf(
+        stderr,
+        "Checking supported command version got unexpected error: 0x%016" PRIx64
+        "\n",
+        status);
+    return status;
   }
 
   struct payload_update_activate_request request = {
@@ -387,16 +407,17 @@ enum payload_update_err libhoth_payload_update_activate(
                                             pld_needs_reinitialization);
 }
 
-int libhoth_payload_update_verify(struct libhoth_device* dev) {
+libhoth_error libhoth_payload_update_verify(struct libhoth_device* dev) {
   return send_payload_update_request_with_command(dev, PAYLOAD_UPDATE_VERIFY);
 }
 
-int libhoth_payload_update_verify_descriptor(struct libhoth_device* dev) {
+libhoth_error libhoth_payload_update_verify_descriptor(
+    struct libhoth_device* dev) {
   return send_payload_update_request_with_command(
       dev, PAYLOAD_UPDATE_VERIFY_DESCRIPTOR);
 }
 
-int libhoth_payload_update_confirm(struct libhoth_device* dev) {
+libhoth_error libhoth_payload_update_confirm(struct libhoth_device* dev) {
   payload_update_confirm_response_t confirm_response = {0};
 
   payload_update_confirm_request_t confirm_request = {0};
@@ -413,21 +434,22 @@ int libhoth_payload_update_confirm(struct libhoth_device* dev) {
   memcpy(&send_buf[sizeof(pkt_header)], &confirm_request,
          sizeof(confirm_request));
 
-  int ret = libhoth_hostcmd_exec(
+  libhoth_error ret = libhoth_hostcmd_exec_v2(
       dev, HOTH_CMD_BOARD_SPECIFIC_BASE + HOTH_PRV_CMD_HOTH_PAYLOAD_UPDATE, 0,
-      &send_buf, sizeof(send_buf), &confirm_response, sizeof(confirm_response),
+      send_buf, sizeof(send_buf), &confirm_response, sizeof(confirm_response),
       NULL);
-  if (ret != 0) {
-    fprintf(stderr, "Payload update confirm failed, err code: %d\n", ret);
-    return -1;
+  if (ret != HOTH_SUCCESS) {
+    fprintf(stderr,
+            "Payload update confirm failed, err code: 0x%016" PRIx64 "\n", ret);
+    return ret;
   }
 
-  return 0;
+  return HOTH_SUCCESS;
 }
 
-int libhoth_payload_update_confirm_enable(struct libhoth_device* dev,
-                                          bool enable,
-                                          uint32_t timeout_seconds) {
+libhoth_error libhoth_payload_update_confirm_enable(struct libhoth_device* dev,
+                                                    bool enable,
+                                                    uint32_t timeout_seconds) {
   payload_update_confirm_response_t confirm_response = {0};
 
   // Initially fill timeout with the set timeout, if enabled
@@ -455,20 +477,22 @@ int libhoth_payload_update_confirm_enable(struct libhoth_device* dev,
   memcpy(&send_buf[sizeof(pkt_header)], &confirm_request,
          sizeof(confirm_request));
 
-  int ret = libhoth_hostcmd_exec(
+  libhoth_error ret = libhoth_hostcmd_exec_v2(
       dev, HOTH_CMD_BOARD_SPECIFIC_BASE + HOTH_PRV_CMD_HOTH_PAYLOAD_UPDATE, 0,
-      &send_buf, sizeof(send_buf), &confirm_response, sizeof(confirm_response),
+      send_buf, sizeof(send_buf), &confirm_response, sizeof(confirm_response),
       NULL);
-  if (ret != 0) {
-    fprintf(stderr, "Payload update confirm enable failed, err code: %d\n",
+  if (ret != HOTH_SUCCESS) {
+    fprintf(stderr,
+            "Payload update confirm enable failed, err code: 0x%016" PRIx64
+            "\n",
             ret);
-    return -1;
+    return ret;
   }
 
-  return 0;
+  return HOTH_SUCCESS;
 }
 
-int libhoth_payload_update_confirm_get_staged_timeout(
+libhoth_error libhoth_payload_update_confirm_get_staged_timeout(
     struct libhoth_device* dev, payload_update_confirm_response_t* response) {
   payload_update_confirm_request_t confirm_request = {0};
   confirm_request.op = PAYLOAD_UPDATE_CONFIRM_OP_GET_STAGED_TIMEOUT_VALUES;
@@ -484,13 +508,15 @@ int libhoth_payload_update_confirm_get_staged_timeout(
   memcpy(&send_buf[sizeof(pkt_header)], &confirm_request,
          sizeof(confirm_request));
 
-  int ret = libhoth_hostcmd_exec(
+  libhoth_error ret = libhoth_hostcmd_exec_v2(
       dev, HOTH_CMD_BOARD_SPECIFIC_BASE + HOTH_PRV_CMD_HOTH_PAYLOAD_UPDATE, 0,
-      &send_buf, sizeof(send_buf), response, sizeof(*response), NULL);
-  if (ret != 0) {
-    fprintf(stderr, "Payload update get timeout failed, err code: %d\n", ret);
-    return -1;
+      send_buf, sizeof(send_buf), response, sizeof(*response), NULL);
+  if (ret != HOTH_SUCCESS) {
+    fprintf(stderr,
+            "Payload update get timeout failed, err code: 0x%016" PRIx64 "\n",
+            ret);
+    return ret;
   }
 
-  return 0;
+  return HOTH_SUCCESS;
 }

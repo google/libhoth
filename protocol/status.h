@@ -62,6 +62,8 @@ typedef enum {
   LIBHOTH_ERR_INTERFACE_BUSY = 11,
   LIBHOTH_ERR_DFU_APP_MISMATCH = 12,
   LIBHOTH_ERR_DFU_ROMEXT_MISMATCH = 13,
+  LIBHOTH_ERR_BAD_IMAGE = 14,
+  LIBHOTH_ERR_IMAGE_NOT_SECTOR_ALIGNED = 15,
 } libhoth_status;
 
 // hoth_context_id: High 16 bits of the error code.
