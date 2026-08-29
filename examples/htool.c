@@ -988,9 +988,10 @@ static int command_opentitan_version(const struct htool_invocation* inv) {
   }
 
   struct opentitan_get_version_resp output;
-  const int rv = libhoth_opentitan_version(dev, &output);
-  if (rv) {
-    return rv;
+  const libhoth_error err = libhoth_opentitan_version(dev, &output);
+  if (err != HOTH_SUCCESS) {
+    htool_report_error("opentitan_version", err);
+    return -1;
   }
 
   libhoth_print_ot_version_resp(&output);

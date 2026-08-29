@@ -485,6 +485,7 @@ cc_test(
     name = "opentitan_version_test",
     srcs = ["opentitan_version_test.cc"],
     deps = [
+        ":libhoth_status",
         ":opentitan_version",
         "//protocol/test:libhoth_device_mock",
         "//transports:libhoth_device",

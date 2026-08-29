@@ -112,19 +112,16 @@ int htool_dfu_update(const struct htool_invocation* inv) {
     retval = 0;
   }
 
-  {
-    int ret = munmap(image, statbuf.st_size);
-    if (ret != 0) {
-      fprintf(stderr, "munmap error: %d\n", ret);
-    }
+  int ret = munmap(image, statbuf.st_size);
+  if (ret != 0) {
+    fprintf(stderr, "munmap error: %d\n", ret);
   }
 
-cleanup: {
-  int ret = close(fd);
+cleanup:
+  ret = close(fd);
   if (ret != 0) {
     fprintf(stderr, "close error: %d\n", ret);
   }
-}
 
   return retval;
 }
@@ -167,7 +164,9 @@ int htool_dfu_check(const struct htool_invocation* inv) {
     goto cleanup;
   }
 
-  if (libhoth_opentitan_version(dev, &resp) != 0) {
+  libhoth_error ot_err = libhoth_opentitan_version(dev, &resp);
+  if (ot_err != HOTH_SUCCESS) {
+    htool_report_error("opentitan_version", ot_err);
     fprintf(stderr, "error: Failed to get current version\n");
     goto cleanup2;
   }

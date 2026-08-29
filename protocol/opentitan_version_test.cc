@@ -52,7 +52,7 @@ TEST_F(LibHothTest, opentitan_version_test) {
       .WillOnce(DoAll(CopyResp(&mock_response, sizeof(mock_response)),
                       Return(LIBHOTH_OK)));
 
-  EXPECT_EQ(libhoth_opentitan_version(&hoth_dev_, &response), LIBHOTH_OK);
+  EXPECT_EQ(libhoth_opentitan_version(&hoth_dev_, &response), HOTH_SUCCESS);
 
   EXPECT_EQ(response.rom_ext.slots[0].major,
             mock_response.rom_ext.slots[0].major);
