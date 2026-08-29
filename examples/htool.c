@@ -753,31 +753,36 @@ int htool_controlled_storage_write(const struct htool_invocation* inv) {
     return -1;
   }
 
-  int ret;
+  int result = -1;
   struct stat statbuf;
-  if ((ret = fstat(fd, &statbuf)) != 0) {
+  if (fstat(fd, &statbuf) != 0) {
     fprintf(stderr, "fstat error: %s\n", strerror(errno));
     goto cleanup;
   }
   if (statbuf.st_size > SIZE_MAX) {
     fprintf(stderr, "file too large\n");
-    ret = -1;
     goto cleanup;
   }
   size_t file_size = statbuf.st_size;
   uint8_t* file_data = mmap(NULL, file_size, PROT_READ, MAP_PRIVATE, fd, 0);
 
   if (file_data == NULL) {
-    ret = -1;
     goto cleanup;
   }
 
-  ret = libhoth_controlled_storage_write(dev, slot, file_data, file_size);
+  libhoth_error err =
+      libhoth_controlled_storage_write(dev, slot, file_data, file_size);
   munmap(file_data, file_size);
+  if (err != HOTH_SUCCESS) {
+    htool_report_error("controlled_storage write", err);
+    goto cleanup;
+  }
+
+  result = 0;
 
 cleanup:
   close(fd);
-  return ret;
+  return result;
 }
 
 int htool_controlled_storage_read(const struct htool_invocation* inv) {
@@ -799,8 +804,10 @@ int htool_controlled_storage_read(const struct htool_invocation* inv) {
 
   struct hoth_payload_controlled_storage payload;
   size_t payload_len;
-  if (libhoth_controlled_storage_read(dev, slot, &payload, &payload_len) != 0) {
-    fprintf(stderr, "Unable to read from controlled storage.\n");
+  libhoth_error err =
+      libhoth_controlled_storage_read(dev, slot, &payload, &payload_len);
+  if (err != HOTH_SUCCESS) {
+    htool_report_error("controlled_storage read", err);
     return -1;
   }
 
@@ -841,7 +848,12 @@ int htool_controlled_storage_delete(const struct htool_invocation* inv) {
     return -1;
   }
 
-  return libhoth_controlled_storage_delete(dev, slot);
+  libhoth_error err = libhoth_controlled_storage_delete(dev, slot);
+  if (err != HOTH_SUCCESS) {
+    htool_report_error("controlled_storage delete", err);
+    return -1;
+  }
+  return 0;
 }
 
 static int command_set_gpio_drive_strength(const struct htool_invocation* inv) {

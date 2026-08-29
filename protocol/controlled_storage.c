@@ -16,44 +16,58 @@
 
 #include <string.h>
 
-#include "controlled_storage.h"
+#include "host_cmd.h"
+#include "protocol/status.h"
 
-int libhoth_controlled_storage_read(
+libhoth_error libhoth_controlled_storage_read(
     struct libhoth_device* dev, uint32_t slot,
     struct hoth_payload_controlled_storage* payload, size_t* payload_len) {
+  if (dev == NULL || payload == NULL) {
+    return LIBHOTH_ERR_CONSTRUCT(HOTH_CTX_CMD_EXEC, HOTH_HOST_SPACE_LIBHOTH,
+                                 LIBHOTH_ERR_INVALID_PARAMETER);
+  }
   struct hoth_request_controlled_storage req = {};
 
   req.operation = CONTROLLED_STORAGE_READ;
   req.slot = slot;
-  return libhoth_hostcmd_exec(
+  return libhoth_hostcmd_exec_v2(
       dev, HOTH_CMD_BOARD_SPECIFIC_BASE + HOTH_PRV_CMD_HOTH_CONTROLLED_STORAGE,
       /*version=*/0, &req, sizeof(req), payload, sizeof(*payload), payload_len);
 }
 
-int libhoth_controlled_storage_write(struct libhoth_device* dev, uint32_t slot,
-                                     const uint8_t* data, size_t len) {
-  struct hoth_request_controlled_storage req = {};
-  if (len > sizeof(req.payload.data)) {
-    return -1;
+libhoth_error libhoth_controlled_storage_write(struct libhoth_device* dev,
+                                               uint32_t slot,
+                                               const uint8_t* data,
+                                               size_t len) {
+  if (dev == NULL || data == NULL ||
+      len >
+          sizeof(((struct hoth_request_controlled_storage*)0)->payload.data)) {
+    return LIBHOTH_ERR_CONSTRUCT(HOTH_CTX_CMD_EXEC, HOTH_HOST_SPACE_LIBHOTH,
+                                 LIBHOTH_ERR_INVALID_PARAMETER);
   }
+  struct hoth_request_controlled_storage req = {};
 
   req.operation = CONTROLLED_STORAGE_WRITE;
   req.slot = slot;
   memcpy(req.payload.data, data, len);
-  return libhoth_hostcmd_exec(
+  return libhoth_hostcmd_exec_v2(
       dev, HOTH_CMD_BOARD_SPECIFIC_BASE + HOTH_PRV_CMD_HOTH_CONTROLLED_STORAGE,
       /*version=*/0, &req,
       sizeof(req) - sizeof(struct hoth_payload_controlled_storage) + len, NULL,
       0, NULL);
 }
 
-int libhoth_controlled_storage_delete(struct libhoth_device* dev,
-                                      uint32_t slot) {
+libhoth_error libhoth_controlled_storage_delete(struct libhoth_device* dev,
+                                                uint32_t slot) {
+  if (dev == NULL) {
+    return LIBHOTH_ERR_CONSTRUCT(HOTH_CTX_CMD_EXEC, HOTH_HOST_SPACE_LIBHOTH,
+                                 LIBHOTH_ERR_INVALID_PARAMETER);
+  }
   struct hoth_request_controlled_storage req = {};
 
   req.operation = CONTROLLED_STORAGE_DELETE;
   req.slot = slot;
-  return libhoth_hostcmd_exec(
+  return libhoth_hostcmd_exec_v2(
       dev, HOTH_CMD_BOARD_SPECIFIC_BASE + HOTH_PRV_CMD_HOTH_CONTROLLED_STORAGE,
       /*version=*/0, &req,
       sizeof(req) - sizeof(struct hoth_payload_controlled_storage), NULL, 0,
