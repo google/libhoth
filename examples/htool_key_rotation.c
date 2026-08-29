@@ -1,19 +1,18 @@
 // Copyright 2025 Google LLC
-
+//
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
 // You may obtain a copy of the License at
-
+//
 //     https://www.apache.org/licenses/LICENSE-2.0
-
+//
 // Unless required by applicable law or agreed to in writing, software
 // distributed under the License is distributed on an "AS IS" BASIS,
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
-// limitations under the License.guage governing permissions and
 // limitations under the License.
 
-#include "htool_key_rotation.h"
+#include "examples/htool_key_rotation.h"
 
 #include <errno.h>
 #include <fcntl.h>
@@ -26,9 +25,10 @@
 #include <sys/types.h>
 #include <unistd.h>
 
-#include "htool.h"
-#include "htool_cmd.h"
+#include "examples/htool.h"
+#include "examples/htool_cmd.h"
 #include "protocol/key_rotation.h"
+#include "protocol/status.h"
 
 static const char* get_validation_method_string(uint32_t validation_method) {
   switch (validation_method) {
@@ -50,9 +50,9 @@ int htool_key_rotation_get_status(const struct htool_invocation* inv) {
     return -1;
   }
   struct hoth_response_key_rotation_status status;
-  enum key_rotation_err ret = libhoth_key_rotation_get_status(dev, &status);
-  if (ret) {
-    fprintf(stderr, "Failed to get key rotation status\n");
+  libhoth_error ret = libhoth_key_rotation_get_status(dev, &status);
+  if (ret != HOTH_SUCCESS) {
+    htool_report_error("key_rotation get_status", ret);
     return -1;
   }
 
@@ -73,9 +73,9 @@ int htool_key_rotation_get_version(const struct htool_invocation* inv) {
     return -1;
   }
   struct hoth_response_key_rotation_record_version version;
-  enum key_rotation_err ret = libhoth_key_rotation_get_version(dev, &version);
-  if (ret) {
-    fprintf(stderr, "Failed to get key rotation version\n");
+  libhoth_error ret = libhoth_key_rotation_get_version(dev, &version);
+  if (ret != HOTH_SUCCESS) {
+    htool_report_error("key_rotation get_version", ret);
     return -1;
   }
   printf("version        : %u\n", version.version);
@@ -148,10 +148,10 @@ int htool_key_rotation_update(const struct htool_invocation* inv) {
     return result;
   }
 
-  enum key_rotation_err key_ret = libhoth_key_rotation_update(dev, image, size);
-  if (key_ret) {
-    fprintf(stderr, "Failed to update key rotation record\n");
-    result = key_ret;
+  libhoth_error key_ret = libhoth_key_rotation_update(dev, image, size);
+  if (key_ret != HOTH_SUCCESS) {
+    htool_report_error("key_rotation update", key_ret);
+    result = -1;
   }
 
   if (image != MAP_FAILED) {
@@ -170,10 +170,9 @@ int htool_key_rotation_payload_status(const struct htool_invocation* inv) {
     return -1;
   }
   struct hoth_response_key_rotation_payload_status payload_status;
-  enum key_rotation_err ret =
-      libhoth_key_rotation_payload_status(dev, &payload_status);
-  if (ret) {
-    fprintf(stderr, "Failed to get key rotation payload status\n");
+  libhoth_error ret = libhoth_key_rotation_payload_status(dev, &payload_status);
+  if (ret != HOTH_SUCCESS) {
+    htool_report_error("key_rotation payload_status", ret);
     return -1;
   }
   printf("validation_method   : %s\n",
@@ -246,10 +245,10 @@ int htool_key_rotation_read(const struct htool_invocation* inv) {
   }
 
   struct hoth_response_key_rotation_record_read read_response;
-  enum key_rotation_err ret_read =
+  libhoth_error ret_read =
       libhoth_key_rotation_read(dev, offset, size, read_half, &read_response);
-  if (ret_read) {
-    fprintf(stderr, "Failed to read key rotation record\n");
+  if (ret_read != HOTH_SUCCESS) {
+    htool_report_error("key_rotation read", ret_read);
     if (fd != -1) {
       close(fd);
     }
@@ -344,11 +343,11 @@ int htool_key_rotation_read_chunk_type(const struct htool_invocation* inv) {
   }
   uint16_t response_size = 0;
   struct hoth_response_key_rotation_record_read read_response;
-  enum key_rotation_err ret_read = libhoth_key_rotation_read_chunk_type(
+  libhoth_error ret_read = libhoth_key_rotation_read_chunk_type(
       dev, chunk_typecode, chunk_index, offset, size, &read_response,
       &response_size);
-  if (ret_read) {
-    fprintf(stderr, "Failed to read chunk from key rotation record\n");
+  if (ret_read != HOTH_SUCCESS) {
+    htool_report_error("key_rotation read_chunk_type", ret_read);
     return -1;
   }
   if (size == 0) {
@@ -401,10 +400,10 @@ int htool_key_rotation_chunk_type_count(const struct htool_invocation* inv) {
     return -1;
   }
   uint16_t chunk_count = 0;
-  enum key_rotation_err ret_count =
+  libhoth_error ret_count =
       libhoth_key_rotation_chunk_type_count(dev, chunk_typecode, &chunk_count);
-  if (ret_count) {
-    fprintf(stderr, "Failed to get chunk type count\n");
+  if (ret_count != HOTH_SUCCESS) {
+    htool_report_error("key_rotation chunk_type_count", ret_count);
     return -1;
   }
   printf("chunk_count: %u\n", chunk_count);
@@ -416,9 +415,9 @@ int htool_key_rotation_erase_record(const struct htool_invocation* inv) {
   if (!dev) {
     return -1;
   }
-  enum key_rotation_err ret = libhoth_key_rotation_erase_record(dev);
-  if (ret) {
-    fprintf(stderr, "Failed to erase key rotation record\n");
+  libhoth_error ret = libhoth_key_rotation_erase_record(dev);
+  if (ret != HOTH_SUCCESS) {
+    htool_report_error("key_rotation erase_record", ret);
     return -1;
   }
   printf("Key rotation record erased successfully\n");
@@ -434,9 +433,9 @@ int htool_key_rotation_set_mauv(const struct htool_invocation* inv) {
   if (htool_get_param_u32(inv, "mauv", &mauv)) {
     return -1;
   }
-  enum key_rotation_err ret = libhoth_key_rotation_set_mauv(dev, mauv);
-  if (ret) {
-    fprintf(stderr, "Failed to set key rotation MAUV\n");
+  libhoth_error ret = libhoth_key_rotation_set_mauv(dev, mauv);
+  if (ret != HOTH_SUCCESS) {
+    htool_report_error("key_rotation set_mauv", ret);
     return -1;
   }
   printf("Key rotation MAUV set successfully\n");
@@ -449,9 +448,9 @@ int htool_key_rotation_get_mauv(const struct htool_invocation* inv) {
     return -1;
   }
   struct hoth_response_key_rotation_mauv mauv;
-  enum key_rotation_err ret = libhoth_key_rotation_get_mauv(dev, &mauv);
-  if (ret) {
-    fprintf(stderr, "Failed to get key rotation MAUV\n");
+  libhoth_error ret = libhoth_key_rotation_get_mauv(dev, &mauv);
+  if (ret != HOTH_SUCCESS) {
+    htool_report_error("key_rotation get_mauv", ret);
     return -1;
   }
   printf("Key rotation MAUV: %u\n", mauv.mauv);
