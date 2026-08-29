@@ -109,7 +109,7 @@ TEST_F(LibhothStatusTest, LogUnhandledSpaceHex) {
   libhoth_error err =
       LIBHOTH_ERR_CONSTRUCT(HOTH_CTX_CMD_EXEC, HOTH_HOST_SPACE_LIBHOTH, 4);
   libhoth_log_err(temp_file_, err);
-  EXPECT_EQ(GetOutput(), "[CMD_EXEC][LIBHOTH][0x00000004]\n");
+  EXPECT_EQ(GetOutput(), "[CMD_EXEC][LIBHOTH][TIMEOUT]\n");
 }
 
 TEST_F(LibhothStatusTest, LogUnknownContextAndSpace) {

@@ -108,6 +108,49 @@ const char* libhoth_error_ec_str(uint16_t code) {
   }
 }
 
+const char* libhoth_error_libhoth_str(uint32_t code) {
+  switch (code) {
+    case LIBHOTH_OK:
+      return "OK";
+    case LIBHOTH_ERR_UNKNOWN_VENDOR:
+      return "UNKNOWN_VENDOR";
+    case LIBHOTH_ERR_INTERFACE_NOT_FOUND:
+      return "INTERFACE_NOT_FOUND";
+    case LIBHOTH_ERR_MALLOC_FAILED:
+      return "MALLOC_FAILED";
+    case LIBHOTH_ERR_TIMEOUT:
+      return "TIMEOUT";
+    case LIBHOTH_ERR_OUT_UNDERFLOW:
+      return "OUT_UNDERFLOW";
+    case LIBHOTH_ERR_IN_OVERFLOW:
+      return "IN_OVERFLOW";
+    case LIBHOTH_ERR_UNSUPPORTED_VERSION:
+      return "UNSUPPORTED_VERSION";
+    case LIBHOTH_ERR_INVALID_PARAMETER:
+      return "INVALID_PARAMETER";
+    case LIBHOTH_ERR_FAIL:
+      return "FAIL";
+    case LIBHOTH_ERR_RESPONSE_BUFFER_OVERFLOW:
+      return "RESPONSE_BUFFER_OVERFLOW";
+    case LIBHOTH_ERR_INTERFACE_BUSY:
+      return "INTERFACE_BUSY";
+    case LIBHOTH_ERR_DFU_APP_MISMATCH:
+      return "DFU_APP_MISMATCH";
+    case LIBHOTH_ERR_DFU_ROMEXT_MISMATCH:
+      return "DFU_ROMEXT_MISMATCH";
+    case LIBHOTH_ERR_INITIATE_FAIL:
+      return "INITIATE_FAIL";
+    case LIBHOTH_ERR_COMMIT_FAIL:
+      return "COMMIT_FAIL";
+    case LIBHOTH_ERR_BAD_IMAGE:
+      return "BAD_IMAGE";
+    case LIBHOTH_ERR_IMAGE_NOT_SECTOR_ALIGNED:
+      return "IMAGE_NOT_SECTOR_ALIGNED";
+    default:
+      return NULL;
+  }
+}
+
 void libhoth_log_err(FILE* stream, libhoth_error err) {
   if (err == HOTH_SUCCESS) {
     return;
@@ -134,6 +177,9 @@ void libhoth_log_err(FILE* stream, libhoth_error err) {
       break;
     case HOTH_HOST_SPACE_EC:
       code_str = libhoth_error_ec_str(code);
+      break;
+    case HOTH_HOST_SPACE_LIBHOTH:
+      code_str = libhoth_error_libhoth_str(code);
       break;
   }
 
