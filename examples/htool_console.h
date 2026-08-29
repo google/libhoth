@@ -27,11 +27,11 @@ extern "C" {
 
 struct libhoth_device;
 
-int htool_console_run(struct libhoth_device* dev,
-                      const struct libhoth_htool_console_opts* opts);
+libhoth_error htool_console_run(struct libhoth_device* dev,
+                                const struct libhoth_htool_console_opts* opts);
 
-int htool_console_snapshot(struct libhoth_device* dev,
-                           const struct libhoth_htool_console_opts* opts);
+libhoth_error htool_console_snapshot(
+    struct libhoth_device* dev, const struct libhoth_htool_console_opts* opts);
 
 #ifdef __cplusplus
 }
