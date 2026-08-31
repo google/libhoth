@@ -156,6 +156,40 @@ message HybridP256MlDsa44PublicMaterial {
   ];
 }
 
+// The public exponent is not carried in this message: it is fixed at 65537
+// (0x10001, F4) for all supported RSA keys, so only the modulus is needed to
+// reconstruct the public key.
+message Rsa2048PublicMaterial {
+  option (openprot.tlv.tlv_fourcc) = "RSA2";
+  // RSA-2048 public key modulus.
+  bytes modulus = 1 [
+    (openprot.tlv.offset) = 0,
+    (openprot.tlv.type) = "[u8; 256]"
+  ];
+}
+
+// The public exponent is fixed at 65537 (0x10001, F4); see
+// `Rsa2048PublicMaterial`.
+message Rsa3072PublicMaterial {
+  option (openprot.tlv.tlv_fourcc) = "RSA3";
+  // RSA-3072 public key modulus.
+  bytes modulus = 1 [
+    (openprot.tlv.offset) = 0,
+    (openprot.tlv.type) = "[u8; 384]"
+  ];
+}
+
+// The public exponent is fixed at 65537 (0x10001, F4); see
+// `Rsa2048PublicMaterial`.
+message Rsa4096PublicMaterial {
+  option (openprot.tlv.tlv_fourcc) = "RSA4";
+  // RSA-4096 public key modulus.
+  bytes modulus = 1 [
+    (openprot.tlv.offset) = 0,
+    (openprot.tlv.type) = "[u8; 512]"
+  ];
+}
+
 message PublicKey {
   option (openprot.tlv.tlv_fourcc) = "PKEY";
 
@@ -169,6 +203,9 @@ message PublicKey {
     MlDsa44PublicMaterial mldsa = 4;
     HybridP256SlhDsaPublicMaterial hybrid_p256_slhdsa = 5;
     HybridP256MlDsa44PublicMaterial hybrid_p256_mldsa = 6;
+    Rsa2048PublicMaterial rsa2048 = 7;
+    Rsa3072PublicMaterial rsa3072 = 8;
+    Rsa4096PublicMaterial rsa4096 = 9;
   }
 }
 
