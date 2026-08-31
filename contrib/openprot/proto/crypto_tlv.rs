@@ -321,6 +321,75 @@ impl ::mutask_tlv::TlvObject for HybridP256MlDsa44PublicMaterial {
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, FromBytes, IntoBytes, Immutable, KnownLayout)]
 #[repr(C)]
+pub struct Rsa2048PublicMaterial {
+    pub modulus: [u8; 256],
+}
+const _: () = {
+    assert!(::core::mem::offset_of!(Rsa2048PublicMaterial, modulus) == 0usize);
+    assert!(::core::mem::align_of::<Rsa2048PublicMaterial>() <= 4);
+    assert!(::core::mem::size_of::<Rsa2048PublicMaterial>() == 256usize);
+};
+impl ::core::default::Default for Rsa2048PublicMaterial {
+    fn default() -> Self {
+        ::zerocopy::FromZeros::new_zeroed()
+    }
+}
+impl ::mutask_tlv::TlvObject for Rsa2048PublicMaterial {
+    type Extension = [u8];
+    const TAG: u32 = u32::from_le_bytes(*b"RSA2");
+    fn make_ext<'a>(header: &::mutask_tlv::TlvHeader, extra: &'a [u32]) -> &'a Self::Extension {
+        ::mutask_tlv::unpad(header, extra)
+    }
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, FromBytes, IntoBytes, Immutable, KnownLayout)]
+#[repr(C)]
+pub struct Rsa3072PublicMaterial {
+    pub modulus: [u8; 384],
+}
+const _: () = {
+    assert!(::core::mem::offset_of!(Rsa3072PublicMaterial, modulus) == 0usize);
+    assert!(::core::mem::align_of::<Rsa3072PublicMaterial>() <= 4);
+    assert!(::core::mem::size_of::<Rsa3072PublicMaterial>() == 384usize);
+};
+impl ::core::default::Default for Rsa3072PublicMaterial {
+    fn default() -> Self {
+        ::zerocopy::FromZeros::new_zeroed()
+    }
+}
+impl ::mutask_tlv::TlvObject for Rsa3072PublicMaterial {
+    type Extension = [u8];
+    const TAG: u32 = u32::from_le_bytes(*b"RSA3");
+    fn make_ext<'a>(header: &::mutask_tlv::TlvHeader, extra: &'a [u32]) -> &'a Self::Extension {
+        ::mutask_tlv::unpad(header, extra)
+    }
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, FromBytes, IntoBytes, Immutable, KnownLayout)]
+#[repr(C)]
+pub struct Rsa4096PublicMaterial {
+    pub modulus: [u8; 512],
+}
+const _: () = {
+    assert!(::core::mem::offset_of!(Rsa4096PublicMaterial, modulus) == 0usize);
+    assert!(::core::mem::align_of::<Rsa4096PublicMaterial>() <= 4);
+    assert!(::core::mem::size_of::<Rsa4096PublicMaterial>() == 512usize);
+};
+impl ::core::default::Default for Rsa4096PublicMaterial {
+    fn default() -> Self {
+        ::zerocopy::FromZeros::new_zeroed()
+    }
+}
+impl ::mutask_tlv::TlvObject for Rsa4096PublicMaterial {
+    type Extension = [u8];
+    const TAG: u32 = u32::from_le_bytes(*b"RSA4");
+    fn make_ext<'a>(header: &::mutask_tlv::TlvHeader, extra: &'a [u32]) -> &'a Self::Extension {
+        ::mutask_tlv::unpad(header, extra)
+    }
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, FromBytes, IntoBytes, Immutable, KnownLayout)]
+#[repr(C)]
 pub struct PublicKey {
     pub key_domain: KeyDomain,
 }
@@ -347,6 +416,9 @@ pub enum PublicKeyKeyMaterial<'a> {
     Mldsa(::mutask_tlv::TlvItem<'a, MlDsa44PublicMaterial>),
     HybridP256Slhdsa(::mutask_tlv::TlvItem<'a, HybridP256SlhDsaPublicMaterial>),
     HybridP256Mldsa(::mutask_tlv::TlvItem<'a, HybridP256MlDsa44PublicMaterial>),
+    Rsa2048(::mutask_tlv::TlvItem<'a, Rsa2048PublicMaterial>),
+    Rsa3072(::mutask_tlv::TlvItem<'a, Rsa3072PublicMaterial>),
+    Rsa4096(::mutask_tlv::TlvItem<'a, Rsa4096PublicMaterial>),
 }
 pub trait PublicKeyExt<'a> {
     fn p256(&self) -> Option<::mutask_tlv::TlvItem<'a, P256PublicMaterial>>;
@@ -358,6 +430,9 @@ pub trait PublicKeyExt<'a> {
     fn hybrid_p256_mldsa(
         &self,
     ) -> Option<::mutask_tlv::TlvItem<'a, HybridP256MlDsa44PublicMaterial>>;
+    fn rsa2048(&self) -> Option<::mutask_tlv::TlvItem<'a, Rsa2048PublicMaterial>>;
+    fn rsa3072(&self) -> Option<::mutask_tlv::TlvItem<'a, Rsa3072PublicMaterial>>;
+    fn rsa4096(&self) -> Option<::mutask_tlv::TlvItem<'a, Rsa4096PublicMaterial>>;
     fn key_material(&self) -> Option<PublicKeyKeyMaterial<'a>>;
 }
 impl<'a> PublicKeyExt<'a> for ::mutask_tlv::TlvItem<'a, PublicKey> {
@@ -390,6 +465,21 @@ impl<'a> PublicKeyExt<'a> for ::mutask_tlv::TlvItem<'a, PublicKey> {
             .iter::<HybridP256MlDsa44PublicMaterial>()
             .next()
     }
+    fn rsa2048(&self) -> Option<::mutask_tlv::TlvItem<'a, Rsa2048PublicMaterial>> {
+        ::mutask_tlv::TlvQuery::ext(self)
+            .iter::<Rsa2048PublicMaterial>()
+            .next()
+    }
+    fn rsa3072(&self) -> Option<::mutask_tlv::TlvItem<'a, Rsa3072PublicMaterial>> {
+        ::mutask_tlv::TlvQuery::ext(self)
+            .iter::<Rsa3072PublicMaterial>()
+            .next()
+    }
+    fn rsa4096(&self) -> Option<::mutask_tlv::TlvItem<'a, Rsa4096PublicMaterial>> {
+        ::mutask_tlv::TlvQuery::ext(self)
+            .iter::<Rsa4096PublicMaterial>()
+            .next()
+    }
     fn key_material(&self) -> Option<PublicKeyKeyMaterial<'a>> {
         use ::mutask_tlv::TlvQuery;
         for item in ::mutask_tlv::TlvQuery::ext(self).iter::<::mutask_tlv::TlvAny>() {
@@ -407,6 +497,15 @@ impl<'a> PublicKeyExt<'a> for ::mutask_tlv::TlvItem<'a, PublicKey> {
             }
             if let Some(val) = item.cast::<HybridP256MlDsa44PublicMaterial>() {
                 return Some(PublicKeyKeyMaterial::HybridP256Mldsa(val));
+            }
+            if let Some(val) = item.cast::<Rsa2048PublicMaterial>() {
+                return Some(PublicKeyKeyMaterial::Rsa2048(val));
+            }
+            if let Some(val) = item.cast::<Rsa3072PublicMaterial>() {
+                return Some(PublicKeyKeyMaterial::Rsa3072(val));
+            }
+            if let Some(val) = item.cast::<Rsa4096PublicMaterial>() {
+                return Some(PublicKeyKeyMaterial::Rsa4096(val));
             }
         }
         None
