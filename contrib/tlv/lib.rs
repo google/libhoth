@@ -21,12 +21,13 @@
 //! # Core Concepts
 //!
 //! *   [`TlvHeader`]: The common prefix for all TLV objects, containing a 4-byte `tag` and a 2-byte `length` (in 32-bit words).
+//! *   [`TlvContainer`]: The contiguous representation of a single TLV object, containing its [`TlvHeader`] and raw payload words.
 //! *   [`TlvObject`]: A trait representing a typed TLV structure. The [`tlv_struct!`] macro
 //!     is used to define these structs and implement this trait.
 //! *   [`TlvData`]: A container representing a sequence of TLVs. It can be used to overlay
 //!     on a raw buffer and iterate over the contained TLVs.
-//! *   [`TlvItem`]: The parsed representation of a TLV, containing the header, the parsed object,
-//!     and a reference to the raw bytes (including any extension data).
+//! *   [`TlvItem`]: The parsed representation of a TLV, containing a reference to the [`TlvContainer`],
+//!     the parsed object, and any extra data words.
 //! *   [`TlvQuery`]: Extension trait for `TlvItem` to allow casting to specific `TlvObject` types
 //!     and accessing extension data.
 //!
@@ -59,7 +60,7 @@
 //! let buf: &[u32] = &[]; // Use u32 slice
 //! let tlv_data = TlvData::overlay(buf);
 //! for item in tlv_data.iter::<TlvAny>() {
-//!     println!("Tag: {}, word_len: {}", item.header.tag, item.header.word_len);
+//!     println!("Tag: {}, word_len: {}", item.container.header.tag, item.container.header.word_len);
 //! }
 //! ```
 
@@ -202,16 +203,45 @@ pub struct TlvIterator<'a, T> {
     target: core::marker::PhantomData<T>,
 }
 
+/// Contiguous representation of a single TLV object, comprising its header and payload.
+///
+/// This dynamically sized type (DST) overlays directly onto the raw word buffer,
+/// making it possible to access all bytes of the TLV record (e.g. for cryptographic hashing
+/// or signature verification) via [`zerocopy::IntoBytes::as_bytes`].
+#[repr(C, align(4))]
+#[derive(Debug, PartialEq, Eq, FromBytes, IntoBytes, Immutable, KnownLayout)]
+pub struct TlvContainer {
+    /// The TLV header defining the type and payload length.
+    pub header: TlvHeader,
+    /// The raw payload words of the TLV object following the header.
+    pub payload: [u32],
+}
+
+impl TlvContainer {
+    /// Returns a byte slice referencing the entire TLV container (header and payload).
+    ///
+    /// The returned slice is always a multiple of four bytes, regardless of the
+    /// padding flags in the header.
+    #[inline(always)]
+    pub fn as_bytes(&self) -> &[u8] {
+        IntoBytes::as_bytes(self)
+    }
+
+    /// Returns a 32-bit word slice referencing the entire TLV container (header and payload).
+    #[inline(always)]
+    pub fn as_words(&self) -> &[u32] {
+        <[u32]>::ref_from_bytes(self.as_bytes()).unwrap_or(&[])
+    }
+}
+
 /// Item returned by [`TlvIterator`].
 pub struct TlvItem<'a, T: TlvObject> {
-    /// The TLV header of the object.
-    pub header: &'a TlvHeader,
+    /// The TLV container containing the header and payload of the object.
+    pub container: &'a TlvContainer,
     /// The TLV object itself (parsed struct).
     pub data: &'a T,
     /// Extra data after the parsed struct
     pub extra: &'a [u32],
-    /// The underlying payload slice of the TLV.
-    pub payload: &'a [u32],
 }
 
 impl<'a, T: TlvObject + 'a> Iterator for TlvIterator<'a, T> {
@@ -219,24 +249,27 @@ impl<'a, T: TlvObject + 'a> Iterator for TlvIterator<'a, T> {
 
     fn next(&mut self) -> Option<Self::Item> {
         while !self.data.is_empty() {
-            let (header, rest) = TlvHeader::ref_from_words_prefix(self.data)?;
+            let (header, _) = TlvHeader::ref_from_words_prefix(self.data)?;
             let word_len = usize::from(header.word_len);
-            let remain = rest.get(word_len..)?;
-            let payload = rest.get(..word_len)?;
+            let total_words = word_size_of::<TlvHeader>() + word_len;
+            let (container_words, remain) = self.data.split_at_checked(total_words)?;
+            let container =
+                TlvContainer::ref_from_bytes_with_elems(container_words.as_bytes(), word_len)
+                    .ok()?;
             self.data = remain;
-            if header.tag != T::TAG && T::TAG != TlvAny::TAG {
+            if container.header.tag != T::TAG && T::TAG != TlvAny::TAG {
                 continue;
             }
-            let Some((data_words, extra)) = payload.split_at_checked(word_size_of::<T>()) else {
+            let Some((data_words, extra)) = container.payload.split_at_checked(word_size_of::<T>())
+            else {
                 continue;
             };
             let Ok(data) = T::ref_from_bytes(data_words.as_bytes()) else {
                 continue;
             };
             return Some(TlvItem {
-                header,
+                container,
                 data,
-                payload,
                 extra,
             });
         }
@@ -304,14 +337,16 @@ pub trait TlvQuery<'a> {
 impl<'a, T: TlvObject> TlvQuery<'a> for TlvItem<'a, T> {
     type Extension = &'a T::Extension;
     fn cast<U: TlvObject>(&self) -> Option<TlvItem<'a, U>> {
-        if self.header.tag == U::TAG {
-            let (data_words, extra) = self.payload.split_at_checked(word_size_of::<U>())?;
+        if self.container.header.tag == U::TAG {
+            let (data_words, extra) = self
+                .container
+                .payload
+                .split_at_checked(word_size_of::<U>())?;
             let data = U::ref_from_bytes(data_words.as_bytes()).ok()?;
             Some(TlvItem {
-                header: self.header,
+                container: self.container,
                 data,
                 extra,
-                payload: self.payload,
             })
         } else {
             None
@@ -319,9 +354,9 @@ impl<'a, T: TlvObject> TlvQuery<'a> for TlvItem<'a, T> {
     }
 
     fn cast_zero_extended<U: TlvObject>(&self) -> Option<U> {
-        if self.header.tag == U::TAG {
+        if self.container.header.tag == U::TAG {
             let mut result = U::new_zeroed();
-            let payload_bytes = self.payload.as_bytes();
+            let payload_bytes = self.container.payload.as_bytes();
             let result_bytes = result.as_mut_bytes();
             let copy_limit = min(result_bytes.len(), payload_bytes.len());
             result_bytes[..copy_limit].copy_from_slice(&payload_bytes[..copy_limit]);
@@ -332,7 +367,7 @@ impl<'a, T: TlvObject> TlvQuery<'a> for TlvItem<'a, T> {
     }
 
     fn ext(&self) -> Self::Extension {
-        T::make_ext(self.header, self.extra)
+        T::make_ext(&self.container.header, self.extra)
     }
 }
 
@@ -528,7 +563,7 @@ mod tests {
         let parent_item = parent_iter.next().unwrap();
         assert!(parent_iter.next().is_none());
 
-        assert_eq!(parent_item.header.tag, Parent::TAG);
+        assert_eq!(parent_item.container.header.tag, Parent::TAG);
         assert_eq!(parent_item.data.id, 100);
 
         // Parse Child from Parent's extension
@@ -536,7 +571,7 @@ mod tests {
         let child_item = child_iter.next().expect("Should find Child");
         assert!(child_iter.next().is_none());
 
-        assert_eq!(child_item.header.tag, Child::TAG);
+        assert_eq!(child_item.container.header.tag, Child::TAG);
         assert_eq!(child_item.data.value, 200);
     }
 
@@ -575,17 +610,21 @@ mod tests {
         let bar_item = bar_iter.next().expect("Should have one Bar item");
         assert!(bar_iter.next().is_none());
 
-        assert_eq!(bar_item.header.tag, Bar::TAG);
-        assert_eq!(bar_item.header.word_len, 29);
+        assert_eq!(bar_item.container.header.tag, Bar::TAG);
+        assert_eq!(bar_item.container.header.word_len, 29);
         assert_eq!(bar_item.data.n, 5);
+        assert_eq!(bar_item.container.as_bytes(), &buf);
+        assert_eq!(bar_item.container.as_words(), &buf_words);
 
         // Iterate over Bar's extensions
         let mut ext_iter = bar_item.ext().iter::<TlvAny>();
 
         // First extension: Foo
         let ext1 = ext_iter.next().expect("Should have first extension");
-        assert_eq!(ext1.header.tag, Foo::TAG);
-        assert_eq!(ext1.header.word_len, 3);
+        assert_eq!(ext1.container.header.tag, Foo::TAG);
+        assert_eq!(ext1.container.header.word_len, 3);
+        assert_eq!(ext1.container.as_bytes(), &buf[12..32]);
+        assert_eq!(ext1.container.as_words(), &buf_words[3..8]);
         let foo1 = ext1.cast::<Foo>().expect("Should cast to Foo");
         assert_eq!(foo1.data.x, 20);
         assert_eq!(foo1.data.y, [1, 2, 3, 4]);
@@ -593,8 +632,8 @@ mod tests {
 
         // Second extension: Foo
         let ext2 = ext_iter.next().expect("Should have second extension");
-        assert_eq!(ext2.header.tag, Foo::TAG);
-        assert_eq!(ext2.header.word_len, 2);
+        assert_eq!(ext2.container.header.tag, Foo::TAG);
+        assert_eq!(ext2.container.header.word_len, 2);
         let foo2 = ext2.cast::<Foo>().expect("Should cast to Foo");
         assert_eq!(foo2.data.x, 30);
         assert_eq!(foo2.data.y, [10, 20, 30, 40]);
@@ -602,8 +641,8 @@ mod tests {
 
         // Third extension: Foo
         let ext3 = ext_iter.next().expect("Should have third extension");
-        assert_eq!(ext3.header.tag, Foo::TAG);
-        assert_eq!(ext3.header.word_len, 3);
+        assert_eq!(ext3.container.header.tag, Foo::TAG);
+        assert_eq!(ext3.container.header.word_len, 3);
         let foo3 = ext3.cast::<Foo>().expect("Should cast to Foo");
         assert_eq!(foo3.data.x, 40);
         assert_eq!(foo3.data.y, [11, 12, 13, 14]);
@@ -611,8 +650,8 @@ mod tests {
 
         // Fourth extension: Foo
         let ext4 = ext_iter.next().expect("Should have fourth extension");
-        assert_eq!(ext4.header.tag, Foo::TAG);
-        assert_eq!(ext4.header.word_len, 4);
+        assert_eq!(ext4.container.header.tag, Foo::TAG);
+        assert_eq!(ext4.container.header.word_len, 4);
         let foo4 = ext4.cast::<Foo>().expect("Should cast to Foo");
         assert_eq!(foo4.data.x, 50);
         assert_eq!(foo4.data.y, [21, 22, 23, 24]);
@@ -620,8 +659,8 @@ mod tests {
 
         // Fifth extension: Baz
         let ext5 = ext_iter.next().expect("Should have fifth extension");
-        assert_eq!(ext5.header.tag, Baz::TAG);
-        assert_eq!(ext5.header.word_len, 1);
+        assert_eq!(ext5.container.header.tag, Baz::TAG);
+        assert_eq!(ext5.container.header.word_len, 1);
         let baz5 = ext5.cast::<Baz>().expect("Should cast to Baz");
         assert_eq!(baz5.data.n, 60);
         // Baz's extension type is TlvData, check that it is empty
@@ -629,8 +668,8 @@ mod tests {
 
         // Sixth extension: Baf
         let ext6 = ext_iter.next().expect("Should have sixth extension");
-        assert_eq!(ext6.header.tag, Baf::TAG);
-        assert_eq!(ext6.header.word_len, 3);
+        assert_eq!(ext6.container.header.tag, Baf::TAG);
+        assert_eq!(ext6.container.header.word_len, 3);
         let baf6 = ext6.cast::<Baf>().expect("Should cast to Baf");
         assert_eq!(baf6.data.a, [237482734, 19263432, 81823823]);
 
@@ -697,8 +736,8 @@ mod tests {
         let bar_item = bar_iter.next().expect("Should have one Bar item");
         assert!(bar_iter.next().is_none());
 
-        assert_eq!(bar_item.header.tag, Bar::TAG);
-        assert_eq!(bar_item.header.word_len, 12);
+        assert_eq!(bar_item.container.header.tag, Bar::TAG);
+        assert_eq!(bar_item.container.header.word_len, 12);
         assert_eq!(bar_item.data.n, 5);
 
         // Iterate over Bar's extensions
@@ -706,8 +745,8 @@ mod tests {
 
         // First extension: Baz
         let ext_baz = ext_iter.next().expect("Should have Baz extension");
-        assert_eq!(ext_baz.header.tag, Baz::TAG);
-        assert_eq!(ext_baz.header.word_len, 5);
+        assert_eq!(ext_baz.container.header.tag, Baz::TAG);
+        assert_eq!(ext_baz.container.header.word_len, 5);
         let baz_item = ext_baz.cast::<Baz>().expect("Should cast to Baz");
         assert_eq!(baz_item.data.n, 60);
 
@@ -715,8 +754,8 @@ mod tests {
             // Baz's child: Foo (nested inside Baz)
             let mut baz_ext_iter = baz_item.ext().iter::<TlvAny>();
             let ext_foo_in_baz = baz_ext_iter.next().expect("Should have Foo inside Baz");
-            assert_eq!(ext_foo_in_baz.header.tag, Foo::TAG);
-            assert_eq!(ext_foo_in_baz.header.word_len, 2);
+            assert_eq!(ext_foo_in_baz.container.header.tag, Foo::TAG);
+            assert_eq!(ext_foo_in_baz.container.header.word_len, 2);
             let foo_in_baz = ext_foo_in_baz
                 .cast::<Foo>()
                 .expect("Should cast to Foo inside Baz");
@@ -727,8 +766,8 @@ mod tests {
 
         // Second extension: Foo (flat child of Bar)
         let ext_foo_in_bar = ext_iter.next().expect("Should have Foo inside Bar");
-        assert_eq!(ext_foo_in_bar.header.tag, Foo::TAG);
-        assert_eq!(ext_foo_in_bar.header.word_len, 2);
+        assert_eq!(ext_foo_in_bar.container.header.tag, Foo::TAG);
+        assert_eq!(ext_foo_in_bar.container.header.word_len, 2);
         let foo_in_bar = ext_foo_in_bar
             .cast::<Foo>()
             .expect("Should cast to Foo inside Bar");
