@@ -733,7 +733,7 @@ mod tests {
         // Verify there is exactly one top-level TLV and it is System
         let mut top_any_iter = tlv_data.iter::<mutask_tlv::TlvAny>();
         let top_item = top_any_iter.next().unwrap();
-        assert_eq!(top_item.header.tag, System::TAG);
+        assert_eq!(top_item.container.header.tag, System::TAG);
         assert!(
             top_any_iter.next().is_none(),
             "Expected no other top-level TLVs"
@@ -1370,7 +1370,10 @@ mod tests {
         let parent_item = iter.next().expect("Should have one SiblingInlineParent");
         assert!(iter.next().is_none());
 
-        assert_eq!(parent_item.header.tag, u32::from_le_bytes(*b"SIBR"));
+        assert_eq!(
+            parent_item.container.header.tag,
+            u32::from_le_bytes(*b"SIBR")
+        );
         assert_eq!(parent_item.data.child1.val, 100);
         assert_eq!(parent_item.data.child2.val, 200);
     }
