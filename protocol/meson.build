@@ -26,6 +26,7 @@ protocol_srcs = [
     'util.c',
     'console.c',
     'gpio_drive_strength.c',
+    'update_session.c',
     'status.c'
 ]
 
