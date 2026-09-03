@@ -189,7 +189,7 @@ impl Default for Sha256 {
     }
 }
 
-pub fn sha256(data: &[u8]) -> [u8; 32] {
+pub const fn sha256(data: &[u8]) -> [u8; 32] {
     let mut sha = Sha256::new();
     sha.update(data);
     sha.finalize()
