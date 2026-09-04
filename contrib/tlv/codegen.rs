@@ -49,6 +49,22 @@ struct Args {
     descriptor_set: Vec<std::path::PathBuf>,
 
     #[argh(option)]
+    /// paths to direct proto files (only emit code for types defined in these files)
+    direct_proto: Vec<std::path::PathBuf>,
+
+    #[argh(option)]
+    /// path to direct descriptor set (only emit code for types in this descriptor set)
+    direct_descriptor_set: Option<std::path::PathBuf>,
+
+    #[argh(switch)]
+    /// emit code for all files in descriptor set (disables direct file filtering)
+    all_files: bool,
+
+    #[argh(option)]
+    /// rust crates to import (e.g. crypto_tlv)
+    import_crate: Vec<String>,
+
+    #[argh(option)]
     /// path to the output Rust file
     output: std::path::PathBuf,
 
@@ -76,6 +92,42 @@ fn main() -> Result<()> {
             .extend(part.file().into_iter().map(|f| f.to_owned()));
     }
 
+    let mut direct_desc_names = std::collections::HashSet::new();
+    if let Some(direct_ds_path) = &args.direct_descriptor_set {
+        let bytes = std::fs::read(direct_ds_path).with_context(|| {
+            format!(
+                "Failed to read direct descriptor set from {}",
+                direct_ds_path.display()
+            )
+        })?;
+        let direct_set = FileDescriptorSet::parse(&bytes).with_context(|| {
+            format!(
+                "Failed to parse direct FileDescriptorSet from {}",
+                direct_ds_path.display()
+            )
+        })?;
+        for file in direct_set.file() {
+            if let Ok(name) = file.name().to_str() {
+                direct_desc_names.insert(name.to_string());
+            }
+        }
+    }
+
+    let target_files: Vec<_> = user_files(&desc_set)
+        .filter(|f| {
+            let file_name = f.name().to_str().unwrap_or("");
+            is_direct_file(
+                file_name,
+                &args.direct_proto,
+                &direct_desc_names,
+                args.all_files,
+            )
+        })
+        .collect();
+
+    let crates_to_import: std::collections::BTreeSet<_> =
+        args.import_crate.iter().cloned().collect();
+
     let mut out = String::new();
     out.push_str("// Copyright 2026 Google LLC\n");
     out.push_str("//\n");
@@ -102,22 +154,26 @@ fn main() -> Result<()> {
     out.push_str("#![allow(non_snake_case)]\n");
     out.push_str("#![allow(unused_imports)]\n");
     out.push_str("#![allow(dead_code)]\n\n");
+    out.push_str("use bitfield_struct::bitfield;\n");
     out.push_str("use mutask_tlv::TlvFlags;\n");
     out.push_str("use mutask_tlv::TlvHeader;\n");
-    out.push_str("use bitfield_struct::bitfield;\n");
-    out.push_str("use zerocopy::{FromBytes, IntoBytes, Immutable, KnownLayout};\n\n");
+    out.push_str("use zerocopy::{FromBytes, Immutable, IntoBytes, KnownLayout};\n");
+    for crate_name in &crates_to_import {
+        out.push_str(&format!("pub use {}::*;\n", crate_name));
+    }
+    out.push('\n');
 
-    // Traverse all user files and collect all messages with their full package-relative names
+    // Traverse direct target files and collect all messages with their full package-relative names
     let mut all_messages = Vec::new();
-    for file in user_files(&desc_set) {
+    for file in &target_files {
         for msg in file.message_type() {
             collect_messages_nested(msg, "", &mut all_messages);
         }
     }
 
-    // Traverse all user files and collect all enums with their full package-relative names
+    // Traverse direct target files and collect all enums with their full package-relative names
     let mut all_enums = Vec::new();
-    for file in user_files(&desc_set) {
+    for file in &target_files {
         let package = file.package().to_str().unwrap_or("");
         for en in file.enum_type() {
             if en.raw_type().is_some() {
@@ -938,9 +994,132 @@ fn user_files<'a>(
     })
 }
 
+fn matches_path(full_path: &str, target: &str) -> bool {
+    let full_path = full_path.trim();
+    let target = target.trim();
+    if full_path == target {
+        return true;
+    }
+    if let Some(stripped) = full_path.strip_suffix(target) {
+        if stripped.ends_with('/') || stripped.ends_with('\\') {
+            return true;
+        }
+    }
+    if let Some(stripped) = target.strip_suffix(full_path) {
+        if stripped.ends_with('/') || stripped.ends_with('\\') {
+            return true;
+        }
+    }
+    false
+}
+
+fn is_direct_file(
+    file_name: &str,
+    direct_protos: &[std::path::PathBuf],
+    direct_desc_names: &std::collections::HashSet<String>,
+    all_files: bool,
+) -> bool {
+    if all_files {
+        return true;
+    }
+    if direct_desc_names.contains(file_name) {
+        return true;
+    }
+    for dp in direct_protos {
+        let dp_str = dp.to_string_lossy();
+        if matches_path(file_name, &dp_str) {
+            return true;
+        }
+    }
+    false
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn test_matches_path() {
+        assert!(matches_path(
+            "path/to/my_message.proto",
+            "external/repo+/path/to/my_message.proto"
+        ));
+        assert!(matches_path(
+            "path/to/my_message.proto",
+            "../repo+/path/to/my_message.proto"
+        ));
+        assert!(matches_path(
+            "path/to/my_message.proto",
+            "path/to/my_message.proto"
+        ));
+        assert!(matches_path("path/to/my_message.proto", "my_message.proto"));
+        assert!(!matches_path("path/to/my_message.proto", "other.proto"));
+        assert!(!matches_path(
+            "path/to/not_my_message.proto",
+            "my_message.proto"
+        ));
+    }
+
+    #[test]
+    fn test_is_direct_file() {
+        let direct_protos = vec![std::path::PathBuf::from("path/to/my_message.proto")];
+        let mut direct_desc = std::collections::HashSet::new();
+        direct_desc.insert("desc_message.proto".to_string());
+
+        // Matching direct_protos
+        assert!(is_direct_file(
+            "path/to/my_message.proto",
+            &direct_protos,
+            &direct_desc,
+            false
+        ));
+        assert!(is_direct_file(
+            "external/repo+/path/to/my_message.proto",
+            &direct_protos,
+            &direct_desc,
+            false
+        ));
+
+        // Matching direct_desc_names
+        assert!(is_direct_file(
+            "desc_message.proto",
+            &direct_protos,
+            &direct_desc,
+            false
+        ));
+
+        // Not matching
+        assert!(!is_direct_file(
+            "other.proto",
+            &direct_protos,
+            &direct_desc,
+            false
+        ));
+
+        // Empty direct_protos and direct_desc_names with all_files = false (aggregating target)
+        let empty_protos = vec![];
+        let empty_desc = std::collections::HashSet::new();
+        assert!(!is_direct_file(
+            "path/to/my_message.proto",
+            &empty_protos,
+            &empty_desc,
+            false
+        ));
+
+        // all_files = true overrides and matches everything
+        assert!(is_direct_file(
+            "path/to/my_message.proto",
+            &empty_protos,
+            &empty_desc,
+            true
+        ));
+        assert!(is_direct_file(
+            "other.proto",
+            &empty_protos,
+            &empty_desc,
+            true
+        ));
+    }
 
     #[test]
     fn test_find_common_prefix_to_strip() {
