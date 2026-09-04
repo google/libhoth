@@ -43,3 +43,39 @@ fn test_generated_code_compiles_and_aligns() {
     assert_eq!(core::mem::size_of::<edge_cases_tlv::U64AlignmentTest>(), 12);
     assert_eq!(core::mem::size_of::<edge_cases_tlv::AllTypesTest>(), 100);
 }
+
+#[test]
+fn test_imported_crates_compile_and_reexport() {
+    // 1. Base crate
+    assert_eq!(core::mem::size_of::<import_base_tlv::BaseRecord>(), 8);
+    assert_eq!(
+        import_base_tlv::BaseStatus::OK,
+        import_base_tlv::BaseStatus(1)
+    );
+
+    // 2. Simple import (import_simple depends on import_base)
+    assert_eq!(core::mem::size_of::<import_simple_tlv::SimpleMessage>(), 8);
+    // BaseStatus is accessible through import_simple_tlv re-export
+    assert_eq!(
+        import_simple_tlv::BaseStatus::OK,
+        import_base_tlv::BaseStatus::OK
+    );
+
+    // 3. Multi-layered import (import_layered depends on import_simple and import_base)
+    assert_eq!(
+        core::mem::size_of::<import_layered_tlv::LayeredMessage>(),
+        4
+    );
+    assert_eq!(core::mem::size_of::<import_layered_tlv::SimpleMessage>(), 8);
+    assert_eq!(core::mem::size_of::<import_layered_tlv::BaseRecord>(), 8);
+
+    // 4. "Pure" import aggregator target (no srcs, only deps)
+    // Re-exports all dependencies without emitting duplicate types
+    assert_eq!(core::mem::size_of::<import_pure_tlv::BaseRecord>(), 8);
+    assert_eq!(core::mem::size_of::<import_pure_tlv::SimpleMessage>(), 8);
+    assert_eq!(core::mem::size_of::<import_pure_tlv::LayeredMessage>(), 4);
+    assert_eq!(
+        import_pure_tlv::BaseStatus::OK,
+        import_base_tlv::BaseStatus::OK
+    );
+}

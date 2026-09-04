@@ -77,3 +77,81 @@ tlv_codegen(
     proto = ":edge_cases_proto",
     visibility = ["//visibility:public"],
 )
+
+proto_library(
+    name = "import_base_proto",
+    srcs = ["import_base.proto"],
+    visibility = ["//visibility:public"],
+    deps = [
+        "//contrib/tlv:options_proto",
+    ],
+)
+
+tlv_codegen(
+    name = "import_base_tlv",
+    src = "import_base_tlv.rs",
+    proto = ":import_base_proto",
+    visibility = ["//visibility:public"],
+)
+
+proto_library(
+    name = "import_simple_proto",
+    srcs = ["import_simple.proto"],
+    visibility = ["//visibility:public"],
+    deps = [
+        ":import_base_proto",
+        "//contrib/tlv:options_proto",
+    ],
+)
+
+tlv_codegen(
+    name = "import_simple_tlv",
+    src = "import_simple_tlv.rs",
+    proto = ":import_simple_proto",
+    visibility = ["//visibility:public"],
+    deps = [":import_base_tlv"],
+)
+
+proto_library(
+    name = "import_layered_proto",
+    srcs = ["import_layered.proto"],
+    visibility = ["//visibility:public"],
+    deps = [
+        ":import_base_proto",
+        ":import_simple_proto",
+        "//contrib/tlv:options_proto",
+    ],
+)
+
+tlv_codegen(
+    name = "import_layered_tlv",
+    src = "import_layered_tlv.rs",
+    proto = ":import_layered_proto",
+    visibility = ["//visibility:public"],
+    deps = [
+        ":import_base_tlv",
+        ":import_simple_tlv",
+    ],
+)
+
+proto_library(
+    name = "import_pure_proto",
+    visibility = ["//visibility:public"],
+    deps = [
+        ":import_base_proto",
+        ":import_layered_proto",
+        ":import_simple_proto",
+    ],
+)
+
+tlv_codegen(
+    name = "import_pure_tlv",
+    src = "import_pure_tlv.rs",
+    proto = ":import_pure_proto",
+    visibility = ["//visibility:public"],
+    deps = [
+        ":import_base_tlv",
+        ":import_layered_tlv",
+        ":import_simple_tlv",
+    ],
+)
