@@ -130,6 +130,10 @@ rust_test(
     deps = [
         ":tlv",
         "//contrib/tlv/test:edge_cases_tlv",
+        "//contrib/tlv/test:import_base_tlv",
+        "//contrib/tlv/test:import_layered_tlv",
+        "//contrib/tlv/test:import_pure_tlv",
+        "//contrib/tlv/test:import_simple_tlv",
         "//contrib/tlv/test:soc_tlv",
         "//third_party:bstr",
     ],

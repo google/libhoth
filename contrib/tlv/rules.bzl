@@ -32,6 +32,11 @@ def _tlv_codegen_rule_impl(ctx):
     args = ctx.actions.args()
     for ds in descriptor_sets:
         args.add("--descriptor-set", ds.path)
+    if proto_info.direct_descriptor_set:
+        args.add("--direct-descriptor-set", proto_info.direct_descriptor_set.path)
+    args.add_all(proto_info.direct_sources, before_each = "--direct-proto")
+    for dep in ctx.attr.deps:
+        args.add("--import-crate", dep.label.name.replace("-", "_"))
     args.add("--output", output_file.path)
     if ctx.attr.test_label:
         args.add("--test-label", ctx.attr.test_label)
@@ -66,6 +71,10 @@ _tlv_codegen_rule = rule(
             mandatory = True,
             providers = [ProtoInfo],
             doc = "The proto_library target to generate TLV structs for.",
+        ),
+        "deps": attr.label_list(
+            default = [],
+            doc = "Upstream TLV libraries this generated crate depends on.",
         ),
         "_codegen_tool": attr.label(
             default = Label("//contrib/tlv:codegen"),
@@ -130,7 +139,7 @@ _update_golden = rule(
     doc = "Copies a generated file back to the source tree when executed via 'bazel run'.",
 )
 
-def tlv_codegen(name, proto, src = None, file_prefix = None, visibility = None, **kwargs):
+def tlv_codegen(name, proto, deps = [], src = None, file_prefix = None, visibility = None, **kwargs):
     """Generates a first-class Rust crate containing TLV structs from a proto_library.
 
     If `src` is specified, it compiles the checked-in file directly and defines a companion
@@ -139,6 +148,7 @@ def tlv_codegen(name, proto, src = None, file_prefix = None, visibility = None, 
     Args:
         name: The name of the generated rust_library target.
         proto: The proto_library target to generate structs for.
+        deps: Optional list of upstream TLV libraries this crate depends on.
         src: Optional checked-in Rust source file.
         file_prefix: Optional file prepended to the generated source, e.g. a license header.
         visibility: The visibility of the target.
@@ -150,6 +160,7 @@ def tlv_codegen(name, proto, src = None, file_prefix = None, visibility = None, 
     _tlv_codegen_rule(
         name = gen_file_target,
         proto = proto,
+        deps = deps,
         test_label = "//{}:{}_update".format(native.package_name(), name) if src else None,
         file_prefix = file_prefix,
         visibility = ["//visibility:private"],
@@ -206,7 +217,7 @@ def tlv_codegen(name, proto, src = None, file_prefix = None, visibility = None, 
             "//contrib/tlv",
             "//third_party:bstr",
             "//third_party:zerocopy",
-        ],
+        ] + deps,
         proc_macro_deps = [
             "//third_party:bitfield_struct",
         ],
