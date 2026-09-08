@@ -622,3 +622,28 @@ cc_test(
         "@googletest//:gtest_main",
     ],
 )
+
+cc_library(
+    name = "update_session",
+    srcs = ["update_session.c"],
+    hdrs = ["update_session.h"],
+    deps = [
+        ":host_cmd",
+        ":libhoth_status",
+        "//transports:libhoth_device",
+    ],
+)
+
+cc_test(
+    name = "update_session_test",
+    srcs = ["update_session_test.cc"],
+    deps = [
+        ":host_cmd",
+        ":libhoth_status",
+        ":update_session",
+        "//protocol/test:libhoth_device_mock",
+        "//transports:libhoth_device",
+        "@googletest//:gtest",
+        "@googletest//:gtest_main",
+    ],
+)

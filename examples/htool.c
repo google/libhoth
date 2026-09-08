@@ -56,6 +56,7 @@
 #include "htool_statistics.h"
 #include "htool_target_control.h"
 #include "htool_tpm.h"
+#include "htool_update_session.h"
 #include "htool_usb.h"
 #include "protocol/authz_record.h"
 #include "protocol/chipinfo.h"
@@ -2175,6 +2176,35 @@ static const struct htool_cmd CMDS[] = {
         .desc = "Set the TPM mode to SPI_NOR_MAILBOX.",
         .params = (const struct htool_param[]){{}},
         .func = htool_set_tpm_mode,
+    },
+    {
+        .verbs = (const char*[]){"update_session", "start", NULL},
+        .desc = "Start a RoT update session.",
+        .params =
+            (const struct htool_param
+                 []){{HTOOL_FLAG_VALUE, 't', "timeout", "",
+                      .desc = "Requested timeout in seconds for the update "
+                              "session."},
+                     {HTOOL_POSITIONAL, .name = "timeout_seconds",
+                      .default_value = "",
+                      .desc = "Requested timeout in seconds for the update "
+                              "session."},
+                     {}},
+        .func = htool_update_session_start,
+    },
+    {
+        .verbs = (const char*[]){"update_session", "finalize", NULL},
+        .alias = (const char*[]){"update_session", "end", NULL},
+        .desc = "Finalize the active RoT update session.",
+        .params = (const struct htool_param[]){{}},
+        .func = htool_update_session_finalize,
+    },
+    {
+        .verbs = (const char*[]){"update_session", "status", NULL},
+        .alias = (const char*[]){"update_session", "get_status", NULL},
+        .desc = "Get the current status of the RoT update session.",
+        .params = (const struct htool_param[]){{}},
+        .func = htool_update_session_status,
     },
     {},
 };
