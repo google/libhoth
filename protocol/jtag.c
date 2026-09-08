@@ -12,17 +12,23 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "jtag.h"
+#include "protocol/jtag.h"
 
 #include <stdint.h>
 #include <stdio.h>
 #include <string.h>
 
 #include "host_cmd.h"
+#include "protocol/status.h"
 #include "transports/libhoth_device.h"
 
-int libhoth_jtag_read_idcode(struct libhoth_device* dev, uint8_t interface_id,
-                             uint16_t clk_idiv, uint32_t* idcode) {
+libhoth_error libhoth_jtag_read_idcode(struct libhoth_device* dev,
+                                       uint8_t interface_id, uint16_t clk_idiv,
+                                       uint32_t* idcode) {
+  if (dev == NULL || idcode == NULL) {
+    return LIBHOTH_ERR_CONSTRUCT(HOTH_CTX_CMD_EXEC, HOTH_HOST_SPACE_LIBHOTH,
+                                 LIBHOTH_ERR_INVALID_PARAMETER);
+  }
   const struct hoth_request_jtag_operation request = {
       .clk_idiv = clk_idiv,
       .operation = HOTH_JTAG_OP_READ_IDCODE,
@@ -31,31 +37,38 @@ int libhoth_jtag_read_idcode(struct libhoth_device* dev, uint8_t interface_id,
   struct hoth_response_jtag_read_idcode_operation response;
 
   size_t response_length = 0;
-  int ret = libhoth_hostcmd_exec(
+  libhoth_error ret = libhoth_hostcmd_exec_v2(
       dev, HOTH_CMD_BOARD_SPECIFIC_BASE + HOTH_PRV_CMD_HOTH_JTAG_OPERATION,
       /*version=*/0, &request, sizeof(request), &response, sizeof(response),
       &response_length);
 
-  if (ret != 0) {
-    fprintf(stderr, "HOTH_JTAG_OPERATION error code: %d\n", ret);
-    return -1;
+  if (ret != HOTH_SUCCESS) {
+    fprintf(stderr, "HOTH_JTAG_OPERATION error code: 0x%016llx\n",
+            (unsigned long long)ret);
+    return ret;
   }
 
   if (response_length != sizeof(response)) {
-    fprintf(stderr,
-            "HOTH_JTAG_OPERATION expected exactly %zu reseponse bytes, got %zu",
-            sizeof(response), response_length);
-    return -1;
+    fprintf(
+        stderr,
+        "HOTH_JTAG_OPERATION expected exactly %zu response bytes, got %zu\n",
+        sizeof(response), response_length);
+    return LIBHOTH_ERR_CONSTRUCT(HOTH_CTX_CMD_EXEC, HOTH_HOST_SPACE_LIBHOTH,
+                                 LIBHOTH_ERR_FAIL);
   }
 
   *idcode = response.idcode;
-  return 0;
+  return HOTH_SUCCESS;
 }
 
-int libhoth_jtag_test_bypass(
+libhoth_error libhoth_jtag_test_bypass(
     struct libhoth_device* dev, uint8_t interface_id, uint16_t clk_idiv,
     const uint8_t tdi_bytes[HOTH_JTAG_TEST_BYPASS_PATTERN_LEN],
     uint8_t tdo_bytes[HOTH_JTAG_TEST_BYPASS_PATTERN_LEN]) {
+  if (dev == NULL || tdi_bytes == NULL || tdo_bytes == NULL) {
+    return LIBHOTH_ERR_CONSTRUCT(HOTH_CTX_CMD_EXEC, HOTH_HOST_SPACE_LIBHOTH,
+                                 LIBHOTH_ERR_INVALID_PARAMETER);
+  }
   struct {
     struct hoth_request_jtag_operation operation;
     struct hoth_request_jtag_test_bypass_operation params;
@@ -73,29 +86,37 @@ int libhoth_jtag_test_bypass(
 
   struct hoth_response_jtag_test_bypass_operation response;
   size_t response_len = 0;
-  int ret = libhoth_hostcmd_exec(
+  libhoth_error ret = libhoth_hostcmd_exec_v2(
       dev, HOTH_CMD_BOARD_SPECIFIC_BASE + HOTH_PRV_CMD_HOTH_JTAG_OPERATION,
       /*version=*/0, &request, sizeof(request), &response, sizeof(response),
       &response_len);
 
-  if (ret != 0) {
-    fprintf(stderr, "HOTH_JTAG_OPERATION error code: %d\n", ret);
-    return -1;
+  if (ret != HOTH_SUCCESS) {
+    fprintf(stderr, "HOTH_JTAG_OPERATION error code: 0x%016llx\n",
+            (unsigned long long)ret);
+    return ret;
   }
 
   if (response_len != sizeof(response)) {
-    fprintf(stderr,
-            "HOTH_JTAG_OPERATION expected exactly %zu response bytes, got %zu",
-            sizeof(response), response_len);
-    return -1;
+    fprintf(
+        stderr,
+        "HOTH_JTAG_OPERATION expected exactly %zu response bytes, got %zu\n",
+        sizeof(response), response_len);
+    return LIBHOTH_ERR_CONSTRUCT(HOTH_CTX_CMD_EXEC, HOTH_HOST_SPACE_LIBHOTH,
+                                 LIBHOTH_ERR_FAIL);
   }
 
   memcpy(tdo_bytes, response.tdo_pattern, HOTH_JTAG_TEST_BYPASS_PATTERN_LEN);
-  return 0;
+  return HOTH_SUCCESS;
 }
 
-int libhoth_jtag_program_and_verify_pld(struct libhoth_device* dev,
-                                        uint8_t interface_id, uint32_t offset) {
+libhoth_error libhoth_jtag_program_and_verify_pld(struct libhoth_device* dev,
+                                                  uint8_t interface_id,
+                                                  uint32_t offset) {
+  if (dev == NULL) {
+    return LIBHOTH_ERR_CONSTRUCT(HOTH_CTX_CMD_EXEC, HOTH_HOST_SPACE_LIBHOTH,
+                                 LIBHOTH_ERR_INVALID_PARAMETER);
+  }
   struct {
     struct hoth_request_jtag_operation operation;
     struct hoth_request_jtag_program_and_verify_pld_operation params;
@@ -113,28 +134,34 @@ int libhoth_jtag_program_and_verify_pld(struct libhoth_device* dev,
   };
 
   size_t response_length = 0;
-  int ret = libhoth_hostcmd_exec(
+  libhoth_error ret = libhoth_hostcmd_exec_v2(
       dev, HOTH_CMD_BOARD_SPECIFIC_BASE + HOTH_PRV_CMD_HOTH_JTAG_OPERATION,
       /*version=*/0, &request, sizeof(request), /*resp_buf=*/NULL,
       /*resp_buf_size=*/0, &response_length);
 
-  if (ret != 0) {
-    fprintf(stderr, "HOTH_JTAG_OPERATION error code: %d\n", ret);
-    return -1;
+  if (ret != HOTH_SUCCESS) {
+    fprintf(stderr, "HOTH_JTAG_OPERATION error code: 0x%016llx\n",
+            (unsigned long long)ret);
+    return ret;
   }
 
   if (response_length != 0) {
     fprintf(stderr,
             "HOTH_JTAG_OPERATION expected exactly %u response bytes, got %zu\n",
             0, response_length);
-    return -1;
+    return LIBHOTH_ERR_CONSTRUCT(HOTH_CTX_CMD_EXEC, HOTH_HOST_SPACE_LIBHOTH,
+                                 LIBHOTH_ERR_FAIL);
   }
 
-  return 0;
+  return HOTH_SUCCESS;
 }
 
-int libhoth_jtag_verify_pld(struct libhoth_device* dev, uint8_t interface_id,
-                            uint32_t offset) {
+libhoth_error libhoth_jtag_verify_pld(struct libhoth_device* dev,
+                                      uint8_t interface_id, uint32_t offset) {
+  if (dev == NULL) {
+    return LIBHOTH_ERR_CONSTRUCT(HOTH_CTX_CMD_EXEC, HOTH_HOST_SPACE_LIBHOTH,
+                                 LIBHOTH_ERR_INVALID_PARAMETER);
+  }
   struct {
     struct hoth_request_jtag_operation operation;
     struct hoth_request_jtag_program_and_verify_pld_operation params;
@@ -152,22 +179,24 @@ int libhoth_jtag_verify_pld(struct libhoth_device* dev, uint8_t interface_id,
   };
 
   size_t response_length = 0;
-  int ret = libhoth_hostcmd_exec(
+  libhoth_error ret = libhoth_hostcmd_exec_v2(
       dev, HOTH_CMD_BOARD_SPECIFIC_BASE + HOTH_PRV_CMD_HOTH_JTAG_OPERATION,
       /*version=*/0, &request, sizeof(request), /*resp_buf=*/NULL,
       /*resp_buf_size=*/0, &response_length);
 
-  if (ret != 0) {
-    fprintf(stderr, "HOTH_JTAG_OPERATION error code: %d\n", ret);
-    return -1;
+  if (ret != HOTH_SUCCESS) {
+    fprintf(stderr, "HOTH_JTAG_OPERATION error code: 0x%016llx\n",
+            (unsigned long long)ret);
+    return ret;
   }
 
   if (response_length != 0) {
     fprintf(stderr,
             "HOTH_JTAG_OPERATION expected exactly %u response bytes, got %zu\n",
             0, response_length);
-    return -1;
+    return LIBHOTH_ERR_CONSTRUCT(HOTH_CTX_CMD_EXEC, HOTH_HOST_SPACE_LIBHOTH,
+                                 LIBHOTH_ERR_FAIL);
   }
 
-  return 0;
+  return HOTH_SUCCESS;
 }

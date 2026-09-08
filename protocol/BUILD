@@ -401,6 +401,7 @@ cc_library(
     hdrs = ["jtag.h"],
     deps = [
         ":host_cmd",
+        ":libhoth_status",
         "//transports:libhoth_device",
     ],
 )
@@ -410,6 +411,7 @@ cc_test(
     srcs = ["jtag_test.cc"],
     deps = [
         ":jtag",
+        ":libhoth_status",
         "//protocol/test:libhoth_device_mock",
         "//transports:libhoth_device",
         "@googletest//:gtest",

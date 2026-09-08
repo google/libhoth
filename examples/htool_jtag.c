@@ -58,9 +58,11 @@ static int jtag_read_idcode(struct libhoth_device* dev,
   }
 
   uint32_t idcode = 0;
-  int ret = libhoth_jtag_read_idcode(dev, interface_id, clk_idiv, &idcode);
-  if (ret != 0) {
-    return ret;
+  libhoth_error err =
+      libhoth_jtag_read_idcode(dev, interface_id, clk_idiv, &idcode);
+  if (err != HOTH_SUCCESS) {
+    htool_report_error("jtag read_idcode", err);
+    return -1;
   }
 
   printf("IDCODE: 0x%08x\n", idcode);
@@ -150,10 +152,11 @@ static int jtag_test_bypass(struct libhoth_device* dev,
   printf("\n");
 
   uint8_t tdo_bytes[HOTH_JTAG_TEST_BYPASS_PATTERN_LEN] = {0};
-  ret = libhoth_jtag_test_bypass(dev, interface_id, clk_idiv, tdi_bytes,
-                                 tdo_bytes);
-  if (ret != 0) {
-    return ret;
+  libhoth_error err = libhoth_jtag_test_bypass(dev, interface_id, clk_idiv,
+                                               tdi_bytes, tdo_bytes);
+  if (err != HOTH_SUCCESS) {
+    htool_report_error("jtag test_bypass", err);
+    return -1;
   }
 
   bool tdo_matches_tdi = true;
@@ -188,7 +191,13 @@ static int jtag_program_and_verify_pld(struct libhoth_device* dev,
     return -1;
   }
 
-  return libhoth_jtag_program_and_verify_pld(dev, interface_id, offset);
+  libhoth_error err =
+      libhoth_jtag_program_and_verify_pld(dev, interface_id, offset);
+  if (err != HOTH_SUCCESS) {
+    htool_report_error("jtag program_and_verify_pld", err);
+    return -1;
+  }
+  return 0;
 }
 
 static int jtag_verify_pld(struct libhoth_device* dev,
@@ -208,7 +217,12 @@ static int jtag_verify_pld(struct libhoth_device* dev,
     return -1;
   }
 
-  return libhoth_jtag_verify_pld(dev, interface_id, offset);
+  libhoth_error err = libhoth_jtag_verify_pld(dev, interface_id, offset);
+  if (err != HOTH_SUCCESS) {
+    htool_report_error("jtag verify_pld", err);
+    return -1;
+  }
+  return 0;
 }
 
 int htool_jtag_run(const struct htool_invocation* inv) {
