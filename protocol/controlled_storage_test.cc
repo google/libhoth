@@ -12,13 +12,15 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "controlled_storage.h"
+#include "protocol/controlled_storage.h"
 
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
 
 #include <cstdint>
+#include <vector>
 
+#include "protocol/status.h"
 #include "test/libhoth_device_mock.h"
 
 using ::testing::_;
@@ -47,11 +49,27 @@ TEST_F(LibHothTest, controlled_storage_read_test) {
   size_t payload_len = 0;
 
   EXPECT_EQ(libhoth_controlled_storage_read(&hoth_dev_, 0, &resp, &payload_len),
-            LIBHOTH_OK);
+            HOTH_SUCCESS);
 
   EXPECT_EQ(payload_len, ex_payload_len);
   EXPECT_THAT(std::vector<uint8_t>(ex_resp.data, ex_resp.data + ex_payload_len),
               ElementsAreArray(resp.data, payload_len));
+}
+
+TEST_F(LibHothTest, controlled_storage_read_null_params) {
+  struct hoth_payload_controlled_storage resp = {};
+  size_t payload_len = 0;
+
+  libhoth_error err =
+      libhoth_controlled_storage_read(nullptr, 0, &resp, &payload_len);
+  EXPECT_EQ(LIBHOTH_ERR_GET_CTX(err), HOTH_CTX_CMD_EXEC);
+  EXPECT_EQ(LIBHOTH_ERR_GET_SPACE(err), HOTH_HOST_SPACE_LIBHOTH);
+  EXPECT_EQ(LIBHOTH_ERR_GET_CODE(err), LIBHOTH_ERR_INVALID_PARAMETER);
+
+  err = libhoth_controlled_storage_read(&hoth_dev_, 0, nullptr, &payload_len);
+  EXPECT_EQ(LIBHOTH_ERR_GET_CTX(err), HOTH_CTX_CMD_EXEC);
+  EXPECT_EQ(LIBHOTH_ERR_GET_SPACE(err), HOTH_HOST_SPACE_LIBHOTH);
+  EXPECT_EQ(LIBHOTH_ERR_GET_CODE(err), LIBHOTH_ERR_INVALID_PARAMETER);
 }
 
 TEST_F(LibHothTest, controlled_storage_write_test) {
@@ -59,8 +77,7 @@ TEST_F(LibHothTest, controlled_storage_write_test) {
                           UsesCommand(HOTH_CMD_BOARD_SPECIFIC_BASE +
                                       HOTH_PRV_CMD_HOTH_CONTROLLED_STORAGE),
                           _))
-      .WillOnce(Return(LIBHOTH_OK))
-      .WillOnce(Return(-1));
+      .WillOnce(Return(LIBHOTH_OK));
 
   uint32_t dummy = 0;
   EXPECT_CALL(mock_, receive)
@@ -70,10 +87,28 @@ TEST_F(LibHothTest, controlled_storage_write_test) {
 
   EXPECT_EQ(
       libhoth_controlled_storage_write(&hoth_dev_, 0, payload, sizeof(payload)),
-      LIBHOTH_OK);
-  EXPECT_EQ(
-      libhoth_controlled_storage_write(&hoth_dev_, 0, payload, sizeof(payload)),
-      -1);
+      HOTH_SUCCESS);
+}
+
+TEST_F(LibHothTest, controlled_storage_write_null_params) {
+  uint8_t payload[] = {0xAB, 0xCD, 0xEF};
+
+  libhoth_error err =
+      libhoth_controlled_storage_write(nullptr, 0, payload, sizeof(payload));
+  EXPECT_EQ(LIBHOTH_ERR_GET_CTX(err), HOTH_CTX_CMD_EXEC);
+  EXPECT_EQ(LIBHOTH_ERR_GET_SPACE(err), HOTH_HOST_SPACE_LIBHOTH);
+  EXPECT_EQ(LIBHOTH_ERR_GET_CODE(err), LIBHOTH_ERR_INVALID_PARAMETER);
+
+  err =
+      libhoth_controlled_storage_write(&hoth_dev_, 0, nullptr, sizeof(payload));
+  EXPECT_EQ(LIBHOTH_ERR_GET_CTX(err), HOTH_CTX_CMD_EXEC);
+  EXPECT_EQ(LIBHOTH_ERR_GET_SPACE(err), HOTH_HOST_SPACE_LIBHOTH);
+  EXPECT_EQ(LIBHOTH_ERR_GET_CODE(err), LIBHOTH_ERR_INVALID_PARAMETER);
+
+  err = libhoth_controlled_storage_write(&hoth_dev_, 0, payload, 1000);
+  EXPECT_EQ(LIBHOTH_ERR_GET_CTX(err), HOTH_CTX_CMD_EXEC);
+  EXPECT_EQ(LIBHOTH_ERR_GET_SPACE(err), HOTH_HOST_SPACE_LIBHOTH);
+  EXPECT_EQ(LIBHOTH_ERR_GET_CODE(err), LIBHOTH_ERR_INVALID_PARAMETER);
 }
 
 TEST_F(LibHothTest, controlled_storage_delete_test) {
@@ -81,13 +116,18 @@ TEST_F(LibHothTest, controlled_storage_delete_test) {
                           UsesCommand(HOTH_CMD_BOARD_SPECIFIC_BASE +
                                       HOTH_PRV_CMD_HOTH_CONTROLLED_STORAGE),
                           _))
-      .WillOnce(Return(LIBHOTH_OK))
-      .WillOnce(Return(-1));
+      .WillOnce(Return(LIBHOTH_OK));
 
   uint32_t dummy = 0;
   EXPECT_CALL(mock_, receive)
       .WillOnce(DoAll(CopyResp(&dummy, 0), Return(LIBHOTH_OK)));
 
-  EXPECT_EQ(libhoth_controlled_storage_delete(&hoth_dev_, 0), LIBHOTH_OK);
-  EXPECT_EQ(libhoth_controlled_storage_delete(&hoth_dev_, 0), -1);
+  EXPECT_EQ(libhoth_controlled_storage_delete(&hoth_dev_, 0), HOTH_SUCCESS);
+}
+
+TEST_F(LibHothTest, controlled_storage_delete_null_params) {
+  libhoth_error err = libhoth_controlled_storage_delete(nullptr, 0);
+  EXPECT_EQ(LIBHOTH_ERR_GET_CTX(err), HOTH_CTX_CMD_EXEC);
+  EXPECT_EQ(LIBHOTH_ERR_GET_SPACE(err), HOTH_HOST_SPACE_LIBHOTH);
+  EXPECT_EQ(LIBHOTH_ERR_GET_CODE(err), LIBHOTH_ERR_INVALID_PARAMETER);
 }

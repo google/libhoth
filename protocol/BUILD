@@ -354,6 +354,7 @@ cc_library(
     hdrs = ["controlled_storage.h"],
     deps = [
         ":host_cmd",
+        ":libhoth_status",
         ":progress",
         "//transports:libhoth_device",
     ],
@@ -364,6 +365,7 @@ cc_test(
     srcs = ["controlled_storage_test.cc"],
     deps = [
         ":controlled_storage",
+        ":libhoth_status",
         "//protocol/test:libhoth_device_mock",
         "//transports:libhoth_device",
         "@googletest//:gtest",
