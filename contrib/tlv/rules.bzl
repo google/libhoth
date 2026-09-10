@@ -222,5 +222,6 @@ def tlv_codegen(name, proto, deps = [], src = None, visibility = None, **kwargs)
             name = name + "_update",
             file_a = src,
             file_b = ":" + gen_file_target,
+            tags = ["tlv_update"],
             visibility = visibility,
         )
