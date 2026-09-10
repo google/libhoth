@@ -1,0 +1,59 @@
+load("@rules_rust//rust:defs.bzl", "rust_library", "rust_test")
+
+package(default_visibility = ["//visibility:public"])
+
+# Transport-agnostic wrapper around libhoth_device. Depends on neither libusb
+# nor spidev; pair it with one of the transport crates below.
+rust_library(
+    name = "device",
+    srcs = ["src/lib.rs"],
+    crate_name = "hoth_device",
+    edition = "2024",
+    deps = [
+        "//protocol:host_cmd",
+        "//transports:libhoth_device",
+    ],
+)
+
+rust_test(
+    name = "device_test",
+    crate = ":device",
+    edition = "2024",
+)
+
+# The only Rust target that depends on libusb.
+rust_library(
+    name = "usb",
+    srcs = ["src/usb.rs"],
+    crate_name = "hoth_usb",
+    crate_root = "src/usb.rs",
+    edition = "2024",
+    deps = [
+        ":device",
+        "//transports:libhoth_usb",
+    ],
+)
+
+rust_test(
+    name = "usb_test",
+    crate = ":usb",
+    edition = "2024",
+)
+
+rust_library(
+    name = "spi",
+    srcs = ["src/spi.rs"],
+    crate_name = "hoth_spi",
+    crate_root = "src/spi.rs",
+    edition = "2024",
+    deps = [
+        ":device",
+        "//transports:libhoth_spi",
+    ],
+)
+
+rust_test(
+    name = "spi_test",
+    crate = ":spi",
+    edition = "2024",
+)
