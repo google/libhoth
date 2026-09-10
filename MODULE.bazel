@@ -12,3 +12,35 @@ use_repo(libusb_ext, "libusb")
 
 bazel_dep(name = "googletest", version = "1.15.2")
 bazel_dep(name = "rules_cc", version = "0.1.4")
+bazel_dep(name = "rules_rust", version = "0.70.0")
+
+crate = use_extension("@rules_rust//crate_universe:extensions.bzl", "crate")
+crate.spec(
+    features = ["derive"],
+    package = "zerocopy",
+    repositories = ["libhoth_crates"],
+    version = "=0.8.38",
+)
+crate.spec(
+    package = "zerocopy-derive",
+    repositories = ["libhoth_crates"],
+    version = "=0.8.38",
+)
+crate.spec(
+    git = "https://github.com/korran/aligned",
+    package = "aligned",
+    repositories = ["libhoth_crates"],
+    rev = "00818cf81d7c858bec568c63f847bf6be840100e",
+)
+crate.from_specs(
+    name = "libhoth_crates",
+    cargo_lockfile = "//:Cargo.lock",
+    supported_platform_triples = [
+        "aarch64-apple-darwin",
+        "aarch64-unknown-linux-gnu",
+        "x86_64-pc-windows-msvc",
+        "x86_64-unknown-linux-gnu",
+        "riscv32imc-unknown-none-elf",
+    ],
+)
+use_repo(crate, "libhoth_crates")

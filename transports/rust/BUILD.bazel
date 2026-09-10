@@ -1,0 +1,21 @@
+load("@rules_rust//rust:defs.bzl", "rust_library", "rust_test")
+
+package(default_visibility = ["//visibility:public"])
+
+rust_library(
+    name = "device",
+    srcs = glob(["src/**/*.rs"]),
+    crate_name = "hoth_device",
+    edition = "2024",
+    deps = [
+        "//:libhoth",
+        "//protocol/rust:protocol",
+        "@libhoth_crates//:aligned",
+    ],
+)
+
+rust_test(
+    name = "device_test",
+    crate = ":device",
+    edition = "2024",
+)
