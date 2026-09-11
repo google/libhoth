@@ -165,11 +165,10 @@ libhoth_error libhoth_dfu_install_firmware(struct libhoth_device* dev,
                                  retval);
   }
 
-  retval = libhoth_opentitan_version(dev, &resp);
-  if (retval != 0) {
-    fprintf(stderr, "Failed to get current version (%d)\n", retval);
-    return LIBHOTH_ERR_CONSTRUCT(HOTH_CTX_CMD_EXEC, HOTH_HOST_SPACE_LIBHOTH,
-                                 retval);
+  libhoth_error ot_err = libhoth_opentitan_version(dev, &resp);
+  if (ot_err != HOTH_SUCCESS) {
+    fprintf(stderr, "Failed to get current version\n");
+    return ot_err;
   }
 
   if (desired_app.security_version < resp.bl0_min_sec_ver) {
@@ -191,12 +190,10 @@ libhoth_error libhoth_dfu_install_firmware(struct libhoth_device* dev,
       return err;
     }
 
-    retval = libhoth_opentitan_version(dev, &resp);
-    if (retval != 0) {
-      fprintf(stderr, "Failed to get ot version after dfu update (%d)\n",
-              retval);
-      return LIBHOTH_ERR_CONSTRUCT(HOTH_CTX_CMD_EXEC, HOTH_HOST_SPACE_LIBHOTH,
-                                   retval);
+    ot_err = libhoth_opentitan_version(dev, &resp);
+    if (ot_err != HOTH_SUCCESS) {
+      fprintf(stderr, "Failed to get ot version after dfu update\n");
+      return ot_err;
     }
 
     if (!libhoth_ot_check_update_successful(&resp, &desired_rom_ext,
