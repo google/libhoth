@@ -547,10 +547,12 @@ cc_library(
     hdrs = ["console.h"],
     deps = [
         ":host_cmd",
+        ":libhoth_status",
         ":util",
         "//transports:libhoth_device",
     ],
 )
+
 
 cc_library(
     name = "dfu_hostcmd",

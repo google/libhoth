@@ -61,27 +61,27 @@ void restore_terminal(int fd, const struct termios* old_termios) {
   tcsetattr(fd, TCSANOW, old_termios);
 }
 
-int htool_console_run(struct libhoth_device* dev,
-                      const struct libhoth_htool_console_opts* opts) {
+libhoth_error htool_console_run(struct libhoth_device* dev,
+                                const struct libhoth_htool_console_opts* opts) {
   printf("%sStarting Interactive Console\n", kAnsiRed);
 
   struct hoth_channel_uart_config uart_config = {};
-  int status = libhoth_get_uart_config(dev, opts, &uart_config);
-  if (status == LIBHOTH_OK) {
+  libhoth_error status = libhoth_get_uart_config(dev, opts, &uart_config);
+  if (status == HOTH_SUCCESS) {
     if (opts->baud_rate != 0) {
       uart_config.baud_rate = opts->baud_rate;
       status = libhoth_set_uart_config(dev, opts, &uart_config);
-      if (status != LIBHOTH_OK) {
-        fprintf(
-            stderr,
-            "libhoth_set_uart_config() failed: %d; unable to set baud-rate\n",
-            status);
+      if (status != HOTH_SUCCESS) {
+        fprintf(stderr,
+                "libhoth_set_uart_config() failed: 0x%016llx; unable to set "
+                "baud-rate\n",
+                (unsigned long long)status);
         return status;
       }
       status = libhoth_get_uart_config(dev, opts, &uart_config);
     }
   }
-  if (status == LIBHOTH_OK) {
+  if (status == HOTH_SUCCESS) {
     printf("Using baud-rate %d\n", uart_config.baud_rate);
   }
   printf("[ Use Ctrl+T-Q to quit ]%s\n", kAnsiReset);
@@ -90,8 +90,9 @@ int htool_console_run(struct libhoth_device* dev,
   // will be stored at this offset)
   uint32_t offset;
   status = libhoth_get_channel_status(dev, opts, &offset);
-  if (status != LIBHOTH_OK) {
-    fprintf(stderr, "libhoth_get_channel_status() failed: %d\n", status);
+  if (status != HOTH_SUCCESS) {
+    fprintf(stderr, "libhoth_get_channel_status() failed: 0x%016llx\n",
+            (unsigned long long)status);
     return status;
   }
 
@@ -106,7 +107,7 @@ int htool_console_run(struct libhoth_device* dev,
 
   while (!quit) {
     // Any previous failure should reset all of the USB state before retrying
-    while (status != LIBHOTH_OK) {
+    while (status != HOTH_SUCCESS) {
       // TODO: Read STDIN during this time and buffer it so we can capture
       // quit events even when the console is disconnected. We will also want
       // to tune the reconnect time to match.
@@ -114,7 +115,7 @@ int htool_console_run(struct libhoth_device* dev,
         // Make sure we don't end up in a tight retry loop
         usleep(100 * 1000);
       } else {
-        status = LIBHOTH_OK;
+        status = HOTH_SUCCESS;
       }
     }
     // Give an opportunity for other clients to use the interface.
@@ -123,20 +124,21 @@ int htool_console_run(struct libhoth_device* dev,
     if (libhoth_claim_device(dev, 1000 * 1000 * opts->claim_timeout_secs) !=
         HOTH_SUCCESS) {
       // If USB is down we might fail claim, just go back and retry
-      status = LIBHOTH_ERR_FAIL;
+      status = LIBHOTH_ERR_CONSTRUCT(HOTH_CTX_CMD_EXEC, HOTH_HOST_SPACE_LIBHOTH,
+                                     LIBHOTH_ERR_FAIL);
       continue;
     }
 
     status = libhoth_read_console(dev, STDOUT_FILENO, false, opts->channel_id,
                                   &offset);
-    if (status != LIBHOTH_OK) {
+    if (status != HOTH_SUCCESS) {
       // Device resets cause failures, just loop and allow reconnection
       continue;
     }
 
     status = libhoth_write_console(dev, opts->channel_id, opts->force_drive_tx,
                                    &quit);
-    if (status != LIBHOTH_OK) {
+    if (status != HOTH_SUCCESS) {
       // Device resets cause failures, just loop and allow reconnection
       continue;
     }
@@ -147,12 +149,14 @@ int htool_console_run(struct libhoth_device* dev,
   return status;
 }
 
-int htool_console_snapshot_legacy(struct libhoth_device* dev) {
+libhoth_error htool_console_snapshot_legacy(struct libhoth_device* dev) {
   size_t response_bytes_written;
-  int status = libhoth_hostcmd_exec(dev, HOTH_CMD_CONSOLE_REQUEST, 0, NULL, 0,
-                                    NULL, 0, &response_bytes_written);
-  if (status != LIBHOTH_OK) {
-    fprintf(stderr, "HOTH_CMD_CONSOLE_REQUEST status: %d\n", status);
+  libhoth_error status =
+      libhoth_hostcmd_exec_v2(dev, HOTH_CMD_CONSOLE_REQUEST, 0, NULL, 0, NULL,
+                              0, &response_bytes_written);
+  if (status != HOTH_SUCCESS) {
+    fprintf(stderr, "HOTH_CMD_CONSOLE_REQUEST status: 0x%016llx\n",
+            (unsigned long long)status);
     return status;
   }
 
@@ -162,11 +166,12 @@ int htool_console_snapshot_legacy(struct libhoth_device* dev) {
       MAILBOX_SIZE - sizeof(struct hoth_host_response);
   while (true) {
     char buf[MAILBOX_SIZE];
-    status = libhoth_hostcmd_exec(dev, HOTH_CMD_CONSOLE_READ, 0, &read_request,
-                                  sizeof(read_request), buf, max_bytes_per_read,
-                                  &response_bytes_written);
-    if (status != LIBHOTH_OK) {
-      fprintf(stderr, "HOTH_CMD_CONSOLE_READ status: %d\n", status);
+    status = libhoth_hostcmd_exec_v2(
+        dev, HOTH_CMD_CONSOLE_READ, 0, &read_request, sizeof(read_request), buf,
+        max_bytes_per_read, &response_bytes_written);
+    if (status != HOTH_SUCCESS) {
+      fprintf(stderr, "HOTH_CMD_CONSOLE_READ status: 0x%016llx\n",
+              (unsigned long long)status);
       return status;
     }
     fwrite(buf, strnlen(buf, sizeof(buf)), 1, stdout);
@@ -176,8 +181,8 @@ int htool_console_snapshot_legacy(struct libhoth_device* dev) {
   return status;
 }
 
-int htool_console_snapshot(struct libhoth_device* dev,
-                           const struct libhoth_htool_console_opts* opts) {
+libhoth_error htool_console_snapshot(
+    struct libhoth_device* dev, const struct libhoth_htool_console_opts* opts) {
   // Legacy host commands for console snapshot.
   if (!opts->channel_id) {
     return htool_console_snapshot_legacy(dev);
@@ -186,9 +191,10 @@ int htool_console_snapshot(struct libhoth_device* dev,
   // Starting from current_offset - 0x80000000 so it's guaranteed to be outside
   // of the Hoth buffer. Repeat read until reaching current offset.
   uint32_t current_offset;
-  int status = libhoth_get_channel_status(dev, opts, &current_offset);
-  if (status != LIBHOTH_OK) {
-    fprintf(stderr, "libhoth_get_channel_status) failed: %d\n", status);
+  libhoth_error status = libhoth_get_channel_status(dev, opts, &current_offset);
+  if (status != HOTH_SUCCESS) {
+    fprintf(stderr, "libhoth_get_channel_status failed: 0x%016llx\n",
+            (unsigned long long)status);
     return status;
   }
   uint32_t offset = current_offset - 0x80000000;
@@ -196,7 +202,7 @@ int htool_console_snapshot(struct libhoth_device* dev,
   while (true) {
     status = libhoth_read_console(dev, STDOUT_FILENO, false, opts->channel_id,
                                   &offset);
-    if (status != LIBHOTH_OK) {
+    if (status != HOTH_SUCCESS) {
       break;
     }
     // Extra check in case UINT32_MAX wrap-around.
