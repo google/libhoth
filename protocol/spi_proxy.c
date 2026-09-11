@@ -12,6 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include "protocol/spi_proxy.h"
+
 #include <assert.h>
 #include <stdbool.h>
 #include <stdint.h>
@@ -21,7 +23,7 @@
 #include <sys/param.h>
 
 #include "host_cmd.h"
-#include "spi_proxy.h"
+#include "protocol/status.h"
 
 const uint8_t SPI_OP_PAGE_PROGRAM = 0x02;
 const uint8_t SPI_OP_READ = 0x03;
@@ -58,17 +60,17 @@ static void spi_operation_init(struct spi_operation* op) {
   op->num_transactions = 0;
 }
 
-static int spi_operation_execute(struct spi_operation* op,
-                                 struct libhoth_device* dev) {
+static libhoth_error spi_operation_execute(struct spi_operation* op,
+                                           struct libhoth_device* dev) {
   uint8_t response_buf[MAX_SPI_OP_PAYLOAD_BYTES] = {0};
   size_t response_len = 0;
 
-  int status = libhoth_hostcmd_exec(
+  libhoth_error status = libhoth_hostcmd_exec_v2(
       dev, HOTH_CMD_BOARD_SPECIFIC_BASE + HOTH_PRV_CMD_HOTH_SPI_OPERATION,
       /*version=*/0, op->buf, op->pos, response_buf, sizeof(response_buf),
       &response_len);
 
-  if (status != 0) {
+  if (status != HOTH_SUCCESS) {
     return status;
   }
 
@@ -80,8 +82,9 @@ static int spi_operation_execute(struct spi_operation* op,
       if (pos + transaction->miso_dest_buf_len + transaction->skip_miso_nbytes >
           response_len) {
         fprintf(stderr,
-                "returned SPI operation payload is smaller than expected");
-        return -1;
+                "returned SPI operation payload is smaller than expected\n");
+        return LIBHOTH_ERR_CONSTRUCT(HOTH_CTX_CMD_EXEC, HOTH_HOST_SPACE_LIBHOTH,
+                                     LIBHOTH_ERR_FAIL);
       }
       if (transaction->miso_dest_buf) {
         memcpy(transaction->miso_dest_buf,
@@ -93,7 +96,7 @@ static int spi_operation_execute(struct spi_operation* op,
     pos += transaction->skip_miso_nbytes + transaction->miso_dest_buf_len;
   }
 
-  return 0;
+  return HOTH_SUCCESS;
 }
 
 static void spi_operation_begin_transaction(struct spi_operation* op) {
@@ -154,8 +157,8 @@ static void spi_operation_end_transaction(struct spi_operation* op) {
   spi_operation_read_miso_and_end_transaction(op, NULL, 0);
 }
 
-static int spi_read_chunk(const struct libhoth_spi_proxy* spi, uint32_t addr,
-                          void* buf, size_t len) {
+static libhoth_error spi_read_chunk(const struct libhoth_spi_proxy* spi,
+                                    uint32_t addr, void* buf, size_t len) {
   struct spi_operation op;
   spi_operation_init(&op);
 
@@ -167,25 +170,25 @@ static int spi_read_chunk(const struct libhoth_spi_proxy* spi, uint32_t addr,
   return spi_operation_execute(&op, spi->dev);
 }
 
-int libhoth_spi_proxy_read(const struct libhoth_spi_proxy* spi, uint32_t addr,
-                           void* buf, size_t len) {
+libhoth_error libhoth_spi_proxy_read(const struct libhoth_spi_proxy* spi,
+                                     uint32_t addr, void* buf, size_t len) {
   uint8_t* cbuf = (uint8_t*)buf;
   while (len > 0) {
     size_t read_len = MIN(len, READ_CHUNK_SIZE);
-    int status = spi_read_chunk(spi, addr, cbuf, read_len);
-    if (status) {
+    libhoth_error status = spi_read_chunk(spi, addr, cbuf, read_len);
+    if (status != HOTH_SUCCESS) {
       return status;
     }
     len -= read_len;
     addr += read_len;
     cbuf += read_len;
   }
-  return 0;
+  return HOTH_SUCCESS;
 }
 
-int libhoth_spi_proxy_verify(const struct libhoth_spi_proxy* spi, uint32_t addr,
-                             const void* buf, size_t len,
-                             const struct libhoth_progress* progress) {
+libhoth_error libhoth_spi_proxy_verify(
+    const struct libhoth_spi_proxy* spi, uint32_t addr, const void* buf,
+    size_t len, const struct libhoth_progress* progress) {
   uint8_t read_buf[READ_CHUNK_SIZE];
   const uint8_t* cbuf = (const uint8_t*)buf;
   size_t len_remaining = len;
@@ -193,8 +196,8 @@ int libhoth_spi_proxy_verify(const struct libhoth_spi_proxy* spi, uint32_t addr,
   uint32_t last_progress_addr = addr;
   while (len_remaining > 0) {
     size_t read_len = MIN(len_remaining, sizeof(read_buf));
-    int status = spi_read_chunk(spi, addr, read_buf, read_len);
-    if (status) {
+    libhoth_error status = spi_read_chunk(spi, addr, read_buf, read_len);
+    if (status != HOTH_SUCCESS) {
       return status;
     }
     for (size_t i = 0; i < read_len; i++) {
@@ -203,7 +206,8 @@ int libhoth_spi_proxy_verify(const struct libhoth_spi_proxy* spi, uint32_t addr,
                 "Verification failed at address 0x%08lx: expected 0x%02x but "
                 "was 0x%02x\n",
                 (unsigned long)(addr + i), cbuf[i], read_buf[i]);
-        return -1;
+        return LIBHOTH_ERR_CONSTRUCT(HOTH_CTX_CMD_EXEC, HOTH_HOST_SPACE_LIBHOTH,
+                                     LIBHOTH_ERR_FAIL);
       }
     }
     len_remaining -= read_len;
@@ -216,7 +220,7 @@ int libhoth_spi_proxy_verify(const struct libhoth_spi_proxy* spi, uint32_t addr,
       progress->func(progress->param, len - len_remaining, len);
     }
   }
-  return 0;
+  return HOTH_SUCCESS;
 }
 
 static void spi_write_page(struct spi_operation* op,
@@ -255,9 +259,9 @@ static void spi_erase_generic(struct spi_operation* op,
   // SPI_OPERATION host commands
 }
 
-int libhoth_spi_proxy_init(struct libhoth_spi_proxy* spi,
-                           struct libhoth_device* dev, bool is_4_byte,
-                           bool enter_exit_4b) {
+libhoth_error libhoth_spi_proxy_init(struct libhoth_spi_proxy* spi,
+                                     struct libhoth_device* dev, bool is_4_byte,
+                                     bool enter_exit_4b) {
   spi->dev = dev;
   spi->is_4_byte = is_4_byte;
 
@@ -273,20 +277,24 @@ int libhoth_spi_proxy_init(struct libhoth_spi_proxy* spi,
   }
   spi_operation_end_transaction(&op);
 
-  int status = spi_operation_execute(&op, spi->dev);
-  if (status == HTOOL_ERROR_HOST_COMMAND_START + HOTH_RES_BUS_ERROR) {
-    fprintf(
-        stderr,
-        "This is likely because the target device is not in reset, and thus it "
-        "is not safe to use the SPI bus through a non-SPI transport. Try using "
-        "'htool target reset on' to put the target in reset first.\n");
+  libhoth_error status = spi_operation_execute(&op, spi->dev);
+  if (status != HOTH_SUCCESS) {
+    if (LIBHOTH_ERR_GET_SPACE(status) == HOTH_HOST_SPACE_EC &&
+        LIBHOTH_ERR_GET_CODE(status) == HOTH_RES_BUS_ERROR) {
+      fprintf(stderr,
+              "This is likely because the target device is not in reset, and "
+              "thus it "
+              "is not safe to use the SPI bus through a non-SPI transport. Try "
+              "using "
+              "'htool target reset on' to put the target in reset first.\n");
+    }
   }
   return status;
 }
 
-int libhoth_spi_proxy_update(const struct libhoth_spi_proxy* spi, uint32_t addr,
-                             const void* buf, size_t len,
-                             const struct libhoth_progress* progress) {
+libhoth_error libhoth_spi_proxy_update(
+    const struct libhoth_spi_proxy* spi, uint32_t addr, const void* buf,
+    size_t len, const struct libhoth_progress* progress) {
   const uint32_t SPI_PAGE_SIZE = 256;
 
   // There is only enough space in the buffer for 3 page writes (and associated
@@ -334,8 +342,8 @@ int libhoth_spi_proxy_update(const struct libhoth_spi_proxy* spi, uint32_t addr,
     if (pages_in_op >= MAX_PAGES_PER_OP || len_remaining == 0) {
       pages_in_op = 0;
 
-      int status = spi_operation_execute(&op, spi->dev);
-      if (status) {
+      libhoth_error status = spi_operation_execute(&op, spi->dev);
+      if (status != HOTH_SUCCESS) {
         return status;
       }
       if (progress &&
@@ -346,5 +354,5 @@ int libhoth_spi_proxy_update(const struct libhoth_spi_proxy* spi, uint32_t addr,
       spi_operation_init(&op);
     }
   }
-  return 0;
+  return HOTH_SUCCESS;
 }
