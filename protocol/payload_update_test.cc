@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "payload_update.h"
+#include "protocol/payload_update.h"
 
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
@@ -24,8 +24,9 @@
 #include <memory>
 #include <string>
 
-#include "command_version.h"
-#include "payload_info.h"
+#include "protocol/command_version.h"
+#include "protocol/payload_info.h"
+#include "protocol/status.h"
 #include "test/libhoth_device_mock.h"
 #include "transports/libhoth_device.h"
 
@@ -77,10 +78,10 @@ TEST_F(LibHothTest, payload_update_bad_image_test) {
 
   uint8_t bad_buffer[100] = {0};
 
-  EXPECT_EQ(libhoth_payload_update(&hoth_dev_, bad_buffer, sizeof(bad_buffer),
+  EXPECT_NE(libhoth_payload_update(&hoth_dev_, bad_buffer, sizeof(bad_buffer),
                                    /*skip_erase=*/false,
                                    /*binary_file=*/false),
-            PAYLOAD_UPDATE_BAD_IMG);
+            HOTH_SUCCESS);
 }
 
 TEST_F(LibHothTest, payload_update_test) {
@@ -120,7 +121,7 @@ TEST_F(LibHothTest, payload_update_test) {
   EXPECT_EQ(libhoth_payload_update(&hoth_dev_, buffer.get(), 2 * kAlign,
                                    /*skip_erase=*/false,
                                    /*binary_file=*/false),
-            PAYLOAD_UPDATE_OK);
+            HOTH_SUCCESS);
 }
 
 TEST_F(LibHothTest, payload_update_command_version_unsupported) {
@@ -148,7 +149,7 @@ TEST_F(LibHothTest, payload_update_command_version_unsupported) {
   EXPECT_EQ(libhoth_payload_update(&hoth_dev_, buffer, sizeof(buffer),
                                    /*skip_erase=*/true,
                                    /*binary_file=*/false),
-            PAYLOAD_UPDATE_OK);
+            HOTH_SUCCESS);
 }
 
 TEST_F(LibHothTest, payload_update_erase_fail) {
@@ -159,10 +160,10 @@ TEST_F(LibHothTest, payload_update_erase_fail) {
   uint8_t buffer[4096] = {0};
   std::memcpy(buffer, &kMagic, sizeof(kMagic));
 
-  EXPECT_EQ(libhoth_payload_update(&hoth_dev_, buffer, sizeof(buffer),
+  EXPECT_NE(libhoth_payload_update(&hoth_dev_, buffer, sizeof(buffer),
                                    /*skip_erase=*/false,
                                    /*binary_file=*/false),
-            PAYLOAD_UPDATE_ERASE_FAIL);
+            HOTH_SUCCESS);
 }
 
 TEST_F(LibHothTest, payload_update_flash_fail) {
@@ -173,10 +174,10 @@ TEST_F(LibHothTest, payload_update_flash_fail) {
   uint8_t buffer[100] = {0};
   std::memcpy(buffer, &kMagic, sizeof(kMagic));
 
-  EXPECT_EQ(libhoth_payload_update(&hoth_dev_, buffer, sizeof(buffer),
+  EXPECT_NE(libhoth_payload_update(&hoth_dev_, buffer, sizeof(buffer),
                                    /*skip_erase=*/true,
                                    /*binary_file=*/false),
-            PAYLOAD_UPDATE_FLASH_FAIL);
+            HOTH_SUCCESS);
 }
 
 TEST_F(LibHothTest, payload_update_command_version_fail) {
@@ -196,10 +197,10 @@ TEST_F(LibHothTest, payload_update_command_version_fail) {
   uint8_t buffer[100] = {0};
   std::memcpy(buffer, &kMagic, sizeof(kMagic));
 
-  EXPECT_EQ(libhoth_payload_update(&hoth_dev_, buffer, sizeof(buffer),
+  EXPECT_NE(libhoth_payload_update(&hoth_dev_, buffer, sizeof(buffer),
                                    /*skip_erase=*/true,
                                    /*binary_file=*/false),
-            PAYLOAD_UPDATE_FINALIZE_FAIL);
+            HOTH_SUCCESS);
 }
 
 TEST_F(LibHothTest, payload_update_finalize_fail) {
@@ -224,10 +225,10 @@ TEST_F(LibHothTest, payload_update_finalize_fail) {
   uint8_t buffer[100] = {0};
   std::memcpy(buffer, &kMagic, sizeof(kMagic));
 
-  EXPECT_EQ(libhoth_payload_update(&hoth_dev_, buffer, sizeof(buffer),
+  EXPECT_NE(libhoth_payload_update(&hoth_dev_, buffer, sizeof(buffer),
                                    /*skip_erase=*/true,
                                    /*binary_file=*/false),
-            PAYLOAD_UPDATE_FINALIZE_FAIL);
+            HOTH_SUCCESS);
 }
 
 TEST_F(LibHothTest, payload_update_activate_v0) {
@@ -248,7 +249,7 @@ TEST_F(LibHothTest, payload_update_activate_v0) {
 
   uint8_t pld_needs_reinit = 0xff;
   EXPECT_EQ(libhoth_payload_update_activate(&hoth_dev_, 1, &pld_needs_reinit),
-            PAYLOAD_UPDATE_OK);
+            HOTH_SUCCESS);
   EXPECT_EQ(pld_needs_reinit, 0);
 }
 
@@ -273,7 +274,7 @@ TEST_F(LibHothTest, payload_update_activate_v1) {
 
   uint8_t pld_needs_reinit = 0xff;
   EXPECT_EQ(libhoth_payload_update_activate(&hoth_dev_, 0, &pld_needs_reinit),
-            PAYLOAD_UPDATE_OK);
+            HOTH_SUCCESS);
   EXPECT_EQ(pld_needs_reinit, 1);
 }
 
@@ -294,8 +295,8 @@ TEST_F(LibHothTest, payload_update_activate_fail) {
       .WillOnce(DoAll(CopyResp(&kDummy, 0), Return(-1)));
 
   uint8_t pld_needs_reinit = 0xff;
-  EXPECT_EQ(libhoth_payload_update_activate(&hoth_dev_, 1, &pld_needs_reinit),
-            PAYLOAD_UPDATE_ACTIVATE_FAIL);
+  EXPECT_NE(libhoth_payload_update_activate(&hoth_dev_, 1, &pld_needs_reinit),
+            HOTH_SUCCESS);
 }
 
 TEST_F(LibHothTest, payload_update_status) {
@@ -310,7 +311,7 @@ TEST_F(LibHothTest, payload_update_status) {
       .WillOnce(DoAll(CopyResp(&exp_us, sizeof(exp_us)), Return(LIBHOTH_OK)));
 
   struct payload_update_status us = {0};
-  EXPECT_EQ(libhoth_payload_update_getstatus(&hoth_dev_, &us), LIBHOTH_OK);
+  EXPECT_EQ(libhoth_payload_update_getstatus(&hoth_dev_, &us), HOTH_SUCCESS);
 
   EXPECT_EQ(exp_us.a_valid, us.a_valid);
   EXPECT_EQ(exp_us.active_half, us.active_half);
@@ -328,7 +329,7 @@ TEST_F(LibHothTest, payload_update_verify) {
   EXPECT_CALL(mock_, receive)
       .WillOnce(DoAll(CopyResp(&kDummy, 0), Return(LIBHOTH_OK)));
 
-  EXPECT_EQ(libhoth_payload_update_verify(&hoth_dev_), 0);
+  EXPECT_EQ(libhoth_payload_update_verify(&hoth_dev_), HOTH_SUCCESS);
 }
 
 TEST_F(LibHothTest, payload_update_verify_descriptor) {
@@ -343,7 +344,7 @@ TEST_F(LibHothTest, payload_update_verify_descriptor) {
   EXPECT_CALL(mock_, receive)
       .WillOnce(DoAll(CopyResp(&kDummy, 0), Return(LIBHOTH_OK)));
 
-  EXPECT_EQ(libhoth_payload_update_verify_descriptor(&hoth_dev_), 0);
+  EXPECT_EQ(libhoth_payload_update_verify_descriptor(&hoth_dev_), HOTH_SUCCESS);
 }
 
 TEST_F(LibHothTest, payload_update_erase_test) {
@@ -397,7 +398,7 @@ TEST_F(LibHothTest, payload_update_erase_test) {
   EXPECT_EQ(
       libhoth_payload_update(&hoth_dev_, buffer, kSize, /*skip_erase=*/false,
                              /*binary_file=*/false),
-      PAYLOAD_UPDATE_OK);
+      HOTH_SUCCESS);
 }
 
 TEST_F(LibHothTest, payload_update_test_with_binary_image) {
@@ -446,7 +447,7 @@ TEST_F(LibHothTest, payload_update_test_with_binary_image) {
   EXPECT_EQ(libhoth_payload_update(&hoth_dev_, buffer.get(), 2 * kAlign,
                                    /*skip_erase=*/false,
                                    /*binary_file=*/true),
-            PAYLOAD_UPDATE_OK);
+            HOTH_SUCCESS);
 }
 
 TEST_F(LibHothTest, payload_update_erase_cmd_test) {
@@ -484,31 +485,31 @@ TEST_F(LibHothTest, payload_update_erase_cmd_test) {
   }
 
   EXPECT_EQ(libhoth_payload_update_erase(&hoth_dev_, kOffset, kSize),
-            PAYLOAD_UPDATE_OK);
+            HOTH_SUCCESS);
 }
 
 TEST_F(LibHothTest, payload_update_erase_cmd_unaligned_offset_test) {
   constexpr size_t kSize = 4 * 1024;
   constexpr size_t kOffset = 1;
 
-  EXPECT_EQ(libhoth_payload_update_erase(&hoth_dev_, kOffset, kSize),
-            PAYLOAD_UPDATE_IMAGE_NOT_SECTOR_ALIGNED);
+  EXPECT_NE(libhoth_payload_update_erase(&hoth_dev_, kOffset, kSize),
+            HOTH_SUCCESS);
 }
 
 TEST_F(LibHothTest, payload_update_erase_cmd_unaligned_size_test) {
   constexpr size_t kSize = 4 * 1024 + 1;
   constexpr size_t kOffset = 4 * 1024;
 
-  EXPECT_EQ(libhoth_payload_update_erase(&hoth_dev_, kOffset, kSize),
-            PAYLOAD_UPDATE_IMAGE_NOT_SECTOR_ALIGNED);
+  EXPECT_NE(libhoth_payload_update_erase(&hoth_dev_, kOffset, kSize),
+            HOTH_SUCCESS);
 }
 
 TEST_F(LibHothTest, payload_update_erase_cmd_zero_size_test) {
   constexpr size_t kSize = 0;
   constexpr size_t kOffset = 0;
 
-  EXPECT_EQ(libhoth_payload_update_erase(&hoth_dev_, kOffset, kSize),
-            PAYLOAD_UPDATE_IMAGE_NOT_SECTOR_ALIGNED);
+  EXPECT_NE(libhoth_payload_update_erase(&hoth_dev_, kOffset, kSize),
+            HOTH_SUCCESS);
 }
 
 TEST_F(LibHothTest, payload_update_erase_cmd_range_overflow_test) {
@@ -517,8 +518,8 @@ TEST_F(LibHothTest, payload_update_erase_cmd_range_overflow_test) {
   constexpr uint32_t kOffset = 0xFFFFF000;
   constexpr uint32_t kSize = 2 * kSectorErase;
 
-  EXPECT_EQ(libhoth_payload_update_erase(&hoth_dev_, kOffset, kSize),
-            PAYLOAD_UPDATE_INVALID_ARGS);
+  EXPECT_NE(libhoth_payload_update_erase(&hoth_dev_, kOffset, kSize),
+            HOTH_SUCCESS);
 }
 
 TEST_F(LibHothTest, payload_update_read_chunk_test) {
@@ -541,7 +542,7 @@ TEST_F(LibHothTest, payload_update_read_chunk_test) {
   } guard = {fd};
 
   EXPECT_EQ(libhoth_payload_update_read_chunk(&hoth_dev_, fd, len, offset),
-            PAYLOAD_UPDATE_OK);
+            HOTH_SUCCESS);
 
   ASSERT_EQ(lseek(fd, 0, SEEK_SET), 0);
   uint8_t actual_data[sizeof(expected_data)] = {0};

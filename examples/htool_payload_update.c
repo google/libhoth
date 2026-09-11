@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "htool_payload_update.h"
+#include "examples/htool_payload_update.h"
 
 #include <errno.h>
 #include <fcntl.h>
@@ -24,9 +24,10 @@
 #include <sys/types.h>
 #include <unistd.h>
 
-#include "htool.h"
-#include "htool_cmd.h"
+#include "examples/htool.h"
+#include "examples/htool_cmd.h"
 #include "protocol/payload_update.h"
+#include "protocol/status.h"
 
 int htool_payload_update(const struct htool_invocation* inv) {
   struct libhoth_device* dev = htool_libhoth_device();
@@ -73,30 +74,14 @@ int htool_payload_update(const struct htool_invocation* inv) {
     goto cleanup;
   }
 
-  enum payload_update_err payload_update_status = libhoth_payload_update(
+  libhoth_error payload_update_status = libhoth_payload_update(
       dev, image, statbuf.st_size, skip_erase, binary_file);
-  switch (payload_update_status) {
-    case PAYLOAD_UPDATE_OK:
-      fprintf(stderr, "Payload update finished\n");
-      retval = 0;
-      break;
-    case PAYLOAD_UPDATE_BAD_IMG:
-      fprintf(stderr, "Not a valid Titan image.\n");
-      break;
-    case PAYLOAD_UPDATE_INITIATE_FAIL:
-      fprintf(stderr, "Error when initiating payload update.\n");
-      break;
-    case PAYLOAD_UPDATE_FLASH_FAIL:
-      fprintf(stderr, "Error when flashing.\n");
-      break;
-    case PAYLOAD_UPDATE_FINALIZE_FAIL:
-      fprintf(stderr, "Error when finalizing.\n");
-      break;
-    case PAYLOAD_UPDATE_IMAGE_NOT_SECTOR_ALIGNED:
-      fprintf(stderr, "Payload image is not sector-aligned.\n");
-      break;
-    default:
-      break;
+  if (payload_update_status != HOTH_SUCCESS) {
+    htool_report_error("payload_update", payload_update_status);
+    retval = -1;
+  } else {
+    fprintf(stderr, "Payload update finished\n");
+    retval = 0;
   }
 
   int ret = munmap(image, statbuf.st_size);
@@ -145,10 +130,14 @@ int htool_payload_read(const struct htool_invocation* inv) {
     return -1;
   }
 
-  int ret = libhoth_payload_update_read_chunk(dev, fd, length, start);
+  libhoth_error err = libhoth_payload_update_read_chunk(dev, fd, length, start);
 
   close(fd);
-  return ret;
+  if (err != HOTH_SUCCESS) {
+    htool_report_error("payload_update read", err);
+    return -1;
+  }
+  return 0;
 }
 
 const char* payload_update_getstatus_valid_string(uint8_t v) {
@@ -185,10 +174,10 @@ int htool_payload_update_getstatus(const struct htool_invocation* inv) {
   }
 
   struct payload_update_status pus;
-  int ret = libhoth_payload_update_getstatus(dev, &pus);
+  libhoth_error err = libhoth_payload_update_getstatus(dev, &pus);
 
-  if (ret != 0) {
-    fprintf(stderr, "Failed to get payload update status\n");
+  if (err != HOTH_SUCCESS) {
+    htool_report_error("payload_update getstatus", err);
     return -1;
   }
 
@@ -220,9 +209,12 @@ int htool_payload_erase(const struct htool_invocation* inv) {
       htool_get_param_u32(inv, "length", &length)) {
     return -1;
   }
-  return (libhoth_payload_update_erase(dev, start, length) == PAYLOAD_UPDATE_OK)
-             ? 0
-             : -1;
+  libhoth_error err = libhoth_payload_update_erase(dev, start, length);
+  if (err != HOTH_SUCCESS) {
+    htool_report_error("payload_update erase", err);
+    return -1;
+  }
+  return 0;
 }
 
 int htool_payload_activate(const struct htool_invocation* inv) {
@@ -247,9 +239,10 @@ int htool_payload_activate(const struct htool_invocation* inv) {
   }
 
   uint8_t pld_needs_reinitialization = 0;
-  if (libhoth_payload_update_activate(dev, half, &pld_needs_reinitialization) !=
-      PAYLOAD_UPDATE_OK) {
-    fprintf(stderr, "Failed to activate payload.\n");
+  libhoth_error err =
+      libhoth_payload_update_activate(dev, half, &pld_needs_reinitialization);
+  if (err != HOTH_SUCCESS) {
+    htool_report_error("payload_update activate", err);
     return -1;
   }
 
@@ -267,16 +260,16 @@ int htool_payload_update_verify(const struct htool_invocation* inv) {
   if (htool_get_param_bool(inv, "descriptor", &verify_only_descriptor)) {
     return -1;
   }
-  int ret;
+  libhoth_error err;
   if (verify_only_descriptor) {
-    ret = libhoth_payload_update_verify_descriptor(dev);
+    err = libhoth_payload_update_verify_descriptor(dev);
   } else {
     fprintf(stderr,
             "Verifying the payload. This can take up to three minutes...\n");
-    ret = libhoth_payload_update_verify(dev);
+    err = libhoth_payload_update_verify(dev);
   }
-  if (ret != 0) {
-    fprintf(stderr, "Payload verify failed\n");
+  if (err != HOTH_SUCCESS) {
+    htool_report_error("payload_update verify", err);
     return -1;
   }
   if (verify_only_descriptor) {
@@ -293,15 +286,13 @@ int htool_payload_update_confirm(const struct htool_invocation* inv) {
     return -1;
   }
 
-  int ret = 0;
-
-  ret = libhoth_payload_update_confirm(dev);
-  if (ret != 0) {
-    fprintf(stderr, "Failed to confirm payload update\n");
+  libhoth_error err = libhoth_payload_update_confirm(dev);
+  if (err != HOTH_SUCCESS) {
+    htool_report_error("payload_update confirm", err);
     return -1;
   }
 
-  return ret;
+  return 0;
 }
 
 int htool_payload_update_confirm_get_staged_timeout(
@@ -313,9 +304,10 @@ int htool_payload_update_confirm_get_staged_timeout(
 
   payload_update_confirm_response_t response = {0};
 
-  int ret = libhoth_payload_update_confirm_get_staged_timeout(dev, &response);
-  if (ret != 0) {
-    fprintf(stderr, "Failed to get payload update timeout\n");
+  libhoth_error err =
+      libhoth_payload_update_confirm_get_staged_timeout(dev, &response);
+  if (err != HOTH_SUCCESS) {
+    htool_report_error("payload_update confirm_get_staged_timeout", err);
     return -1;
   }
 
@@ -334,8 +326,6 @@ int htool_payload_update_confirm_enable(const struct htool_invocation* inv) {
     return -1;
   }
 
-  int ret = 0;
-
   uint32_t timeout = 0;
   if (htool_get_param_u32(inv, "timeout", &timeout)) {
     return -1;
@@ -346,11 +336,12 @@ int htool_payload_update_confirm_enable(const struct htool_invocation* inv) {
     return -1;
   }
 
-  ret = libhoth_payload_update_confirm_enable(dev, enable_confirm, timeout);
-  if (ret != 0) {
-    fprintf(stderr, "Failed to confirm payload update\n");
+  libhoth_error err =
+      libhoth_payload_update_confirm_enable(dev, enable_confirm, timeout);
+  if (err != HOTH_SUCCESS) {
+    htool_report_error("payload_update confirm_enable", err);
     return -1;
   }
 
-  return ret;
+  return 0;
 }
