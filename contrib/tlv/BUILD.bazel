@@ -64,7 +64,7 @@ rust_library(
     data = ["//contrib/tlv/test:bad_proto"],
     edition = "2024",
     rustc_env = {
-        "BAD_PROTO_DESCRIPTOR_SET": "$(location //contrib/tlv/test:bad_proto)",
+        "BAD_PROTO_DESCRIPTOR_SET": "$(execpath //contrib/tlv/test:bad_proto)",
     },
     visibility = ["//visibility:public"],
     deps = [
