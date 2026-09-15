@@ -2114,6 +2114,76 @@ static const struct htool_cmd CMDS[] = {
                 {}},
     },
     {
+        .verbs = (const char*[]){"security", "unload_attestation_key", NULL},
+        .desc = "Unload the Attestation Key from the device",
+        .func = htool_unload_attestation_key,
+        .params = (const struct htool_param[]){{}},
+    },
+    {
+        .verbs = (const char*[]){"security", "gen_attestation_key_v1", NULL},
+        .desc = "Generate an Attestation Key using CSR v1",
+        .func = htool_gen_attestation_key_v1,
+        .params =
+            (const struct htool_param[]){
+                {HTOOL_FLAG_VALUE, .name = "csr_output", .default_value = "",
+                 .desc = "The Attestation Key CSR v1 output file"},
+                {HTOOL_FLAG_VALUE, .name = "wrapped_key_output",
+                 .default_value = "",
+                 .desc = "The Wrapped Attestation Key output file"},
+                {}},
+    },
+    {
+        .verbs = (const char*[]){"security", "gen_attestation_key_v2", NULL},
+        .desc = "Generate an Attestation Key using CSR v2",
+        .func = htool_gen_attestation_key_v2,
+        .params =
+            (const struct htool_param[]){
+                {HTOOL_FLAG_VALUE, .name = "fw_major_version",
+                 .default_value = "0",
+                 .desc = "The firmware major version to bind the Attestation "
+                         "Key to"},
+                {HTOOL_FLAG_VALUE, .name = "csr_output", .default_value = "",
+                 .desc = "The Attestation Key CSR v2 output file"},
+                {HTOOL_FLAG_VALUE, .name = "wrapped_key_output",
+                 .default_value = "",
+                 .desc = "The Wrapped Attestation Key output file"},
+                {}},
+    },
+    {
+        .verbs = (const char*[]){"security", "load_attestation_key", NULL},
+        .desc = "Load a CA-signed Attestation Key certificate and wrapped key",
+        .func = htool_load_attestation_key,
+        .params =
+            (const struct htool_param[]){
+                {HTOOL_FLAG_VALUE, .name = "wrapped_key", .default_value = "",
+                 .desc = "The Wrapped Attestation Key input file"},
+                {HTOOL_FLAG_VALUE, .name = "cert", .default_value = "",
+                 .desc = "The CA-signed Attestation Key Certificate input "
+                         "file"},
+                {}},
+    },
+    {
+        .verbs = (const char*[]){"security", "load_attestation_key_from_csr_v1",
+                                 NULL},
+        .desc = "Load a self-signed Attestation Key from CSR v1 (requires "
+                "firmware with self-signed attestation key support)",
+        .func = htool_load_attestation_key_from_csr_v1,
+        .params =
+            (const struct htool_param[]){
+                {HTOOL_FLAG_VALUE, .name = "wrapped_key", .default_value = "",
+                 .desc = "The Wrapped Attestation Key input file"},
+                {HTOOL_FLAG_VALUE, .name = "csr", .default_value = "",
+                 .desc = "The Attestation Key CSR v1 input file"},
+                {}},
+    },
+    {
+        .verbs = (const char*[]){"security", "provision_attestation_key", NULL},
+        .desc = "Provision a self-signed Attestation Key (unload, gen_v1, "
+                "load_v1; requires firmware with self-signed support)",
+        .func = htool_provision_attestation_key,
+        .params = (const struct htool_param[]){{}},
+    },
+    {
         .verbs = (const char*[]){"security", "attestation", NULL},
         .desc =
             "Fetch attestation information, including tokens and certificates.",

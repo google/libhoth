@@ -287,3 +287,482 @@ cleanup:
   }
   return status;
 }
+
+// SecurityV2 parameters are padded to 4-byte alignment on the wire. Ensure all
+// fixed-size attestation key buffer sizes are multiples of 4 so buffer sizing
+// macros remain exact.
+_Static_assert(ATTESTATION_KEY_CSR_V1_SIZE % 4 == 0,
+               "ATTESTATION_KEY_CSR_V1_SIZE must be 4-byte aligned");
+_Static_assert(ATTESTATION_KEY_CSR_V2_SIZE % 4 == 0,
+               "ATTESTATION_KEY_CSR_V2_SIZE must be 4-byte aligned");
+_Static_assert(WRAPPED_ATTESTATION_KEY_SIZE % 4 == 0,
+               "WRAPPED_ATTESTATION_KEY_SIZE must be 4-byte aligned");
+_Static_assert(ATTESTATION_CERT_SIZE % 4 == 0,
+               "ATTESTATION_CERT_SIZE must be 4-byte aligned");
+
+static int read_exact_file(const char* filename, uint8_t* buf, size_t size) {
+  FILE* fp = fopen(filename, "rb");
+  if (fp == NULL) {
+    printf("Error: %s, when attempting to open file: %s\n", strerror(errno),
+           filename);
+    return -1;
+  }
+  size_t bytes_read = fread(buf, 1, size, fp);
+  int extra = fgetc(fp);
+  int stream_err = ferror(fp);
+  fclose(fp);
+  if (bytes_read != size || extra != EOF || stream_err != 0) {
+    printf("Error: File %s must be exactly %zu bytes\n", filename, size);
+    return -1;
+  }
+  return 0;
+}
+
+static int write_exact_file(const char* filename, const uint8_t* buf,
+                            size_t size) {
+  FILE* fp = fopen(filename, "wb");
+  if (fp == NULL) {
+    printf("Error: %s, when attempting to open file: %s\n", strerror(errno),
+           filename);
+    return -1;
+  }
+  size_t bytes_written = fwrite(buf, 1, size, fp);
+  int stream_err = ferror(fp);
+  fclose(fp);
+  if (bytes_written != size || stream_err != 0) {
+    printf("Error: Failed to write %zu bytes to %s\n", size, filename);
+    return -1;
+  }
+  return 0;
+}
+
+static int exec_unload_attestation_key(struct libhoth_device* dev) {
+  uint8_t request_storage_hdr[HOTH_SECURITY_V2_REQUEST_SIZE(0)] = {};
+  uint8_t response_storage_hdr[HOTH_SECURITY_V2_RESPONSE_SIZE(0)] = {};
+
+  int hoth_status = htool_exec_security_v2_cmd(
+      dev,
+      /*major=*/HOTH_PRV_CMD_HOTH_SECURITY_V2_GET_CERTIFICATES_MAJOR_COMMAND,
+      /*minor=*/
+      HOTH_PRV_CMD_HOTH_SECURITY_V2_UNLOAD_ATTESTATION_KEY_MINOR_COMMAND,
+      /*base_command=*/HOTH_BASE_CMD(HOTH_PRV_CMD_HOTH_SECURITY_V2),
+      SECURITY_V2_BUFFER_PARAM(request_storage_hdr), NULL, 0,
+      SECURITY_V2_BUFFER_PARAM(response_storage_hdr), NULL, 0);
+  if (hoth_status != 0) {
+    printf(
+        "Unexpected Error: Returned status %d, while trying to send command to "
+        "unload the Attestation Key\n",
+        hoth_status);
+  }
+  return hoth_status;
+}
+
+static int exec_gen_attestation_key_v1(
+    struct libhoth_device* dev, uint8_t csr[ATTESTATION_KEY_CSR_V1_SIZE],
+    uint8_t wrapped_key[WRAPPED_ATTESTATION_KEY_SIZE]) {
+  uint8_t request_storage_hdr[HOTH_SECURITY_V2_REQUEST_SIZE(0)] = {};
+  uint8_t response_storage_hdr[HOTH_SECURITY_V2_RESPONSE_SIZE(2) +
+                               ATTESTATION_KEY_CSR_V1_SIZE +
+                               WRAPPED_ATTESTATION_KEY_SIZE] = {};
+  struct security_v2_param response_params[] = {
+      {
+          .data = csr,
+          .size = ATTESTATION_KEY_CSR_V1_SIZE,
+      },
+      {
+          .data = wrapped_key,
+          .size = WRAPPED_ATTESTATION_KEY_SIZE,
+      },
+  };
+  int hoth_status = htool_exec_security_v2_cmd(
+      dev,
+      /*major=*/HOTH_PRV_CMD_HOTH_SECURITY_V2_GET_CERTIFICATES_MAJOR_COMMAND,
+      /*minor=*/
+      HOTH_PRV_CMD_HOTH_SECURITY_V2_GEN_ATTESTATION_KEY_USING_CSR_V1_MINOR_COMMAND,
+      /*base_command=*/HOTH_BASE_CMD(HOTH_PRV_CMD_HOTH_SECURITY_V2),
+      SECURITY_V2_BUFFER_PARAM(request_storage_hdr), NULL, 0,
+      SECURITY_V2_BUFFER_PARAM(response_storage_hdr), response_params,
+      ARRAY_SIZE(response_params));
+  if (hoth_status != 0) {
+    printf(
+        "Unexpected Error: Returned status %d, while trying to send command to "
+        "generate the Attestation Key\n",
+        hoth_status);
+  }
+  return hoth_status;
+}
+
+static int exec_gen_attestation_key_v2(
+    struct libhoth_device* dev, uint32_t fw_major_version,
+    uint8_t csr[ATTESTATION_KEY_CSR_V2_SIZE],
+    uint8_t wrapped_key[WRAPPED_ATTESTATION_KEY_SIZE]) {
+  uint32_t csr_version = 2;
+  struct security_v2_param request_params[] = {
+      {
+          .data = &csr_version,
+          .size = sizeof(csr_version),
+      },
+      {
+          .data = &fw_major_version,
+          .size = sizeof(fw_major_version),
+      },
+  };
+  uint8_t request_storage_hdr[HOTH_SECURITY_V2_REQUEST_SIZE(2) +
+                              sizeof(csr_version) + sizeof(fw_major_version)] =
+      {};
+  uint8_t response_storage_hdr[HOTH_SECURITY_V2_RESPONSE_SIZE(2) +
+                               ATTESTATION_KEY_CSR_V2_SIZE +
+                               WRAPPED_ATTESTATION_KEY_SIZE] = {};
+  struct security_v2_param response_params[] = {
+      {
+          .data = csr,
+          .size = ATTESTATION_KEY_CSR_V2_SIZE,
+      },
+      {
+          .data = wrapped_key,
+          .size = WRAPPED_ATTESTATION_KEY_SIZE,
+      },
+  };
+  int hoth_status = htool_exec_security_v2_cmd(
+      dev,
+      /*major=*/HOTH_PRV_CMD_HOTH_SECURITY_V2_GET_CERTIFICATES_MAJOR_COMMAND,
+      /*minor=*/
+      HOTH_PRV_CMD_HOTH_SECURITY_V2_GEN_VERSIONED_ATTESTATION_KEY_MINOR_COMMAND,
+      /*base_command=*/HOTH_BASE_CMD(HOTH_PRV_CMD_HOTH_SECURITY_V2),
+      SECURITY_V2_BUFFER_PARAM(request_storage_hdr), request_params,
+      ARRAY_SIZE(request_params),
+      SECURITY_V2_BUFFER_PARAM(response_storage_hdr), response_params,
+      ARRAY_SIZE(response_params));
+  if (hoth_status != 0) {
+    printf(
+        "Unexpected Error: Returned status %d, while trying to send command to "
+        "generate the Attestation Key\n",
+        hoth_status);
+  }
+  return hoth_status;
+}
+
+static int exec_load_attestation_key(
+    struct libhoth_device* dev,
+    uint8_t wrapped_key[WRAPPED_ATTESTATION_KEY_SIZE],
+    uint8_t cert[ATTESTATION_CERT_SIZE]) {
+  uint8_t request_storage_hdr[HOTH_SECURITY_V2_REQUEST_SIZE(2) +
+                              WRAPPED_ATTESTATION_KEY_SIZE +
+                              ATTESTATION_CERT_SIZE] = {};
+  uint8_t response_storage_hdr[HOTH_SECURITY_V2_RESPONSE_SIZE(0)] = {};
+  struct security_v2_param request_params[] = {
+      {
+          .data = wrapped_key,
+          .size = WRAPPED_ATTESTATION_KEY_SIZE,
+      },
+      {
+          .data = cert,
+          .size = ATTESTATION_CERT_SIZE,
+      },
+  };
+  int hoth_status = htool_exec_security_v2_cmd(
+      dev,
+      /*major=*/HOTH_PRV_CMD_HOTH_SECURITY_V2_GET_CERTIFICATES_MAJOR_COMMAND,
+      /*minor=*/
+      HOTH_PRV_CMD_HOTH_SECURITY_V2_LOAD_ATTESTATION_KEY_MINOR_COMMAND,
+      /*base_command=*/HOTH_BASE_CMD(HOTH_PRV_CMD_HOTH_SECURITY_V2),
+      SECURITY_V2_BUFFER_PARAM(request_storage_hdr), request_params,
+      ARRAY_SIZE(request_params),
+      SECURITY_V2_BUFFER_PARAM(response_storage_hdr), NULL, 0);
+  if (hoth_status != 0) {
+    printf(
+        "Unexpected Error: Returned status %d, while trying to send command to "
+        "load the Attestation Key\n",
+        hoth_status);
+  }
+  return hoth_status;
+}
+
+static int exec_load_attestation_key_from_csr_v1(
+    struct libhoth_device* dev,
+    uint8_t wrapped_key[WRAPPED_ATTESTATION_KEY_SIZE],
+    uint8_t csr[ATTESTATION_KEY_CSR_V1_SIZE]) {
+  uint8_t request_storage_hdr[HOTH_SECURITY_V2_REQUEST_SIZE(2) +
+                              WRAPPED_ATTESTATION_KEY_SIZE +
+                              ATTESTATION_KEY_CSR_V1_SIZE] = {};
+  uint8_t response_storage_hdr[HOTH_SECURITY_V2_RESPONSE_SIZE(0)] = {};
+  struct security_v2_param request_params[] = {
+      {
+          .data = wrapped_key,
+          .size = WRAPPED_ATTESTATION_KEY_SIZE,
+      },
+      {
+          .data = csr,
+          .size = ATTESTATION_KEY_CSR_V1_SIZE,
+      },
+  };
+  int hoth_status = htool_exec_security_v2_cmd(
+      dev,
+      /*major=*/HOTH_PRV_CMD_HOTH_SECURITY_V2_GET_CERTIFICATES_MAJOR_COMMAND,
+      /*minor=*/
+      HOTH_PRV_CMD_HOTH_SECURITY_V2_LOAD_ATTESTATION_KEY_FROM_CSR_V1_MINOR_COMMAND,
+      /*base_command=*/HOTH_BASE_CMD(HOTH_PRV_CMD_HOTH_SECURITY_V2),
+      SECURITY_V2_BUFFER_PARAM(request_storage_hdr), request_params,
+      ARRAY_SIZE(request_params),
+      SECURITY_V2_BUFFER_PARAM(response_storage_hdr), NULL, 0);
+  if (hoth_status != 0) {
+    printf(
+        "Unexpected Error: Returned status %d, while trying to send command to "
+        "load the Attestation Key from CSR\n",
+        hoth_status);
+  }
+  return hoth_status;
+}
+
+int htool_unload_attestation_key(const struct htool_invocation* inv) {
+  (void)inv;
+  struct libhoth_device* dev = htool_libhoth_device();
+  if (!dev) {
+    return -1;
+  }
+
+  libhoth_security_version sv = htool_get_security_version(dev);
+  switch (sv) {
+    case LIBHOTH_SECURITY_V2:
+      return exec_unload_attestation_key(dev);
+    // SECURITY_V3 not supported yet.
+    default:
+      printf("SECURITY_V3 not supported yet\n");
+      return -1;
+  }
+}
+
+int htool_gen_attestation_key_v1(const struct htool_invocation* inv) {
+  struct libhoth_device* dev = htool_libhoth_device();
+  if (!dev) {
+    return -1;
+  }
+
+  const char* csr_output_file;
+  if (htool_get_param_string(inv, "csr_output", &csr_output_file) != 0) {
+    return -1;
+  }
+
+  const char* wrapped_key_output_file;
+  if (htool_get_param_string(inv, "wrapped_key_output",
+                             &wrapped_key_output_file) != 0) {
+    return -1;
+  }
+
+  bool is_csr_output_provided = strlen(csr_output_file) > 0;
+  bool is_wrapped_key_output_provided = strlen(wrapped_key_output_file) > 0;
+
+  if (!is_csr_output_provided && !is_wrapped_key_output_provided) {
+    printf(
+        "Error: No valid csr_output provided and no valid wrapped_key_output "
+        "provided.\n");
+    return -1;
+  }
+
+  uint8_t csr[ATTESTATION_KEY_CSR_V1_SIZE] = {0};
+  uint8_t wrapped_key[WRAPPED_ATTESTATION_KEY_SIZE] = {0};
+  libhoth_security_version sv = htool_get_security_version(dev);
+  switch (sv) {
+    case LIBHOTH_SECURITY_V2: {
+      int hoth_status = exec_gen_attestation_key_v1(dev, csr, wrapped_key);
+      if (hoth_status != 0) {
+        return hoth_status;
+      }
+      if (is_csr_output_provided &&
+          write_exact_file(csr_output_file, csr, sizeof(csr)) != 0) {
+        return -1;
+      }
+      if (is_wrapped_key_output_provided &&
+          write_exact_file(wrapped_key_output_file, wrapped_key,
+                           sizeof(wrapped_key)) != 0) {
+        return -1;
+      }
+      return 0;
+    }
+    // SECURITY_V3 not supported yet.
+    default:
+      printf("SECURITY_V3 not supported yet\n");
+      return -1;
+  }
+}
+
+int htool_gen_attestation_key_v2(const struct htool_invocation* inv) {
+  struct libhoth_device* dev = htool_libhoth_device();
+  if (!dev) {
+    return -1;
+  }
+
+  uint32_t fw_major_version;
+  if (htool_get_param_u32(inv, "fw_major_version", &fw_major_version) != 0) {
+    return -1;
+  }
+
+  const char* csr_output_file;
+  if (htool_get_param_string(inv, "csr_output", &csr_output_file) != 0) {
+    return -1;
+  }
+
+  const char* wrapped_key_output_file;
+  if (htool_get_param_string(inv, "wrapped_key_output",
+                             &wrapped_key_output_file) != 0) {
+    return -1;
+  }
+
+  bool is_csr_output_provided = strlen(csr_output_file) > 0;
+  bool is_wrapped_key_output_provided = strlen(wrapped_key_output_file) > 0;
+
+  if (!is_csr_output_provided && !is_wrapped_key_output_provided) {
+    printf(
+        "Error: No valid csr_output provided and no valid wrapped_key_output "
+        "provided.\n");
+    return -1;
+  }
+
+  uint8_t csr[ATTESTATION_KEY_CSR_V2_SIZE] = {0};
+  uint8_t wrapped_key[WRAPPED_ATTESTATION_KEY_SIZE] = {0};
+  libhoth_security_version sv = htool_get_security_version(dev);
+  switch (sv) {
+    case LIBHOTH_SECURITY_V2: {
+      int hoth_status =
+          exec_gen_attestation_key_v2(dev, fw_major_version, csr, wrapped_key);
+      if (hoth_status != 0) {
+        return hoth_status;
+      }
+      if (is_csr_output_provided &&
+          write_exact_file(csr_output_file, csr, sizeof(csr)) != 0) {
+        return -1;
+      }
+      if (is_wrapped_key_output_provided &&
+          write_exact_file(wrapped_key_output_file, wrapped_key,
+                           sizeof(wrapped_key)) != 0) {
+        return -1;
+      }
+      return 0;
+    }
+    // SECURITY_V3 not supported yet.
+    default:
+      printf("SECURITY_V3 not supported yet\n");
+      return -1;
+  }
+}
+
+int htool_load_attestation_key(const struct htool_invocation* inv) {
+  struct libhoth_device* dev = htool_libhoth_device();
+  if (!dev) {
+    return -1;
+  }
+
+  const char* wrapped_key_file;
+  if (htool_get_param_string(inv, "wrapped_key", &wrapped_key_file) != 0) {
+    return -1;
+  }
+
+  const char* cert_file;
+  if (htool_get_param_string(inv, "cert", &cert_file) != 0) {
+    return -1;
+  }
+
+  if (strlen(wrapped_key_file) == 0 || strlen(cert_file) == 0) {
+    printf(
+        "Error: Both wrapped_key and cert files must be provided to load the "
+        "Attestation Key.\n");
+    return -1;
+  }
+
+  uint8_t wrapped_key[WRAPPED_ATTESTATION_KEY_SIZE] = {0};
+  if (read_exact_file(wrapped_key_file, wrapped_key, sizeof(wrapped_key)) !=
+      0) {
+    return -1;
+  }
+
+  uint8_t cert[ATTESTATION_CERT_SIZE] = {0};
+  if (read_exact_file(cert_file, cert, sizeof(cert)) != 0) {
+    return -1;
+  }
+
+  libhoth_security_version sv = htool_get_security_version(dev);
+  switch (sv) {
+    case LIBHOTH_SECURITY_V2:
+      return exec_load_attestation_key(dev, wrapped_key, cert);
+    // SECURITY_V3 not supported yet.
+    default:
+      printf("SECURITY_V3 not supported yet\n");
+      return -1;
+  }
+}
+
+int htool_load_attestation_key_from_csr_v1(const struct htool_invocation* inv) {
+  struct libhoth_device* dev = htool_libhoth_device();
+  if (!dev) {
+    return -1;
+  }
+
+  const char* wrapped_key_file;
+  if (htool_get_param_string(inv, "wrapped_key", &wrapped_key_file) != 0) {
+    return -1;
+  }
+
+  const char* csr_file;
+  if (htool_get_param_string(inv, "csr", &csr_file) != 0) {
+    return -1;
+  }
+
+  if (strlen(wrapped_key_file) == 0 || strlen(csr_file) == 0) {
+    printf(
+        "Error: Both wrapped_key and csr files must be provided to load the "
+        "Attestation Key.\n");
+    return -1;
+  }
+
+  uint8_t wrapped_key[WRAPPED_ATTESTATION_KEY_SIZE] = {0};
+  if (read_exact_file(wrapped_key_file, wrapped_key, sizeof(wrapped_key)) !=
+      0) {
+    return -1;
+  }
+
+  uint8_t csr[ATTESTATION_KEY_CSR_V1_SIZE] = {0};
+  if (read_exact_file(csr_file, csr, sizeof(csr)) != 0) {
+    return -1;
+  }
+
+  libhoth_security_version sv = htool_get_security_version(dev);
+  switch (sv) {
+    case LIBHOTH_SECURITY_V2:
+      return exec_load_attestation_key_from_csr_v1(dev, wrapped_key, csr);
+    // SECURITY_V3 not supported yet.
+    default:
+      printf("SECURITY_V3 not supported yet\n");
+      return -1;
+  }
+}
+
+int htool_provision_attestation_key(const struct htool_invocation* inv) {
+  (void)inv;
+  struct libhoth_device* dev = htool_libhoth_device();
+  if (!dev) {
+    return -1;
+  }
+
+  libhoth_security_version sv = htool_get_security_version(dev);
+  switch (sv) {
+    case LIBHOTH_SECURITY_V2: {
+      int status = exec_unload_attestation_key(dev);
+      if (status != 0) {
+        return status;
+      }
+
+      uint8_t csr[ATTESTATION_KEY_CSR_V1_SIZE] = {0};
+      uint8_t wrapped_key[WRAPPED_ATTESTATION_KEY_SIZE] = {0};
+      status = exec_gen_attestation_key_v1(dev, csr, wrapped_key);
+      if (status != 0) {
+        return status;
+      }
+
+      return exec_load_attestation_key_from_csr_v1(dev, wrapped_key, csr);
+    }
+    // SECURITY_V3 not supported yet.
+    default:
+      printf("SECURITY_V3 not supported yet\n");
+      return -1;
+  }
+}
