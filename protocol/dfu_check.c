@@ -65,8 +65,8 @@ void libhoth_print_dfu_error(struct libhoth_device* const dev,
     libhoth_print_ot_version_resp(resp);
   } else {
     struct opentitan_get_version_resp ot_resp;
-    int retval = libhoth_opentitan_version(dev, &ot_resp);
-    if (retval == LIBHOTH_OK) {
+    libhoth_error retval = libhoth_opentitan_version(dev, &ot_resp);
+    if (retval == HOTH_SUCCESS) {
       libhoth_print_ot_version_resp(&ot_resp);
     } else {
       printf("Failed to get OT version information from RoT\n");

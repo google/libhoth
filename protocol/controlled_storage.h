@@ -15,14 +15,16 @@
 #ifndef _LIBHOTH_PROTOCOL_CONTROLLED_STORAGE_H_
 #define _LIBHOTH_PROTOCOL_CONTROLLED_STORAGE_H_
 
+#include <stddef.h>
+#include <stdint.h>
+
 #include "host_cmd.h"
+#include "protocol/status.h"
 #include "transports/libhoth_device.h"
 
 #ifdef __cplusplus
 extern "C" {
 #endif
-
-#include <stdint.h>
 
 #define HOTH_PRV_CMD_HOTH_CONTROLLED_STORAGE 0x0015
 #define CONTROLLED_STORAGE_SIZE_MAX 128
@@ -48,13 +50,14 @@ struct hoth_request_controlled_storage {
   struct hoth_payload_controlled_storage payload;
 } __attribute__((packed));
 
-int libhoth_controlled_storage_read(
+libhoth_error libhoth_controlled_storage_read(
     struct libhoth_device* dev, uint32_t slot,
     struct hoth_payload_controlled_storage* payload, size_t* payload_len);
-int libhoth_controlled_storage_write(struct libhoth_device* dev, uint32_t slot,
-                                     const uint8_t* data, size_t len);
-int libhoth_controlled_storage_delete(struct libhoth_device* dev,
-                                      uint32_t slot);
+libhoth_error libhoth_controlled_storage_write(struct libhoth_device* dev,
+                                               uint32_t slot,
+                                               const uint8_t* data, size_t len);
+libhoth_error libhoth_controlled_storage_delete(struct libhoth_device* dev,
+                                                uint32_t slot);
 
 #ifdef __cplusplus
 }

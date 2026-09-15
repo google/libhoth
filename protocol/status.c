@@ -101,6 +101,8 @@ const char* libhoth_error_ec_str(uint16_t code) {
       return "INVALID_DATA_CRC";
     case HOTH_RES_DUP_UNAVAILABLE:
       return "DUP_UNAVAILABLE";
+    case HOTH_RES_INVALID_RESPONSE_SIZE:
+      return "INVALID_RESPONSE_SIZE";
     default:
       return "UNKNOWN";
   }

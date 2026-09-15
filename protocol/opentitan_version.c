@@ -17,17 +17,15 @@
 #include <stdbool.h>
 #include <stddef.h>
 
-#include "protocol/status.h"
-
-int libhoth_opentitan_version(struct libhoth_device* dev,
-                              struct opentitan_get_version_resp* output) {
+libhoth_error libhoth_opentitan_version(
+    struct libhoth_device* dev, struct opentitan_get_version_resp* output) {
   uint32_t request = 0;
   struct opentitan_get_version_resp response;
-  const int rv = libhoth_hostcmd_exec(dev, HOTH_OPENTITAN_GET_VERSION,
-                                      /*version=*/0, &request, sizeof(request),
-                                      &response, sizeof(response), NULL);
+  const libhoth_error rv = libhoth_hostcmd_exec_v2(
+      dev, HOTH_OPENTITAN_GET_VERSION, /*version=*/0, &request, sizeof(request),
+      &response, sizeof(response), NULL);
 
-  if (rv == 0) {
+  if (rv == HOTH_SUCCESS) {
     *output = response;
   }
 

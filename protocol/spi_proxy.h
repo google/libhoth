@@ -19,6 +19,7 @@
 #include <stdint.h>
 
 #include "protocol/progress.h"
+#include "protocol/status.h"
 #include "transports/libhoth_device.h"
 
 #ifdef __cplusplus
@@ -30,20 +31,22 @@ struct libhoth_spi_proxy {
   bool is_4_byte;
 };
 
-int libhoth_spi_proxy_init(struct libhoth_spi_proxy* spi,
-                           struct libhoth_device* dev, bool is_4_byte,
-                           bool enter_exit_4b);
+libhoth_error libhoth_spi_proxy_init(struct libhoth_spi_proxy* spi,
+                                     struct libhoth_device* dev, bool is_4_byte,
+                                     bool enter_exit_4b);
 
-int libhoth_spi_proxy_read(const struct libhoth_spi_proxy* spi, uint32_t addr,
-                           void* buf, size_t len);
+libhoth_error libhoth_spi_proxy_read(const struct libhoth_spi_proxy* spi,
+                                     uint32_t addr, void* buf, size_t len);
 
-int libhoth_spi_proxy_update(const struct libhoth_spi_proxy* spi, uint32_t addr,
-                             const void* buf, size_t len,
-                             const struct libhoth_progress* progress);
+libhoth_error libhoth_spi_proxy_update(const struct libhoth_spi_proxy* spi,
+                                       uint32_t addr, const void* buf,
+                                       size_t len,
+                                       const struct libhoth_progress* progress);
 
-int libhoth_spi_proxy_verify(const struct libhoth_spi_proxy* spi, uint32_t addr,
-                             const void* buf, size_t len,
-                             const struct libhoth_progress* progress);
+libhoth_error libhoth_spi_proxy_verify(const struct libhoth_spi_proxy* spi,
+                                       uint32_t addr, const void* buf,
+                                       size_t len,
+                                       const struct libhoth_progress* progress);
 
 struct hoth_spi_operation_request {
   // The number of MOSI bytes we're sending

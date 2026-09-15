@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "jtag.h"
+#include "protocol/jtag.h"
 
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
@@ -21,6 +21,7 @@
 #include <cstdint>
 #include <cstdlib>
 
+#include "protocol/status.h"
 #include "protocol/test/libhoth_device_mock.h"
 #include "transports/libhoth_device.h"
 
@@ -53,8 +54,21 @@ TEST_F(LibHothTest, jtag_read_idcode_success) {
   uint16_t clk_idiv = 0;
   EXPECT_EQ(libhoth_jtag_read_idcode(&hoth_dev_, interface_id, clk_idiv,
                                      &received_idcode),
-            LIBHOTH_OK);
+            HOTH_SUCCESS);
   EXPECT_EQ(received_idcode, expected_idcode);
+}
+
+TEST_F(LibHothTest, jtag_read_idcode_null_params) {
+  uint32_t idcode = 0;
+  libhoth_error err = libhoth_jtag_read_idcode(nullptr, 0, 0, &idcode);
+  EXPECT_EQ(LIBHOTH_ERR_GET_CTX(err), HOTH_CTX_CMD_EXEC);
+  EXPECT_EQ(LIBHOTH_ERR_GET_SPACE(err), HOTH_HOST_SPACE_LIBHOTH);
+  EXPECT_EQ(LIBHOTH_ERR_GET_CODE(err), LIBHOTH_ERR_INVALID_PARAMETER);
+
+  err = libhoth_jtag_read_idcode(&hoth_dev_, 0, 0, nullptr);
+  EXPECT_EQ(LIBHOTH_ERR_GET_CTX(err), HOTH_CTX_CMD_EXEC);
+  EXPECT_EQ(LIBHOTH_ERR_GET_SPACE(err), HOTH_HOST_SPACE_LIBHOTH);
+  EXPECT_EQ(LIBHOTH_ERR_GET_CODE(err), LIBHOTH_ERR_INVALID_PARAMETER);
 }
 
 TEST_F(LibHothTest, jtag_read_idcode_receive_error) {
@@ -69,9 +83,9 @@ TEST_F(LibHothTest, jtag_read_idcode_receive_error) {
   uint32_t received_idcode;
   uint8_t interface_id = 0;
   uint16_t clk_idiv = 0;
-  EXPECT_EQ(libhoth_jtag_read_idcode(&hoth_dev_, interface_id, clk_idiv,
+  EXPECT_NE(libhoth_jtag_read_idcode(&hoth_dev_, interface_id, clk_idiv,
                                      &received_idcode),
-            -1);
+            HOTH_SUCCESS);
 }
 
 TEST_F(LibHothTest, jtag_read_idcode_receive_unexpected_length) {
@@ -92,9 +106,9 @@ TEST_F(LibHothTest, jtag_read_idcode_receive_unexpected_length) {
   uint32_t received_idcode;
   uint8_t interface_id = 0;
   uint16_t clk_idiv = 0;
-  EXPECT_EQ(libhoth_jtag_read_idcode(&hoth_dev_, interface_id, clk_idiv,
+  EXPECT_NE(libhoth_jtag_read_idcode(&hoth_dev_, interface_id, clk_idiv,
                                      &received_idcode),
-            -1);
+            HOTH_SUCCESS);
 }
 
 TEST_F(LibHothTest, jtag_test_bypass_success_with_tdi_tdo_data_match) {
@@ -121,8 +135,28 @@ TEST_F(LibHothTest, jtag_test_bypass_success_with_tdi_tdo_data_match) {
   uint16_t clk_idiv = 0;
   EXPECT_EQ(libhoth_jtag_test_bypass(&hoth_dev_, interface_id, clk_idiv,
                                      tdi_bytes, tdo_bytes),
-            LIBHOTH_OK);
+            HOTH_SUCCESS);
   EXPECT_THAT(tdo_bytes, testing::ElementsAreArray(tdi_bytes));
+}
+
+TEST_F(LibHothTest, jtag_test_bypass_null_params) {
+  uint8_t tdi[HOTH_JTAG_TEST_BYPASS_PATTERN_LEN] = {};
+  uint8_t tdo[HOTH_JTAG_TEST_BYPASS_PATTERN_LEN] = {};
+
+  libhoth_error err = libhoth_jtag_test_bypass(nullptr, 0, 0, tdi, tdo);
+  EXPECT_EQ(LIBHOTH_ERR_GET_CTX(err), HOTH_CTX_CMD_EXEC);
+  EXPECT_EQ(LIBHOTH_ERR_GET_SPACE(err), HOTH_HOST_SPACE_LIBHOTH);
+  EXPECT_EQ(LIBHOTH_ERR_GET_CODE(err), LIBHOTH_ERR_INVALID_PARAMETER);
+
+  err = libhoth_jtag_test_bypass(&hoth_dev_, 0, 0, nullptr, tdo);
+  EXPECT_EQ(LIBHOTH_ERR_GET_CTX(err), HOTH_CTX_CMD_EXEC);
+  EXPECT_EQ(LIBHOTH_ERR_GET_SPACE(err), HOTH_HOST_SPACE_LIBHOTH);
+  EXPECT_EQ(LIBHOTH_ERR_GET_CODE(err), LIBHOTH_ERR_INVALID_PARAMETER);
+
+  err = libhoth_jtag_test_bypass(&hoth_dev_, 0, 0, tdi, nullptr);
+  EXPECT_EQ(LIBHOTH_ERR_GET_CTX(err), HOTH_CTX_CMD_EXEC);
+  EXPECT_EQ(LIBHOTH_ERR_GET_SPACE(err), HOTH_HOST_SPACE_LIBHOTH);
+  EXPECT_EQ(LIBHOTH_ERR_GET_CODE(err), LIBHOTH_ERR_INVALID_PARAMETER);
 }
 
 TEST_F(LibHothTest, jtag_test_bypass_success_with_tdi_tdo_data_mismatch) {
@@ -149,7 +183,7 @@ TEST_F(LibHothTest, jtag_test_bypass_success_with_tdi_tdo_data_mismatch) {
   uint16_t clk_idiv = 0;
   EXPECT_EQ(libhoth_jtag_test_bypass(&hoth_dev_, interface_id, clk_idiv,
                                      tdi_bytes, tdo_bytes),
-            LIBHOTH_OK);
+            HOTH_SUCCESS);
   EXPECT_THAT(tdo_bytes, testing::Not(testing::ElementsAreArray(tdi_bytes)));
 }
 
@@ -166,9 +200,9 @@ TEST_F(LibHothTest, jtag_test_bypass_receive_error) {
   uint8_t tdo_bytes[HOTH_JTAG_TEST_BYPASS_PATTERN_LEN];
   uint8_t interface_id = 0;
   uint16_t clk_idiv = 0;
-  EXPECT_EQ(libhoth_jtag_test_bypass(&hoth_dev_, interface_id, clk_idiv,
+  EXPECT_NE(libhoth_jtag_test_bypass(&hoth_dev_, interface_id, clk_idiv,
                                      tdi_bytes, tdo_bytes),
-            -1);
+            HOTH_SUCCESS);
 }
 
 TEST_F(LibHothTest, jtag_test_bypass_receive_unexpected_length) {
@@ -193,9 +227,9 @@ TEST_F(LibHothTest, jtag_test_bypass_receive_unexpected_length) {
   uint8_t tdo_bytes[HOTH_JTAG_TEST_BYPASS_PATTERN_LEN];
   uint8_t interface_id = 0;
   uint16_t clk_idiv = 0;
-  EXPECT_EQ(libhoth_jtag_test_bypass(&hoth_dev_, interface_id, clk_idiv,
+  EXPECT_NE(libhoth_jtag_test_bypass(&hoth_dev_, interface_id, clk_idiv,
                                      tdi_bytes, tdo_bytes),
-            -1);
+            HOTH_SUCCESS);
 }
 
 TEST_F(LibHothTest, jtag_program_and_verify_pld_success) {
@@ -205,7 +239,7 @@ TEST_F(LibHothTest, jtag_program_and_verify_pld_success) {
                           _))
       .WillOnce(Return(LIBHOTH_OK));
 
-  uint8_t unused;
+  uint8_t unused = 0;
   EXPECT_CALL(mock_, receive)
       .WillOnce(DoAll(CopyResp(&unused, 0), Return(LIBHOTH_OK)));
 
@@ -213,7 +247,14 @@ TEST_F(LibHothTest, jtag_program_and_verify_pld_success) {
   uint8_t interface_id = 0;
   EXPECT_EQ(
       libhoth_jtag_program_and_verify_pld(&hoth_dev_, interface_id, offset),
-      LIBHOTH_OK);
+      HOTH_SUCCESS);
+}
+
+TEST_F(LibHothTest, jtag_program_and_verify_pld_null_params) {
+  libhoth_error err = libhoth_jtag_program_and_verify_pld(nullptr, 0, 0);
+  EXPECT_EQ(LIBHOTH_ERR_GET_CTX(err), HOTH_CTX_CMD_EXEC);
+  EXPECT_EQ(LIBHOTH_ERR_GET_SPACE(err), HOTH_HOST_SPACE_LIBHOTH);
+  EXPECT_EQ(LIBHOTH_ERR_GET_CODE(err), LIBHOTH_ERR_INVALID_PARAMETER);
 }
 
 TEST_F(LibHothTest, jtag_program_and_verify_pld_receive_error) {
@@ -227,9 +268,9 @@ TEST_F(LibHothTest, jtag_program_and_verify_pld_receive_error) {
 
   uint32_t offset = 0;
   uint8_t interface_id = 0;
-  EXPECT_EQ(
+  EXPECT_NE(
       libhoth_jtag_program_and_verify_pld(&hoth_dev_, interface_id, offset),
-      -1);
+      HOTH_SUCCESS);
 }
 
 TEST_F(LibHothTest, jtag_program_and_verify_pld_receive_unexpected_length) {
@@ -246,9 +287,9 @@ TEST_F(LibHothTest, jtag_program_and_verify_pld_receive_unexpected_length) {
 
   uint32_t offset = 0;
   uint8_t interface_id = 0;
-  EXPECT_EQ(
+  EXPECT_NE(
       libhoth_jtag_program_and_verify_pld(&hoth_dev_, interface_id, offset),
-      -1);
+      HOTH_SUCCESS);
 }
 
 TEST_F(LibHothTest, jtag_verify_pld_success) {
@@ -258,14 +299,21 @@ TEST_F(LibHothTest, jtag_verify_pld_success) {
                           _))
       .WillOnce(Return(LIBHOTH_OK));
 
-  uint8_t unused;
+  uint8_t unused = 0;
   EXPECT_CALL(mock_, receive)
       .WillOnce(DoAll(CopyResp(&unused, 0), Return(LIBHOTH_OK)));
 
   uint32_t offset = 0;
   uint8_t interface_id = 0;
   EXPECT_EQ(libhoth_jtag_verify_pld(&hoth_dev_, interface_id, offset),
-            LIBHOTH_OK);
+            HOTH_SUCCESS);
+}
+
+TEST_F(LibHothTest, jtag_verify_pld_null_params) {
+  libhoth_error err = libhoth_jtag_verify_pld(nullptr, 0, 0);
+  EXPECT_EQ(LIBHOTH_ERR_GET_CTX(err), HOTH_CTX_CMD_EXEC);
+  EXPECT_EQ(LIBHOTH_ERR_GET_SPACE(err), HOTH_HOST_SPACE_LIBHOTH);
+  EXPECT_EQ(LIBHOTH_ERR_GET_CODE(err), LIBHOTH_ERR_INVALID_PARAMETER);
 }
 
 TEST_F(LibHothTest, jtag_verify_pld_receive_error) {
@@ -279,7 +327,8 @@ TEST_F(LibHothTest, jtag_verify_pld_receive_error) {
 
   uint32_t offset = 0;
   uint8_t interface_id = 0;
-  EXPECT_EQ(libhoth_jtag_verify_pld(&hoth_dev_, interface_id, offset), -1);
+  EXPECT_NE(libhoth_jtag_verify_pld(&hoth_dev_, interface_id, offset),
+            HOTH_SUCCESS);
 }
 
 TEST_F(LibHothTest, jtag_verify_pld_receive_unexpected_length) {
@@ -296,5 +345,6 @@ TEST_F(LibHothTest, jtag_verify_pld_receive_unexpected_length) {
 
   uint32_t offset = 0;
   uint8_t interface_id = 0;
-  EXPECT_EQ(libhoth_jtag_verify_pld(&hoth_dev_, interface_id, offset), -1);
+  EXPECT_NE(libhoth_jtag_verify_pld(&hoth_dev_, interface_id, offset),
+            HOTH_SUCCESS);
 }

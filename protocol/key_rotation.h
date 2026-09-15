@@ -19,6 +19,7 @@
 #include <stdint.h>
 
 #include "protocol/host_cmd.h"
+#include "protocol/status.h"
 #include "transports/libhoth_device.h"
 
 #ifdef __cplusplus
@@ -45,16 +46,6 @@ extern "C" {
    sizeof(uint32_t))
 #define KEY_ROTATION_RECORD_SIGNATURE_SIZE 96
 #define STRUCT_CHUNK_SIZE 8
-
-enum key_rotation_err {
-  KEY_ROTATION_CMD_SUCCESS = 0,
-  KEY_ROTATION_ERR,
-  KEY_ROTATION_ERR_INVALID_PARAM,
-  KEY_ROTATION_ERR_UNIMPLEMENTED,
-  KEY_ROTATION_ERR_INVALID_RESPONSE_SIZE,
-  KEY_ROTATION_INITIATE_FAIL,
-  KEY_ROTATION_COMMIT_FAIL,
-};
 
 enum key_rotation_record_read_half {
   KEY_ROTATION_RECORD_READ_HALF_ACTIVE = 0,
@@ -173,34 +164,33 @@ struct bios_allowed_hash_list {
   sha256 hash_list[];  // only support sha256 hash for bios
 };
 
-enum key_rotation_err libhoth_key_rotation_get_version(
+libhoth_error libhoth_key_rotation_get_version(
     struct libhoth_device* dev,
     struct hoth_response_key_rotation_record_version* record_version);
-enum key_rotation_err libhoth_key_rotation_get_status(
+libhoth_error libhoth_key_rotation_get_status(
     struct libhoth_device* dev,
     struct hoth_response_key_rotation_status* record_status);
-enum key_rotation_err libhoth_key_rotation_payload_status(
+libhoth_error libhoth_key_rotation_payload_status(
     struct libhoth_device* dev,
     struct hoth_response_key_rotation_payload_status* payload_status);
-enum key_rotation_err libhoth_key_rotation_update(struct libhoth_device* dev,
-                                                  const uint8_t* image,
-                                                  size_t size);
-enum key_rotation_err libhoth_key_rotation_read(
+libhoth_error libhoth_key_rotation_update(struct libhoth_device* dev,
+                                          const uint8_t* image, size_t size);
+libhoth_error libhoth_key_rotation_read(
     struct libhoth_device* dev, uint16_t offset, uint16_t size,
     uint32_t read_half,
     struct hoth_response_key_rotation_record_read* read_response);
-enum key_rotation_err libhoth_key_rotation_read_chunk_type(
+libhoth_error libhoth_key_rotation_read_chunk_type(
     struct libhoth_device* dev, uint32_t chunk_typecode, uint32_t chunk_index,
     uint16_t offset, uint16_t size,
     struct hoth_response_key_rotation_record_read* read_response,
     uint16_t* response_size);
-enum key_rotation_err libhoth_key_rotation_chunk_type_count(
-    struct libhoth_device* dev, uint32_t chunk_typecode, uint16_t* chunk_count);
-enum key_rotation_err libhoth_key_rotation_erase_record(
-    struct libhoth_device* dev);
-enum key_rotation_err libhoth_key_rotation_set_mauv(struct libhoth_device* dev,
-                                                    uint32_t mauv);
-enum key_rotation_err libhoth_key_rotation_get_mauv(
+libhoth_error libhoth_key_rotation_chunk_type_count(struct libhoth_device* dev,
+                                                    uint32_t chunk_typecode,
+                                                    uint16_t* chunk_count);
+libhoth_error libhoth_key_rotation_erase_record(struct libhoth_device* dev);
+libhoth_error libhoth_key_rotation_set_mauv(struct libhoth_device* dev,
+                                            uint32_t mauv);
+libhoth_error libhoth_key_rotation_get_mauv(
     struct libhoth_device* dev, struct hoth_response_key_rotation_mauv* mauv);
 #ifdef __cplusplus
 }

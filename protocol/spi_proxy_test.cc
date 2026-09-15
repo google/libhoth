@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "spi_proxy.h"
+#include "protocol/spi_proxy.h"
 
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
@@ -20,6 +20,7 @@
 #include <cstring>
 #include <vector>
 
+#include "protocol/status.h"
 #include "test/libhoth_device_mock.h"
 
 using ::testing::_;
@@ -57,13 +58,14 @@ TEST_F(LibHothTest, spi_proxy_init) {
                                       HOTH_PRV_CMD_HOTH_SPI_OPERATION),
                           _))
       .WillOnce(Return(LIBHOTH_OK));
-  uint32_t dummy;
+  uint32_t dummy = 0;
   EXPECT_CALL(mock_, receive)
       .WillOnce(DoAll(CopyResp(&dummy, 0), Return(LIBHOTH_OK)));
 
   struct libhoth_spi_proxy spi;
 
-  EXPECT_EQ(libhoth_spi_proxy_init(&spi, &hoth_dev_, false, false), LIBHOTH_OK);
+  EXPECT_EQ(libhoth_spi_proxy_init(&spi, &hoth_dev_, false, false),
+            HOTH_SUCCESS);
 }
 
 TEST_F(LibHothTest, spi_proxy_verify) {
@@ -101,7 +103,7 @@ TEST_F(LibHothTest, spi_proxy_verify) {
       libhoth_spi_proxy_verify(&spi, SPI_TEST_DEFAULT_ADDR,
                                &mock_resp_buffer[SPI_TEST_OP_REQ_MISO_OFFSET],
                                SPI_TEST_DEFAULT_SIZE, &progress.progress),
-      LIBHOTH_OK);
+      HOTH_SUCCESS);
 }
 
 // Test for spi_proxy_verify failure case
@@ -134,11 +136,11 @@ TEST_F(LibHothTest, spi_proxy_fail_verify) {
   struct libhoth_progress_stderr progress = {};
   libhoth_progress_stderr_init(&progress, "Verifying SPI flash");
 
-  EXPECT_EQ(
+  EXPECT_NE(
       libhoth_spi_proxy_verify(&spi, SPI_TEST_DEFAULT_ADDR,
                                &mock_resp_buffer[SPI_TEST_OP_REQ_MISO_OFFSET],
                                SPI_TEST_DEFAULT_SIZE, &progress.progress),
-      -1);
+      HOTH_SUCCESS);
 }
 
 // Test for spi_proxy_update with progress callback enabled
@@ -149,7 +151,7 @@ TEST_F(LibHothTest, spi_proxy_update) {
                           _))
       .WillRepeatedly(Return(LIBHOTH_OK));
 
-  uint32_t dummy;
+  uint32_t dummy = 0;
   EXPECT_CALL(mock_, receive)
       .WillRepeatedly(DoAll(CopyResp(&dummy, 0), Return(LIBHOTH_OK)));
 
@@ -162,7 +164,7 @@ TEST_F(LibHothTest, spi_proxy_update) {
   std::vector<uint8_t> buffer(SPI_TEST_DEFAULT_LEN);
   EXPECT_EQ(libhoth_spi_proxy_update(&spi, SPI_TEST_DEFAULT_ADDR, buffer.data(),
                                      SPI_TEST_DEFAULT_LEN, &progress.progress),
-            LIBHOTH_OK);
+            HOTH_SUCCESS);
 }
 
 // Testing to see if the 64k erase boundary is handled correctly
@@ -173,7 +175,7 @@ TEST_F(LibHothTest, spi_proxy_update_64k_erase) {
                           _))
       .WillRepeatedly(Return(LIBHOTH_OK));
 
-  uint32_t dummy;
+  uint32_t dummy = 0;
   EXPECT_CALL(mock_, receive)
       .WillRepeatedly(DoAll(CopyResp(&dummy, 0), Return(LIBHOTH_OK)));
 
@@ -183,5 +185,5 @@ TEST_F(LibHothTest, spi_proxy_update_64k_erase) {
   std::vector<uint8_t> buffer(SPI_TEST_DATA_LEN_64K);
   EXPECT_EQ(libhoth_spi_proxy_update(&spi, SPI_TEST_ADDR_ALIGNED, buffer.data(),
                                      SPI_TEST_DATA_LEN_64K, nullptr),
-            LIBHOTH_OK);
+            HOTH_SUCCESS);
 }

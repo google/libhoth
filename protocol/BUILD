@@ -312,6 +312,7 @@ cc_library(
     hdrs = ["spi_proxy.h"],
     deps = [
         ":host_cmd",
+        ":libhoth_status",
         ":progress",
         "//transports:libhoth_device",
     ],
@@ -321,6 +322,7 @@ cc_test(
     name = "spi_proxy_test",
     srcs = ["spi_proxy_test.cc"],
     deps = [
+        ":libhoth_status",
         ":spi_proxy",
         "//protocol/test:libhoth_device_mock",
         "//transports:libhoth_device",
@@ -354,6 +356,7 @@ cc_library(
     hdrs = ["controlled_storage.h"],
     deps = [
         ":host_cmd",
+        ":libhoth_status",
         ":progress",
         "//transports:libhoth_device",
     ],
@@ -364,6 +367,7 @@ cc_test(
     srcs = ["controlled_storage_test.cc"],
     deps = [
         ":controlled_storage",
+        ":libhoth_status",
         "//protocol/test:libhoth_device_mock",
         "//transports:libhoth_device",
         "@googletest//:gtest",
@@ -401,6 +405,7 @@ cc_library(
     hdrs = ["jtag.h"],
     deps = [
         ":host_cmd",
+        ":libhoth_status",
         "//transports:libhoth_device",
     ],
 )
@@ -410,6 +415,7 @@ cc_test(
     srcs = ["jtag_test.cc"],
     deps = [
         ":jtag",
+        ":libhoth_status",
         "//protocol/test:libhoth_device_mock",
         "//transports:libhoth_device",
         "@googletest//:gtest",
@@ -481,6 +487,7 @@ cc_test(
     name = "opentitan_version_test",
     srcs = ["opentitan_version_test.cc"],
     deps = [
+        ":libhoth_status",
         ":opentitan_version",
         "//protocol/test:libhoth_device_mock",
         "//transports:libhoth_device",
@@ -495,6 +502,7 @@ cc_library(
     hdrs = ["key_rotation.h"],
     deps = [
         ":host_cmd",
+        ":libhoth_status",
         "//transports:libhoth_device",
     ],
 )
@@ -505,6 +513,7 @@ cc_test(
     deps = [
         ":host_cmd",
         ":key_rotation",
+        ":libhoth_status",
         "//protocol/test:libhoth_device_mock",
         "//transports:libhoth_device",
         "@googletest//:gtest",
