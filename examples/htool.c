@@ -2059,6 +2059,36 @@ static const struct htool_cmd CMDS[] = {
                 {}},
     },
     {
+        .verbs = (const char*[]){"provisioning", "store_secrets", NULL},
+        .desc = "Store secrets encrypted to the provisioning encryption key",
+        .func = htool_provisioning_store_secrets,
+        .params =
+            (const struct htool_param[]){
+                {HTOOL_FLAG_VALUE, .name = "secrets", .default_value = "",
+                 .desc = "File containing the encrypted secrets."},
+                {}},
+    },
+    {
+        .verbs = (const char*[]){"provisioning", "write", NULL},
+        .desc = "Write and commit the provisioning log",
+        .func = htool_provisioning_write,
+        .params =
+            (const struct htool_param[]){
+                {HTOOL_FLAG_VALUE, .name = "input", .default_value = "",
+                 .desc = "File containing the provisioning log to write."},
+                {}},
+    },
+    {
+        .verbs = (const char*[]){"provisioning", "load_mldsa_key", NULL},
+        .desc = "Load the ML-DSA-44 public key to the RoT",
+        .func = htool_provisioning_load_mldsa_key,
+        .params =
+            (const struct htool_param[]){
+                {HTOOL_FLAG_VALUE, .name = "key", .default_value = "",
+                 .desc = "Path to the 1312-byte ML-DSA-44 public key file."},
+                {}},
+    },
+    {
         .verbs = (const char*[]){"security", "get_alias_key_cert", NULL},
         .desc = "Get the Alias Key Cert",
         .func = htool_get_alias_key_cert,
