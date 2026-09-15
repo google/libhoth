@@ -64,6 +64,8 @@ executable(
         'htool_security_tokens.c',
         'htool_tpm.h',
         'htool_tpm.c',
+        'htool_update_session.h',
+        'htool_update_session.c',
         git_version_h,
     ],
     dependencies: [libusb],
