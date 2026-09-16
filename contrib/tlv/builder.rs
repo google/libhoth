@@ -16,9 +16,11 @@ use zerocopy::IntoBytes;
 use zerocopy::transmute;
 use zerocopy::transmute_mut;
 
+use crate::TlvContainer;
 use crate::TlvError;
 use crate::TlvFlags;
 use crate::TlvHeader;
+use crate::TlvItem;
 use crate::TlvObject;
 
 /// A builder for creating TLV objects.
@@ -52,6 +54,9 @@ impl<'a> TlvBuilder<'a> {
         self.header
     }
 
+    /// Allocates space for a new fixed-size child TLV and returns a mutable reference to it.
+    ///
+    /// NOTE: On error, the builder is spoiled and finishing it yields an `InvalidBufferError`.
     pub fn add<T: TlvObject>(&mut self) -> Result<&'a mut T, TlvError> {
         let remaining = core::mem::take(&mut self.remaining);
         let (header_words, remaining) = remaining
@@ -81,6 +86,11 @@ impl<'a> TlvBuilder<'a> {
         Ok(T::mut_from_prefix(data_words.as_mut_bytes()).unwrap().0)
     }
 
+    /// Allocates space for a new child TLV, and writes the supplied ext_bytes variable-length
+    /// extension. The returned mutable reference can be used to initialize the fixed-size fields of
+    /// the TLV.
+    ///
+    /// NOTE: On error, the builder is spoiled and finishing it yields an `InvalidBufferError`.
     pub fn add_with_ext<T: TlvObject>(&mut self, ext_bytes: &[u8]) -> Result<&'a mut T, TlvError> {
         let remaining = core::mem::take(&mut self.remaining);
         let struct_words = crate::word_size_of::<T>();
@@ -127,6 +137,11 @@ impl<'a> TlvBuilder<'a> {
         Ok(T::mut_from_prefix(data_words.as_mut_bytes()).unwrap().0)
     }
 
+    /// Allocates space for the fixed size portion of a child TLV, and returns a nested TlvBuilder
+    /// that can be used to add children to the child TLV. When all the children have been added,
+    /// call `finish_with_parent()` before adding more children to the parent.
+    ///
+    /// NOTE: Consider using `add_in()` instead, which is less error-prone.
     pub fn add_with_children<T: TlvObject>(
         &mut self,
     ) -> Result<(&'a mut T, TlvBuilder<'a>), TlvError> {
@@ -162,6 +177,36 @@ impl<'a> TlvBuilder<'a> {
         Ok(data)
     }
 
+    /// Adds a copy of `item` (including its children) as a child of the builder.
+    ///
+    /// NOTE: On error, the builder is spoiled and finishing it yields an `InvalidBufferError`.
+    #[inline(always)]
+    pub fn add_copy<T: TlvObject>(&mut self, item: &TlvItem<'_, T>) -> Result<(), TlvError> {
+        self.add_copy_container(item.container)
+    }
+
+    /// Non-generic implementation of [`Self::add_copy`], to avoid monomorphization bloat.
+    fn add_copy_container(&mut self, container: &TlvContainer) -> Result<(), TlvError> {
+        let src_words = container.as_words();
+        let remaining = core::mem::take(&mut self.remaining);
+        let (dest_words, remaining) = remaining
+            .split_at_mut_checked(src_words.len())
+            .ok_or(TlvError)?;
+        dest_words.copy_from_slice(src_words);
+        self.remaining = remaining;
+
+        // Update current header length
+        let added_words = u16::try_from(src_words.len()).map_err(|_| TlvError)?;
+        self.header.word_len = self
+            .header
+            .word_len
+            .checked_add(added_words)
+            .ok_or(TlvError)?;
+        Ok(())
+    }
+
+    /// Finish the builder, making the constructed bytes (or words) available as members of the
+    /// returned `TlvBuilderFinisher`.
     pub fn finish(self) -> TlvBuilderFinisher {
         TlvBuilderFinisher {
             start_ptr: self.header as *const _ as *const u32,
