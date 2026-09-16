@@ -76,7 +76,9 @@ use zerocopy::transmute_ref;
 
 mod builder;
 
+pub use builder::InvalidBufferError;
 pub use builder::TlvBuilder;
+pub use builder::TlvBuilderFinisher;
 
 #[bitfield(u8)]
 #[derive(PartialEq, Eq, FromBytes, IntoBytes, Immutable, KnownLayout)]
@@ -1086,5 +1088,71 @@ mod tests {
         assert_eq!(foo_v2.a, 100);
         assert_eq!(foo_v2.b, 200);
         assert_eq!(foo_v2.c, 0); // 'c' is 0-initialized
+    }
+
+    #[test]
+    fn test_builder_add_copy() {
+        // First build a Baz with a nested Foo child and some ext data
+        let mut src_buf = [0u32; 64];
+        let (baz, mut baz_builder) = TlvBuilder::new::<Baz>(&mut src_buf).unwrap();
+        baz.n = 42;
+        baz_builder.add_with_ext::<Foo>(&[10, 20, 30]).unwrap();
+        let src_bytes = baz_builder.finish().into_bytes(&src_buf).unwrap();
+
+        // Parse it back as a TlvItem
+        let src_data = TlvData::overlay_bytes(src_bytes).unwrap();
+        let baz_item = src_data.iter::<Baz>().next().unwrap();
+
+        // Now build a Parent container and add a copy of Baz (with its Foo child) into it
+        let mut dest_buf = [0u32; 64];
+        let (parent, mut parent_builder) = TlvBuilder::new::<Parent>(&mut dest_buf).unwrap();
+        parent.id = 1;
+
+        parent_builder.add_copy(&baz_item).unwrap();
+
+        // Also add another child to parent to ensure builder state remains valid
+        let extra_child = parent_builder.add::<Child>().unwrap();
+        extra_child.value = 99;
+
+        let dest_bytes = parent_builder.finish().into_bytes(&dest_buf).unwrap();
+
+        // Parse back the destination container and verify everything
+        let dest_data = TlvData::overlay_bytes(dest_bytes).unwrap();
+        let parent_item = dest_data.iter::<Parent>().next().unwrap();
+        // The copy landed after the Parent struct, leaving it untouched.
+        assert_eq!(parent_item.data.id, 1);
+
+        let mut children = parent_item.ext().iter::<TlvAny>();
+        // The copy is byte-identical to the source container, padding flags and all.
+        assert_eq!(children.next().unwrap().container.as_bytes(), src_bytes);
+        // The sibling added after the copy is intact, so the builder state stayed consistent.
+        assert_eq!(
+            children.next().unwrap().cast::<Child>().unwrap().data.value,
+            99
+        );
+        assert!(children.next().is_none());
+    }
+
+    #[test]
+    fn test_builder_add_copy_overflow() {
+        let mut src_buf = [0u32; 32];
+        let (child, builder) = TlvBuilder::new::<Child>(&mut src_buf).unwrap();
+        child.value = 123;
+        let src_bytes = builder.finish().into_bytes(&src_buf).unwrap();
+
+        let src_data = TlvData::overlay_bytes(src_bytes).unwrap();
+        let child_item = src_data.iter::<Child>().next().unwrap();
+
+        // Destination buffer has one spare word after the Parent header and struct (3 words),
+        // not enough for copying the Child (which needs 2 header + 1 data = 3 words).
+        let mut small_buf = [0u32; 4];
+        let (_parent, mut parent_builder) = TlvBuilder::new::<Parent>(&mut small_buf).unwrap();
+        assert_eq!(parent_builder.add_copy(&child_item), Err(TlvError));
+
+        // The failed add_copy spoiled the builder, so finishing it won't yield a buffer.
+        assert_eq!(
+            parent_builder.finish().into_bytes(&small_buf),
+            Err(InvalidBufferError)
+        );
     }
 }
