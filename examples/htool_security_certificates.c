@@ -34,8 +34,8 @@ static int get_cert_v2_data(const struct htool_invocation* inv,
   FILE* output_ptr = NULL;
   output_ptr = fopen(output_file, "wb");
   if (output_ptr == NULL) {
-    printf("Error: %s, when attempting to open file: %s\n", strerror(errno),
-           output_file);
+    fprintf(stderr, "Error: %s, when attempting to open file: %s\n",
+            strerror(errno), output_file);
     goto cleanup;
   }
 
@@ -62,11 +62,10 @@ static int get_cert_v2_data(const struct htool_invocation* inv,
               response_storage_hdr, response_storage_hdr_size),
           response_params, ARRAY_SIZE(response_params));
       if (hoth_status != 0) {
-        printf(
-            "Unexpected Error: Returned status %d,  while trying to send "
-            "command to "
-            "get the Certificate\n",
-            hoth_status);
+        fprintf(stderr,
+                "Unexpected Error: Returned status %d, while trying to send "
+                "command to get the Certificate\n",
+                hoth_status);
         status = hoth_status;
         goto cleanup;
       }
@@ -76,7 +75,7 @@ static int get_cert_v2_data(const struct htool_invocation* inv,
     }
     // SECURITY_V3 not supported yet.
     default:
-      printf("SECURITY_V3 not supported yet\n");
+      fprintf(stderr, "SECURITY_V3 not supported yet\n");
       goto cleanup;
   }
   status = 0;
@@ -148,7 +147,7 @@ int htool_get_alias_key_cert(const struct htool_invocation* inv) {
       status = htool_get_alias_key_v1_cert(inv);
       break;
     default:
-      printf("Unknown Alias Key Version received: %d", version);
+      fprintf(stderr, "Unknown Alias Key Version received: %d\n", version);
       break;
   }
 
@@ -182,8 +181,8 @@ int htool_get_device_id_cert(const struct htool_invocation* inv) {
   if (strlen(cert_output_file) > 0) {
     cert_output_ptr = fopen(cert_output_file, "wb");
     if (cert_output_ptr == NULL) {
-      printf("Error: %s, when attempting to open file: %s\n", strerror(errno),
-             cert_output_file);
+      fprintf(stderr, "Error: %s, when attempting to open file: %s\n",
+              strerror(errno), cert_output_file);
       goto cleanup;
     }
     is_cert_output_file_provided = true;
@@ -200,8 +199,8 @@ int htool_get_device_id_cert(const struct htool_invocation* inv) {
   if (strlen(endorsement_cert_output_file) > 0) {
     endorsement_cert_output_ptr = fopen(endorsement_cert_output_file, "wb");
     if (endorsement_cert_output_ptr == NULL) {
-      printf("Error: %s, when attempting to open file: %s.\n", strerror(errno),
-             endorsement_cert_output_file);
+      fprintf(stderr, "Error: %s, when attempting to open file: %s.\n",
+              strerror(errno), endorsement_cert_output_file);
       goto cleanup;
     }
     is_endorsement_cert_output_file_provided = true;
@@ -209,7 +208,8 @@ int htool_get_device_id_cert(const struct htool_invocation* inv) {
 
   if (!is_cert_output_file_provided &&
       !is_endorsement_cert_output_file_provided) {
-    printf(
+    fprintf(
+        stderr,
         "Error: No valid cert_output provided and No valid "
         "endorsement_cert_output provided."
         " Only a cert_output field can be provided to return only the Device "
@@ -253,11 +253,10 @@ int htool_get_device_id_cert(const struct htool_invocation* inv) {
           SECURITY_V2_BUFFER_PARAM(response_storage_hdr), response_params,
           ARRAY_SIZE(response_params));
       if (hoth_status != 0) {
-        printf(
-            "Unexpected Error: Returned status %d,  while trying to send "
-            "command to "
-            "get the Device ID Certificates\n",
-            hoth_status);
+        fprintf(stderr,
+                "Unexpected Error: Returned status %d, while trying to send "
+                "command to get the Device ID Certificates\n",
+                hoth_status);
         status = hoth_status;
         goto cleanup;
       }
@@ -274,7 +273,7 @@ int htool_get_device_id_cert(const struct htool_invocation* inv) {
     }
     // SECURITY_V3 not supported yet.
     default:
-      printf("SECURITY_V3 not supported yet\n");
+      fprintf(stderr, "SECURITY_V3 not supported yet\n");
       goto cleanup;
   }
   status = 0;
@@ -303,8 +302,8 @@ _Static_assert(ATTESTATION_CERT_SIZE % 4 == 0,
 static int read_exact_file(const char* filename, uint8_t* buf, size_t size) {
   FILE* fp = fopen(filename, "rb");
   if (fp == NULL) {
-    printf("Error: %s, when attempting to open file: %s\n", strerror(errno),
-           filename);
+    fprintf(stderr, "Error: %s, when attempting to open file: %s\n",
+            strerror(errno), filename);
     return -1;
   }
   size_t bytes_read = fread(buf, 1, size, fp);
@@ -312,7 +311,8 @@ static int read_exact_file(const char* filename, uint8_t* buf, size_t size) {
   int stream_err = ferror(fp);
   fclose(fp);
   if (bytes_read != size || extra != EOF || stream_err != 0) {
-    printf("Error: File %s must be exactly %zu bytes\n", filename, size);
+    fprintf(stderr, "Error: File %s must be exactly %zu bytes\n", filename,
+            size);
     return -1;
   }
   return 0;
@@ -322,15 +322,15 @@ static int write_exact_file(const char* filename, const uint8_t* buf,
                             size_t size) {
   FILE* fp = fopen(filename, "wb");
   if (fp == NULL) {
-    printf("Error: %s, when attempting to open file: %s\n", strerror(errno),
-           filename);
+    fprintf(stderr, "Error: %s, when attempting to open file: %s\n",
+            strerror(errno), filename);
     return -1;
   }
   size_t bytes_written = fwrite(buf, 1, size, fp);
   int stream_err = ferror(fp);
   fclose(fp);
   if (bytes_written != size || stream_err != 0) {
-    printf("Error: Failed to write %zu bytes to %s\n", size, filename);
+    fprintf(stderr, "Error: Failed to write %zu bytes to %s\n", size, filename);
     return -1;
   }
   return 0;
@@ -349,7 +349,8 @@ static int exec_unload_attestation_key(struct libhoth_device* dev) {
       SECURITY_V2_BUFFER_PARAM(request_storage_hdr), NULL, 0,
       SECURITY_V2_BUFFER_PARAM(response_storage_hdr), NULL, 0);
   if (hoth_status != 0) {
-    printf(
+    fprintf(
+        stderr,
         "Unexpected Error: Returned status %d, while trying to send command to "
         "unload the Attestation Key\n",
         hoth_status);
@@ -384,7 +385,8 @@ static int exec_gen_attestation_key_v1(
       SECURITY_V2_BUFFER_PARAM(response_storage_hdr), response_params,
       ARRAY_SIZE(response_params));
   if (hoth_status != 0) {
-    printf(
+    fprintf(
+        stderr,
         "Unexpected Error: Returned status %d, while trying to send command to "
         "generate the Attestation Key\n",
         hoth_status);
@@ -434,7 +436,8 @@ static int exec_gen_attestation_key_v2(
       SECURITY_V2_BUFFER_PARAM(response_storage_hdr), response_params,
       ARRAY_SIZE(response_params));
   if (hoth_status != 0) {
-    printf(
+    fprintf(
+        stderr,
         "Unexpected Error: Returned status %d, while trying to send command to "
         "generate the Attestation Key\n",
         hoth_status);
@@ -470,7 +473,8 @@ static int exec_load_attestation_key(
       ARRAY_SIZE(request_params),
       SECURITY_V2_BUFFER_PARAM(response_storage_hdr), NULL, 0);
   if (hoth_status != 0) {
-    printf(
+    fprintf(
+        stderr,
         "Unexpected Error: Returned status %d, while trying to send command to "
         "load the Attestation Key\n",
         hoth_status);
@@ -506,7 +510,8 @@ static int exec_load_attestation_key_from_csr_v1(
       ARRAY_SIZE(request_params),
       SECURITY_V2_BUFFER_PARAM(response_storage_hdr), NULL, 0);
   if (hoth_status != 0) {
-    printf(
+    fprintf(
+        stderr,
         "Unexpected Error: Returned status %d, while trying to send command to "
         "load the Attestation Key from CSR\n",
         hoth_status);
@@ -527,7 +532,7 @@ int htool_unload_attestation_key(const struct htool_invocation* inv) {
       return exec_unload_attestation_key(dev);
     // SECURITY_V3 not supported yet.
     default:
-      printf("SECURITY_V3 not supported yet\n");
+      fprintf(stderr, "SECURITY_V3 not supported yet\n");
       return -1;
   }
 }
@@ -553,7 +558,8 @@ int htool_gen_attestation_key_v1(const struct htool_invocation* inv) {
   bool is_wrapped_key_output_provided = strlen(wrapped_key_output_file) > 0;
 
   if (!is_csr_output_provided && !is_wrapped_key_output_provided) {
-    printf(
+    fprintf(
+        stderr,
         "Error: No valid csr_output provided and no valid wrapped_key_output "
         "provided.\n");
     return -1;
@@ -581,7 +587,7 @@ int htool_gen_attestation_key_v1(const struct htool_invocation* inv) {
     }
     // SECURITY_V3 not supported yet.
     default:
-      printf("SECURITY_V3 not supported yet\n");
+      fprintf(stderr, "SECURITY_V3 not supported yet\n");
       return -1;
   }
 }
@@ -612,7 +618,8 @@ int htool_gen_attestation_key_v2(const struct htool_invocation* inv) {
   bool is_wrapped_key_output_provided = strlen(wrapped_key_output_file) > 0;
 
   if (!is_csr_output_provided && !is_wrapped_key_output_provided) {
-    printf(
+    fprintf(
+        stderr,
         "Error: No valid csr_output provided and no valid wrapped_key_output "
         "provided.\n");
     return -1;
@@ -641,7 +648,7 @@ int htool_gen_attestation_key_v2(const struct htool_invocation* inv) {
     }
     // SECURITY_V3 not supported yet.
     default:
-      printf("SECURITY_V3 not supported yet\n");
+      fprintf(stderr, "SECURITY_V3 not supported yet\n");
       return -1;
   }
 }
@@ -663,7 +670,8 @@ int htool_load_attestation_key(const struct htool_invocation* inv) {
   }
 
   if (strlen(wrapped_key_file) == 0 || strlen(cert_file) == 0) {
-    printf(
+    fprintf(
+        stderr,
         "Error: Both wrapped_key and cert files must be provided to load the "
         "Attestation Key.\n");
     return -1;
@@ -686,7 +694,7 @@ int htool_load_attestation_key(const struct htool_invocation* inv) {
       return exec_load_attestation_key(dev, wrapped_key, cert);
     // SECURITY_V3 not supported yet.
     default:
-      printf("SECURITY_V3 not supported yet\n");
+      fprintf(stderr, "SECURITY_V3 not supported yet\n");
       return -1;
   }
 }
@@ -708,7 +716,8 @@ int htool_load_attestation_key_from_csr_v1(const struct htool_invocation* inv) {
   }
 
   if (strlen(wrapped_key_file) == 0 || strlen(csr_file) == 0) {
-    printf(
+    fprintf(
+        stderr,
         "Error: Both wrapped_key and csr files must be provided to load the "
         "Attestation Key.\n");
     return -1;
@@ -731,7 +740,7 @@ int htool_load_attestation_key_from_csr_v1(const struct htool_invocation* inv) {
       return exec_load_attestation_key_from_csr_v1(dev, wrapped_key, csr);
     // SECURITY_V3 not supported yet.
     default:
-      printf("SECURITY_V3 not supported yet\n");
+      fprintf(stderr, "SECURITY_V3 not supported yet\n");
       return -1;
   }
 }
@@ -762,7 +771,7 @@ int htool_provision_attestation_key(const struct htool_invocation* inv) {
     }
     // SECURITY_V3 not supported yet.
     default:
-      printf("SECURITY_V3 not supported yet\n");
+      fprintf(stderr, "SECURITY_V3 not supported yet\n");
       return -1;
   }
 }
