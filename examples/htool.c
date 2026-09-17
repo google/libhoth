@@ -2061,7 +2061,7 @@ static const struct htool_cmd CMDS[] = {
     },
     {
         .verbs = (const char*[]){"provisioning", "store_secrets", NULL},
-        .desc = "Store secrets encrypted to the provisioning encryption key",
+        .desc = "Store secrets encrypted with the provisioning encryption key",
         .func = htool_provisioning_store_secrets,
         .params =
             (const struct htool_param[]){
@@ -2086,7 +2086,8 @@ static const struct htool_cmd CMDS[] = {
         .params =
             (const struct htool_param[]){
                 {HTOOL_FLAG_VALUE, .name = "key", .default_value = "",
-                 .desc = "Path to the 1312-byte ML-DSA-44 public key file."},
+                 .desc = "Path to the ML-DSA-44 public key file. Must be "
+                         "exactly 1312 raw bytes."},
                 {}},
     },
     {

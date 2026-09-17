@@ -67,7 +67,7 @@ int htool_get_provisioning_log(const struct htool_invocation* inv) {
   int status = -1;
   struct libhoth_device* dev = htool_libhoth_device();
   if (!dev) {
-    printf("Unable to retrieve libhoth_device\n");
+    fprintf(stderr, "Unable to retrieve libhoth_device\n");
     return -1;
   }
 
@@ -80,8 +80,8 @@ int htool_get_provisioning_log(const struct htool_invocation* inv) {
   FILE* output_ptr = NULL;
   output_ptr = fopen(output_file, "wb");
   if (output_ptr == NULL) {
-    printf("Error: %s, when attempting to open file: %s\n", strerror(errno),
-           output_file);
+    fprintf(stderr, "Error: %s, when attempting to open file: %s\n",
+            strerror(errno), output_file);
     goto cleanup;
   }
   enum provisioning_log_op operation = PROVISIONING_LOG_READ;
@@ -134,7 +134,8 @@ int htool_get_provisioning_log(const struct htool_invocation* inv) {
               dev, &request, sizeof(request), &response, sizeof(response),
               &response_size);
           if (exec_status != 0) {
-            printf(
+            fprintf(
+                stderr,
                 "Unexpected Error: Returned status %d,  while trying to send "
                 "command to "
                 "read the provisioning_log\n",
@@ -144,19 +145,19 @@ int htool_get_provisioning_log(const struct htool_invocation* inv) {
           }
           // Check if read bytes matches chunk size
           if (response_size != chunk_size + sizeof(prov_log_hdr_resp)) {
-            printf(
-                "Unexpected host command response size. Expecting %lu; Got "
-                "%lu\n",
-                chunk_size + sizeof(prov_log_hdr_resp), response_size);
+            fprintf(stderr,
+                    "Unexpected host command response size. Expecting %lu; Got "
+                    "%lu\n",
+                    chunk_size + sizeof(prov_log_hdr_resp), response_size);
             status = 1;
             goto cleanup;
           }
 
           if (bytes_read + chunk_size > PROVISIONING_LOG_MAX_SIZE) {
-            printf(
-                "Unexpected Error: Bytes returned: %hu > "
-                "PROVISIONING_LOG_MAX_SIZE: %u\n",
-                bytes_read + chunk_size, PROVISIONING_LOG_MAX_SIZE);
+            fprintf(stderr,
+                    "Unexpected Error: Bytes returned: %hu > "
+                    "PROVISIONING_LOG_MAX_SIZE: %u\n",
+                    bytes_read + chunk_size, PROVISIONING_LOG_MAX_SIZE);
             goto cleanup;
           }
 
@@ -174,7 +175,7 @@ int htool_get_provisioning_log(const struct htool_invocation* inv) {
     // SECURITY_V3 not supported yet.
     default:
       status = -1;
-      printf("SECURITY_V3 is not supported yet\n");
+      fprintf(stderr, "SECURITY_V3 is not supported yet\n");
       goto cleanup;
   }
 
@@ -195,7 +196,7 @@ int htool_validate_and_sign(const struct htool_invocation* inv) {
   uint8_t* perso_blob_data = NULL;
   struct libhoth_device* dev = htool_libhoth_device();
   if (!dev) {
-    printf("Unable to retrieve libhoth_device\n");
+    fprintf(stderr, "Unable to retrieve libhoth_device\n");
     return -1;
   }
 
@@ -207,8 +208,8 @@ int htool_validate_and_sign(const struct htool_invocation* inv) {
 
   perso_blob_ptr = fopen(perso_blob_file, "rb");
   if (perso_blob_ptr == NULL) {
-    printf("Error: %s, when attempting to open file: %s\n", strerror(errno),
-           perso_blob_file);
+    fprintf(stderr, "Error: %s, when attempting to open file: %s\n",
+            strerror(errno), perso_blob_file);
     goto cleanup;
   }
 
@@ -220,8 +221,8 @@ int htool_validate_and_sign(const struct htool_invocation* inv) {
   size_t bytes_read =
       fread(perso_blob_data, sizeof(uint8_t), perso_blob_size, perso_blob_ptr);
   if (bytes_read <= 0) {
-    printf("Error: %s, when trying to read perso_blob: %s\n", strerror(errno),
-           perso_blob_file);
+    fprintf(stderr, "Error: %s, when trying to read perso_blob: %s\n",
+            strerror(errno), perso_blob_file);
     goto cleanup;
   }
 
@@ -235,8 +236,8 @@ int htool_validate_and_sign(const struct htool_invocation* inv) {
   if (strlen(output_file) > 0) {
     output_ptr = fopen(output_file, "wb");
     if (output_ptr == NULL) {
-      printf("Error: %s, when attempting to open file: %s\n", strerror(errno),
-             output_file);
+      fprintf(stderr, "Error: %s, when attempting to open file: %s\n",
+              strerror(errno), output_file);
       goto cleanup;
     }
   }
@@ -268,21 +269,21 @@ int htool_validate_and_sign(const struct htool_invocation* inv) {
             /*version=*/0, request_ptr, sizeof(request), &response,
             sizeof(response), &response_size);
         if (exec_status != 0) {
-          printf(
-              "Unexpected Error: Returned status %d,  while trying to send "
-              "command to "
-              "read the provisioning_log\n",
-              exec_status);
+          fprintf(stderr,
+                  "Unexpected Error: Returned status %d,  while trying to send "
+                  "command to "
+                  "read the provisioning_log\n",
+                  exec_status);
 
           status = exec_status;
           goto cleanup;
         }
 
         if (response_size > PROVISIONING_CERT_MAX_SIZE) {
-          printf(
-              "Unexpected Error: Bytes returned: %lu > "
-              "PROVISIONING_CERT_MAX_SIZE: %u\n",
-              response_size, PROVISIONING_CERT_MAX_SIZE);
+          fprintf(stderr,
+                  "Unexpected Error: Bytes returned: %lu > "
+                  "PROVISIONING_CERT_MAX_SIZE: %u\n",
+                  response_size, PROVISIONING_CERT_MAX_SIZE);
           goto cleanup;
         }
 
@@ -296,7 +297,7 @@ int htool_validate_and_sign(const struct htool_invocation* inv) {
     // SECURITY_V3 not supported yet.
     default:
       status = -1;
-      printf("SECURITY_V3 is not supported yet.\n");
+      fprintf(stderr, "SECURITY_V3 is not supported yet.\n");
       goto cleanup;
   }
 
