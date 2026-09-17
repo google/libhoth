@@ -56,11 +56,13 @@ pub trait LayeredMessageExt<'a> {
     fn base(&self) -> Option<::mutask_tlv::TlvItem<'a, BaseRecord>>;
 }
 impl<'a> LayeredMessageExt<'a> for ::mutask_tlv::TlvItem<'a, LayeredMessage> {
+    #[inline(always)]
     fn simple(&self) -> Option<::mutask_tlv::TlvItem<'a, SimpleMessage>> {
         ::mutask_tlv::TlvQuery::ext(self)
             .iter::<SimpleMessage>()
             .next()
     }
+    #[inline(always)]
     fn base(&self) -> Option<::mutask_tlv::TlvItem<'a, BaseRecord>> {
         ::mutask_tlv::TlvQuery::ext(self)
             .iter::<BaseRecord>()

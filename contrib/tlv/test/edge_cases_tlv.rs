@@ -339,6 +339,7 @@ pub trait NodeExt<'a> {
     fn children(&self) -> ::mutask_tlv::TlvIterator<'a, Node>;
 }
 impl<'a> NodeExt<'a> for ::mutask_tlv::TlvItem<'a, Node> {
+    #[inline(always)]
     fn children(&self) -> ::mutask_tlv::TlvIterator<'a, Node> {
         ::mutask_tlv::TlvQuery::ext(self).iter::<Node>()
     }
@@ -479,6 +480,7 @@ pub trait RawBytesExtensionTestExt<'a> {
     fn payload(&self) -> &'a [u8];
 }
 impl<'a> RawBytesExtensionTestExt<'a> for ::mutask_tlv::TlvItem<'a, RawBytesExtensionTest> {
+    #[inline(always)]
     fn payload(&self) -> &'a [u8] {
         use ::mutask_tlv::TlvQuery;
         self.ext()
@@ -508,6 +510,7 @@ pub trait StringExtensionTestExt<'a> {
     fn text(&self) -> &'a ::bstr::BStr;
 }
 impl<'a> StringExtensionTestExt<'a> for ::mutask_tlv::TlvItem<'a, StringExtensionTest> {
+    #[inline(always)]
     fn text(&self) -> &'a ::bstr::BStr {
         use ::mutask_tlv::TlvQuery;
         ::bstr::BStr::new(self.ext())
@@ -541,11 +544,13 @@ pub trait ExtensionContainerExt<'a> {
     fn next_child(&self) -> Option<::mutask_tlv::TlvItem<'a, RegisterContainer>>;
 }
 impl<'a> ExtensionContainerExt<'a> for ::mutask_tlv::TlvItem<'a, ExtensionContainer> {
+    #[inline(always)]
     fn child_ext(&self) -> Option<::mutask_tlv::TlvItem<'a, RawBytesExtensionTest>> {
         ::mutask_tlv::TlvQuery::ext(self)
             .iter::<RawBytesExtensionTest>()
             .next()
     }
+    #[inline(always)]
     fn next_child(&self) -> Option<::mutask_tlv::TlvItem<'a, RegisterContainer>> {
         ::mutask_tlv::TlvQuery::ext(self)
             .iter::<RegisterContainer>()
