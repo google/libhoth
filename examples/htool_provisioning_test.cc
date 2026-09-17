@@ -452,8 +452,8 @@ TEST_F(HtoolProvisioningTest, ValidateAndSignSuccess) {
   std::vector<uint8_t> signed_log_data = {0xDE, 0xAD, 0xBE, 0xEF};
 
   // Expected request payload for ValidateAndSign
-  uint32_t prov_checksum =
-      crc32(0, perso_blob_data.data(), perso_blob_data.size());
+  uint32_t prov_checksum = libhoth_provisioning_crc32(0, perso_blob_data.data(),
+                                                      perso_blob_data.size());
   struct hoth_provisioning_log_request expected_provisioning_req = {
       .version = 1,
       .operation = PROVISIONING_LOG_VALIDATE_AND_SIGN,
@@ -848,7 +848,7 @@ TEST_F(HtoolProvisioningTest, WriteSuccess) {
           EXPECT_EQ(write_req->req.operation, PROVISIONING_LOG_COMMIT);
           EXPECT_EQ(write_req->req.size, 1500);
           EXPECT_EQ(write_req->req.checksum,
-                    crc32(0, data.data(), data.size()));
+                    libhoth_provisioning_crc32(0, data.data(), data.size()));
         }
         call_count++;
         return LIBHOTH_OK;

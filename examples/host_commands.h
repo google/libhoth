@@ -79,12 +79,6 @@ struct hoth_response_flash_spi_info {
  */
 #define HOTH_BASE_CMD(cmd) (HOTH_CMD_BOARD_SPECIFIC_BASE + (cmd))
 
-/* The major command identifier for the Provisioning Log host command. */
-#define HOTH_PRV_CMD_HOTH_PROVISIONING_LOG 0x0040
-
-/* The major command identifier for the Key Provisioning host command. */
-#define HOTH_PRV_CMD_HOTH_KEY_PROVISIONING 0x0043
-
 /**
  * The request header structure for security v2 commands
  */
