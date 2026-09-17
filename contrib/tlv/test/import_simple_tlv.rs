@@ -57,6 +57,7 @@ pub trait SimpleMessageExt<'a> {
     fn record(&self) -> Option<::mutask_tlv::TlvItem<'a, BaseRecord>>;
 }
 impl<'a> SimpleMessageExt<'a> for ::mutask_tlv::TlvItem<'a, SimpleMessage> {
+    #[inline(always)]
     fn record(&self) -> Option<::mutask_tlv::TlvItem<'a, BaseRecord>> {
         ::mutask_tlv::TlvQuery::ext(self)
             .iter::<BaseRecord>()

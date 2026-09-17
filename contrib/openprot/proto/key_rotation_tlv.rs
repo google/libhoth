@@ -53,11 +53,13 @@ pub trait SignedDescriptorExt<'a> {
     fn signature(&self) -> ::mutask_tlv::TlvIterator<'a, SignatureContainer>;
 }
 impl<'a> SignedDescriptorExt<'a> for ::mutask_tlv::TlvItem<'a, SignedDescriptor> {
+    #[inline(always)]
     fn descriptor(&self) -> Option<::mutask_tlv::TlvItem<'a, Descriptor>> {
         ::mutask_tlv::TlvQuery::ext(self)
             .iter::<Descriptor>()
             .next()
     }
+    #[inline(always)]
     fn signature(&self) -> ::mutask_tlv::TlvIterator<'a, SignatureContainer> {
         ::mutask_tlv::TlvQuery::ext(self).iter::<SignatureContainer>()
     }
@@ -87,11 +89,13 @@ pub trait SealedDescriptorExt<'a> {
     fn seal(&self) -> Option<::mutask_tlv::TlvItem<'a, KRSeal>>;
 }
 impl<'a> SealedDescriptorExt<'a> for ::mutask_tlv::TlvItem<'a, SealedDescriptor> {
+    #[inline(always)]
     fn descriptor(&self) -> Option<::mutask_tlv::TlvItem<'a, Descriptor>> {
         ::mutask_tlv::TlvQuery::ext(self)
             .iter::<Descriptor>()
             .next()
     }
+    #[inline(always)]
     fn seal(&self) -> Option<::mutask_tlv::TlvItem<'a, KRSeal>> {
         ::mutask_tlv::TlvQuery::ext(self).iter::<KRSeal>().next()
     }
@@ -156,17 +160,21 @@ pub trait DescriptorExt<'a> {
     fn _legacy_image_family(&self) -> Option<DescriptorLegacyImageFamily<'a>>;
 }
 impl<'a> DescriptorExt<'a> for ::mutask_tlv::TlvItem<'a, Descriptor> {
+    #[inline(always)]
     fn legacy_image_family(&self) -> Option<::mutask_tlv::TlvItem<'a, LegacyImageFamily>> {
         ::mutask_tlv::TlvQuery::ext(self)
             .iter::<LegacyImageFamily>()
             .next()
     }
+    #[inline(always)]
     fn fingerprint(&self) -> ::mutask_tlv::TlvIterator<'a, KeyFingerprint> {
         ::mutask_tlv::TlvQuery::ext(self).iter::<KeyFingerprint>()
     }
+    #[inline(always)]
     fn img_descriptor_digest(&self) -> ::mutask_tlv::TlvIterator<'a, ImgDescriptorDigest> {
         ::mutask_tlv::TlvQuery::ext(self).iter::<ImgDescriptorDigest>()
     }
+    #[inline(always)]
     fn _legacy_image_family(&self) -> Option<DescriptorLegacyImageFamily<'a>> {
         use ::mutask_tlv::TlvQuery;
         for item in ::mutask_tlv::TlvQuery::ext(self).iter::<::mutask_tlv::TlvAny>() {
@@ -207,16 +215,19 @@ pub trait ImgDescriptorDigestExt<'a> {
     fn digest(&self) -> Option<ImgDescriptorDigestDigest<'a>>;
 }
 impl<'a> ImgDescriptorDigestExt<'a> for ::mutask_tlv::TlvItem<'a, ImgDescriptorDigest> {
+    #[inline(always)]
     fn sha2_256(&self) -> Option<::mutask_tlv::TlvItem<'a, Sha2_256Digest>> {
         ::mutask_tlv::TlvQuery::ext(self)
             .iter::<Sha2_256Digest>()
             .next()
     }
+    #[inline(always)]
     fn sha2_384(&self) -> Option<::mutask_tlv::TlvItem<'a, Sha2_384Digest>> {
         ::mutask_tlv::TlvQuery::ext(self)
             .iter::<Sha2_384Digest>()
             .next()
     }
+    #[inline(always)]
     fn digest(&self) -> Option<ImgDescriptorDigestDigest<'a>> {
         use ::mutask_tlv::TlvQuery;
         for item in ::mutask_tlv::TlvQuery::ext(self).iter::<::mutask_tlv::TlvAny>() {

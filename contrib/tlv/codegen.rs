@@ -677,6 +677,7 @@ fn generate_sub_tlv_accessors(
                             fn #field_ident(&self) -> ::mutask_tlv::TlvIterator<'a, #child_ident>;
                         });
                         accessors.push(quote::quote! {
+                            #[inline(always)]
                             fn #field_ident(&self) -> ::mutask_tlv::TlvIterator<'a, #child_ident> {
                                 ::mutask_tlv::TlvQuery::ext(self).iter::<#child_ident>()
                             }
@@ -686,6 +687,7 @@ fn generate_sub_tlv_accessors(
                             fn #field_ident(&self) -> Option<::mutask_tlv::TlvItem<'a, #child_ident>>;
                         });
                         accessors.push(quote::quote! {
+                            #[inline(always)]
                             fn #field_ident(&self) -> Option<::mutask_tlv::TlvItem<'a, #child_ident>> {
                                 ::mutask_tlv::TlvQuery::ext(self).iter::<#child_ident>().next()
                             }
@@ -700,6 +702,7 @@ fn generate_sub_tlv_accessors(
                             fn #field_ident(&self) -> &'a ::bstr::BStr;
                         });
                         accessors.push(quote::quote! {
+                            #[inline(always)]
                             fn #field_ident(&self) -> &'a ::bstr::BStr {
                                 use ::mutask_tlv::TlvQuery;
                                 ::bstr::BStr::new(self.ext())
@@ -710,6 +713,7 @@ fn generate_sub_tlv_accessors(
                             fn #field_ident(&self) -> &'a [u8];
                         });
                         accessors.push(quote::quote! {
+                            #[inline(always)]
                             fn #field_ident(&self) -> &'a [u8] {
                                 use ::mutask_tlv::TlvQuery;
                                 self.ext()
@@ -969,6 +973,7 @@ fn generate_oneofs(
         });
 
         accessors.push(quote::quote! {
+            #[inline(always)]
             fn #accessor_ident(&self) -> Option<#enum_ident<'a>> {
                 use ::mutask_tlv::TlvQuery;
                 for item in ::mutask_tlv::TlvQuery::ext(self).iter::<::mutask_tlv::TlvAny>() {
