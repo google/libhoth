@@ -2119,10 +2119,10 @@ static const struct htool_cmd CMDS[] = {
         .params =
             (const struct htool_param[]){
                 {HTOOL_FLAG_VALUE, .name = "csr_output", .default_value = "",
-                 .desc = "The Attestation Key CSR v1 output file"},
+                 .desc = "The Attestation Key CSR v1 output file (256 bytes)"},
                 {HTOOL_FLAG_VALUE, .name = "wrapped_key_output",
                  .default_value = "",
-                 .desc = "The Wrapped Attestation Key output file"},
+                 .desc = "The Wrapped Attestation Key output file (88 bytes)"},
                 {}},
     },
     {
@@ -2136,10 +2136,10 @@ static const struct htool_cmd CMDS[] = {
                  .desc = "The firmware major version to bind the Attestation "
                          "Key to"},
                 {HTOOL_FLAG_VALUE, .name = "csr_output", .default_value = "",
-                 .desc = "The Attestation Key CSR v2 output file"},
+                 .desc = "The Attestation Key CSR v2 output file (192 bytes)"},
                 {HTOOL_FLAG_VALUE, .name = "wrapped_key_output",
                  .default_value = "",
-                 .desc = "The Wrapped Attestation Key output file"},
+                 .desc = "The Wrapped Attestation Key output file (88 bytes)"},
                 {}},
     },
     {
@@ -2149,10 +2149,11 @@ static const struct htool_cmd CMDS[] = {
         .params =
             (const struct htool_param[]){
                 {HTOOL_FLAG_VALUE, .name = "wrapped_key", .default_value = "",
-                 .desc = "The Wrapped Attestation Key input file"},
+                 .desc = "The Wrapped Attestation Key input file. Must be "
+                         "exactly 88 bytes."},
                 {HTOOL_FLAG_VALUE, .name = "cert", .default_value = "",
                  .desc = "The CA-signed Attestation Key Certificate input "
-                         "file"},
+                         "file. Must be exactly 192 bytes."},
                 {}},
     },
     {
@@ -2164,9 +2165,11 @@ static const struct htool_cmd CMDS[] = {
         .params =
             (const struct htool_param[]){
                 {HTOOL_FLAG_VALUE, .name = "wrapped_key", .default_value = "",
-                 .desc = "The Wrapped Attestation Key input file"},
+                 .desc = "The Wrapped Attestation Key input file. Must be "
+                         "exactly 88 bytes."},
                 {HTOOL_FLAG_VALUE, .name = "csr", .default_value = "",
-                 .desc = "The Attestation Key CSR v1 input file"},
+                 .desc = "The Attestation Key CSR v1 input file. Must be "
+                         "exactly 256 bytes."},
                 {}},
     },
     {
