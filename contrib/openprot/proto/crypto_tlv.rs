@@ -436,21 +436,25 @@ pub trait PublicKeyExt<'a> {
     fn key_material(&self) -> Option<PublicKeyKeyMaterial<'a>>;
 }
 impl<'a> PublicKeyExt<'a> for ::mutask_tlv::TlvItem<'a, PublicKey> {
+    #[inline(always)]
     fn p256(&self) -> Option<::mutask_tlv::TlvItem<'a, P256PublicMaterial>> {
         ::mutask_tlv::TlvQuery::ext(self)
             .iter::<P256PublicMaterial>()
             .next()
     }
+    #[inline(always)]
     fn slhdsa(&self) -> Option<::mutask_tlv::TlvItem<'a, SlhDsaPublicMaterial>> {
         ::mutask_tlv::TlvQuery::ext(self)
             .iter::<SlhDsaPublicMaterial>()
             .next()
     }
+    #[inline(always)]
     fn mldsa(&self) -> Option<::mutask_tlv::TlvItem<'a, MlDsa44PublicMaterial>> {
         ::mutask_tlv::TlvQuery::ext(self)
             .iter::<MlDsa44PublicMaterial>()
             .next()
     }
+    #[inline(always)]
     fn hybrid_p256_slhdsa(
         &self,
     ) -> Option<::mutask_tlv::TlvItem<'a, HybridP256SlhDsaPublicMaterial>> {
@@ -458,6 +462,7 @@ impl<'a> PublicKeyExt<'a> for ::mutask_tlv::TlvItem<'a, PublicKey> {
             .iter::<HybridP256SlhDsaPublicMaterial>()
             .next()
     }
+    #[inline(always)]
     fn hybrid_p256_mldsa(
         &self,
     ) -> Option<::mutask_tlv::TlvItem<'a, HybridP256MlDsa44PublicMaterial>> {
@@ -465,21 +470,25 @@ impl<'a> PublicKeyExt<'a> for ::mutask_tlv::TlvItem<'a, PublicKey> {
             .iter::<HybridP256MlDsa44PublicMaterial>()
             .next()
     }
+    #[inline(always)]
     fn rsa2048(&self) -> Option<::mutask_tlv::TlvItem<'a, Rsa2048PublicMaterial>> {
         ::mutask_tlv::TlvQuery::ext(self)
             .iter::<Rsa2048PublicMaterial>()
             .next()
     }
+    #[inline(always)]
     fn rsa3072(&self) -> Option<::mutask_tlv::TlvItem<'a, Rsa3072PublicMaterial>> {
         ::mutask_tlv::TlvQuery::ext(self)
             .iter::<Rsa3072PublicMaterial>()
             .next()
     }
+    #[inline(always)]
     fn rsa4096(&self) -> Option<::mutask_tlv::TlvItem<'a, Rsa4096PublicMaterial>> {
         ::mutask_tlv::TlvQuery::ext(self)
             .iter::<Rsa4096PublicMaterial>()
             .next()
     }
+    #[inline(always)]
     fn key_material(&self) -> Option<PublicKeyKeyMaterial<'a>> {
         use ::mutask_tlv::TlvQuery;
         for item in ::mutask_tlv::TlvQuery::ext(self).iter::<::mutask_tlv::TlvAny>() {
@@ -661,9 +670,11 @@ pub trait SignatureContainerExt<'a> {
     fn signature(&self) -> Option<::mutask_tlv::TlvItem<'a, Signature>>;
 }
 impl<'a> SignatureContainerExt<'a> for ::mutask_tlv::TlvItem<'a, SignatureContainer> {
+    #[inline(always)]
     fn public_key(&self) -> Option<::mutask_tlv::TlvItem<'a, PublicKey>> {
         ::mutask_tlv::TlvQuery::ext(self).iter::<PublicKey>().next()
     }
+    #[inline(always)]
     fn signature(&self) -> Option<::mutask_tlv::TlvItem<'a, Signature>> {
         ::mutask_tlv::TlvQuery::ext(self).iter::<Signature>().next()
     }
@@ -704,31 +715,37 @@ pub trait SignatureExt<'a> {
     fn signature(&self) -> Option<SignatureSignature<'a>>;
 }
 impl<'a> SignatureExt<'a> for ::mutask_tlv::TlvItem<'a, Signature> {
+    #[inline(always)]
     fn p256(&self) -> Option<::mutask_tlv::TlvItem<'a, P256Signature>> {
         ::mutask_tlv::TlvQuery::ext(self)
             .iter::<P256Signature>()
             .next()
     }
+    #[inline(always)]
     fn slhdsa(&self) -> Option<::mutask_tlv::TlvItem<'a, SlhDsaSignature>> {
         ::mutask_tlv::TlvQuery::ext(self)
             .iter::<SlhDsaSignature>()
             .next()
     }
+    #[inline(always)]
     fn mldsa(&self) -> Option<::mutask_tlv::TlvItem<'a, MlDsa44Signature>> {
         ::mutask_tlv::TlvQuery::ext(self)
             .iter::<MlDsa44Signature>()
             .next()
     }
+    #[inline(always)]
     fn hybrid_p256_slhdsa(&self) -> Option<::mutask_tlv::TlvItem<'a, HybridP256SlhDsaSignature>> {
         ::mutask_tlv::TlvQuery::ext(self)
             .iter::<HybridP256SlhDsaSignature>()
             .next()
     }
+    #[inline(always)]
     fn hybrid_p256_mldsa(&self) -> Option<::mutask_tlv::TlvItem<'a, HybridP256MlDsa44Signature>> {
         ::mutask_tlv::TlvQuery::ext(self)
             .iter::<HybridP256MlDsa44Signature>()
             .next()
     }
+    #[inline(always)]
     fn signature(&self) -> Option<SignatureSignature<'a>> {
         use ::mutask_tlv::TlvQuery;
         for item in ::mutask_tlv::TlvQuery::ext(self).iter::<::mutask_tlv::TlvAny>() {
@@ -781,16 +798,19 @@ pub trait P256FingerprintExt<'a> {
     fn digest(&self) -> Option<P256FingerprintDigest<'a>>;
 }
 impl<'a> P256FingerprintExt<'a> for ::mutask_tlv::TlvItem<'a, P256Fingerprint> {
+    #[inline(always)]
     fn sha2_256(&self) -> Option<::mutask_tlv::TlvItem<'a, Sha2_256Digest>> {
         ::mutask_tlv::TlvQuery::ext(self)
             .iter::<Sha2_256Digest>()
             .next()
     }
+    #[inline(always)]
     fn sha2_384(&self) -> Option<::mutask_tlv::TlvItem<'a, Sha2_384Digest>> {
         ::mutask_tlv::TlvQuery::ext(self)
             .iter::<Sha2_384Digest>()
             .next()
     }
+    #[inline(always)]
     fn digest(&self) -> Option<P256FingerprintDigest<'a>> {
         use ::mutask_tlv::TlvQuery;
         for item in ::mutask_tlv::TlvQuery::ext(self).iter::<::mutask_tlv::TlvAny>() {
@@ -834,16 +854,19 @@ pub trait SlhDsaFingerprintExt<'a> {
     fn digest(&self) -> Option<SlhDsaFingerprintDigest<'a>>;
 }
 impl<'a> SlhDsaFingerprintExt<'a> for ::mutask_tlv::TlvItem<'a, SlhDsaFingerprint> {
+    #[inline(always)]
     fn sha2_256(&self) -> Option<::mutask_tlv::TlvItem<'a, Sha2_256Digest>> {
         ::mutask_tlv::TlvQuery::ext(self)
             .iter::<Sha2_256Digest>()
             .next()
     }
+    #[inline(always)]
     fn sha2_384(&self) -> Option<::mutask_tlv::TlvItem<'a, Sha2_384Digest>> {
         ::mutask_tlv::TlvQuery::ext(self)
             .iter::<Sha2_384Digest>()
             .next()
     }
+    #[inline(always)]
     fn digest(&self) -> Option<SlhDsaFingerprintDigest<'a>> {
         use ::mutask_tlv::TlvQuery;
         for item in ::mutask_tlv::TlvQuery::ext(self).iter::<::mutask_tlv::TlvAny>() {
@@ -887,16 +910,19 @@ pub trait Rsa2048FingerprintExt<'a> {
     fn digest(&self) -> Option<Rsa2048FingerprintDigest<'a>>;
 }
 impl<'a> Rsa2048FingerprintExt<'a> for ::mutask_tlv::TlvItem<'a, Rsa2048Fingerprint> {
+    #[inline(always)]
     fn sha2_256(&self) -> Option<::mutask_tlv::TlvItem<'a, Sha2_256Digest>> {
         ::mutask_tlv::TlvQuery::ext(self)
             .iter::<Sha2_256Digest>()
             .next()
     }
+    #[inline(always)]
     fn sha2_384(&self) -> Option<::mutask_tlv::TlvItem<'a, Sha2_384Digest>> {
         ::mutask_tlv::TlvQuery::ext(self)
             .iter::<Sha2_384Digest>()
             .next()
     }
+    #[inline(always)]
     fn digest(&self) -> Option<Rsa2048FingerprintDigest<'a>> {
         use ::mutask_tlv::TlvQuery;
         for item in ::mutask_tlv::TlvQuery::ext(self).iter::<::mutask_tlv::TlvAny>() {
@@ -940,16 +966,19 @@ pub trait Rsa3072FingerprintExt<'a> {
     fn digest(&self) -> Option<Rsa3072FingerprintDigest<'a>>;
 }
 impl<'a> Rsa3072FingerprintExt<'a> for ::mutask_tlv::TlvItem<'a, Rsa3072Fingerprint> {
+    #[inline(always)]
     fn sha2_256(&self) -> Option<::mutask_tlv::TlvItem<'a, Sha2_256Digest>> {
         ::mutask_tlv::TlvQuery::ext(self)
             .iter::<Sha2_256Digest>()
             .next()
     }
+    #[inline(always)]
     fn sha2_384(&self) -> Option<::mutask_tlv::TlvItem<'a, Sha2_384Digest>> {
         ::mutask_tlv::TlvQuery::ext(self)
             .iter::<Sha2_384Digest>()
             .next()
     }
+    #[inline(always)]
     fn digest(&self) -> Option<Rsa3072FingerprintDigest<'a>> {
         use ::mutask_tlv::TlvQuery;
         for item in ::mutask_tlv::TlvQuery::ext(self).iter::<::mutask_tlv::TlvAny>() {
@@ -993,16 +1022,19 @@ pub trait Rsa4096FingerprintExt<'a> {
     fn digest(&self) -> Option<Rsa4096FingerprintDigest<'a>>;
 }
 impl<'a> Rsa4096FingerprintExt<'a> for ::mutask_tlv::TlvItem<'a, Rsa4096Fingerprint> {
+    #[inline(always)]
     fn sha2_256(&self) -> Option<::mutask_tlv::TlvItem<'a, Sha2_256Digest>> {
         ::mutask_tlv::TlvQuery::ext(self)
             .iter::<Sha2_256Digest>()
             .next()
     }
+    #[inline(always)]
     fn sha2_384(&self) -> Option<::mutask_tlv::TlvItem<'a, Sha2_384Digest>> {
         ::mutask_tlv::TlvQuery::ext(self)
             .iter::<Sha2_384Digest>()
             .next()
     }
+    #[inline(always)]
     fn digest(&self) -> Option<Rsa4096FingerprintDigest<'a>> {
         use ::mutask_tlv::TlvQuery;
         for item in ::mutask_tlv::TlvQuery::ext(self).iter::<::mutask_tlv::TlvAny>() {
@@ -1048,16 +1080,19 @@ pub trait HybridP256SlhDsaFingerprintExt<'a> {
 impl<'a> HybridP256SlhDsaFingerprintExt<'a>
     for ::mutask_tlv::TlvItem<'a, HybridP256SlhDsaFingerprint>
 {
+    #[inline(always)]
     fn sha2_256(&self) -> Option<::mutask_tlv::TlvItem<'a, Sha2_256Digest>> {
         ::mutask_tlv::TlvQuery::ext(self)
             .iter::<Sha2_256Digest>()
             .next()
     }
+    #[inline(always)]
     fn sha2_384(&self) -> Option<::mutask_tlv::TlvItem<'a, Sha2_384Digest>> {
         ::mutask_tlv::TlvQuery::ext(self)
             .iter::<Sha2_384Digest>()
             .next()
     }
+    #[inline(always)]
     fn digest(&self) -> Option<HybridP256SlhDsaFingerprintDigest<'a>> {
         use ::mutask_tlv::TlvQuery;
         for item in ::mutask_tlv::TlvQuery::ext(self).iter::<::mutask_tlv::TlvAny>() {
@@ -1101,16 +1136,19 @@ pub trait MlDsa44FingerprintExt<'a> {
     fn digest(&self) -> Option<MlDsa44FingerprintDigest<'a>>;
 }
 impl<'a> MlDsa44FingerprintExt<'a> for ::mutask_tlv::TlvItem<'a, MlDsa44Fingerprint> {
+    #[inline(always)]
     fn sha2_256(&self) -> Option<::mutask_tlv::TlvItem<'a, Sha2_256Digest>> {
         ::mutask_tlv::TlvQuery::ext(self)
             .iter::<Sha2_256Digest>()
             .next()
     }
+    #[inline(always)]
     fn sha2_384(&self) -> Option<::mutask_tlv::TlvItem<'a, Sha2_384Digest>> {
         ::mutask_tlv::TlvQuery::ext(self)
             .iter::<Sha2_384Digest>()
             .next()
     }
+    #[inline(always)]
     fn digest(&self) -> Option<MlDsa44FingerprintDigest<'a>> {
         use ::mutask_tlv::TlvQuery;
         for item in ::mutask_tlv::TlvQuery::ext(self).iter::<::mutask_tlv::TlvAny>() {
@@ -1156,16 +1194,19 @@ pub trait HybridP256MlDsa44FingerprintExt<'a> {
 impl<'a> HybridP256MlDsa44FingerprintExt<'a>
     for ::mutask_tlv::TlvItem<'a, HybridP256MlDsa44Fingerprint>
 {
+    #[inline(always)]
     fn sha2_256(&self) -> Option<::mutask_tlv::TlvItem<'a, Sha2_256Digest>> {
         ::mutask_tlv::TlvQuery::ext(self)
             .iter::<Sha2_256Digest>()
             .next()
     }
+    #[inline(always)]
     fn sha2_384(&self) -> Option<::mutask_tlv::TlvItem<'a, Sha2_384Digest>> {
         ::mutask_tlv::TlvQuery::ext(self)
             .iter::<Sha2_384Digest>()
             .next()
     }
+    #[inline(always)]
     fn digest(&self) -> Option<HybridP256MlDsa44FingerprintDigest<'a>> {
         use ::mutask_tlv::TlvQuery;
         for item in ::mutask_tlv::TlvQuery::ext(self).iter::<::mutask_tlv::TlvAny>() {
@@ -1224,46 +1265,55 @@ pub trait KeyFingerprintExt<'a> {
     fn key_type(&self) -> Option<KeyFingerprintKeyType<'a>>;
 }
 impl<'a> KeyFingerprintExt<'a> for ::mutask_tlv::TlvItem<'a, KeyFingerprint> {
+    #[inline(always)]
     fn p256(&self) -> Option<::mutask_tlv::TlvItem<'a, P256Fingerprint>> {
         ::mutask_tlv::TlvQuery::ext(self)
             .iter::<P256Fingerprint>()
             .next()
     }
+    #[inline(always)]
     fn slhdsa(&self) -> Option<::mutask_tlv::TlvItem<'a, SlhDsaFingerprint>> {
         ::mutask_tlv::TlvQuery::ext(self)
             .iter::<SlhDsaFingerprint>()
             .next()
     }
+    #[inline(always)]
     fn rsa2048(&self) -> Option<::mutask_tlv::TlvItem<'a, Rsa2048Fingerprint>> {
         ::mutask_tlv::TlvQuery::ext(self)
             .iter::<Rsa2048Fingerprint>()
             .next()
     }
+    #[inline(always)]
     fn rsa3072(&self) -> Option<::mutask_tlv::TlvItem<'a, Rsa3072Fingerprint>> {
         ::mutask_tlv::TlvQuery::ext(self)
             .iter::<Rsa3072Fingerprint>()
             .next()
     }
+    #[inline(always)]
     fn rsa4096(&self) -> Option<::mutask_tlv::TlvItem<'a, Rsa4096Fingerprint>> {
         ::mutask_tlv::TlvQuery::ext(self)
             .iter::<Rsa4096Fingerprint>()
             .next()
     }
+    #[inline(always)]
     fn hybrid_p256_slhdsa(&self) -> Option<::mutask_tlv::TlvItem<'a, HybridP256SlhDsaFingerprint>> {
         ::mutask_tlv::TlvQuery::ext(self)
             .iter::<HybridP256SlhDsaFingerprint>()
             .next()
     }
+    #[inline(always)]
     fn mldsa(&self) -> Option<::mutask_tlv::TlvItem<'a, MlDsa44Fingerprint>> {
         ::mutask_tlv::TlvQuery::ext(self)
             .iter::<MlDsa44Fingerprint>()
             .next()
     }
+    #[inline(always)]
     fn hybrid_p256_mldsa(&self) -> Option<::mutask_tlv::TlvItem<'a, HybridP256MlDsa44Fingerprint>> {
         ::mutask_tlv::TlvQuery::ext(self)
             .iter::<HybridP256MlDsa44Fingerprint>()
             .next()
     }
+    #[inline(always)]
     fn key_type(&self) -> Option<KeyFingerprintKeyType<'a>> {
         use ::mutask_tlv::TlvQuery;
         for item in ::mutask_tlv::TlvQuery::ext(self).iter::<::mutask_tlv::TlvAny>() {
@@ -1346,11 +1396,13 @@ pub trait KRSealExt<'a> {
     fn seal(&self) -> Option<KRSealSeal<'a>>;
 }
 impl<'a> KRSealExt<'a> for ::mutask_tlv::TlvItem<'a, KRSeal> {
+    #[inline(always)]
     fn kmsl(&self) -> Option<::mutask_tlv::TlvItem<'a, Kmac256Seal>> {
         ::mutask_tlv::TlvQuery::ext(self)
             .iter::<Kmac256Seal>()
             .next()
     }
+    #[inline(always)]
     fn seal(&self) -> Option<KRSealSeal<'a>> {
         use ::mutask_tlv::TlvQuery;
         for item in ::mutask_tlv::TlvQuery::ext(self).iter::<::mutask_tlv::TlvAny>() {

@@ -174,7 +174,7 @@ pub struct BadAlignmentError;
 
 impl TlvData {
     /// Constructs a new `TlvData` reference by overlaying onto a word buffer.
-    #[inline]
+    #[inline(always)]
     pub fn overlay(data: &[u32]) -> &Self {
         transmute_ref!(data)
     }
@@ -247,6 +247,7 @@ pub struct TlvItem<'a, T: TlvObject> {
 impl<'a, T: TlvObject + 'a> Iterator for TlvIterator<'a, T> {
     type Item = TlvItem<'a, T>;
 
+    #[inline(always)]
     fn next(&mut self) -> Option<Self::Item> {
         while !self.data.is_empty() {
             let (header, _) = TlvHeader::ref_from_words_prefix(self.data)?;
@@ -336,6 +337,7 @@ pub trait TlvQuery<'a> {
 
 impl<'a, T: TlvObject> TlvQuery<'a> for TlvItem<'a, T> {
     type Extension = &'a T::Extension;
+    #[inline(always)]
     fn cast<U: TlvObject>(&self) -> Option<TlvItem<'a, U>> {
         if self.container.header.tag == U::TAG {
             let (data_words, extra) = self
