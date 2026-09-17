@@ -29,6 +29,7 @@ typedef uint64_t libhoth_error;
 const char* libhoth_error_ctx_str(uint32_t ctx);
 const char* libhoth_error_space_str(uint16_t space);
 const char* libhoth_error_ec_str(uint16_t code);
+const char* libhoth_error_libhoth_str(uint32_t code);
 void libhoth_log_err(FILE* stream, libhoth_error err);
 
 /** Constructs a libhoth error code from its components.
@@ -64,6 +65,8 @@ typedef enum {
   LIBHOTH_ERR_DFU_ROMEXT_MISMATCH = 13,
   LIBHOTH_ERR_INITIATE_FAIL = 14,
   LIBHOTH_ERR_COMMIT_FAIL = 15,
+  LIBHOTH_ERR_BAD_IMAGE = 16,
+  LIBHOTH_ERR_IMAGE_NOT_SECTOR_ALIGNED = 17,
 } libhoth_status;
 
 // hoth_context_id: High 16 bits of the error code.

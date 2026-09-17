@@ -141,6 +141,7 @@ cc_test(
     ],
     deps = [
         ":command_version",
+        ":libhoth_status",
         ":payload_info",
         ":payload_update",
         "//protocol/test:libhoth_device_mock",
