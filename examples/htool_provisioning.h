@@ -39,7 +39,7 @@ enum hoth_key_provisioning_command {
 
 struct hoth_key_provisioning_request_header {
   uint8_t version;
-  uint8_t command;
+  uint8_t command;  // enum hoth_key_provisioning_command
   uint16_t size;
 } __attribute__((packed));
 
