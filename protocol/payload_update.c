@@ -115,16 +115,16 @@ static libhoth_error payload_update_erase_chunk(
       &request, sizeof(request), NULL, 0, NULL);
 }
 
+static const size_t kBlockErase = 64 * 1024;
+static const size_t kSectorErase = 4 * 1024;
+
 libhoth_error libhoth_payload_update_erase(struct libhoth_device* const dev,
                                            const uint32_t offset,
                                            const uint32_t len) {
   struct libhoth_progress_stderr erase_progress;
   libhoth_progress_stderr_init(&erase_progress, "Erase staging side");
 
-  const size_t block_erase = 64 * 1024;
-  const size_t sector_erase = 4 * 1024;
-
-  if (len == 0 || (len % sector_erase) != 0) {
+  if (len == 0 || (len % kSectorErase) != 0) {
     fprintf(stderr,
             "error: erase length (0x%" PRIx32
             ") is zero or not sector-aligned.\n",
@@ -132,7 +132,7 @@ libhoth_error libhoth_payload_update_erase(struct libhoth_device* const dev,
     return LIBHOTH_ERR_CONSTRUCT(HOTH_CTX_CMD_EXEC, HOTH_HOST_SPACE_LIBHOTH,
                                  LIBHOTH_ERR_IMAGE_NOT_SECTOR_ALIGNED);
   }
-  if ((offset % sector_erase) != 0) {
+  if ((offset % kSectorErase) != 0) {
     fprintf(stderr, "error: offset (0x%" PRIx32 ") is not sector-aligned.\n",
             offset);
     return LIBHOTH_ERR_CONSTRUCT(HOTH_CTX_CMD_EXEC, HOTH_HOST_SPACE_LIBHOTH,
@@ -154,8 +154,8 @@ libhoth_error libhoth_payload_update_erase(struct libhoth_device* const dev,
     const uint32_t current_offset = offset + erased;
     const uint32_t remaining = len - erased;
     const bool send_block_erase =
-        (current_offset % block_erase == 0) && (remaining >= block_erase);
-    const uint32_t chunk_size = send_block_erase ? block_erase : sector_erase;
+        (current_offset % kBlockErase == 0) && (remaining >= kBlockErase);
+    const uint32_t chunk_size = send_block_erase ? kBlockErase : kSectorErase;
     const libhoth_error ret =
         payload_update_erase_chunk(dev, current_offset, chunk_size);
     if (ret != HOTH_SUCCESS) {
@@ -178,7 +178,21 @@ libhoth_error libhoth_payload_update(struct libhoth_device* dev, uint8_t* image,
   }
 
   if (!skip_erase) {
-    libhoth_error err = libhoth_payload_update_erase(dev, 0, size);
+    size_t erase_size = size;
+    if (binary_file && (erase_size % kSectorErase) != 0) {
+      const size_t pad = kSectorErase - (erase_size % kSectorErase);
+      if (erase_size > UINT32_MAX - pad) {
+        return LIBHOTH_ERR_CONSTRUCT(HOTH_CTX_CMD_EXEC, HOTH_HOST_SPACE_LIBHOTH,
+                                     LIBHOTH_ERR_INVALID_PARAMETER);
+      }
+      erase_size += pad;
+    }
+    if (erase_size > UINT32_MAX) {
+      return LIBHOTH_ERR_CONSTRUCT(HOTH_CTX_CMD_EXEC, HOTH_HOST_SPACE_LIBHOTH,
+                                   LIBHOTH_ERR_INVALID_PARAMETER);
+    }
+    libhoth_error err =
+        libhoth_payload_update_erase(dev, 0, (uint32_t)erase_size);
     if (err != HOTH_SUCCESS) {
       return err;
     }
