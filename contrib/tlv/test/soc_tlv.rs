@@ -87,12 +87,15 @@ pub trait SystemExt<'a> {
     fn accelerators(&self) -> ::mutask_tlv::TlvIterator<'a, Accelerator>;
 }
 impl<'a> SystemExt<'a> for ::mutask_tlv::TlvItem<'a, System> {
+    #[inline(always)]
     fn cores(&self) -> ::mutask_tlv::TlvIterator<'a, CpuCore> {
         ::mutask_tlv::TlvQuery::ext(self).iter::<CpuCore>()
     }
+    #[inline(always)]
     fn bus(&self) -> Option<::mutask_tlv::TlvItem<'a, SystemBus>> {
         ::mutask_tlv::TlvQuery::ext(self).iter::<SystemBus>().next()
     }
+    #[inline(always)]
     fn accelerators(&self) -> ::mutask_tlv::TlvIterator<'a, Accelerator> {
         ::mutask_tlv::TlvQuery::ext(self).iter::<Accelerator>()
     }
@@ -145,9 +148,11 @@ pub trait CpuCoreExt<'a> {
     fn execution_units(&self) -> ::mutask_tlv::TlvIterator<'a, ExecutionUnit>;
 }
 impl<'a> CpuCoreExt<'a> for ::mutask_tlv::TlvItem<'a, CpuCore> {
+    #[inline(always)]
     fn cache(&self) -> Option<::mutask_tlv::TlvItem<'a, CacheInfo>> {
         ::mutask_tlv::TlvQuery::ext(self).iter::<CacheInfo>().next()
     }
+    #[inline(always)]
     fn execution_units(&self) -> ::mutask_tlv::TlvIterator<'a, ExecutionUnit> {
         ::mutask_tlv::TlvQuery::ext(self).iter::<ExecutionUnit>()
     }
@@ -328,6 +333,7 @@ pub trait CryptoAcceleratorExt<'a> {
     fn supported_ciphers(&self) -> &'a [u8];
 }
 impl<'a> CryptoAcceleratorExt<'a> for ::mutask_tlv::TlvItem<'a, CryptoAccelerator> {
+    #[inline(always)]
     fn supported_ciphers(&self) -> &'a [u8] {
         use ::mutask_tlv::TlvQuery;
         self.ext()
@@ -365,21 +371,25 @@ pub trait AcceleratorExt<'a> {
     fn config(&self) -> Option<AcceleratorConfig<'a>>;
 }
 impl<'a> AcceleratorExt<'a> for ::mutask_tlv::TlvItem<'a, Accelerator> {
+    #[inline(always)]
     fn gpu(&self) -> Option<::mutask_tlv::TlvItem<'a, GpuAccelerator>> {
         ::mutask_tlv::TlvQuery::ext(self)
             .iter::<GpuAccelerator>()
             .next()
     }
+    #[inline(always)]
     fn npu(&self) -> Option<::mutask_tlv::TlvItem<'a, NpuAccelerator>> {
         ::mutask_tlv::TlvQuery::ext(self)
             .iter::<NpuAccelerator>()
             .next()
     }
+    #[inline(always)]
     fn crypto(&self) -> Option<::mutask_tlv::TlvItem<'a, CryptoAccelerator>> {
         ::mutask_tlv::TlvQuery::ext(self)
             .iter::<CryptoAccelerator>()
             .next()
     }
+    #[inline(always)]
     fn config(&self) -> Option<AcceleratorConfig<'a>> {
         use ::mutask_tlv::TlvQuery;
         for item in ::mutask_tlv::TlvQuery::ext(self).iter::<::mutask_tlv::TlvAny>() {
