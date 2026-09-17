@@ -67,12 +67,11 @@ cc_library(
     srcs = ["htool_provisioning.c"],
     hdrs = ["htool_provisioning.h"],
     deps = [
-        ":host_commands",
         ":htool_cmd",
         ":htool_header",
         ":htool_macros",
         ":htool_security_version",
-        "//protocol:host_cmd",
+        "//protocol:provisioning",
         "//transports:libhoth_device",
     ],
 )
@@ -267,6 +266,7 @@ cc_binary(
         "//protocol:payload_status",
         "//protocol:payload_update",
         "//protocol:progress",
+        "//protocol:provisioning",
         "//protocol:reboot",
         "//protocol:rot_firmware_version",
         "//protocol:secure_boot",
