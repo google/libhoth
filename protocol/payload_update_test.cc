@@ -41,6 +41,8 @@ constexpr int kCmd =
 constexpr int64_t kMagic = 0x5F435344474D495F;
 constexpr int64_t kAlign = 1 << 16;
 constexpr int64_t kDummy = 0;
+constexpr size_t kBlockErase = 64 * 1024;
+constexpr size_t kSectorErase = 4 * 1024;
 
 MATCHER_P2(IsEraseRequest, offset, len, "") {
   const struct hoth_host_request* req =
@@ -459,6 +461,66 @@ TEST_F(LibHothTest, payload_update_test_with_binary_image) {
                                    /*skip_erase=*/false,
                                    /*binary_file=*/true),
             HOTH_SUCCESS);
+}
+
+TEST_F(LibHothTest, payload_update_unaligned_binary_rounds_up_erase) {
+  constexpr size_t kUnalignedSize = kBlockErase + 100;
+  uint8_t buffer[kUnalignedSize];
+  std::memset(buffer, 0xFF, kUnalignedSize);
+  buffer[0] = 0xAA;
+
+  {
+    InSequence s;
+
+    // 64KB Block Erase for [0, 64KB)
+    EXPECT_CALL(mock_, send(_, IsEraseRequest(0, kBlockErase), _))
+        .WillOnce(Return(LIBHOTH_OK));
+    EXPECT_CALL(mock_, receive)
+        .WillOnce(DoAll(CopyResp(&kDummy, 0), Return(LIBHOTH_OK)));
+
+    // 4KB Sector Erase for [64KB, 68KB) rounded up from 64KB + 100B
+    EXPECT_CALL(mock_, send(_, IsEraseRequest(kBlockErase, kSectorErase), _))
+        .WillOnce(Return(LIBHOTH_OK));
+    EXPECT_CALL(mock_, receive)
+        .WillOnce(DoAll(CopyResp(&kDummy, 0), Return(LIBHOTH_OK)));
+
+    // Flash payload data
+    EXPECT_CALL(mock_, send(_, UsesCommand(kCmd), _))
+        .WillOnce(Return(LIBHOTH_OK));
+    EXPECT_CALL(mock_, receive)
+        .WillOnce(DoAll(CopyResp(&kDummy, 0), Return(LIBHOTH_OK)));
+  }
+
+  EXPECT_EQ(libhoth_payload_update(&hoth_dev_, buffer, kUnalignedSize,
+                                   /*skip_erase=*/false,
+                                   /*binary_file=*/true),
+            HOTH_SUCCESS);
+}
+
+TEST_F(LibHothTest, payload_update_unaligned_non_binary_fails) {
+  constexpr size_t kUnalignedSize = kSectorErase + 100;
+  uint8_t buffer[kUnalignedSize] = {0};
+
+  struct image_descriptor desc = {};
+  desc.descriptor_magic = TITAN_IMAGE_DESCRIPTOR_MAGIC;
+  desc.descriptor_area_size = sizeof(desc);
+  std::memcpy(buffer, &desc, sizeof(desc));
+
+  EXPECT_EQ(libhoth_payload_update(&hoth_dev_, buffer, kUnalignedSize,
+                                   /*skip_erase=*/false,
+                                   /*binary_file=*/false),
+            LIBHOTH_ERR_CONSTRUCT(HOTH_CTX_CMD_EXEC, HOTH_HOST_SPACE_LIBHOTH,
+                                  LIBHOTH_ERR_IMAGE_NOT_SECTOR_ALIGNED));
+}
+
+TEST_F(LibHothTest, payload_update_unaligned_binary_erase_overflow_fails) {
+  uint8_t dummy = 0;
+  // Rounding 0xFFFFF001 up to the next 4 KiB boundary would overflow uint32_t.
+  EXPECT_EQ(libhoth_payload_update(&hoth_dev_, &dummy, 0xFFFFF001u,
+                                   /*skip_erase=*/false,
+                                   /*binary_file=*/true),
+            LIBHOTH_ERR_CONSTRUCT(HOTH_CTX_CMD_EXEC, HOTH_HOST_SPACE_LIBHOTH,
+                                  LIBHOTH_ERR_INVALID_PARAMETER));
 }
 
 TEST_F(LibHothTest, payload_update_erase_cmd_test) {
