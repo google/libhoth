@@ -50,7 +50,7 @@ int htool_mauv_compiled(const struct htool_invocation* inv) {
     return -1;
   }
 
-  struct hoth_response_mauv mauv;
+  struct hoth_response_mauv mauv = {0};
   libhoth_error err =
       libhoth_fetch_mauv(dev, MAUV_STATE_COMPILED, HAVEN_MAUV, &mauv);
   if (err != HOTH_SUCCESS) {
@@ -63,7 +63,20 @@ int htool_mauv_compiled(const struct htool_invocation* inv) {
 }
 
 int htool_mauv_effective(const struct htool_invocation* inv) {
-  // TODO: support FW MAUV effective once it's implemented in firmware.
+  struct libhoth_device* dev = htool_libhoth_device();
+  if (!dev) {
+    return -1;
+  }
+
+  struct hoth_response_mauv mauv = {0};
+  libhoth_error err =
+      libhoth_fetch_mauv(dev, MAUV_STATE_EFFECTIVE, HAVEN_MAUV, &mauv);
+  if (err != HOTH_SUCCESS) {
+    htool_report_error("fetch_mauv", err);
+    return -1;
+  }
+
+  print_firmware_mauv(&mauv);
   return 0;
 }
 
