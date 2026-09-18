@@ -91,7 +91,7 @@ libhoth_error libhoth_read_console(struct libhoth_device* dev, int fd,
   struct hoth_channel_read_request req = {
       .channel_id = channel_id,
       .offset = *offset,
-      .size = HOTH_FIFO_MAX_REQUEST_SIZE -
+      .size = HOTH_FIFO_MAX_REQUEST_SIZE - sizeof(struct hoth_host_response) -
               sizeof(struct hoth_channel_read_response),
       .timeout_us = 10000,
   };
