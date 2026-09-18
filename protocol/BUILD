@@ -669,3 +669,14 @@ cc_test(
         "@googletest//:gtest_main",
     ],
 )
+
+cc_library(
+    name = "provisioning",
+    srcs = ["provisioning.c"],
+    hdrs = ["provisioning.h"],
+    deps = [
+        ":host_cmd",
+        ":libhoth_status",
+        "//transports:libhoth_device",
+    ],
+)
