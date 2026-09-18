@@ -558,6 +558,18 @@ cc_library(
     ],
 )
 
+cc_test(
+    name = "console_test",
+    srcs = ["console_test.cc"],
+    deps = [
+        ":console",
+        "//protocol/test:libhoth_device_mock",
+        "//transports:libhoth_device",
+        "@googletest//:gtest",
+        "@googletest//:gtest_main",
+    ],
+)
+
 
 cc_library(
     name = "dfu_hostcmd",
