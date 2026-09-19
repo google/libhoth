@@ -1,0 +1,18 @@
+# Stable labels for libhoth's Rust third-party dependencies.
+#
+# Rust rules in this repo depend on `//third_party:<crate>` rather than naming a
+# crate_universe hub directly. That keeps the hub name in exactly one place
+# (MODULE.bazel), which is what makes it cheap for a vendoring project to
+# redirect the whole set at its own pinned copies. See MODULE.bazel.
+
+package(default_visibility = ["//visibility:public"])
+
+alias(
+    name = "zerocopy",
+    actual = "@crates_libhoth//:zerocopy",
+)
+
+alias(
+    name = "zerocopy_derive",
+    actual = "@crates_libhoth//:zerocopy-derive",
+)

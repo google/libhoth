@@ -1,0 +1,68 @@
+# Rust bindings for the host command protocol.
+#
+# These targets have no dependency on libhoth's C libraries, deliberately:
+# :hostcmd_types is no_std and is linked into RoT firmware, which cannot pull in
+# libusb or anything else host-side.
+
+load("@rules_rust//rust:defs.bzl", "rust_library", "rust_test")
+
+package(default_visibility = ["//visibility:public"])
+
+# The vocabulary: command codes, wire headers, and the per-command structs.
+#
+# Adding a host command means adding a module here. Both the firmware that
+# implements the command and the host tooling that calls it then see the same
+# definition, which is the point of this crate living in libhoth rather than in
+# any one consumer.
+rust_library(
+    name = "hostcmd_types",
+    srcs = [
+        "types/channel.rs",
+        "types/chipinfo.rs",
+        "types/dfu.rs",
+        "types/get_version.rs",
+        "types/hello.rs",
+        "types/is_host_command_supported.rs",
+        "types/lib.rs",
+        "types/reboot.rs",
+        "types/target_control.rs",
+        "types/target_reset.rs",
+        "types/tpm_mode.rs",
+        "types/unsafe_commands.rs",
+    ],
+    crate_name = "hoth_hostcmd_types",
+    crate_root = "types/lib.rs",
+    edition = "2024",
+    proc_macro_deps = [
+        "//third_party:zerocopy_derive",
+    ],
+    deps = [
+        "//third_party:zerocopy",
+    ],
+)
+
+rust_test(
+    name = "hostcmd_types_test",
+    crate = ":hostcmd_types",
+    edition = "2024",
+)
+
+# Host-side framing. std and allocating, so firmware cannot use it; firmware
+# assembles requests in place instead. Both share :hostcmd_types.
+rust_library(
+    name = "hostcmd",
+    srcs = ["hostcmd/lib.rs"],
+    crate_name = "hoth_hostcmd",
+    crate_root = "hostcmd/lib.rs",
+    edition = "2024",
+    deps = [
+        ":hostcmd_types",
+        "//third_party:zerocopy",
+    ],
+)
+
+rust_test(
+    name = "hostcmd_test",
+    crate = ":hostcmd",
+    edition = "2024",
+)

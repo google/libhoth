@@ -12,3 +12,36 @@ use_repo(libusb_ext, "libusb")
 
 bazel_dep(name = "googletest", version = "1.15.2")
 bazel_dep(name = "rules_cc", version = "0.1.4")
+bazel_dep(name = "rules_rust", version = "0.70.0")
+
+# --- Rust third-party -------------------------------------------------------
+#
+# Only used by //protocol/rust. The C library has no Rust dependencies.
+#
+# This hub exists so libhoth builds standalone. When libhoth is vendored into a
+# larger project, that project's ROOT module is expected to redirect this hub at
+# its own pinned copy so there is exactly ONE zerocopy in the build:
+#
+#     override_repo(crate, crates_libhoth = "<their_hub>")
+#
+# That matters more than it looks. zerocopy's FromBytes/IntoBytes appear in the
+# bounds of `HostCmdReq`, so two zerocopy rlibs means two distinct traits and
+# every `#[derive(FromBytes)]` in the consuming project silently fails to
+# satisfy them. See pie-rot's MODULE.bazel for a worked example.
+crate = use_extension("@rules_rust//crate_universe:extensions.bzl", "crate")
+crate.spec(
+    features = ["derive"],
+    package = "zerocopy",
+    repositories = ["crates_libhoth"],
+    version = "=0.8.38",
+)
+crate.spec(
+    package = "zerocopy-derive",
+    repositories = ["crates_libhoth"],
+    version = "=0.8.38",
+)
+crate.from_specs(
+    name = "crates_libhoth",
+    cargo_lockfile = "//:Cargo.lock",
+)
+use_repo(crate, "crates_libhoth")
