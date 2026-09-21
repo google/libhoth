@@ -11,4 +11,102 @@ libusb_ext = use_extension("//:libusb_extension.bzl", "libusb_extension")
 use_repo(libusb_ext, "libusb")
 
 bazel_dep(name = "googletest", version = "1.15.2")
-bazel_dep(name = "rules_cc", version = "0.1.4")
+bazel_dep(name = "rules_cc", version = "0.2.18")
+bazel_dep(name = "rules_rust", version = "0.70.0")
+crate = use_extension("@rules_rust//crate_universe:extensions.bzl", "crate")
+crate.spec(
+    features = ["derive"],
+    package = "zerocopy",
+    repositories = ["crates_libhoth_nostd"],
+    version = "=0.8.56",
+)
+crate.spec(
+    package = "zerocopy-derive",
+    repositories = ["crates_libhoth_nostd"],
+    version = "=0.8.56",
+)
+crate.annotation(
+    crate = "zerocopy",
+    repositories = ["crates_libhoth_nostd"],
+    rustc_flags = ["--cfg=zerocopy_inline_always"],
+)
+crate.spec(
+    package = "aligned",
+    repositories = ["crates_libhoth_nostd"],
+    version = "0.4.3",
+)
+crate.spec(
+    features = [
+        "io-util",
+        "macros",
+        "net",
+        "process",
+        "rt",
+        "signal",
+        "sync",
+        "time",
+    ],
+    package = "tokio",
+    repositories = ["crates_libhoth"],
+    version = "=1.46.1",
+)
+crate.spec(
+    package = "ufmt",
+    repositories = ["crates_libhoth_nostd"],
+    version = "0.2.0",
+)
+crate.annotation(
+    crate = "ufmt",
+    patch_args = ["-p1"],
+    patches = ["//:patches/ufmt.patch"],
+    repositories = ["crates_libhoth_nostd"],
+)
+crate.spec(
+    package = "hex",
+    repositories = ["crates_libhoth"],
+    version = "=0.4.3",
+)
+crate.spec(
+    package = "anyhow",
+    repositories = ["crates_libhoth"],
+    version = "1.0.89",
+)
+crate.spec(
+    package = "bytes",
+    repositories = ["crates_libhoth"],
+    version = "1.10.1",
+)
+crate.spec(
+    package = "thiserror",
+    repositories = ["crates_libhoth"],
+    version = "=2.0.17",
+)
+
+# This repository contains crates that are intended for no_std environments.
+# We keep them in a separate repository so that "std" feature doesn't leak in
+# from a host crate's deps (in particular, stable_deref_trait's "std" feature)
+crate.from_specs(
+    name = "crates_libhoth_nostd",
+    cargo_lockfile = "//:Cargo.nostd.lock",
+    supported_platform_triples = [
+        "aarch64-apple-darwin",
+        "aarch64-unknown-linux-gnu",
+        "x86_64-pc-windows-msvc",
+        "x86_64-unknown-linux-gnu",
+        "riscv32imc-unknown-none-elf",
+        "thumbv8m.main-none-eabi",
+    ],
+)
+use_repo(crate, "crates_libhoth_nostd")
+
+crate.from_specs(
+    name = "crates_libhoth",
+    cargo_lockfile = "//:Cargo.lock",
+    supported_platform_triples = [
+        "aarch64-apple-darwin",
+        "aarch64-unknown-linux-gnu",
+        "x86_64-pc-windows-msvc",
+        "x86_64-unknown-linux-gnu",
+    ],
+)
+use_repo(crate, "crates_libhoth")
