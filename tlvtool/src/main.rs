@@ -17,7 +17,9 @@
 use argh::FromArgs;
 use std::process::ExitCode;
 use tlvtool::cli::InspectArgs;
+use tlvtool::cli::KrrArgs;
 use tlvtool::cli::handle_inspect;
+use tlvtool::cli::handle_krr;
 
 // The top-level CLI structure, `Commands` enum, and dispatch logic are defined here
 // rather than in `cli.rs` so that `tlvtool_lib` remains a modular library defining
@@ -33,11 +35,13 @@ pub struct Cli {
 #[derive(FromArgs, Debug, Clone, PartialEq, Eq)]
 #[argh(subcommand)]
 pub enum Commands {
+    Krr(KrrArgs),
     Inspect(InspectArgs),
 }
 
 pub fn run_command(command: Commands) -> anyhow::Result<String> {
     match command {
+        Commands::Krr(krr) => handle_krr(krr),
         Commands::Inspect(args) => handle_inspect(args),
     }
 }
@@ -64,6 +68,13 @@ mod tests {
 
     #[test]
     fn test_main_cli_dispatch() {
+        let cli_krr = Cli::from_args(
+            &["tlvtool"],
+            &["krr", "build", "config.json", "-o", "out.bin"],
+        )
+        .expect("Failed to parse krr");
+        assert!(matches!(cli_krr.command, Commands::Krr(_)));
+
         let cli_inspect = Cli::from_args(&["tlvtool"], &["inspect", "file.bin"])
             .expect("Failed to parse inspect");
         assert!(matches!(cli_inspect.command, Commands::Inspect(_)));
