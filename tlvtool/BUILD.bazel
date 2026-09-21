@@ -19,7 +19,9 @@ package(default_visibility = ["//visibility:public"])
 rust_library(
     name = "tlvtool_lib",
     srcs = [
+        "src/builder.rs",
         "src/cli.rs",
+        "src/crypto.rs",
         "src/inspect.rs",
         "src/lib.rs",
     ],
@@ -27,11 +29,22 @@ rust_library(
     edition = "2024",
     visibility = ["//visibility:public"],
     deps = [
+        "//contrib/crypto:sha256_sw",
+        "//contrib/openprot/proto",
+        "//contrib/openprot/proto:crypto_rust_proto",
+        "//contrib/openprot/proto:identity_rust_proto",
+        "//contrib/openprot/proto:key_rotation_rust_proto",
         "//contrib/tlv",
+        "//contrib/tlv:proto_conv",
+        "//contrib/tlv:proto_meta",
         "//third_party:anyhow",
         "//third_party:argh",
+        "//third_party:base64",
         "//third_party:hex",
+        "//third_party:serde",
+        "//third_party:serde_json",
         "//third_party:zerocopy",
+        "@protobuf//rust:protobuf",
     ],
 )
 

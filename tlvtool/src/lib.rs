@@ -12,12 +12,16 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-//! OpenPRoT TLV Key Rotation Tool library for open RoT architectures.
+//! A library and tool to create, inspect, and manage OpenPRoT TLV records.
 
 extern crate alloc;
 
+pub mod builder;
 pub mod cli;
+pub mod crypto;
 pub mod inspect;
 
+pub use builder::RecordBuilder;
+pub use builder::UnsignedRecord;
 pub use inspect::inspect_file;
 pub use inspect::inspect_words;
