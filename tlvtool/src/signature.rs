@@ -132,6 +132,7 @@ pub struct SignedRecordBuilder {
     unsigned: UnsignedRecord,
     signatures: Vec<crypto_rust_proto::SignatureContainer>,
     otp_fingerprint: Option<String>,
+    expected_otp_fingerprint: Option<String>,
 }
 
 impl SignedRecordBuilder {
@@ -140,6 +141,7 @@ impl SignedRecordBuilder {
             unsigned,
             signatures: Vec::new(),
             otp_fingerprint: None,
+            expected_otp_fingerprint: None,
         }
     }
 
@@ -149,6 +151,11 @@ impl SignedRecordBuilder {
 
     pub fn from_unsigned_file(path: impl AsRef<Path>) -> Result<Self> {
         Ok(Self::new(UnsignedRecord::from_file(path)?))
+    }
+
+    pub fn expect_otp_fingerprint(mut self, fingerprint: [u8; 32]) -> Self {
+        self.expected_otp_fingerprint = Some(to_hex(&fingerprint));
+        self
     }
 
     pub fn add_signature_container(mut self, sigc: crypto_rust_proto::SignatureContainer) -> Self {
@@ -162,7 +169,12 @@ impl SignedRecordBuilder {
         material: &HybridMaterial<T>,
     ) -> Result<Self> {
         let (sigc, otp_fp_hex) = build_hybrid_sigc(key_domain, material)?;
-        // The first signing authority is the one reported back to the operator.
+        if let Some(expected) = &self.expected_otp_fingerprint {
+            ensure!(
+                *expected == otp_fp_hex,
+                "Signing authority OTP fingerprint mismatch: expected {expected}, the signing key is {otp_fp_hex}"
+            );
+        }
         self.otp_fingerprint.get_or_insert(otp_fp_hex);
         self.signatures.push(sigc);
         Ok(self)
@@ -412,6 +424,41 @@ mod tests {
         assert_eq!(signed.signed_size(), signed.as_bytes().len());
         assert!(signed.signed_size() > 3800 && signed.signed_size() <= 8192);
         assert_signed_shape(signed.as_bytes());
+    }
+
+    #[test]
+    fn test_expected_otp_fingerprint_gates_the_signing_key() {
+        let unsigned = RecordBuilder::new()
+            .add_fingerprint(
+                crypto_rust_proto::KeyDomain::PayloadProd,
+                Algorithm::P256,
+                [0x11u8; 32],
+            )
+            .build_unsigned()
+            .unwrap();
+
+        let expected: [u8; 32] = crate::crypto::from_hex(EXPECTED_OTP_FP)
+            .unwrap()
+            .try_into()
+            .unwrap();
+
+        // The authority the operator named is the one holding the key.
+        assert!(
+            SignedRecordBuilder::new(unsigned.clone())
+                .expect_otp_fingerprint(expected)
+                .add_hybrid_signature(crypto_rust_proto::KeyDomain::Rotr, &MATERIAL)
+                .is_ok()
+        );
+
+        // Any other key would produce a record the target RoT rejects.
+        let err = SignedRecordBuilder::new(unsigned)
+            .expect_otp_fingerprint([0x42u8; 32])
+            .add_hybrid_signature(crypto_rust_proto::KeyDomain::Rotr, &MATERIAL)
+            .expect_err("signing with an unexpected authority must fail")
+            .to_string();
+        assert!(err.contains("OTP fingerprint mismatch"), "{err}");
+        assert!(err.contains(&to_hex(&[0x42u8; 32])), "{err}");
+        assert!(err.contains(EXPECTED_OTP_FP), "{err}");
     }
 
     #[test]

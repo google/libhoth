@@ -45,30 +45,104 @@ fn check_unsigned_size(size: usize) -> Result<()> {
     Ok(())
 }
 
+const KEY_DOMAINS: [(&str, crypto_rust_proto::KeyDomain); 6] = [
+    ("prod", crypto_rust_proto::KeyDomain::PayloadProd),
+    ("dev", crypto_rust_proto::KeyDomain::PayloadDev),
+    ("test", crypto_rust_proto::KeyDomain::PayloadTest),
+    ("bios_prod", crypto_rust_proto::KeyDomain::BiosProd),
+    ("bios_dev", crypto_rust_proto::KeyDomain::BiosDev),
+    ("rotr", crypto_rust_proto::KeyDomain::Rotr),
+];
+
+const TEST_KEY_DOMAINS: [crypto_rust_proto::KeyDomain; 3] = [
+    crypto_rust_proto::KeyDomain::PayloadTest,
+    crypto_rust_proto::KeyDomain::PayloadDev,
+    crypto_rust_proto::KeyDomain::BiosDev,
+];
+
+/// Key domain parsing helper.
+pub fn parse_key_domain(s: &str) -> Result<crypto_rust_proto::KeyDomain> {
+    KEY_DOMAINS
+        .iter()
+        .find(|(name, _)| *name == s)
+        .map(|(_, domain)| *domain)
+        .with_context(|| {
+            let valid: Vec<&str> = KEY_DOMAINS.iter().map(|(name, _)| *name).collect();
+            format!(
+                "Unknown key domain '{}'. Valid domains: {}",
+                s,
+                valid.join(", ")
+            )
+        })
+}
+
+/// The name an operator would have written for `domain`.
+fn key_domain_name(domain: crypto_rust_proto::KeyDomain) -> &'static str {
+    KEY_DOMAINS
+        .iter()
+        .find(|(_, d)| *d == domain)
+        .map_or("unknown", |(name, _)| name)
+}
+
+/// Decodes a hex string that must denote exactly one SHA2-256 digest.
+pub(crate) fn parse_digest32(label: &str, hex_str: &str) -> Result<[u8; 32]> {
+    let raw = crate::crypto::from_hex(hex_str).with_context(|| format!("Invalid {label} hex"))?;
+    raw.try_into()
+        .map_err(|_| anyhow!("{label} '{hex_str}' must be 32 bytes (64 hex chars)"))
+}
+
+/// Fingerprints an in-memory public key the way the firmware would.
+fn key_digest(algorithm: Algorithm, key: KeyBytes<'_>) -> Result<[u8; 32]> {
+    KeyMaterial::parse(algorithm, key).map(|material| material.fingerprint_sha256())
+}
+
 fn read_key(path: &Path) -> Result<Vec<u8>> {
     std::fs::read(path).with_context(|| format!("Failed to read key file {}", path.display()))
 }
 
-/// Key domain parsing helper.
-pub fn parse_key_domain(s: &str) -> Result<crypto_rust_proto::KeyDomain> {
-    Ok(match s {
-        "prod" => crypto_rust_proto::KeyDomain::PayloadProd,
-        "dev" => crypto_rust_proto::KeyDomain::PayloadDev,
-        "test" => crypto_rust_proto::KeyDomain::PayloadTest,
-        "bios_prod" => crypto_rust_proto::KeyDomain::BiosProd,
-        "bios_dev" => crypto_rust_proto::KeyDomain::BiosDev,
-        "rotr" => crypto_rust_proto::KeyDomain::Rotr,
-        _ => bail!(
-            "Unknown key domain '{s}'. Valid domains: prod, dev, test, bios_prod, bios_dev, rotr"
-        ),
+fn key_file_digest(algorithm: Algorithm, path: &Path) -> Result<[u8; 32]> {
+    key_digest(algorithm, KeyBytes::Single(&read_key(path)?))
+        .with_context(|| format!("Invalid {algorithm:?} key in {}", path.display()))
+}
+
+fn hybrid_key_files_digest(algorithm: Algorithm, ec: &Path, pq: &Path) -> Result<[u8; 32]> {
+    let (ec_key, pq_key) = (read_key(ec)?, read_key(pq)?);
+    let key = KeyBytes::Hybrid {
+        ec: &ec_key,
+        pq: &pq_key,
+    };
+    key_digest(algorithm, key).with_context(|| {
+        format!(
+            "Invalid {algorithm:?} key in {} + {}",
+            ec.display(),
+            pq.display()
+        )
     })
 }
 
-/// Decodes a hex string that must denote exactly one SHA2-256 digest.
-fn parse_digest32(label: &str, hex_str: &str) -> Result<[u8; 32]> {
-    let raw = crate::crypto::from_hex(hex_str).with_context(|| format!("Invalid {label} hex"))?;
-    raw.try_into()
-        .map_err(|_| anyhow!("{label} '{hex_str}' must be 32 bytes (64 hex chars)"))
+fn check_expected_fingerprint(
+    key_domain: &str,
+    algorithm: Algorithm,
+    expected_hex: &str,
+    actual: [u8; 32],
+) -> Result<()> {
+    let expected = parse_digest32("Expected fingerprint", expected_hex)?;
+    ensure!(
+        expected == actual,
+        "Fingerprint mismatch for the {:?} key in domain '{}': config expects {}, the key hashes to {}",
+        algorithm,
+        key_domain,
+        crate::crypto::to_hex(&expected),
+        crate::crypto::to_hex(&actual)
+    );
+    Ok(())
+}
+
+/// The first item that repeats one already seen, if any.
+fn first_duplicate<T: PartialEq>(items: &[T]) -> Option<&T> {
+    (1..items.len())
+        .find(|&i| items[..i].contains(&items[i]))
+        .map(|i| &items[i])
 }
 
 /// Validates an identity string and NUL-pads it to [`MAX_IDENTITY_STRING_LEN`].
@@ -90,9 +164,6 @@ fn default_key_domain() -> String {
     "prod".to_string()
 }
 
-/// JSON configuration for building a Key Rotation Record.
-///
-/// Every field is optional; omitted fields take their [`Default`] value.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(default)]
 pub struct KrrBuildConfig {
@@ -117,7 +188,6 @@ impl Default for KrrBuildConfig {
     }
 }
 
-/// Where the fingerprint bytes for a key come from.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]
 pub enum FingerprintSource {
@@ -129,7 +199,6 @@ pub enum FingerprintSource {
     Fingerprint(String),
 }
 
-/// The EC and post-quantum public key files making up one hybrid key.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct HybridKeyFiles {
     pub ec: String,
@@ -146,22 +215,54 @@ pub struct KeyFingerprintConfig {
 
     #[serde(flatten)]
     pub source: FingerprintSource,
+
+    // Assumed hex encoding
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub expected_fingerprint: Option<String>,
 }
 
-/// Fluent builder for constructing canonical OpenPRoT key rotation records (`KROT`).
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+struct Fingerprint {
+    key_domain: crypto_rust_proto::KeyDomain,
+    algorithm: Algorithm,
+    digest: [u8; 32],
+}
+
+impl Fingerprint {
+    fn to_proto(self) -> crypto_rust_proto::KeyFingerprint {
+        let mut fp = protobuf::proto!(crypto_rust_proto::KeyFingerprint {
+            key_domain: self.key_domain
+        });
+        let digest = protobuf::proto!(crypto_rust_proto::Sha2_256Digest {
+            data: self.digest.to_vec()
+        });
+        match self.algorithm {
+            Algorithm::P256 => fp.p256_mut().set_sha2_256(digest),
+            Algorithm::Slhdsa => fp.slhdsa_mut().set_sha2_256(digest),
+            Algorithm::Rsa2048 => fp.rsa2048_mut().set_sha2_256(digest),
+            Algorithm::Rsa3072 => fp.rsa3072_mut().set_sha2_256(digest),
+            Algorithm::Rsa4096 => fp.rsa4096_mut().set_sha2_256(digest),
+            Algorithm::HybridP256Slhdsa => fp.hybrid_p256_slhdsa_mut().set_sha2_256(digest),
+            Algorithm::Mldsa => fp.mldsa_mut().set_sha2_256(digest),
+            Algorithm::HybridP256Mldsa => fp.hybrid_p256_mldsa_mut().set_sha2_256(digest),
+        }
+        fp
+    }
+}
+
 #[derive(Debug)]
 pub struct RecordBuilder {
     version: u32,
     image_vendor: String,
     image_family: String,
     legacy_image_family: Option<u32>,
-    fingerprints: Vec<crypto_rust_proto::KeyFingerprint>,
-    img_descriptor_digests: Vec<key_rotation_rust_proto::ImgDescriptorDigest>,
+    fingerprints: Vec<Fingerprint>,
+    img_descriptor_digests: Vec<[u8; 32]>,
+    allow_test_keys: bool,
 }
 
 impl Default for RecordBuilder {
     fn default() -> Self {
-        // Defaults live in exactly one place: `KrrBuildConfig::default()`.
         let config = KrrBuildConfig::default();
         Self {
             version: config.version,
@@ -170,6 +271,7 @@ impl Default for RecordBuilder {
             legacy_image_family: config.legacy_image_family,
             fingerprints: Vec::new(),
             img_descriptor_digests: Vec::new(),
+            allow_test_keys: false,
         }
     }
 }
@@ -191,19 +293,27 @@ impl RecordBuilder {
 
         for fp_cfg in &config.fingerprints {
             let domain = parse_key_domain(&fp_cfg.key_domain)?;
-            builder = match &fp_cfg.source {
-                FingerprintSource::KeyFile(path) => {
-                    builder.add_key_file(domain, fp_cfg.algorithm, path)?
-                }
+            let algorithm = fp_cfg.algorithm;
+            let digest = match &fp_cfg.source {
+                FingerprintSource::KeyFile(path) => key_file_digest(algorithm, Path::new(path))?,
                 FingerprintSource::KeyFiles(files) => {
-                    builder.add_hybrid_key_files(domain, fp_cfg.algorithm, &files.ec, &files.pq)?
+                    hybrid_key_files_digest(algorithm, Path::new(&files.ec), Path::new(&files.pq))?
                 }
-                FingerprintSource::Fingerprint(hex_str) => builder.add_fingerprint(
-                    domain,
-                    fp_cfg.algorithm,
-                    parse_digest32("Fingerprint", hex_str)?,
-                ),
+                FingerprintSource::Fingerprint(hex_str) => {
+                    ensure!(
+                        fp_cfg.expected_fingerprint.is_none(),
+                        "'expected_fingerprint' has nothing to check in the '{}' {:?} entry: \
+                         it already states the fingerprint instead of naming a key file",
+                        fp_cfg.key_domain,
+                        algorithm
+                    );
+                    parse_digest32("Fingerprint", hex_str)?
+                }
             };
+            if let Some(expected) = &fp_cfg.expected_fingerprint {
+                check_expected_fingerprint(&fp_cfg.key_domain, algorithm, expected, digest)?;
+            }
+            builder = builder.add_fingerprint(domain, algorithm, digest);
         }
 
         for hex_str in &config.digests {
@@ -246,6 +356,11 @@ impl RecordBuilder {
         self
     }
 
+    pub fn allow_test_keys(mut self, allow: bool) -> Self {
+        self.allow_test_keys = allow;
+        self
+    }
+
     /// Appends a precomputed SHA2-256 fingerprint for `algorithm` under `domain`.
     pub fn add_fingerprint(
         mut self,
@@ -253,21 +368,11 @@ impl RecordBuilder {
         algorithm: Algorithm,
         digest: [u8; 32],
     ) -> Self {
-        let mut fp = protobuf::proto!(crypto_rust_proto::KeyFingerprint { key_domain: domain });
-        let digest = protobuf::proto!(crypto_rust_proto::Sha2_256Digest {
-            data: digest.to_vec()
+        self.fingerprints.push(Fingerprint {
+            key_domain: domain,
+            algorithm,
+            digest,
         });
-        match algorithm {
-            Algorithm::P256 => fp.p256_mut().set_sha2_256(digest),
-            Algorithm::Slhdsa => fp.slhdsa_mut().set_sha2_256(digest),
-            Algorithm::Rsa2048 => fp.rsa2048_mut().set_sha2_256(digest),
-            Algorithm::Rsa3072 => fp.rsa3072_mut().set_sha2_256(digest),
-            Algorithm::Rsa4096 => fp.rsa4096_mut().set_sha2_256(digest),
-            Algorithm::HybridP256Slhdsa => fp.hybrid_p256_slhdsa_mut().set_sha2_256(digest),
-            Algorithm::Mldsa => fp.mldsa_mut().set_sha2_256(digest),
-            Algorithm::HybridP256Mldsa => fp.hybrid_p256_mldsa_mut().set_sha2_256(digest),
-        }
-        self.fingerprints.push(fp);
         self
     }
 
@@ -278,52 +383,13 @@ impl RecordBuilder {
         algorithm: Algorithm,
         key: KeyBytes<'_>,
     ) -> Result<Self> {
-        let material = KeyMaterial::parse(algorithm, key)
-            .with_context(|| format!("Invalid {algorithm:?} key"))?;
-        Ok(self.add_fingerprint(domain, algorithm, material.fingerprint_sha256()))
-    }
-
-    /// Reads a public key file and appends its SHA2-256 fingerprint.
-    pub fn add_key_file(
-        self,
-        domain: crypto_rust_proto::KeyDomain,
-        algorithm: Algorithm,
-        path: impl AsRef<Path>,
-    ) -> Result<Self> {
-        let content = read_key(path.as_ref())?;
-        self.add_key_bytes(domain, algorithm, KeyBytes::Single(&content))
-            .with_context(|| format!("Failed to fingerprint key file {}", path.as_ref().display()))
-    }
-
-    /// Reads the EC and PQ halves of a hybrid public key and appends its fingerprint.
-    pub fn add_hybrid_key_files(
-        self,
-        domain: crypto_rust_proto::KeyDomain,
-        algorithm: Algorithm,
-        ec: impl AsRef<Path>,
-        pq: impl AsRef<Path>,
-    ) -> Result<Self> {
-        let (ec_key, pq_key) = (read_key(ec.as_ref())?, read_key(pq.as_ref())?);
-        let key = KeyBytes::Hybrid {
-            ec: &ec_key,
-            pq: &pq_key,
-        };
-        self.add_key_bytes(domain, algorithm, key).with_context(|| {
-            format!(
-                "Failed to fingerprint key files {} + {}",
-                ec.as_ref().display(),
-                pq.as_ref().display()
-            )
-        })
+        let digest =
+            key_digest(algorithm, key).with_context(|| format!("Invalid {algorithm:?} key"))?;
+        Ok(self.add_fingerprint(domain, algorithm, digest))
     }
 
     pub fn add_image_digest(mut self, digest: [u8; 32]) -> Self {
-        let d = protobuf::proto!(key_rotation_rust_proto::ImgDescriptorDigest {
-            sha2_256: crypto_rust_proto::Sha2_256Digest {
-                data: digest.to_vec()
-            }
-        });
-        self.img_descriptor_digests.push(d);
+        self.img_descriptor_digests.push(digest);
         self
     }
 
@@ -337,14 +403,49 @@ impl RecordBuilder {
             "Key rotation record must contain at least one key fingerprint or image descriptor digest"
         );
 
+        if !self.allow_test_keys
+            && let Some(fp) = self
+                .fingerprints
+                .iter()
+                .find(|fp| TEST_KEY_DOMAINS.contains(&fp.key_domain))
+        {
+            bail!(
+                "Key domain '{}' holds test or development keys; pass --allow-test-keys to rotate to them",
+                key_domain_name(fp.key_domain)
+            );
+        }
+
+        // A repeated entry is always an editing accident: the record would say
+        // the same thing twice and waste the flash slot doing it.
+        if let Some(fp) = first_duplicate(&self.fingerprints) {
+            bail!(
+                "Duplicate {:?} key fingerprint in domain '{}': {}",
+                fp.algorithm,
+                key_domain_name(fp.key_domain),
+                crate::crypto::to_hex(&fp.digest)
+            );
+        }
+        if let Some(digest) = first_duplicate(&self.img_descriptor_digests) {
+            bail!(
+                "Duplicate image descriptor digest: {}",
+                crate::crypto::to_hex(digest)
+            );
+        }
+
         let vendor_name = identity_name("Image Vendor", &self.image_vendor)?;
         let family_name = identity_name("Image Family", &self.image_family)?;
         let mut desc = protobuf::proto!(key_rotation_rust_proto::Descriptor {
             version: self.version,
             image_vendor: identity_rust_proto::ImageVendor { name: vendor_name },
             image_family: identity_rust_proto::ImageFamily { name: family_name },
-            fingerprint: self.fingerprints.into_iter(),
-            img_descriptor_digest: self.img_descriptor_digests.into_iter(),
+            fingerprint: self.fingerprints.iter().map(|fp| fp.to_proto()),
+            img_descriptor_digest: self.img_descriptor_digests.iter().map(|digest| {
+                protobuf::proto!(key_rotation_rust_proto::ImgDescriptorDigest {
+                    sha2_256: crypto_rust_proto::Sha2_256Digest {
+                        data: digest.to_vec()
+                    }
+                })
+            }),
         });
         if let Some(family) = self.legacy_image_family {
             desc.set_legacy_image_family(protobuf::proto!(
@@ -598,6 +699,8 @@ mod tests {
         }"#;
         let unsigned = RecordBuilder::from_json(json)
             .expect("Failed to parse JSON")
+            // The config names the `dev` domain, so it needs the opt-in.
+            .allow_test_keys(true)
             .build_unsigned()
             .expect("Failed to build unsigned");
 
@@ -644,6 +747,10 @@ mod tests {
             r#"{"fingerprints": [{ "algorithm": "p256", "fingerprint": "not_hex" }]}"#,
             // Correct hex, wrong length.
             r#"{"fingerprints": [{ "algorithm": "p256", "fingerprint": "0102" }]}"#,
+            // A pinned fingerprint with no key to check it against.
+            r#"{"fingerprints": [{ "algorithm": "p256",
+                "fingerprint": "0000000000000000000000000000000000000000000000000000000000000000",
+                "expected_fingerprint": "0000000000000000000000000000000000000000000000000000000000000000" }]}"#,
             // Invalid image digest.
             r#"{"digests": ["0102"]}"#,
         ];
@@ -653,5 +760,72 @@ mod tests {
                 "expected rejection of: {json}"
             );
         }
+    }
+
+    #[test]
+    fn test_test_key_domains_need_the_flag() {
+        use crypto_rust_proto::KeyDomain;
+        let record =
+            |domain| RecordBuilder::new().add_fingerprint(domain, Algorithm::P256, [0x42u8; 32]);
+
+        for domain in [
+            KeyDomain::PayloadTest,
+            KeyDomain::PayloadDev,
+            KeyDomain::BiosDev,
+        ] {
+            let err = record(domain)
+                .build_unsigned()
+                .expect_err("a test domain must not build by default");
+            assert!(err.to_string().contains("--allow-test-keys"), "{err:#}");
+            assert!(
+                record(domain)
+                    .allow_test_keys(true)
+                    .build_unsigned()
+                    .is_ok()
+            );
+        }
+
+        // Production domains never need the opt-in.
+        for domain in [KeyDomain::PayloadProd, KeyDomain::BiosProd, KeyDomain::Rotr] {
+            assert!(record(domain).build_unsigned().is_ok());
+        }
+    }
+
+    #[test]
+    fn test_duplicate_entries_rejected() {
+        use crypto_rust_proto::KeyDomain;
+        let digest = [0x42u8; 32];
+        let base = || {
+            RecordBuilder::new().add_fingerprint(KeyDomain::PayloadProd, Algorithm::P256, digest)
+        };
+
+        let err = base()
+            .add_fingerprint(KeyDomain::PayloadProd, Algorithm::P256, digest)
+            .build_unsigned()
+            .expect_err("the same fingerprint twice says nothing new");
+        assert!(
+            err.to_string().contains("Duplicate P256 key fingerprint"),
+            "{err}"
+        );
+
+        // One key can legitimately appear under two domains or two algorithms.
+        assert!(
+            base()
+                .add_fingerprint(KeyDomain::BiosProd, Algorithm::P256, digest)
+                .add_fingerprint(KeyDomain::PayloadProd, Algorithm::Mldsa, digest)
+                .build_unsigned()
+                .is_ok()
+        );
+
+        let err = base()
+            .add_image_digest(digest)
+            .add_image_digest(digest)
+            .build_unsigned()
+            .expect_err("the same image digest twice says nothing new");
+        assert!(
+            err.to_string()
+                .contains("Duplicate image descriptor digest"),
+            "{err}"
+        );
     }
 }

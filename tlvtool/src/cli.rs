@@ -15,6 +15,7 @@
 //! Command line interface definitions and handlers.
 
 use crate::builder::RecordBuilder;
+use crate::builder::parse_digest32;
 use crate::inspect::inspect_file;
 use crate::signature::HybridSignatureFiles;
 use crate::signature::SignedRecordBuilder;
@@ -49,6 +50,10 @@ pub struct BuildArgs {
     /// output file path (.unsigned). If omitted, prints human-readable record inspection to stdout.
     #[argh(option, short = 'o')]
     pub out: Option<String>,
+
+    /// allow keys from test domains to be included in the record.
+    #[argh(switch)]
+    pub allow_test_keys: bool,
 }
 
 #[derive(FromArgs, Debug, Clone, PartialEq, Eq)]
@@ -87,6 +92,10 @@ pub struct SignArgs {
     /// path to ML-DSA-44 signature file (raw).
     #[argh(option)]
     pub mldsa_signature: String,
+
+    /// expected SHA2-256 hash of the target RoT OTP key material (hex string).
+    #[argh(option)]
+    pub expected_otp_fingerprint: Option<String>,
 }
 
 pub fn handle_krr(args: KrrArgs) -> Result<String> {
@@ -99,6 +108,7 @@ pub fn handle_krr(args: KrrArgs) -> Result<String> {
 pub fn handle_build(args: BuildArgs) -> Result<String> {
     let unsigned = RecordBuilder::from_json_file(&args.config)
         .context("Failed to load build config")?
+        .allow_test_keys(args.allow_test_keys)
         .build_unsigned()
         .context("Failed to build record")?;
 
@@ -121,8 +131,14 @@ pub fn handle_inspect(args: InspectArgs) -> Result<String> {
 }
 
 pub fn handle_sign(args: SignArgs) -> Result<String> {
-    let signed = SignedRecordBuilder::from_unsigned_file(&args.record)
-        .context("Failed to load unsigned record")?
+    let mut builder = SignedRecordBuilder::from_unsigned_file(&args.record)
+        .context("Failed to load unsigned record")?;
+
+    if let Some(hex) = &args.expected_otp_fingerprint {
+        builder = builder.expect_otp_fingerprint(parse_digest32("Expected OTP fingerprint", hex)?);
+    }
+
+    let signed = builder
         // Key rotation records are only ever countersigned by the RoT rotation
         // authority, so the signing key domain is fixed rather than selectable.
         .add_hybrid_signature_files(
