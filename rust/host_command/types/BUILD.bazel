@@ -191,3 +191,19 @@ rust_library(
         "//third_party:zerocopy",
     ],
 )
+
+rust_library(
+    name = "tpm_mode",
+    srcs = ["tpm_mode.rs"],
+    crate_name = "pie_rot_hostcmd_types_tpm_mode",
+    edition = "2024",
+    proc_macro_deps = [
+        "//third_party:zerocopy_derive",
+    ],
+    visibility = ["//visibility:public"],
+    deps = [
+        ":types",
+        "//third_party:ufmt",
+        "//third_party:zerocopy",
+    ],
+)
