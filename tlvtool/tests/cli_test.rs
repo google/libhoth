@@ -14,6 +14,7 @@
 
 //! Integration tests for the `tlvtool` command line interface.
 
+use std::path::Path;
 use std::path::PathBuf;
 use std::process::Command;
 
@@ -143,4 +144,118 @@ fn test_build_rejects_a_bad_config() {
     assert!(!out.status.success(), "a bad config must not exit zero");
     let stderr = String::from_utf8_lossy(&out.stderr);
     assert!(stderr.contains("Failed to parse JSON config"), "{stderr}");
+}
+
+/// Filler hybrid signing inputs, written to scratch as `krr sign` expects them.
+///
+/// Returns the four paths in the order the command line takes them: EC public
+/// key, ML-DSA public key, EC signature, ML-DSA signature.
+fn write_key_material(prefix: &str) -> [PathBuf; 4] {
+    let mut ec_public_key = vec![1u8; 32];
+    ec_public_key.extend_from_slice(&[2u8; 32]);
+
+    [
+        ("ec.pub", ec_public_key),
+        ("mldsa.pub", vec![3u8; 1312]),
+        ("ec.sig", vec![1u8; 64]),
+        ("mldsa.sig", vec![2u8; 2420]),
+    ]
+    .map(|(name, bytes)| {
+        let path = PathBuf::from(std::env::var(TEST_TEMPDIR).expect("TEST_TMPDIR is not set"))
+            .join(format!("{}_{}", prefix, name));
+        std::fs::write(&path, bytes).expect("failed to write key material");
+        path
+    })
+}
+
+/// Builds an unsigned record with `krr build` and returns its path.
+fn build_unsigned(prefix: &str) -> PathBuf {
+    let config = write_config(&format!("{}_config.json", prefix));
+    let record = PathBuf::from(std::env::var(TEST_TEMPDIR).expect("TEST_TMPDIR is not set"))
+        .join(format!("{}.unsigned", prefix));
+    run(&[
+        "krr",
+        "build",
+        config.to_str().unwrap(),
+        "-o",
+        record.to_str().unwrap(),
+    ]);
+    record
+}
+
+/// Returns `krr sign` arguments for `record`, writing to `out` if given.
+fn sign_args(record: &Path, keys: &[PathBuf; 4], out: Option<&Path>) -> Vec<String> {
+    let mut args = vec![
+        "krr".to_string(),
+        "sign".to_string(),
+        record.display().to_string(),
+        "--ec-public-key".to_string(),
+        keys[0].display().to_string(),
+        "--mldsa-public-key".to_string(),
+        keys[1].display().to_string(),
+        "--ec-signature".to_string(),
+        keys[2].display().to_string(),
+        "--mldsa-signature".to_string(),
+        keys[3].display().to_string(),
+    ];
+    if let Some(out) = out {
+        args.push("-o".to_string());
+        args.push(out.display().to_string());
+    }
+    args
+}
+
+#[test]
+fn test_sign_writes_the_output_file() {
+    let record = build_unsigned("sign_emit");
+    let keys = write_key_material("sign_emit");
+    let signed = PathBuf::from(std::env::var(TEST_TEMPDIR).expect("TEST_TMPDIR is not set"))
+        .join("sign_emit.signed");
+
+    let args = sign_args(&record, &keys, Some(&signed));
+    let msg = run(&args.iter().map(String::as_str).collect::<Vec<_>>());
+
+    assert!(msg.contains("successfully written"), "{msg}");
+    assert!(msg.contains("Total Signed Size"), "{msg}");
+    assert!(!std::fs::read(&signed).unwrap().is_empty());
+
+    // The signed record must still inspect as a KRSD wrapping the original.
+    let report = run(&["inspect", signed.to_str().unwrap()]);
+    for tag in ["KRSD", "KROT", "SIGC"] {
+        assert!(report.contains(&format!("Tag: '{tag}'")), "{report}");
+    }
+}
+
+#[test]
+fn test_sign_prints_the_record_without_an_output_path() {
+    let record = build_unsigned("sign_dump");
+    let keys = write_key_material("sign_dump");
+
+    let args = sign_args(&record, &keys, None);
+    let report = run(&args.iter().map(String::as_str).collect::<Vec<_>>());
+
+    assert!(report.contains("Tag: 'KRSD'"), "{report}");
+    assert!(report.contains("Target RoT OTP FP"), "{report}");
+}
+
+#[test]
+fn test_sign_rejects_a_bad_key_file() {
+    let record = build_unsigned("sign_bad");
+    let mut keys = write_key_material("sign_bad");
+    keys[0] = PathBuf::from(std::env::var(TEST_TEMPDIR).expect("TEST_TMPDIR is not set"))
+        .join("sign_bad_short.pub");
+    std::fs::write(&keys[0], [0u8; 8]).unwrap();
+
+    let args = sign_args(&record, &keys, None);
+    let out = tlvtool()
+        .args(&args)
+        .output()
+        .expect("failed to run tlvtool");
+
+    assert!(!out.status.success(), "a bad key must not exit zero");
+    let stderr = String::from_utf8_lossy(&out.stderr);
+    assert!(
+        stderr.contains("Failed to attach hybrid signature"),
+        "{stderr}"
+    );
 }
