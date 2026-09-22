@@ -26,6 +26,7 @@
 //! ```
 
 use mutask_golden::assert_eq_golden;
+use tlvtool::Algorithm;
 use tlvtool::HybridMaterial;
 use tlvtool::RecordBuilder;
 use tlvtool::SignedRecordBuilder;
@@ -50,8 +51,16 @@ fn v1_unsigned() -> Vec<u8> {
         .image_vendor("GOOGLE")
         .image_family("FAMILYV1")
         .legacy_image_family(1)
-        .add_p256_fingerprint(crypto_rust_proto::KeyDomain::PayloadProd, p256_fp)
-        .add_mldsa44_fingerprint(crypto_rust_proto::KeyDomain::PayloadProd, mldsa_fp)
+        .add_fingerprint(
+            crypto_rust_proto::KeyDomain::PayloadProd,
+            Algorithm::P256,
+            p256_fp,
+        )
+        .add_fingerprint(
+            crypto_rust_proto::KeyDomain::PayloadProd,
+            Algorithm::Mldsa,
+            mldsa_fp,
+        )
         .add_image_digest([0xaa; 32])
         .build_unsigned()
         .expect("failed to build the v1 record")
@@ -64,7 +73,11 @@ fn v2_unsigned() -> tlvtool::UnsignedRecord {
         .version(2)
         .image_vendor("GOOGLE")
         .image_family("FAMILYV1")
-        .add_p256_fingerprint(crypto_rust_proto::KeyDomain::PayloadProd, [0x50; 32])
+        .add_fingerprint(
+            crypto_rust_proto::KeyDomain::PayloadProd,
+            Algorithm::P256,
+            [0x50; 32],
+        )
         .add_image_digest([0x77; 32])
         .build_unsigned()
         .expect("failed to build the v2 record")

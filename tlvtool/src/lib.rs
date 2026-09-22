@@ -24,6 +24,8 @@ pub mod signature;
 
 pub use builder::RecordBuilder;
 pub use builder::UnsignedRecord;
+pub use crypto::Algorithm;
+pub use crypto::KeyBytes;
 pub use inspect::inspect_file;
 pub use inspect::inspect_words;
 pub use signature::HybridMaterial;

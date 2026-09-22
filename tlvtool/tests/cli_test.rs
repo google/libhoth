@@ -146,6 +146,83 @@ fn test_build_rejects_a_bad_config() {
     assert!(stderr.contains("Failed to parse JSON config"), "{stderr}");
 }
 
+/// Test P-256 public key (SPKI PEM).
+const P256_SPKI_PEM: &str = "-----BEGIN PUBLIC KEY-----
+MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAEBYAk4OZX3K0yh4j6950NlUpCQlwZ
+M97unt4Q7HG36ecljO7J3mFVWaraKzXTjM7oGqPNkKpVQg7CIcHZ6MRsaA==
+-----END PUBLIC KEY-----
+";
+
+/// Test SLH-DSA-SHA2-128s public key (raw PEM).
+const SLHDSA_RAW_PEM: &str = "-----BEGIN RAW:SPHINCS+_SHA2_128s_simple PUBLIC KEY-----
+szRCBKbhiZP2Hu/mtVAvQTdyraaLL9+cqDB6gKhS88M=
+-----END RAW:SPHINCS+_SHA2_128s_simple PUBLIC KEY-----
+";
+
+/// Writes the two real public keys to scratch and returns `(ec, pq)` paths.
+fn write_public_keys(prefix: &str) -> (PathBuf, PathBuf) {
+    let ec = PathBuf::from(std::env::var(TEST_TEMPDIR).expect("TEST_TEMPDIR is not set"))
+        .join(format!("{prefix}.ec.pem"));
+    let pq = PathBuf::from(std::env::var(TEST_TEMPDIR).expect("TEST_TEMPDIR is not set"))
+        .join(format!("{prefix}.slhdsa.pem"));
+    std::fs::write(&ec, P256_SPKI_PEM).unwrap();
+    std::fs::write(&pq, SLHDSA_RAW_PEM).unwrap();
+    (ec, pq)
+}
+
+#[test]
+fn test_build_fingerprints_key_files_from_json() {
+    let (ec, pq) = write_public_keys("build_keys");
+    let config = PathBuf::from(std::env::var(TEST_TEMPDIR).expect("TEST_TEMPDIR is not set"))
+        .join("build_keys.json");
+    std::fs::write(
+        &config,
+        format!(
+            r#"{{ "fingerprints": [
+                {{ "algorithm": "p256",   "key_file": "{ec}" }},
+                {{ "algorithm": "slhdsa", "key_file": "{pq}" }},
+                {{ "algorithm": "hybrid_p256_slhdsa", "key_domain": "rotr",
+                   "key_files": {{ "ec": "{ec}", "pq": "{pq}" }} }}
+            ] }}"#,
+            ec = ec.display(),
+            pq = pq.display()
+        ),
+    )
+    .unwrap();
+
+    let report = run(&["krr", "build", config.to_str().unwrap()]);
+    assert!(report.contains("Tag: 'KROT'"), "{report}");
+}
+
+#[test]
+fn test_build_rejects_key_file_arity_mismatch() {
+    let (ec, pq) = write_public_keys("build_arity");
+    let config = PathBuf::from(std::env::var(TEST_TEMPDIR).expect("TEST_TEMPDIR is not set"))
+        .join("build_arity.json");
+    std::fs::write(
+        &config,
+        format!(
+            r#"{{ "fingerprints": [ {{ "algorithm": "p256",
+                "key_files": {{ "ec": "{}", "pq": "{}" }} }} ] }}"#,
+            ec.display(),
+            pq.display()
+        ),
+    )
+    .unwrap();
+
+    let out = tlvtool()
+        .args(["krr", "build", config.to_str().unwrap()])
+        .output()
+        .expect("failed to run tlvtool");
+
+    assert!(
+        !out.status.success(),
+        "two keys for a non-hybrid algorithm must fail"
+    );
+    let stderr = String::from_utf8_lossy(&out.stderr);
+    assert!(stderr.contains("takes a single key"), "{stderr}");
+}
+
 /// Filler hybrid signing inputs, written to scratch as `krr sign` expects them.
 ///
 /// Returns the four paths in the order the command line takes them: EC public
