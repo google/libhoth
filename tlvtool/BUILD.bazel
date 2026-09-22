@@ -31,8 +31,10 @@ rust_library(
     visibility = ["//visibility:public"],
     deps = [
         "//contrib/crypto:sha256_sw",
+        "//contrib/fingerprints",
         "//contrib/openprot/proto",
         "//contrib/openprot/proto:crypto_rust_proto",
+        "//contrib/openprot/proto:crypto_tlv",
         "//contrib/openprot/proto:identity_rust_proto",
         "//contrib/openprot/proto:key_rotation_rust_proto",
         "//contrib/tlv",

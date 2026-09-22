@@ -12,7 +12,7 @@
       └── [1] Tag: 'SIGC' | Offset: 0x00000090 | Words: 974 (3896 bytes) | Padding: 0
           Children:
           ├── [0] Tag: 'PKEY' | Offset: 0x00000098 | Words: 347 (1388 bytes) | Padding: 0
-          │   Data: 524f54524d34503258010000303132333435363738393a3b3c3d3e3f40414243...
+          │   Data: 524f54524d345032580100004f4e4d4c4b4a494847464544434241403f3e3d3c...
           └── [1] Tag: 'SIGN' | Offset: 0x0000060c | Words: 623 (2492 bytes) | Padding: 0
               Children:
               └── [0] Tag: 'M4P2' | Offset: 0x00000614 | Words: 621 (2484 bytes) | Padding: 0
