@@ -130,3 +130,18 @@ rust_library(
         "//third_party:zerocopy",
     ],
 )
+
+rust_library(
+    name = "chipinfo",
+    srcs = ["chipinfo.rs"],
+    crate_name = "pie_rot_hostcmd_types_chipinfo",
+    edition = "2024",
+    proc_macro_deps = [
+        "//third_party:zerocopy_derive",
+    ],
+    visibility = ["//visibility:public"],
+    deps = [
+        ":types",
+        "//third_party:zerocopy",
+    ],
+)
