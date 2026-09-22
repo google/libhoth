@@ -85,3 +85,18 @@ rust_library(
         "//third_party:zerocopy",
     ],
 )
+
+rust_library(
+    name = "get_version",
+    srcs = ["get_version.rs"],
+    crate_name = "pie_rot_hostcmd_types_get_version",
+    edition = "2024",
+    proc_macro_deps = [
+        "//third_party:zerocopy_derive",
+    ],
+    visibility = ["//visibility:public"],
+    deps = [
+        ":types",
+        "//third_party:zerocopy",
+    ],
+)
