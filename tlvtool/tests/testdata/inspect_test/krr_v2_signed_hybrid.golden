@@ -1,0 +1,20 @@
+=================================================================
+                   OpenPRoT TLV File Inspector                   
+=================================================================
+  Total Size     : 4048 bytes (1012 words)
+  Root Containers: 1
+-----------------------------------------------------------------
+  TLV Structure Tree:
+  └── [0] Tag: 'KRSD' | Offset: 0x00000000 | Words: 1010 (4040 bytes) | Padding: 0
+      Children:
+      ├── [0] Tag: 'KROT' | Offset: 0x00000008 | Words: 32 (128 bytes) | Padding: 0
+      │   Data: 02000000474f4f474c45000046414d494c5956314b4649500d00000050524f44...
+      └── [1] Tag: 'SIGC' | Offset: 0x00000090 | Words: 974 (3896 bytes) | Padding: 0
+          Children:
+          ├── [0] Tag: 'PKEY' | Offset: 0x00000098 | Words: 347 (1388 bytes) | Padding: 0
+          │   Data: 524f54524d34503258010000303132333435363738393a3b3c3d3e3f40414243...
+          └── [1] Tag: 'SIGN' | Offset: 0x0000060c | Words: 623 (2492 bytes) | Padding: 0
+              Children:
+              └── [0] Tag: 'M4P2' | Offset: 0x00000614 | Words: 621 (2484 bytes) | Padding: 0
+                  Data: 8888888888888888888888888888888888888888888888888888888888888888...
+=================================================================
