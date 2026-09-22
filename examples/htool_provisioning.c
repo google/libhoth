@@ -11,7 +11,6 @@
 
 #include "htool.h"
 #include "htool_cmd.h"
-#include "htool_security_version.h"
 #include "protocol/provisioning.h"
 #include "transports/libhoth_device.h"
 
@@ -37,13 +36,6 @@ int htool_get_provisioning_log(const struct htool_invocation* inv) {
   if (output_ptr == NULL) {
     fprintf(stderr, "Error: %s, when attempting to open file: %s\n",
             strerror(errno), output_file);
-    goto cleanup;
-  }
-
-  // SECURITY_V3 not supported yet.
-  if (htool_get_security_version(dev) != LIBHOTH_SECURITY_V2) {
-    status = -1;
-    fprintf(stderr, "SECURITY_V3 is not supported yet\n");
     goto cleanup;
   }
 
@@ -120,13 +112,6 @@ int htool_validate_and_sign(const struct htool_invocation* inv) {
               strerror(errno), output_file);
       goto cleanup;
     }
-  }
-
-  // SECURITY_V3 not supported yet.
-  if (htool_get_security_version(dev) != LIBHOTH_SECURITY_V2) {
-    status = -1;
-    fprintf(stderr, "SECURITY_V3 is not supported yet.\n");
-    goto cleanup;
   }
 
   memset(cert, 0, sizeof(cert));
