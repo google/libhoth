@@ -1,0 +1,31 @@
+load("@rules_rust//rust:defs.bzl", "rust_doc_test", "rust_library", "rust_test")
+
+rust_library(
+    name = "client",
+    srcs = [
+        "lib.rs",
+    ],
+    crate_name = "pie_rot_hostcmd_client",
+    edition = "2024",
+    visibility = ["//visibility:public"],
+    deps = [
+        "//block_on",
+        "//error",
+        "//host_command/types",
+        "//host_command/types:hello",
+        "//third_party:aligned",
+        "//third_party:thiserror",
+        "//third_party:zerocopy",
+    ],
+)
+
+rust_test(
+    name = "client_test",
+    crate = ":client",
+    edition = "2024",
+)
+
+rust_doc_test(
+    name = "client_doctest",
+    crate = ":client",
+)
