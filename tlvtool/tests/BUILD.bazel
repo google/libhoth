@@ -21,3 +21,21 @@ rust_test(
     edition = "2024",
     deps = ["@rules_rust//tools/runfiles"],
 )
+
+# Golden tests for the `inspect` report. Update them with:
+#   UPDATE_GOLDEN=1 bazel run //tlvtool/tests:inspect_test
+rust_test(
+    name = "inspect_test",
+    srcs = ["inspect_test.rs"],
+    compile_data = glob(["testdata/inspect_test/*.golden"]),
+    edition = "2024",
+    rustc_flags = [
+        "-C",
+        "link-arg=-lgcc",
+    ],
+    deps = [
+        "//contrib/golden",
+        "//contrib/openprot/proto:crypto_rust_proto",
+        "//tlvtool:tlvtool_lib",
+    ],
+)
