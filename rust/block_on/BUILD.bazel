@@ -1,0 +1,14 @@
+load("@rules_rust//rust:defs.bzl", "rust_library")
+
+rust_library(
+    name = "block_on",
+    srcs = [
+        "lib.rs",
+    ],
+    crate_name = "libhoth_block_on",
+    edition = "2024",
+    visibility = ["//visibility:public"],
+    deps = [
+        "//third_party:tokio",
+    ],
+)
