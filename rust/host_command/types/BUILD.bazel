@@ -207,3 +207,26 @@ rust_library(
         "//third_party:zerocopy",
     ],
 )
+
+rust_library(
+    name = "test_commands",
+    srcs = ["test_commands.rs"],
+    crate_name = "pie_rot_hostcmd_types_test_commands",
+    edition = "2024",
+    proc_macro_deps = [
+        "//third_party:zerocopy_derive",
+    ],
+    visibility = ["//visibility:public"],
+    deps = [
+        ":types",
+        "//third_party:aligned",
+        "//third_party:ufmt",
+        "//third_party:zerocopy",
+    ],
+)
+
+rust_test(
+    name = "test_commands_test",
+    crate = ":test_commands",
+    edition = "2024",
+)
