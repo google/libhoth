@@ -24,6 +24,7 @@ rust_library(
         "src/crypto.rs",
         "src/inspect.rs",
         "src/lib.rs",
+        "src/signature.rs",
     ],
     crate_name = "tlvtool",
     edition = "2024",
