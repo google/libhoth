@@ -16,9 +16,12 @@
 
 use crate::builder::RecordBuilder;
 use crate::inspect::inspect_file;
+use crate::signature::HybridSignatureFiles;
+use crate::signature::SignedRecordBuilder;
 use anyhow::Context;
 use anyhow::Result;
 use argh::FromArgs;
+use std::path::Path;
 
 #[derive(FromArgs, Debug, Clone, PartialEq, Eq)]
 #[argh(subcommand, name = "krr")]
@@ -32,6 +35,7 @@ pub struct KrrArgs {
 #[argh(subcommand)]
 pub enum KrrCommands {
     Build(BuildArgs),
+    Sign(SignArgs),
 }
 
 #[derive(FromArgs, Debug, Clone, PartialEq, Eq)]
@@ -56,9 +60,39 @@ pub struct InspectArgs {
     pub file: String,
 }
 
+#[derive(FromArgs, Debug, Clone, PartialEq, Eq)]
+#[argh(subcommand, name = "sign")]
+/// Attach offline signatures to a frozen unsigned Key Rotation record.
+pub struct SignArgs {
+    /// path to the unsigned record file (.unsigned).
+    #[argh(positional)]
+    pub record: String,
+
+    /// output file path (.signed). If omitted, prints human-readable record inspection to stdout.
+    #[argh(option, short = 'o')]
+    pub out: Option<String>,
+
+    /// path to EC (P-256) public key file (PEM/DER/raw).
+    #[argh(option)]
+    pub ec_public_key: String,
+
+    /// path to ML-DSA-44 public key file (raw).
+    #[argh(option)]
+    pub mldsa_public_key: String,
+
+    /// path to EC (P-256) signature file (DER/raw).
+    #[argh(option)]
+    pub ec_signature: String,
+
+    /// path to ML-DSA-44 signature file (raw).
+    #[argh(option)]
+    pub mldsa_signature: String,
+}
+
 pub fn handle_krr(args: KrrArgs) -> Result<String> {
     match args.command {
         KrrCommands::Build(build_args) => handle_build(build_args),
+        KrrCommands::Sign(sig_args) => handle_sign(sig_args),
     }
 }
 
@@ -86,6 +120,46 @@ pub fn handle_inspect(args: InspectArgs) -> Result<String> {
     inspect_file(&record_bytes).with_context(|| format!("Failed to inspect {}", args.file))
 }
 
+pub fn handle_sign(args: SignArgs) -> Result<String> {
+    let signed = SignedRecordBuilder::from_unsigned_file(&args.record)
+        .context("Failed to load unsigned record")?
+        // Key rotation records are only ever countersigned by the RoT rotation
+        // authority, so the signing key domain is fixed rather than selectable.
+        .add_hybrid_signature_files(
+            crypto_rust_proto::KeyDomain::Rotr,
+            HybridSignatureFiles {
+                ec_public_key: Path::new(&args.ec_public_key),
+                mldsa_public_key: Path::new(&args.mldsa_public_key),
+                ec_signature: Path::new(&args.ec_signature),
+                mldsa_signature: Path::new(&args.mldsa_signature),
+            },
+        )
+        .context("Failed to attach hybrid signature")?
+        .build()
+        .context("Failed to sign record")?;
+
+    let report = match args.out.as_deref() {
+        Some(path) => {
+            std::fs::write(path, signed.as_bytes())
+                .with_context(|| format!("Failed to write {path}"))?;
+            format!("Signed key rotation record successfully written to {path}")
+        }
+        None => inspect_file(signed.as_bytes()).context("Failed to inspect built record")?,
+    };
+    let fingerprint = signed
+        .otp_fingerprint()
+        .map(|fp| format!("\n  Target RoT OTP FP  : {}", fp))
+        .unwrap_or_default();
+
+    Ok(format!(
+        "{}\n  Unsigned Body Size : {} bytes\n  Total Signed Size  : {} bytes{}",
+        report,
+        signed.unsigned_size(),
+        signed.signed_size(),
+        fingerprint,
+    ))
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -101,6 +175,37 @@ mod tests {
                 assert_eq!(b_args.config, "config.json");
                 assert_eq!(b_args.out.as_deref(), Some("out.bin"));
             }
+            _ => panic!("Expected Krr Build subcommand"),
+        }
+
+        let krr_sign = KrrArgs::from_args(
+            &["krr"],
+            &[
+                "sign",
+                "in.unsigned",
+                "-o",
+                "out.signed",
+                "--ec-public-key",
+                "ec.pub",
+                "--mldsa-public-key",
+                "mldsa.pub",
+                "--ec-signature",
+                "ec.sig",
+                "--mldsa-signature",
+                "mldsa.sig",
+            ],
+        )
+        .expect("Failed to parse 'krr sign'");
+        match krr_sign.command {
+            KrrCommands::Sign(sig_args) => {
+                assert_eq!(sig_args.record, "in.unsigned");
+                assert_eq!(sig_args.out.as_deref(), Some("out.signed"));
+                assert_eq!(sig_args.ec_public_key, "ec.pub");
+                assert_eq!(sig_args.mldsa_public_key, "mldsa.pub");
+                assert_eq!(sig_args.ec_signature, "ec.sig");
+                assert_eq!(sig_args.mldsa_signature, "mldsa.sig");
+            }
+            _ => panic!("Expected Krr Sign subcommand"),
         }
 
         let inspect = InspectArgs::from_args(&["inspect"], &["record.bin"])
