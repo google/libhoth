@@ -14,10 +14,9 @@
 
 //! Record compilation, partition size limit verification, and binary emission.
 
-use crate::crypto::p256_fingerprint_sha256;
-use crate::crypto::parse_mldsa44_public_key;
-use crate::crypto::parse_p256_public_key;
-use crate::crypto::sha256;
+use crate::crypto::Algorithm;
+use crate::crypto::KeyBytes;
+use crate::crypto::KeyMaterial;
 use alloc::format;
 use alloc::string::String;
 use alloc::string::ToString;
@@ -46,12 +45,8 @@ fn check_unsigned_size(size: usize) -> Result<()> {
     Ok(())
 }
 
-/// Signature algorithm selecting which fingerprint variant a key populates.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
-#[serde(rename_all = "lowercase")]
-pub enum Algorithm {
-    P256,
-    Mldsa,
+fn read_key(path: &Path) -> Result<Vec<u8>> {
+    std::fs::read(path).with_context(|| format!("Failed to read key file {}", path.display()))
 }
 
 /// Key domain parsing helper.
@@ -128,8 +123,17 @@ impl Default for KrrBuildConfig {
 pub enum FingerprintSource {
     /// Path to a public key file; the fingerprint is derived from its contents.
     KeyFile(String),
+    /// Paths to the two halves of a hybrid public key.
+    KeyFiles(HybridKeyFiles),
     /// A precomputed SHA2-256 fingerprint, hex encoded.
     Fingerprint(String),
+}
+
+/// The EC and post-quantum public key files making up one hybrid key.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+pub struct HybridKeyFiles {
+    pub ec: String,
+    pub pq: String,
 }
 
 /// Configuration for an individual key fingerprint in JSON.
@@ -191,6 +195,9 @@ impl RecordBuilder {
                 FingerprintSource::KeyFile(path) => {
                     builder.add_key_file(domain, fp_cfg.algorithm, path)?
                 }
+                FingerprintSource::KeyFiles(files) => {
+                    builder.add_hybrid_key_files(domain, fp_cfg.algorithm, &files.ec, &files.pq)?
+                }
                 FingerprintSource::Fingerprint(hex_str) => builder.add_fingerprint(
                     domain,
                     fp_cfg.algorithm,
@@ -246,42 +253,22 @@ impl RecordBuilder {
         algorithm: Algorithm,
         digest: [u8; 32],
     ) -> Self {
-        let fp = match algorithm {
-            Algorithm::P256 => protobuf::proto!(crypto_rust_proto::KeyFingerprint {
-                key_domain: domain,
-                p256: crypto_rust_proto::P256Fingerprint {
-                    sha2_256: crypto_rust_proto::Sha2_256Digest {
-                        data: digest.to_vec()
-                    }
-                }
-            }),
-            Algorithm::Mldsa => protobuf::proto!(crypto_rust_proto::KeyFingerprint {
-                key_domain: domain,
-                mldsa: crypto_rust_proto::MlDsa44Fingerprint {
-                    sha2_256: crypto_rust_proto::Sha2_256Digest {
-                        data: digest.to_vec()
-                    }
-                }
-            }),
-        };
+        let mut fp = protobuf::proto!(crypto_rust_proto::KeyFingerprint { key_domain: domain });
+        let digest = protobuf::proto!(crypto_rust_proto::Sha2_256Digest {
+            data: digest.to_vec()
+        });
+        match algorithm {
+            Algorithm::P256 => fp.p256_mut().set_sha2_256(digest),
+            Algorithm::Slhdsa => fp.slhdsa_mut().set_sha2_256(digest),
+            Algorithm::Rsa2048 => fp.rsa2048_mut().set_sha2_256(digest),
+            Algorithm::Rsa3072 => fp.rsa3072_mut().set_sha2_256(digest),
+            Algorithm::Rsa4096 => fp.rsa4096_mut().set_sha2_256(digest),
+            Algorithm::HybridP256Slhdsa => fp.hybrid_p256_slhdsa_mut().set_sha2_256(digest),
+            Algorithm::Mldsa => fp.mldsa_mut().set_sha2_256(digest),
+            Algorithm::HybridP256Mldsa => fp.hybrid_p256_mldsa_mut().set_sha2_256(digest),
+        }
         self.fingerprints.push(fp);
         self
-    }
-
-    pub fn add_p256_fingerprint(
-        self,
-        domain: crypto_rust_proto::KeyDomain,
-        digest: [u8; 32],
-    ) -> Self {
-        self.add_fingerprint(domain, Algorithm::P256, digest)
-    }
-
-    pub fn add_mldsa44_fingerprint(
-        self,
-        domain: crypto_rust_proto::KeyDomain,
-        digest: [u8; 32],
-    ) -> Self {
-        self.add_fingerprint(domain, Algorithm::Mldsa, digest)
     }
 
     /// Fingerprints a public key held in memory and appends it.
@@ -289,19 +276,11 @@ impl RecordBuilder {
         self,
         domain: crypto_rust_proto::KeyDomain,
         algorithm: Algorithm,
-        key: &[u8],
+        key: KeyBytes<'_>,
     ) -> Result<Self> {
-        let digest = match algorithm {
-            Algorithm::P256 => {
-                let (x, y) = parse_p256_public_key(key).context("Invalid P256 key")?;
-                p256_fingerprint_sha256(&x, &y)
-            }
-            Algorithm::Mldsa => {
-                let mldsa = parse_mldsa44_public_key(key).context("Invalid Mldsa key")?;
-                sha256(&mldsa)
-            }
-        };
-        Ok(self.add_fingerprint(domain, algorithm, digest))
+        let material = KeyMaterial::parse(algorithm, key)
+            .with_context(|| format!("Invalid {algorithm:?} key"))?;
+        Ok(self.add_fingerprint(domain, algorithm, material.fingerprint_sha256()))
     }
 
     /// Reads a public key file and appends its SHA2-256 fingerprint.
@@ -311,11 +290,31 @@ impl RecordBuilder {
         algorithm: Algorithm,
         path: impl AsRef<Path>,
     ) -> Result<Self> {
-        let p = path.as_ref();
-        let content =
-            std::fs::read(p).with_context(|| format!("Failed to read key file {}", p.display()))?;
-        self.add_key_bytes(domain, algorithm, &content)
-            .with_context(|| format!("Failed to fingerprint key file {}", p.display()))
+        let content = read_key(path.as_ref())?;
+        self.add_key_bytes(domain, algorithm, KeyBytes::Single(&content))
+            .with_context(|| format!("Failed to fingerprint key file {}", path.as_ref().display()))
+    }
+
+    /// Reads the EC and PQ halves of a hybrid public key and appends its fingerprint.
+    pub fn add_hybrid_key_files(
+        self,
+        domain: crypto_rust_proto::KeyDomain,
+        algorithm: Algorithm,
+        ec: impl AsRef<Path>,
+        pq: impl AsRef<Path>,
+    ) -> Result<Self> {
+        let (ec_key, pq_key) = (read_key(ec.as_ref())?, read_key(pq.as_ref())?);
+        let key = KeyBytes::Hybrid {
+            ec: &ec_key,
+            pq: &pq_key,
+        };
+        self.add_key_bytes(domain, algorithm, key).with_context(|| {
+            format!(
+                "Failed to fingerprint key files {} + {}",
+                ec.as_ref().display(),
+                pq.as_ref().display()
+            )
+        })
     }
 
     pub fn add_image_digest(mut self, digest: [u8; 32]) -> Self {
@@ -420,7 +419,11 @@ mod tests {
             .version(2)
             .image_vendor("VNDR")
             .image_family("FAM")
-            .add_p256_fingerprint(crypto_rust_proto::KeyDomain::PayloadProd, [0x42u8; 32])
+            .add_fingerprint(
+                crypto_rust_proto::KeyDomain::PayloadProd,
+                Algorithm::P256,
+                [0x42u8; 32],
+            )
             .add_image_digest([0x99u8; 32])
             .build_unsigned()
             .expect("Failed to build unsigned record with RecordBuilder");
@@ -450,8 +453,11 @@ mod tests {
     #[test]
     fn test_build_unsigned_validation() {
         let base = || {
-            RecordBuilder::new()
-                .add_p256_fingerprint(crypto_rust_proto::KeyDomain::PayloadProd, [0x42u8; 32])
+            RecordBuilder::new().add_fingerprint(
+                crypto_rust_proto::KeyDomain::PayloadProd,
+                Algorithm::P256,
+                [0x42u8; 32],
+            )
         };
 
         // v0 rollback records are not representable.
@@ -481,41 +487,78 @@ mod tests {
 
         // Round-trips a real record.
         let unsigned = RecordBuilder::new()
-            .add_p256_fingerprint(crypto_rust_proto::KeyDomain::PayloadProd, [0x42u8; 32])
+            .add_fingerprint(
+                crypto_rust_proto::KeyDomain::PayloadProd,
+                Algorithm::P256,
+                [0x42u8; 32],
+            )
             .build_unsigned()
             .unwrap();
         let reparsed = UnsignedRecord::from_bytes(unsigned.as_bytes()).unwrap();
         assert_eq!(reparsed.as_bytes(), unsigned.as_bytes());
     }
 
-    #[test]
-    fn test_add_key_bytes_accepts_raw_binary() {
-        let mut p256_key = vec![1u8; 32];
-        p256_key.extend_from_slice(&[2u8; 32]);
+    /// Every `KeyFingerprint` arm, with filler key bytes its parser accepts.
+    fn all_algorithms() -> Vec<(Algorithm, Vec<u8>, Vec<u8>)> {
+        let ec: Vec<u8> = (0u8..64).collect();
+        let slh = vec![0x11u8; 32];
+        let mldsa = vec![0x22u8; 1312];
+        let rsa = |n: usize| match n {
+            256 => crate::crypto::rsa_pkcs1_der::<256>(&[1, 0, 1]),
+            384 => crate::crypto::rsa_pkcs1_der::<384>(&[1, 0, 1]),
+            _ => crate::crypto::rsa_pkcs1_der::<512>(&[1, 0, 1]),
+        };
+        vec![
+            (Algorithm::P256, ec.clone(), vec![]),
+            (Algorithm::Slhdsa, slh.clone(), vec![]),
+            (Algorithm::Rsa2048, rsa(256), vec![]),
+            (Algorithm::Rsa3072, rsa(384), vec![]),
+            (Algorithm::Rsa4096, rsa(512), vec![]),
+            (Algorithm::HybridP256Slhdsa, ec.clone(), slh),
+            (Algorithm::Mldsa, mldsa.clone(), vec![]),
+            (Algorithm::HybridP256Mldsa, ec, mldsa),
+        ]
+    }
 
-        let unsigned = RecordBuilder::new()
-            .image_vendor("VNDR")
-            .image_family("FAM")
-            .add_key_bytes(
-                crypto_rust_proto::KeyDomain::PayloadProd,
-                Algorithm::P256,
-                &p256_key,
-            )
+    /// Reads the single `KeyFingerprint` out of `bytes` the way the firmware
+    /// does and reports which `key_type` arm it populates.
+    fn fingerprint_arm(bytes: &[u8]) -> Algorithm {
+        use proto::crypto::KeyFingerprintExt;
+        use proto::crypto::KeyFingerprintKeyType as K;
+        use proto::key_rotation::DescriptorExt;
+        let desc = mutask_tlv::TlvData::overlay_bytes(bytes)
             .unwrap()
-            .add_key_bytes(
-                crypto_rust_proto::KeyDomain::PayloadProd,
-                Algorithm::Mldsa,
-                &vec![3u8; 1312],
-            )
-            .unwrap()
-            .build_unsigned()
+            .iter::<proto::key_rotation::Descriptor>()
+            .next()
             .unwrap();
+        let fp = desc.fingerprint().next().expect("no KFIP in record");
+        match fp.key_type().expect("KFIP has no key_type arm") {
+            K::P256(_) => Algorithm::P256,
+            K::Slhdsa(_) => Algorithm::Slhdsa,
+            K::Rsa2048(_) => Algorithm::Rsa2048,
+            K::Rsa3072(_) => Algorithm::Rsa3072,
+            K::Rsa4096(_) => Algorithm::Rsa4096,
+            K::HybridP256Slhdsa(_) => Algorithm::HybridP256Slhdsa,
+            K::Mldsa(_) => Algorithm::Mldsa,
+            K::HybridP256Mldsa(_) => Algorithm::HybridP256Mldsa,
+        }
+    }
 
-        assert!(
-            inspect_file(unsigned.as_bytes())
-                .unwrap()
-                .contains("Tag: 'KROT'")
-        );
+    #[test]
+    fn test_add_key_bytes_populates_every_fingerprint_arm() {
+        for (algorithm, key, pq) in all_algorithms() {
+            let bytes = if pq.is_empty() {
+                KeyBytes::Single(&key)
+            } else {
+                KeyBytes::Hybrid { ec: &key, pq: &pq }
+            };
+            let unsigned = RecordBuilder::new()
+                .add_key_bytes(crypto_rust_proto::KeyDomain::PayloadProd, algorithm, bytes)
+                .unwrap_or_else(|e| panic!("{algorithm:?}: {e}"))
+                .build_unsigned()
+                .unwrap();
+            assert_eq!(fingerprint_arm(unsigned.as_bytes()), algorithm);
+        }
     }
 
     #[test]
@@ -524,7 +567,7 @@ mod tests {
             .add_key_bytes(
                 crypto_rust_proto::KeyDomain::PayloadProd,
                 Algorithm::P256,
-                &[0u8; 8],
+                KeyBytes::Single(&[0u8; 8]),
             )
             .unwrap_err();
         assert!(err.to_string().contains("Invalid P256 key"), "{err:#}");
