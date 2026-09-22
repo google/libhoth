@@ -46,3 +46,27 @@ rust_library(
         "//third_party:zerocopy",
     ],
 )
+
+rust_library(
+    name = "channel",
+    srcs = ["channel.rs"],
+    crate_name = "pie_rot_hostcmd_types_channel",
+    edition = "2024",
+    proc_macro_deps = [
+        "//third_party:zerocopy_derive",
+    ],
+    visibility = ["//visibility:public"],
+    deps = [
+        ":types",
+        "//third_party:zerocopy",
+    ],
+)
+
+rust_test(
+    name = "channel_test",
+    crate = ":channel",
+    edition = "2024",
+    deps = [
+        "//third_party:aligned",
+    ],
+)
