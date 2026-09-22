@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-//! Cryptographic primitives and public key coordinate parsing.
+//! Cryptographic primitives, key coordinate parsing, and signature verification.
 
 use alloc::string::String;
 use alloc::vec::Vec;
@@ -29,6 +29,15 @@ pub use mutask_sha256_sw::sha256;
 
 /// Length of an ML-DSA-44 public key, in bytes.
 pub const MLDSA44_PUBLIC_KEY_LEN: usize = 1312;
+
+/// Length of an ML-DSA-44 signature, in bytes.
+pub const MLDSA44_SIGNATURE_LEN: usize = 2420;
+
+/// Length of a raw P-256 public key (`x || y`), in bytes.
+pub const P256_PUBLIC_KEY_LEN: usize = 64;
+
+/// Length of a raw P-256 signature (`r || s`), in bytes.
+pub const P256_SIGNATURE_LEN: usize = 64;
 
 // -----------------------------------------------------------------------------
 // Encoding Utilities
@@ -61,46 +70,57 @@ fn decode_pem(data: &[u8]) -> Option<Vec<u8>> {
 }
 
 // -----------------------------------------------------------------------------
-// P-256 Curve & Utilities
+// Fingerprints
 // -----------------------------------------------------------------------------
 
-pub fn p256_public_key_to_words(x_bytes: &[u8; 32], y_bytes: &[u8; 32]) -> ([u32; 8], [u32; 8]) {
-    let mut x_words = [0u32; 8];
-    let mut y_words = [0u32; 8];
-    for i in 0..8 {
-        x_words[i] = u32::from_le_bytes(x_bytes[i * 4..(i + 1) * 4].try_into().unwrap());
-        y_words[i] = u32::from_le_bytes(y_bytes[i * 4..(i + 1) * 4].try_into().unwrap());
+/// SHA2-256 over the concatenation of `parts`.
+fn sha256_parts(parts: &[&[u8]]) -> [u8; 32] {
+    let mut hasher = Sha256::new();
+    for part in parts {
+        hasher.update(part);
     }
-    (x_words, y_words)
+    hasher.finalize()
 }
 
-pub fn p256_fingerprint_sha256(x_le: &[u32; 8], y_le: &[u32; 8]) -> [u8; 32] {
-    let mut raw_le = [0u8; 64];
-    for (i, word) in x_le.iter().enumerate() {
-        raw_le[i * 4..(i + 1) * 4].copy_from_slice(&word.to_le_bytes());
-    }
-    for (i, word) in y_le.iter().enumerate() {
-        raw_le[32 + i * 4..32 + (i + 1) * 4].copy_from_slice(&word.to_le_bytes());
-    }
-    sha256(&raw_le)
+/// Fingerprints a P-256 public key as `SHA2-256(x || y)` over the coordinates
+/// exactly as they appear in the parsed key.
+pub fn p256_fingerprint_sha256(x: &[u8; 32], y: &[u8; 32]) -> [u8; 32] {
+    sha256_parts(&[x, y])
+}
+
+/// Fingerprints a hybrid signing authority as `SHA2-256(x || y || mldsa)`.
+///
+/// This is the value provisioned into RoT OTP to pin the key rotation authority.
+pub fn compute_hybrid_otp_fingerprint(
+    x: &[u8; 32],
+    y: &[u8; 32],
+    mldsa: &[u8; MLDSA44_PUBLIC_KEY_LEN],
+) -> [u8; 32] {
+    sha256_parts(&[x, y, mldsa])
+}
+
+// -----------------------------------------------------------------------------
+// P-256 Public Key & Signature Parsing
+// -----------------------------------------------------------------------------
+
+/// Splits a 64-byte `a || b` buffer into its two 32-byte halves.
+fn split_halves(data: &[u8; 64]) -> ([u8; 32], [u8; 32]) {
+    let (a, b) = data.split_at(32);
+    (a.try_into().unwrap(), b.try_into().unwrap())
 }
 
 /// Locates an uncompressed SEC1 point (`0x04 || X || Y`) inside `data`, which may
 /// be the bare point or a DER/SPKI structure wrapping it.
-fn uncompressed_point(data: &[u8]) -> Option<([u32; 8], [u32; 8])> {
+fn uncompressed_point(data: &[u8]) -> Option<([u8; 32], [u8; 32])> {
     let pos = data.windows(65).position(|w| w[0] == 0x04)?;
-    let point = &data[pos..pos + 65];
-    let x: [u8; 32] = point[1..33].try_into().ok()?;
-    let y: [u8; 32] = point[33..65].try_into().ok()?;
-    Some(p256_public_key_to_words(&x, &y))
+    let point: &[u8; 64] = data[pos + 1..pos + 65].try_into().ok()?;
+    Some(split_halves(point))
 }
 
-pub fn parse_p256_public_key(data: &[u8]) -> Result<([u32; 8], [u32; 8])> {
+pub fn parse_p256_public_key(data: &[u8]) -> Result<([u8; 32], [u8; 32])> {
     // Bare `X || Y`, with no SEC1 point prefix.
-    if let Ok(xy) = <[u8; 64]>::try_from(data) {
-        let x: [u8; 32] = xy[0..32].try_into().unwrap();
-        let y: [u8; 32] = xy[32..64].try_into().unwrap();
-        return Ok(p256_public_key_to_words(&x, &y));
+    if let Ok(xy) = <&[u8; P256_PUBLIC_KEY_LEN]>::try_from(data) {
+        return Ok(split_halves(xy));
     }
     // A bare SEC1 point, or binary DER/SPKI wrapping one.
     if let Some(point) = uncompressed_point(data) {
@@ -113,8 +133,56 @@ pub fn parse_p256_public_key(data: &[u8]) -> Result<([u32; 8], [u32; 8])> {
     Err(anyhow!("Unrecognized P-256 public key encoding"))
 }
 
+pub fn parse_p256_signature(data: &[u8]) -> Result<([u8; 32], [u8; 32])> {
+    if let Ok(rs) = <&[u8; P256_SIGNATURE_LEN]>::try_from(data) {
+        return Ok(split_halves(rs));
+    }
+    if let Some(rs) = parse_der_signature(data) {
+        return Ok(rs);
+    }
+    Err(anyhow!("Expected 64-byte raw or DER P-256 signature"))
+}
+
+/// Reads the DER `INTEGER` at `*idx`, advancing `idx` past it.
+///
+/// Every access is bounds checked, so a truncated or malformed encoding yields
+/// `None` rather than panicking on untrusted input.
+fn der_integer(data: &[u8], idx: &mut usize) -> Option<[u8; 32]> {
+    if *data.get(*idx)? != 0x02 {
+        return None;
+    }
+    let len = *data.get(*idx + 1)? as usize;
+    let value = data.get(*idx + 2..*idx + 2 + len)?;
+    *idx += 2 + len;
+    pad_or_trim_32(value)
+}
+
+/// Parses a DER `SEQUENCE { INTEGER r, INTEGER s }` ECDSA signature.
+fn parse_der_signature(data: &[u8]) -> Option<([u8; 32], [u8; 32])> {
+    if *data.first()? != 0x30 {
+        return None;
+    }
+    // Skip the outer SEQUENCE tag and length.
+    let mut idx = 2;
+    Some((der_integer(data, &mut idx)?, der_integer(data, &mut idx)?))
+}
+
+fn pad_or_trim_32(bytes: &[u8]) -> Option<[u8; 32]> {
+    let trimmed = if bytes.len() > 32 && bytes[0] == 0x00 {
+        &bytes[1..]
+    } else {
+        bytes
+    };
+    if trimmed.len() > 32 {
+        return None;
+    }
+    let mut out = [0u8; 32];
+    out[32 - trimmed.len()..].copy_from_slice(trimmed);
+    Some(out)
+}
+
 // -----------------------------------------------------------------------------
-// ML-DSA-44 Public Key Parsing
+// ML-DSA-44 Public Key & Signature Parsing
 // -----------------------------------------------------------------------------
 
 /// Extracts an ML-DSA-44 public key from the bare key, or from a DER/SPKI blob
@@ -140,6 +208,21 @@ pub fn parse_mldsa44_public_key(data: &[u8]) -> Result<[u8; MLDSA44_PUBLIC_KEY_L
     }
     Err(anyhow!(
         "Expected 1312-byte raw or SPKI PEM ML-DSA-44 public key"
+    ))
+}
+
+pub fn parse_mldsa44_signature(data: &[u8]) -> Result<[u8; MLDSA44_SIGNATURE_LEN]> {
+    if let Ok(sig) = <[u8; MLDSA44_SIGNATURE_LEN]>::try_from(data) {
+        return Ok(sig);
+    }
+    if let Some(sig) = decode_pem(data)
+        .as_deref()
+        .and_then(|b| <[u8; MLDSA44_SIGNATURE_LEN]>::try_from(b).ok())
+    {
+        return Ok(sig);
+    }
+    Err(anyhow!(
+        "Expected 2420-byte raw, hex, or base64 ML-DSA-44 signature"
     ))
 }
 
@@ -177,8 +260,8 @@ mod tests {
         let mut raw_64 = vec![0x11u8; 32];
         raw_64.extend_from_slice(&[0x22u8; 32]);
         let (x, y) = parse_p256_public_key(&raw_64).unwrap();
-        assert_eq!(x[0], 0x11111111);
-        assert_eq!(y[0], 0x22222222);
+        assert_eq!(x, [0x11u8; 32]);
+        assert_eq!(y, [0x22u8; 32]);
 
         let mut raw_65 = vec![0x04u8];
         raw_65.extend_from_slice(&raw_64);
@@ -200,5 +283,58 @@ mod tests {
         assert_eq!(parse_mldsa44_public_key(&spki).unwrap(), raw_pk[..]);
 
         assert!(parse_mldsa44_public_key(&[0u8; 16]).is_err());
+    }
+
+    #[test]
+    fn test_p256_signature_parsing() {
+        let mut raw_sig = vec![0x33u8; 32];
+        raw_sig.extend_from_slice(&[0x44u8; 32]);
+        let (r, s) = parse_p256_signature(&raw_sig).unwrap();
+        assert_eq!(r, [0x33u8; 32]);
+        assert_eq!(s, [0x44u8; 32]);
+    }
+
+    #[test]
+    fn test_der_signature_parsing() {
+        // SEQUENCE { INTEGER 0x01, INTEGER 0x02 }, left-padded to 32 bytes each.
+        let der = [0x30, 0x06, 0x02, 0x01, 0x01, 0x02, 0x01, 0x02];
+        let (r, s) = parse_p256_signature(&der).unwrap();
+        assert_eq!(r[31], 0x01);
+        assert_eq!(s[31], 0x02);
+        assert_eq!(r[..31], [0u8; 31]);
+    }
+
+    #[test]
+    fn test_malformed_der_signature_is_rejected_not_panic() {
+        // An INTEGER whose declared length runs off the end of the buffer.
+        assert!(parse_p256_signature(&[0x30, 0x06, 0x02, 0x7f, 0, 0, 0, 0]).is_err());
+        // A second INTEGER whose length octet is missing entirely.
+        assert!(parse_p256_signature(&[0x30, 0x04, 0x02, 0x01, 0x01, 0x02]).is_err());
+        // Not a SEQUENCE at all.
+        assert!(parse_p256_signature(&[0x02, 0x01, 0x01]).is_err());
+    }
+
+    #[test]
+    fn test_mldsa44_signature_parsing() {
+        let raw_sig = vec![0x66u8; MLDSA44_SIGNATURE_LEN];
+        assert_eq!(parse_mldsa44_signature(&raw_sig).unwrap()[0], 0x66);
+
+        assert!(parse_mldsa44_signature(&[0u8; 16]).is_err());
+    }
+
+    #[test]
+    fn test_hybrid_otp_fingerprint() {
+        let x = [0x12u8; 32];
+        let y = [0x34u8; 32];
+        let mldsa = [0x77u8; MLDSA44_PUBLIC_KEY_LEN];
+        let fp = compute_hybrid_otp_fingerprint(&x, &y, &mldsa);
+        assert_ne!(fp, [0u8; 32]);
+
+        // The hybrid fingerprint is the streaming hash of the same concatenation.
+        let mut material = Vec::new();
+        material.extend_from_slice(&x);
+        material.extend_from_slice(&y);
+        material.extend_from_slice(&mldsa);
+        assert_eq!(fp, sha256(&material));
     }
 }

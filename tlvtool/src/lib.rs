@@ -20,8 +20,13 @@ pub mod builder;
 pub mod cli;
 pub mod crypto;
 pub mod inspect;
+pub mod signature;
 
 pub use builder::RecordBuilder;
 pub use builder::UnsignedRecord;
 pub use inspect::inspect_file;
 pub use inspect::inspect_words;
+pub use signature::HybridMaterial;
+pub use signature::HybridSignatureFiles;
+pub use signature::SignedRecord;
+pub use signature::SignedRecordBuilder;
