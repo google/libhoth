@@ -1,0 +1,26 @@
+load("@rules_rust//rust:defs.bzl", "rust_doc_test", "rust_library", "rust_test")
+
+rust_library(
+    name = "error",
+    srcs = [
+        "lib.rs",
+    ],
+    crate_name = "libhoth_error",
+    edition = "2024",
+    visibility = ["//visibility:public"],
+    deps = [
+        "//third_party:ufmt",
+        "//third_party:zerocopy",
+    ],
+)
+
+rust_test(
+    name = "error_test",
+    crate = ":error",
+    edition = "2024",
+)
+
+rust_doc_test(
+    name = "error_doctest",
+    crate = ":error",
+)
