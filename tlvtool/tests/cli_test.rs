@@ -44,6 +44,21 @@ fn run(args: &[&str]) -> String {
 
 const TEST_TEMPDIR: &str = "TEST_TMPDIR";
 
+/// Runs `tlvtool` with `args`, requires it to fail, and returns stderr.
+fn run_failing(args: &[&str]) -> String {
+    let out = tlvtool()
+        .args(args)
+        .output()
+        .expect("failed to run tlvtool");
+    assert!(
+        !out.status.success(),
+        "`tlvtool {}` unexpectedly exited zero:\n{}",
+        args.join(" "),
+        String::from_utf8_lossy(&out.stdout)
+    );
+    String::from_utf8_lossy(&out.stderr).into_owned()
+}
+
 /// Writes `words` to a scratch file as little-endian TLV and returns its path.
 fn write_words(name: &str, words: &[u32]) -> PathBuf {
     let mut bytes = Vec::with_capacity(words.len() * 4);
@@ -70,13 +85,7 @@ fn test_inspect_reads_a_record_file() {
 
 #[test]
 fn test_inspect_rejects_a_missing_file() {
-    let out = tlvtool()
-        .args(["inspect", "/nonexistent/record.bin"])
-        .output()
-        .expect("failed to run tlvtool");
-
-    assert!(!out.status.success(), "a missing file must not exit zero");
-    let stderr = String::from_utf8_lossy(&out.stderr);
+    let stderr = run_failing(&["inspect", "/nonexistent/record.bin"]);
     assert!(stderr.contains("Failed to read"), "{stderr}");
 }
 
@@ -136,13 +145,7 @@ fn test_build_rejects_a_bad_config() {
         .join("build_bad.json");
     std::fs::write(&config, "{ not json }").unwrap();
 
-    let out = tlvtool()
-        .args(["krr", "build", config.to_str().unwrap()])
-        .output()
-        .expect("failed to run tlvtool");
-
-    assert!(!out.status.success(), "a bad config must not exit zero");
-    let stderr = String::from_utf8_lossy(&out.stderr);
+    let stderr = run_failing(&["krr", "build", config.to_str().unwrap()]);
     assert!(stderr.contains("Failed to parse JSON config"), "{stderr}");
 }
 
@@ -210,17 +213,75 @@ fn test_build_rejects_key_file_arity_mismatch() {
     )
     .unwrap();
 
-    let out = tlvtool()
-        .args(["krr", "build", config.to_str().unwrap()])
-        .output()
-        .expect("failed to run tlvtool");
-
-    assert!(
-        !out.status.success(),
-        "two keys for a non-hybrid algorithm must fail"
-    );
-    let stderr = String::from_utf8_lossy(&out.stderr);
+    let stderr = run_failing(&["krr", "build", config.to_str().unwrap()]);
     assert!(stderr.contains("takes a single key"), "{stderr}");
+}
+
+/// Writes a one-fingerprint config with `entry` and returns its path.
+fn write_key_config(name: &str, entry: &str) -> PathBuf {
+    let path =
+        PathBuf::from(std::env::var(TEST_TEMPDIR).expect("TEST_TEMPDIR is not set")).join(name);
+    std::fs::write(&path, format!(r#"{{ "fingerprints": [ {entry} ] }}"#)).unwrap();
+    path
+}
+
+#[test]
+fn test_build_requires_allow_test_keys_for_a_test_domain() {
+    let (ec, _) = write_public_keys("build_testkey");
+    let entry = format!(
+        r#"{{ "algorithm": "p256", "key_domain": "test", "key_file": "{}" }}"#,
+        ec.display()
+    );
+    let config = write_key_config("build_testkey.json", &entry);
+
+    let stderr = run_failing(&["krr", "build", config.to_str().unwrap()]);
+    assert!(stderr.contains("--allow-test-keys"), "{stderr}");
+
+    let report = run(&[
+        "krr",
+        "build",
+        config.to_str().unwrap(),
+        "--allow-test-keys",
+    ]);
+    assert!(report.contains("Tag: 'KROT'"), "{report}");
+}
+
+/// The fingerprint of [`P256_SPKI_PEM`], as the firmware computes it:
+/// `SHA2-256(x || y)` over the little-endian coordinates `crypto.proto` stores.
+///
+/// Pinned from an independent SHA2-256 rather than from `tlvtool`'s own output,
+/// so that a tool which fingerprinted the key differently from the device would
+/// fail this test:
+///
+/// ```text
+/// python3 -c "import base64,hashlib,sys; der=base64.b64decode(...);
+///     pt=der[-65:]; print(hashlib.sha256(pt[1:33][::-1] + pt[33:][::-1]).hexdigest())"
+/// ```
+const P256_SPKI_PEM_FP: &str = "605c317e50b00ec81716fd23f56651302a1d890676b7e0161026d5543ccbb24e";
+
+#[test]
+fn test_build_checks_an_expected_fingerprint() {
+    let (ec, _) = write_public_keys("build_pinned");
+    let config = |name: &str, expected: &str| {
+        write_key_config(
+            name,
+            &format!(
+                r#"{{ "algorithm": "p256", "key_file": "{}", "expected_fingerprint": "{expected}" }}"#,
+                ec.display()
+            ),
+        )
+    };
+
+    let good = config("build_pinned_good.json", P256_SPKI_PEM_FP);
+    let report = run(&["krr", "build", good.to_str().unwrap()]);
+    assert!(report.contains("Tag: 'KROT'"), "{report}");
+
+    let bad = config("build_pinned_bad.json", &"11".repeat(32));
+    let stderr = run_failing(&["krr", "build", bad.to_str().unwrap()]);
+    assert!(stderr.contains("Fingerprint mismatch"), "{stderr}");
+    // The error names the fingerprint the key really has, so the operator can
+    // fix the config without reaching for a second tool.
+    assert!(stderr.contains(P256_SPKI_PEM_FP), "{stderr}");
 }
 
 /// Filler hybrid signing inputs, written to scratch as `krr sign` expects them.
@@ -315,6 +376,13 @@ fn test_sign_prints_the_record_without_an_output_path() {
     assert!(report.contains("Target RoT OTP FP"), "{report}");
 }
 
+/// Runs `krr sign` for `record` and returns stderr, requiring it to fail.
+fn sign_failing(record: &Path, keys: &[PathBuf; 4], extra: &[&str]) -> String {
+    let mut args = sign_args(record, keys, None);
+    args.extend(extra.iter().map(|s| s.to_string()));
+    run_failing(&args.iter().map(String::as_str).collect::<Vec<_>>())
+}
+
 #[test]
 fn test_sign_rejects_a_bad_key_file() {
     let record = build_unsigned("sign_bad");
@@ -323,16 +391,22 @@ fn test_sign_rejects_a_bad_key_file() {
         .join("sign_bad_short.pub");
     std::fs::write(&keys[0], [0u8; 8]).unwrap();
 
-    let args = sign_args(&record, &keys, None);
-    let out = tlvtool()
-        .args(&args)
-        .output()
-        .expect("failed to run tlvtool");
-
-    assert!(!out.status.success(), "a bad key must not exit zero");
-    let stderr = String::from_utf8_lossy(&out.stderr);
+    let stderr = sign_failing(&record, &keys, &[]);
     assert!(
         stderr.contains("Failed to attach hybrid signature"),
         "{stderr}"
     );
+}
+
+#[test]
+fn test_sign_rejects_an_unexpected_signing_authority() {
+    let record = build_unsigned("sign_otp");
+    let keys = write_key_material("sign_otp");
+
+    let stderr = sign_failing(
+        &record,
+        &keys,
+        &["--expected-otp-fingerprint", &"11".repeat(32)],
+    );
+    assert!(stderr.contains("OTP fingerprint mismatch"), "{stderr}");
 }
