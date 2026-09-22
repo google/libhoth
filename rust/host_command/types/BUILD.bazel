@@ -31,3 +31,18 @@ rust_doc_test(
     name = "types_doctest",
     crate = ":types",
 )
+
+rust_library(
+    name = "hello",
+    srcs = ["hello.rs"],
+    crate_name = "pie_rot_hostcmd_types_hello",
+    edition = "2024",
+    proc_macro_deps = [
+        "//third_party:zerocopy_derive",
+    ],
+    visibility = ["//visibility:public"],
+    deps = [
+        ":types",
+        "//third_party:zerocopy",
+    ],
+)
