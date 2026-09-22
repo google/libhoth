@@ -1,0 +1,33 @@
+load("@rules_rust//rust:defs.bzl", "rust_doc_test", "rust_library", "rust_test")
+
+rust_library(
+    name = "types",
+    srcs = [
+        "lib.rs",
+    ],
+    crate_name = "pie_rot_hostcmd_types",
+    edition = "2024",
+    proc_macro_deps = [
+        "//third_party:zerocopy_derive",
+    ],
+    visibility = ["//visibility:public"],
+    deps = [
+        "//aligned",
+        "//error",
+        "//hex",
+        "//third_party:aligned",
+        "//third_party:ufmt",
+        "//third_party:zerocopy",
+    ],
+)
+
+rust_test(
+    name = "types_test",
+    crate = ":types",
+    edition = "2024",
+)
+
+rust_doc_test(
+    name = "types_doctest",
+    crate = ":types",
+)
