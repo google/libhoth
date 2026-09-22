@@ -176,3 +176,18 @@ rust_library(
         "//third_party:zerocopy",
     ],
 )
+
+rust_library(
+    name = "target_reset",
+    srcs = ["target_reset.rs"],
+    crate_name = "pie_rot_hostcmd_types_target_reset",
+    edition = "2024",
+    proc_macro_deps = [
+        "//third_party:zerocopy_derive",
+    ],
+    visibility = ["//visibility:public"],
+    deps = [
+        ":types",
+        "//third_party:zerocopy",
+    ],
+)
