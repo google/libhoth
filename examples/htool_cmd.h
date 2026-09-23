@@ -67,6 +67,8 @@ int htool_get_param_bool(const struct htool_invocation* inv, const char* name,
                          bool* value);
 int htool_get_param_u32(const struct htool_invocation* inv, const char* name,
                         uint32_t* value);
+int htool_get_param_u64(const struct htool_invocation* inv, const char* name,
+                        uint64_t* value);
 int htool_get_param_string(const struct htool_invocation* inv, const char* name,
                            const char** value);
 int htool_get_param_u32_or_fourcc(const struct htool_invocation* inv,
