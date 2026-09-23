@@ -41,6 +41,8 @@ executable(
         'htool_spi.c',
         'htool_statistics.c',
         'htool_target_control.c',
+        'htool_target_watchdog.c',
+        'htool_target_watchdog.h',
         'htool_sbs_single.c',
         'htool_sbs_dual.c',
         'htool_usb.c',
@@ -229,4 +231,7 @@ if gtest_dep.found() and gmock_dep.found()
         ),
     )
 
+
+
 endif
+
