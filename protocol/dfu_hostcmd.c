@@ -20,9 +20,8 @@
 #include "protocol/status.h"
 
 static int generate_random_nonce(struct hoth_dfu_session_id* session_id) {
-  ssize_t ret = getrandom(&session_id->nonce, sizeof(session_id->nonce), 0);
-  if (ret == -1) {
-    perror("getrandom");
+  if (getentropy(&session_id->nonce, sizeof(session_id->nonce)) != 0) {
+    perror("getentropy");
     return -1;
   }
   return 0;
