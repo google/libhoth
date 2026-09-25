@@ -16,10 +16,33 @@ cc_library(
     hdrs = ["libhoth_ec.h"],
 )
 
+config_setting(
+    name = "dbus_backend",
+    define_values = {
+        "dbus_backend": "true",
+    },
+)
+
+config_setting(
+    name = "mtd_backend",
+    define_values = {
+        "mtd_backend": "true",
+    },
+)
+
+config_setting(
+    name = "spi_backend",
+    define_values = {
+        "spi_backend": "true",
+    },
+)
+
 cc_library(
     name = "libhoth_mtd",
     srcs = ["libhoth_mtd.c"],
     hdrs = ["libhoth_mtd.h"],
+    defines = ["MTD_BACKEND"],
+    target_compatible_with = ["@platforms//os:linux"],
     deps = [
         ":libhoth_device",
         ":libhoth_ec",
@@ -31,6 +54,8 @@ cc_library(
     name = "libhoth_spi",
     srcs = ["libhoth_spi.c"],
     hdrs = ["libhoth_spi.h"],
+    defines = ["SPI_BACKEND"],
+    target_compatible_with = ["@platforms//os:linux"],
     deps = [
         ":libhoth_device",
         ":libhoth_ec",
@@ -57,6 +82,7 @@ cc_library(
     hdrs = ["libhoth_dbus.h"],
     defines = ["DBUS_BACKEND"],
     linkopts = ["-lsystemd"],
+    target_compatible_with = ["@platforms//os:linux"],
     deps = [
         ":libhoth_device",
         "//protocol:libhoth_status",

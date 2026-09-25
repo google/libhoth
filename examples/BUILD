@@ -24,13 +24,6 @@ cc_library(
     ],
 )
 
-config_setting(
-    name = "dbus_backend",
-    define_values = {
-        "dbus_backend": "true",
-    },
-)
-
 cc_library(
     name = "htool_cmd",
     srcs = ["htool_cmd.c"],
@@ -275,13 +268,17 @@ cc_binary(
         "//protocol:update_session",
         "//protocol:util",
         "//transports:libhoth_device",
-        "//transports:libhoth_mtd",
-        "//transports:libhoth_spi",
         "//transports:libhoth_usb",
         "//transports:libhoth_usb_device",
         "@libusb",
     ] + select({
-        ":dbus_backend": ["//transports:libhoth_dbus"],
+        "//transports:dbus_backend": ["//transports:libhoth_dbus"],
+        "//conditions:default": [],
+    }) + select({
+        "//transports:mtd_backend": ["//transports:libhoth_mtd"],
+        "//conditions:default": [],
+    }) + select({
+        "//transports:spi_backend": ["//transports:libhoth_spi"],
         "//conditions:default": [],
     }),
 )

@@ -52,3 +52,25 @@ jobs:
       - name: Bazel tests
         run: |
           bazel test ...
+
+  build-macos:
+    runs-on: 'macos-15'
+
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      # No -Werror yet: format strings such as "%lx" for uint64_t and the
+      # upstream libusb darwin backend both emit warnings on macOS.
+      - name: Build with Bazel
+        run: |
+          bazel build ...
+
+      - name: Smoke test htool
+        run: |
+          bazel-bin/examples/htool --version
+
+      - name: Bazel tests
+        run: |
+          bazel test --test_output=errors ...
