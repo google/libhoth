@@ -18,6 +18,8 @@
 #include <stddef.h>
 #include <stdint.h>
 
+#include "protocol/provisioning.h"
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -25,48 +27,20 @@ extern "C" {
 // Forward declaration
 struct htool_invocation;
 
-#define PROVISIONING_LOG_MAX_SIZE 2048
-
-#define PROVISIONING_LOG_CHUNK_MAX_SIZE 1008
-
-#define PROVISIONING_CERT_MAX_SIZE 240
-
-struct hoth_provisioning_log_header {
-  uint8_t version;  // 1
-  uint8_t reserved;
-  uint16_t size;      // size of the log content
-  uint32_t checksum;  // CRC32 checksum of |size| bytes of log data
-} __attribute__((packed));
-
-struct hoth_provisioning_log_request {
-  uint8_t version;    // 1
-  uint8_t operation;  // enum provisioning_log_op
-  uint16_t reserved;
-  uint16_t offset;    // Chunked read/write offset
-  uint16_t size;      // Chunked read/write size
-  uint32_t checksum;  // CRC32 checksum of the full provisioning log
-} __attribute__((packed));
-
-struct hoth_provisioning_log {
-  struct hoth_provisioning_log_header hdr;
-  uint8_t data[PROVISIONING_LOG_CHUNK_MAX_SIZE];
-} __attribute__((packed));
-
-enum provisioning_log_op {
-  PROVISIONING_LOG_READ = 0,
-  PROVISIONING_LOG_VALIDATE_AND_SIGN = 3,
-};
-
-// This is a standalone CRC32 that matches Titan Firmware.
-// A table-free bit-level implementation is okay since there are no
-// performance constraints in it's use in htool_validate_and_sign.
-uint32_t crc32(uint32_t initial_value, const uint8_t* buf, size_t size);
-
 // Retrieve the provisioning log from the device.
 int htool_get_provisioning_log(const struct htool_invocation* inv);
 
 // Validate and Sign the provisioning log.
 int htool_validate_and_sign(const struct htool_invocation* inv);
+
+// Loads secrets that were encrypted with the provisioning encryption key.
+int htool_provisioning_store_secrets(const struct htool_invocation* inv);
+
+// Writes and commits the provisioning log.
+int htool_provisioning_write(const struct htool_invocation* inv);
+
+// Loads the ML-DSA-44 public key to the RoT.
+int htool_provisioning_load_mldsa_key(const struct htool_invocation* inv);
 
 #ifdef __cplusplus
 }
