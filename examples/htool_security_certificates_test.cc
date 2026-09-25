@@ -604,3 +604,450 @@ TEST_F(HtoolSecurityCertificatesTest, GetAttestationPubCertFailCommand) {
       .WillOnce(Return(-1));
   EXPECT_EQ(htool_get_attestation_pub_cert(&inv), -1);
 }
+
+TEST_F(HtoolSecurityCertificatesTest, UnloadAttestationKeySuccess) {
+  struct htool_invocation inv{};
+  EXPECT_CALL(security_v2_mock_, htool_exec_security_v2_cmd)
+      .With(IsSecurityV2Command(
+          HOTH_PRV_CMD_HOTH_SECURITY_V2_GET_CERTIFICATES_MAJOR_COMMAND,
+          HOTH_PRV_CMD_HOTH_SECURITY_V2_UNLOAD_ATTESTATION_KEY_MINOR_COMMAND,
+          HOTH_BASE_CMD(HOTH_PRV_CMD_HOTH_SECURITY_V2),
+          HOTH_SECURITY_V2_REQUEST_SIZE(0), HOTH_SECURITY_V2_RESPONSE_SIZE(0)))
+      .WillOnce(Return(0));
+
+  EXPECT_EQ(htool_unload_attestation_key(&inv), 0);
+}
+
+TEST_F(HtoolSecurityCertificatesTest, UnloadAttestationKeyFailure) {
+  struct htool_invocation inv{};
+  EXPECT_CALL(security_v2_mock_,
+              htool_exec_security_v2_cmd(_, _, _, _, _, _, _, _, _, _))
+      .WillOnce(Return(-1));
+
+  EXPECT_EQ(htool_unload_attestation_key(&inv), -1);
+}
+
+TEST_F(HtoolSecurityCertificatesTest, GenAttestationKeyV1Success) {
+  struct htool_invocation inv{};
+  std::string csr_output_file = tmp_dir_path_ + "/csr_v1.bin";
+  std::string wrapped_key_output_file = tmp_dir_path_ + "/wrapped_key.bin";
+
+  EXPECT_CALL(invocation_mock_, GetParamString("csr_output", _))
+      .WillOnce(DoAll(SetArgPointee<1>(csr_output_file.c_str()), Return(0)));
+  EXPECT_CALL(invocation_mock_, GetParamString("wrapped_key_output", _))
+      .WillOnce(
+          DoAll(SetArgPointee<1>(wrapped_key_output_file.c_str()), Return(0)));
+
+  uint8_t expected_csr[ATTESTATION_KEY_CSR_V1_SIZE] = {};
+  for (size_t i = 0; i < sizeof(expected_csr); ++i) {
+    expected_csr[i] = static_cast<uint8_t>(i & 0xff);
+  }
+  uint8_t expected_wrapped_key[WRAPPED_ATTESTATION_KEY_SIZE] = {};
+  for (size_t i = 0; i < sizeof(expected_wrapped_key); ++i) {
+    expected_wrapped_key[i] = static_cast<uint8_t>((i + 0x55) & 0xff);
+  }
+
+  EXPECT_CALL(security_v2_mock_, htool_exec_security_v2_cmd)
+      .With(IsSecurityV2Command(
+          HOTH_PRV_CMD_HOTH_SECURITY_V2_GET_CERTIFICATES_MAJOR_COMMAND,
+          HOTH_PRV_CMD_HOTH_SECURITY_V2_GEN_ATTESTATION_KEY_USING_CSR_V1_MINOR_COMMAND,
+          HOTH_BASE_CMD(HOTH_PRV_CMD_HOTH_SECURITY_V2),
+          HOTH_SECURITY_V2_REQUEST_SIZE(0),
+          HOTH_SECURITY_V2_RESPONSE_SIZE(2) + sizeof(expected_csr) +
+              sizeof(expected_wrapped_key)))
+      .WillOnce([&](struct libhoth_device* dev, uint8_t major, uint8_t minor,
+                    uint16_t base_command,
+                    struct security_v2_buffer* request_buffer,
+                    const struct security_v2_param* request_params,
+                    uint16_t request_param_count,
+                    struct security_v2_buffer* response_buffer,
+                    struct security_v2_param* response_params,
+                    uint16_t response_param_count) {
+        EXPECT_EQ(response_param_count, 2);
+        EXPECT_EQ(response_params[0].size, sizeof(expected_csr));
+        EXPECT_EQ(response_params[1].size, sizeof(expected_wrapped_key));
+        memcpy(response_params[0].data, expected_csr, sizeof(expected_csr));
+        memcpy(response_params[1].data, expected_wrapped_key,
+               sizeof(expected_wrapped_key));
+        return 0;
+      });
+
+  ASSERT_EQ(htool_gen_attestation_key_v1(&inv), 0);
+
+  FILE* fp_csr = fopen(csr_output_file.c_str(), "rb");
+  ASSERT_NE(fp_csr, nullptr);
+  uint8_t csr_contents[ATTESTATION_KEY_CSR_V1_SIZE];
+  ASSERT_EQ(fread(csr_contents, 1, sizeof(csr_contents), fp_csr),
+            sizeof(csr_contents));
+  EXPECT_EQ(memcmp(csr_contents, expected_csr, sizeof(expected_csr)), 0);
+  fclose(fp_csr);
+
+  FILE* fp_key = fopen(wrapped_key_output_file.c_str(), "rb");
+  ASSERT_NE(fp_key, nullptr);
+  uint8_t key_contents[WRAPPED_ATTESTATION_KEY_SIZE];
+  ASSERT_EQ(fread(key_contents, 1, sizeof(key_contents), fp_key),
+            sizeof(key_contents));
+  EXPECT_EQ(
+      memcmp(key_contents, expected_wrapped_key, sizeof(expected_wrapped_key)),
+      0);
+  fclose(fp_key);
+}
+
+TEST_F(HtoolSecurityCertificatesTest, GenAttestationKeyV1NoOutputFails) {
+  struct htool_invocation inv{};
+  EXPECT_CALL(invocation_mock_, GetParamString("csr_output", _))
+      .WillOnce(DoAll(SetArgPointee<1>(""), Return(0)));
+  EXPECT_CALL(invocation_mock_, GetParamString("wrapped_key_output", _))
+      .WillOnce(DoAll(SetArgPointee<1>(""), Return(0)));
+  EXPECT_CALL(security_v2_mock_,
+              htool_exec_security_v2_cmd(_, _, _, _, _, _, _, _, _, _))
+      .Times(0);
+
+  EXPECT_EQ(htool_gen_attestation_key_v1(&inv), -1);
+}
+
+TEST_F(HtoolSecurityCertificatesTest, GenAttestationKeyV2Success) {
+  struct htool_invocation inv{};
+  std::string csr_output_file = tmp_dir_path_ + "/csr_v2.bin";
+  std::string wrapped_key_output_file = tmp_dir_path_ + "/wrapped_key_v2.bin";
+  uint32_t expected_fw_major_version = 3;
+
+  EXPECT_CALL(invocation_mock_, GetParamU32("fw_major_version", _))
+      .WillOnce(DoAll(SetArgPointee<1>(expected_fw_major_version), Return(0)));
+  EXPECT_CALL(invocation_mock_, GetParamString("csr_output", _))
+      .WillOnce(DoAll(SetArgPointee<1>(csr_output_file.c_str()), Return(0)));
+  EXPECT_CALL(invocation_mock_, GetParamString("wrapped_key_output", _))
+      .WillOnce(
+          DoAll(SetArgPointee<1>(wrapped_key_output_file.c_str()), Return(0)));
+
+  uint8_t expected_csr[ATTESTATION_KEY_CSR_V2_SIZE] = {};
+  for (size_t i = 0; i < sizeof(expected_csr); ++i) {
+    expected_csr[i] = static_cast<uint8_t>((i + 0x10) & 0xff);
+  }
+  uint8_t expected_wrapped_key[WRAPPED_ATTESTATION_KEY_SIZE] = {};
+  for (size_t i = 0; i < sizeof(expected_wrapped_key); ++i) {
+    expected_wrapped_key[i] = static_cast<uint8_t>((i + 0xaa) & 0xff);
+  }
+
+  EXPECT_CALL(security_v2_mock_, htool_exec_security_v2_cmd)
+      .With(IsSecurityV2Command(
+          HOTH_PRV_CMD_HOTH_SECURITY_V2_GET_CERTIFICATES_MAJOR_COMMAND,
+          HOTH_PRV_CMD_HOTH_SECURITY_V2_GEN_VERSIONED_ATTESTATION_KEY_MINOR_COMMAND,
+          HOTH_BASE_CMD(HOTH_PRV_CMD_HOTH_SECURITY_V2),
+          HOTH_SECURITY_V2_REQUEST_SIZE(2) + sizeof(uint32_t) +
+              sizeof(uint32_t),
+          HOTH_SECURITY_V2_RESPONSE_SIZE(2) + sizeof(expected_csr) +
+              sizeof(expected_wrapped_key)))
+      .WillOnce([&](struct libhoth_device* dev, uint8_t major, uint8_t minor,
+                    uint16_t base_command,
+                    struct security_v2_buffer* request_buffer,
+                    const struct security_v2_param* request_params,
+                    uint16_t request_param_count,
+                    struct security_v2_buffer* response_buffer,
+                    struct security_v2_param* response_params,
+                    uint16_t response_param_count) {
+        EXPECT_EQ(request_param_count, 2);
+        EXPECT_EQ(request_params[0].size, sizeof(uint32_t));
+        EXPECT_EQ(*static_cast<const uint32_t*>(request_params[0].data), 2u);
+        EXPECT_EQ(request_params[1].size, sizeof(uint32_t));
+        EXPECT_EQ(*static_cast<const uint32_t*>(request_params[1].data),
+                  expected_fw_major_version);
+
+        EXPECT_EQ(response_param_count, 2);
+        EXPECT_EQ(response_params[0].size, sizeof(expected_csr));
+        EXPECT_EQ(response_params[1].size, sizeof(expected_wrapped_key));
+        memcpy(response_params[0].data, expected_csr, sizeof(expected_csr));
+        memcpy(response_params[1].data, expected_wrapped_key,
+               sizeof(expected_wrapped_key));
+        return 0;
+      });
+
+  ASSERT_EQ(htool_gen_attestation_key_v2(&inv), 0);
+
+  FILE* fp_csr = fopen(csr_output_file.c_str(), "rb");
+  ASSERT_NE(fp_csr, nullptr);
+  uint8_t csr_contents[ATTESTATION_KEY_CSR_V2_SIZE];
+  ASSERT_EQ(fread(csr_contents, 1, sizeof(csr_contents), fp_csr),
+            sizeof(csr_contents));
+  EXPECT_EQ(memcmp(csr_contents, expected_csr, sizeof(expected_csr)), 0);
+  fclose(fp_csr);
+
+  FILE* fp_key = fopen(wrapped_key_output_file.c_str(), "rb");
+  ASSERT_NE(fp_key, nullptr);
+  uint8_t key_contents[WRAPPED_ATTESTATION_KEY_SIZE];
+  ASSERT_EQ(fread(key_contents, 1, sizeof(key_contents), fp_key),
+            sizeof(key_contents));
+  EXPECT_EQ(
+      memcmp(key_contents, expected_wrapped_key, sizeof(expected_wrapped_key)),
+      0);
+  fclose(fp_key);
+}
+
+TEST_F(HtoolSecurityCertificatesTest, LoadAttestationKeyFromCsrV1Success) {
+  struct htool_invocation inv{};
+  std::string wrapped_key_file = tmp_dir_path_ + "/input_wrapped_key.bin";
+  std::string csr_file = tmp_dir_path_ + "/input_csr_v1.bin";
+
+  uint8_t expected_wrapped_key[WRAPPED_ATTESTATION_KEY_SIZE] = {};
+  for (size_t i = 0; i < sizeof(expected_wrapped_key); ++i) {
+    expected_wrapped_key[i] = static_cast<uint8_t>(i + 1);
+  }
+  uint8_t expected_csr[ATTESTATION_KEY_CSR_V1_SIZE] = {};
+  for (size_t i = 0; i < sizeof(expected_csr); ++i) {
+    expected_csr[i] = static_cast<uint8_t>(255 - (i & 0xff));
+  }
+
+  FILE* fp_key = fopen(wrapped_key_file.c_str(), "wb");
+  ASSERT_NE(fp_key, nullptr);
+  ASSERT_EQ(
+      fwrite(expected_wrapped_key, 1, sizeof(expected_wrapped_key), fp_key),
+      sizeof(expected_wrapped_key));
+  fclose(fp_key);
+
+  FILE* fp_csr = fopen(csr_file.c_str(), "wb");
+  ASSERT_NE(fp_csr, nullptr);
+  ASSERT_EQ(fwrite(expected_csr, 1, sizeof(expected_csr), fp_csr),
+            sizeof(expected_csr));
+  fclose(fp_csr);
+
+  EXPECT_CALL(invocation_mock_, GetParamString("wrapped_key", _))
+      .WillOnce(DoAll(SetArgPointee<1>(wrapped_key_file.c_str()), Return(0)));
+  EXPECT_CALL(invocation_mock_, GetParamString("csr", _))
+      .WillOnce(DoAll(SetArgPointee<1>(csr_file.c_str()), Return(0)));
+
+  EXPECT_CALL(security_v2_mock_, htool_exec_security_v2_cmd)
+      .With(IsSecurityV2Command(
+          HOTH_PRV_CMD_HOTH_SECURITY_V2_GET_CERTIFICATES_MAJOR_COMMAND,
+          HOTH_PRV_CMD_HOTH_SECURITY_V2_LOAD_ATTESTATION_KEY_FROM_CSR_V1_MINOR_COMMAND,
+          HOTH_BASE_CMD(HOTH_PRV_CMD_HOTH_SECURITY_V2),
+          HOTH_SECURITY_V2_REQUEST_SIZE(2) + sizeof(expected_wrapped_key) +
+              sizeof(expected_csr),
+          HOTH_SECURITY_V2_RESPONSE_SIZE(0)))
+      .WillOnce([&](struct libhoth_device* dev, uint8_t major, uint8_t minor,
+                    uint16_t base_command,
+                    struct security_v2_buffer* request_buffer,
+                    const struct security_v2_param* request_params,
+                    uint16_t request_param_count,
+                    struct security_v2_buffer* response_buffer,
+                    struct security_v2_param* response_params,
+                    uint16_t response_param_count) {
+        EXPECT_EQ(request_param_count, 2);
+        EXPECT_EQ(request_params[0].size, sizeof(expected_wrapped_key));
+        EXPECT_EQ(memcmp(request_params[0].data, expected_wrapped_key,
+                         sizeof(expected_wrapped_key)),
+                  0);
+        EXPECT_EQ(request_params[1].size, sizeof(expected_csr));
+        EXPECT_EQ(
+            memcmp(request_params[1].data, expected_csr, sizeof(expected_csr)),
+            0);
+        return 0;
+      });
+
+  EXPECT_EQ(htool_load_attestation_key_from_csr_v1(&inv), 0);
+}
+
+TEST_F(HtoolSecurityCertificatesTest,
+       LoadAttestationKeyFromCsrV1WrongSizeFails) {
+  struct htool_invocation inv{};
+  std::string wrapped_key_file = tmp_dir_path_ + "/short_wrapped_key.bin";
+  std::string csr_file = tmp_dir_path_ + "/input_csr_v1.bin";
+
+  uint8_t short_key[10] = {0};
+  FILE* fp_key = fopen(wrapped_key_file.c_str(), "wb");
+  ASSERT_NE(fp_key, nullptr);
+  ASSERT_EQ(fwrite(short_key, 1, sizeof(short_key), fp_key), sizeof(short_key));
+  fclose(fp_key);
+
+  EXPECT_CALL(invocation_mock_, GetParamString("wrapped_key", _))
+      .WillOnce(DoAll(SetArgPointee<1>(wrapped_key_file.c_str()), Return(0)));
+  EXPECT_CALL(invocation_mock_, GetParamString("csr", _))
+      .WillOnce(DoAll(SetArgPointee<1>(csr_file.c_str()), Return(0)));
+  EXPECT_CALL(security_v2_mock_,
+              htool_exec_security_v2_cmd(_, _, _, _, _, _, _, _, _, _))
+      .Times(0);
+
+  EXPECT_EQ(htool_load_attestation_key_from_csr_v1(&inv), -1);
+}
+
+TEST_F(HtoolSecurityCertificatesTest, ProvisionAttestationKeySuccess) {
+  struct htool_invocation inv{};
+  uint8_t generated_csr[ATTESTATION_KEY_CSR_V1_SIZE] = {};
+  for (size_t i = 0; i < sizeof(generated_csr); ++i) {
+    generated_csr[i] = static_cast<uint8_t>((i * 3) & 0xff);
+  }
+  uint8_t generated_wrapped_key[WRAPPED_ATTESTATION_KEY_SIZE] = {};
+  for (size_t i = 0; i < sizeof(generated_wrapped_key); ++i) {
+    generated_wrapped_key[i] = static_cast<uint8_t>((i * 7 + 1) & 0xff);
+  }
+
+  ::testing::InSequence seq;
+
+  // 1. Unload existing attestation key
+  EXPECT_CALL(security_v2_mock_, htool_exec_security_v2_cmd)
+      .With(IsSecurityV2Command(
+          HOTH_PRV_CMD_HOTH_SECURITY_V2_GET_CERTIFICATES_MAJOR_COMMAND,
+          HOTH_PRV_CMD_HOTH_SECURITY_V2_UNLOAD_ATTESTATION_KEY_MINOR_COMMAND,
+          HOTH_BASE_CMD(HOTH_PRV_CMD_HOTH_SECURITY_V2),
+          HOTH_SECURITY_V2_REQUEST_SIZE(0), HOTH_SECURITY_V2_RESPONSE_SIZE(0)))
+      .WillOnce(Return(0));
+
+  // 2. Generate attestation key v1
+  EXPECT_CALL(security_v2_mock_, htool_exec_security_v2_cmd)
+      .With(IsSecurityV2Command(
+          HOTH_PRV_CMD_HOTH_SECURITY_V2_GET_CERTIFICATES_MAJOR_COMMAND,
+          HOTH_PRV_CMD_HOTH_SECURITY_V2_GEN_ATTESTATION_KEY_USING_CSR_V1_MINOR_COMMAND,
+          HOTH_BASE_CMD(HOTH_PRV_CMD_HOTH_SECURITY_V2),
+          HOTH_SECURITY_V2_REQUEST_SIZE(0),
+          HOTH_SECURITY_V2_RESPONSE_SIZE(2) + sizeof(generated_csr) +
+              sizeof(generated_wrapped_key)))
+      .WillOnce([&](struct libhoth_device* dev, uint8_t major, uint8_t minor,
+                    uint16_t base_command,
+                    struct security_v2_buffer* request_buffer,
+                    const struct security_v2_param* request_params,
+                    uint16_t request_param_count,
+                    struct security_v2_buffer* response_buffer,
+                    struct security_v2_param* response_params,
+                    uint16_t response_param_count) {
+        EXPECT_EQ(response_param_count, 2);
+        memcpy(response_params[0].data, generated_csr, sizeof(generated_csr));
+        memcpy(response_params[1].data, generated_wrapped_key,
+               sizeof(generated_wrapped_key));
+        return 0;
+      });
+
+  // 3. Load attestation key from CSR v1 with the generated bytes
+  EXPECT_CALL(security_v2_mock_, htool_exec_security_v2_cmd)
+      .With(IsSecurityV2Command(
+          HOTH_PRV_CMD_HOTH_SECURITY_V2_GET_CERTIFICATES_MAJOR_COMMAND,
+          HOTH_PRV_CMD_HOTH_SECURITY_V2_LOAD_ATTESTATION_KEY_FROM_CSR_V1_MINOR_COMMAND,
+          HOTH_BASE_CMD(HOTH_PRV_CMD_HOTH_SECURITY_V2),
+          HOTH_SECURITY_V2_REQUEST_SIZE(2) + sizeof(generated_wrapped_key) +
+              sizeof(generated_csr),
+          HOTH_SECURITY_V2_RESPONSE_SIZE(0)))
+      .WillOnce([&](struct libhoth_device* dev, uint8_t major, uint8_t minor,
+                    uint16_t base_command,
+                    struct security_v2_buffer* request_buffer,
+                    const struct security_v2_param* request_params,
+                    uint16_t request_param_count,
+                    struct security_v2_buffer* response_buffer,
+                    struct security_v2_param* response_params,
+                    uint16_t response_param_count) {
+        EXPECT_EQ(request_param_count, 2);
+        EXPECT_EQ(memcmp(request_params[0].data, generated_wrapped_key,
+                         sizeof(generated_wrapped_key)),
+                  0);
+        EXPECT_EQ(memcmp(request_params[1].data, generated_csr,
+                         sizeof(generated_csr)),
+                  0);
+        return 0;
+      });
+
+  EXPECT_EQ(htool_provision_attestation_key(&inv), 0);
+}
+
+TEST_F(HtoolSecurityCertificatesTest,
+       GenAttestationKeyV1DeviceFailDoesNotCreateFiles) {
+  struct htool_invocation inv{};
+  std::string csr_output_file = tmp_dir_path_ + "/should_not_exist_csr.bin";
+  std::string wrapped_key_output_file =
+      tmp_dir_path_ + "/should_not_exist_key.bin";
+
+  EXPECT_CALL(invocation_mock_, GetParamString("csr_output", _))
+      .WillOnce(DoAll(SetArgPointee<1>(csr_output_file.c_str()), Return(0)));
+  EXPECT_CALL(invocation_mock_, GetParamString("wrapped_key_output", _))
+      .WillOnce(
+          DoAll(SetArgPointee<1>(wrapped_key_output_file.c_str()), Return(0)));
+
+  EXPECT_CALL(security_v2_mock_,
+              htool_exec_security_v2_cmd(_, _, _, _, _, _, _, _, _, _))
+      .WillOnce(Return(-1));
+
+  EXPECT_EQ(htool_gen_attestation_key_v1(&inv), -1);
+  EXPECT_FALSE(std::filesystem::exists(csr_output_file));
+  EXPECT_FALSE(std::filesystem::exists(wrapped_key_output_file));
+}
+
+TEST_F(HtoolSecurityCertificatesTest, LoadAttestationKeySuccess) {
+  struct htool_invocation inv{};
+  std::string wrapped_key_file = tmp_dir_path_ + "/input_wrapped_key_ca.bin";
+  std::string cert_file = tmp_dir_path_ + "/input_cert.bin";
+
+  uint8_t expected_wrapped_key[WRAPPED_ATTESTATION_KEY_SIZE] = {};
+  for (size_t i = 0; i < sizeof(expected_wrapped_key); ++i) {
+    expected_wrapped_key[i] = static_cast<uint8_t>(i + 0x20);
+  }
+  uint8_t expected_cert[ATTESTATION_CERT_SIZE] = {};
+  for (size_t i = 0; i < sizeof(expected_cert); ++i) {
+    expected_cert[i] = static_cast<uint8_t>(255 - (i & 0xff));
+  }
+
+  FILE* fp_key = fopen(wrapped_key_file.c_str(), "wb");
+  ASSERT_NE(fp_key, nullptr);
+  ASSERT_EQ(
+      fwrite(expected_wrapped_key, 1, sizeof(expected_wrapped_key), fp_key),
+      sizeof(expected_wrapped_key));
+  fclose(fp_key);
+
+  FILE* fp_cert = fopen(cert_file.c_str(), "wb");
+  ASSERT_NE(fp_cert, nullptr);
+  ASSERT_EQ(fwrite(expected_cert, 1, sizeof(expected_cert), fp_cert),
+            sizeof(expected_cert));
+  fclose(fp_cert);
+
+  EXPECT_CALL(invocation_mock_, GetParamString("wrapped_key", _))
+      .WillOnce(DoAll(SetArgPointee<1>(wrapped_key_file.c_str()), Return(0)));
+  EXPECT_CALL(invocation_mock_, GetParamString("cert", _))
+      .WillOnce(DoAll(SetArgPointee<1>(cert_file.c_str()), Return(0)));
+
+  EXPECT_CALL(security_v2_mock_, htool_exec_security_v2_cmd)
+      .With(IsSecurityV2Command(
+          HOTH_PRV_CMD_HOTH_SECURITY_V2_GET_CERTIFICATES_MAJOR_COMMAND,
+          HOTH_PRV_CMD_HOTH_SECURITY_V2_LOAD_ATTESTATION_KEY_MINOR_COMMAND,
+          HOTH_BASE_CMD(HOTH_PRV_CMD_HOTH_SECURITY_V2),
+          HOTH_SECURITY_V2_REQUEST_SIZE(2) + sizeof(expected_wrapped_key) +
+              sizeof(expected_cert),
+          HOTH_SECURITY_V2_RESPONSE_SIZE(0)))
+      .WillOnce([&](struct libhoth_device* dev, uint8_t major, uint8_t minor,
+                    uint16_t base_command,
+                    struct security_v2_buffer* request_buffer,
+                    const struct security_v2_param* request_params,
+                    uint16_t request_param_count,
+                    struct security_v2_buffer* response_buffer,
+                    struct security_v2_param* response_params,
+                    uint16_t response_param_count) {
+        EXPECT_EQ(request_param_count, 2);
+        EXPECT_EQ(request_params[0].size, sizeof(expected_wrapped_key));
+        EXPECT_EQ(memcmp(request_params[0].data, expected_wrapped_key,
+                         sizeof(expected_wrapped_key)),
+                  0);
+        EXPECT_EQ(request_params[1].size, sizeof(expected_cert));
+        EXPECT_EQ(memcmp(request_params[1].data, expected_cert,
+                         sizeof(expected_cert)),
+                  0);
+        return 0;
+      });
+
+  EXPECT_EQ(htool_load_attestation_key(&inv), 0);
+}
+
+TEST_F(HtoolSecurityCertificatesTest, LoadAttestationKeyWrongSizeFails) {
+  struct htool_invocation inv{};
+  std::string wrapped_key_file = tmp_dir_path_ + "/short_wrapped_key_ca.bin";
+  std::string cert_file = tmp_dir_path_ + "/input_cert.bin";
+
+  uint8_t short_key[10] = {0};
+  FILE* fp_key = fopen(wrapped_key_file.c_str(), "wb");
+  ASSERT_NE(fp_key, nullptr);
+  ASSERT_EQ(fwrite(short_key, 1, sizeof(short_key), fp_key), sizeof(short_key));
+  fclose(fp_key);
+
+  EXPECT_CALL(invocation_mock_, GetParamString("wrapped_key", _))
+      .WillOnce(DoAll(SetArgPointee<1>(wrapped_key_file.c_str()), Return(0)));
+  EXPECT_CALL(invocation_mock_, GetParamString("cert", _))
+      .WillOnce(DoAll(SetArgPointee<1>(cert_file.c_str()), Return(0)));
+  EXPECT_CALL(security_v2_mock_,
+              htool_exec_security_v2_cmd(_, _, _, _, _, _, _, _, _, _))
+      .Times(0);
+
+  EXPECT_EQ(htool_load_attestation_key(&inv), -1);
+}
