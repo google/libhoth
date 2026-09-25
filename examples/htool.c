@@ -71,7 +71,6 @@
 #include "protocol/spi_proxy.h"
 #include "protocol/util.h"
 #include "transports/libhoth_device.h"
-#include "transports/libhoth_spi.h"
 
 void htool_report_error(const char* cmd_name, libhoth_error err) {
   if (err == HOTH_SUCCESS) {
@@ -708,15 +707,6 @@ struct libhoth_device* htool_libhoth_device(void) {
   }
 
   return result;
-}
-
-int htool_tpm_spi_probe(const struct htool_invocation* inv) {
-  struct libhoth_device* dev = htool_libhoth_spi_device();
-  if (!dev) {
-    return -1;
-  }
-
-  return libhoth_tpm_spi_probe(dev);
 }
 
 int htool_external_usb_host_check_presence(const struct htool_invocation* inv) {
