@@ -252,6 +252,11 @@ libhoth_error libhoth_provisioning_log_commit(struct libhoth_device* dev,
 libhoth_error libhoth_key_provisioning_store_secrets(struct libhoth_device* dev,
                                                      const uint8_t* secrets,
                                                      size_t size) {
+  if (size > HOTH_KEY_PROVISIONING_MAX_SECRETS_SIZE) {
+    return LIBHOTH_ERR_CONSTRUCT(HOTH_CTX_CMD_EXEC, HOTH_HOST_SPACE_LIBHOTH,
+                                 LIBHOTH_ERR_INVALID_PARAMETER);
+  }
+
   const size_t request_size =
       sizeof(struct hoth_key_provisioning_request_header) + size;
 
@@ -270,6 +275,11 @@ libhoth_error libhoth_key_provisioning_store_secrets(struct libhoth_device* dev,
 
 libhoth_error libhoth_key_provisioning_load_mldsa_key(
     struct libhoth_device* dev, const uint8_t* key, size_t size) {
+  if (size != HOTH_KEY_PROVISIONING_MLDSA44_PUBLIC_KEY_BYTES) {
+    return LIBHOTH_ERR_CONSTRUCT(HOTH_CTX_CMD_EXEC, HOTH_HOST_SPACE_LIBHOTH,
+                                 LIBHOTH_ERR_INVALID_PARAMETER);
+  }
+
   uint16_t offset = 0;
   while (offset < size) {
     uint16_t chunk_size = (uint16_t)(size - offset);

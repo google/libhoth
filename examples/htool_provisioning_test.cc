@@ -957,3 +957,22 @@ TEST_F(HtoolProvisioningTest, LoadMldsaKeyMissingKey) {
 
   ASSERT_EQ(htool_provisioning_load_mldsa_key(&inv), -1);
 }
+
+TEST_F(HtoolProvisioningTest, StoreSecretsProtocolTooLarge) {
+  std::vector<uint8_t> data(HOTH_KEY_PROVISIONING_MAX_SECRETS_SIZE + 1, 0x11);
+  EXPECT_CALL(mock_, send(_, _, _)).Times(0);
+  EXPECT_EQ(libhoth_key_provisioning_store_secrets(&hoth_dev_, data.data(),
+                                                   data.size()),
+            LIBHOTH_ERR_CONSTRUCT(HOTH_CTX_CMD_EXEC, HOTH_HOST_SPACE_LIBHOTH,
+                                  LIBHOTH_ERR_INVALID_PARAMETER));
+}
+
+TEST_F(HtoolProvisioningTest, LoadMldsaKeyProtocolInvalidSize) {
+  std::vector<uint8_t> key_data(
+      HOTH_KEY_PROVISIONING_MLDSA44_PUBLIC_KEY_BYTES - 1, 0x44);
+  EXPECT_CALL(mock_, send(_, _, _)).Times(0);
+  EXPECT_EQ(libhoth_key_provisioning_load_mldsa_key(&hoth_dev_, key_data.data(),
+                                                    key_data.size()),
+            LIBHOTH_ERR_CONSTRUCT(HOTH_CTX_CMD_EXEC, HOTH_HOST_SPACE_LIBHOTH,
+                                  LIBHOTH_ERR_INVALID_PARAMETER));
+}
