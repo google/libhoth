@@ -6,7 +6,7 @@
 # from bazel and generate a header file that defines the
 # value.
 
-git_commit=$(sed -nE 's/^STABLE_GIT_COMMIT ([a-z0-9\-]+)$/\1/p' bazel-out/stable-status.txt)
+git_commit=$(sed -nE 's/^STABLE_GIT_COMMIT ([a-zA-Z0-9._\-]+)$/\1/p' bazel-out/stable-status.txt)
 
 if [ -z "$git_commit" ]; then
   >&2 echo "failed to parse Git commit"
