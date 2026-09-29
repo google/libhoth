@@ -706,6 +706,21 @@ TEST_F(HtoolSecurityCertificatesTest, GenAttestationKeyV1NoOutputFails) {
   EXPECT_EQ(htool_gen_attestation_key_v1(&inv), -1);
 }
 
+TEST_F(HtoolSecurityCertificatesTest,
+       GenAttestationKeyV1MissingWrappedKeyOutputFails) {
+  struct htool_invocation inv{};
+  std::string csr_output_file = tmp_dir_path_ + "/csr_v1.bin";
+  EXPECT_CALL(invocation_mock_, GetParamString("csr_output", _))
+      .WillOnce(DoAll(SetArgPointee<1>(csr_output_file.c_str()), Return(0)));
+  EXPECT_CALL(invocation_mock_, GetParamString("wrapped_key_output", _))
+      .WillOnce(DoAll(SetArgPointee<1>(""), Return(0)));
+  EXPECT_CALL(security_v2_mock_,
+              htool_exec_security_v2_cmd(_, _, _, _, _, _, _, _, _, _))
+      .Times(0);
+
+  EXPECT_EQ(htool_gen_attestation_key_v1(&inv), -1);
+}
+
 TEST_F(HtoolSecurityCertificatesTest, GenAttestationKeyV2Success) {
   struct htool_invocation inv{};
   std::string csr_output_file = tmp_dir_path_ + "/csr_v2.bin";

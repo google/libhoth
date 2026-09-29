@@ -554,14 +554,10 @@ int htool_gen_attestation_key_v1(const struct htool_invocation* inv) {
     return -1;
   }
 
-  bool is_csr_output_provided = strlen(csr_output_file) > 0;
-  bool is_wrapped_key_output_provided = strlen(wrapped_key_output_file) > 0;
-
-  if (!is_csr_output_provided && !is_wrapped_key_output_provided) {
-    fprintf(
-        stderr,
-        "Error: No valid csr_output provided and no valid wrapped_key_output "
-        "provided.\n");
+  if (strlen(csr_output_file) == 0 || strlen(wrapped_key_output_file) == 0) {
+    fprintf(stderr,
+            "Error: Both csr_output and wrapped_key_output files must be "
+            "provided.\n");
     return -1;
   }
 
@@ -574,12 +570,10 @@ int htool_gen_attestation_key_v1(const struct htool_invocation* inv) {
       if (hoth_status != 0) {
         return hoth_status;
       }
-      if (is_csr_output_provided &&
-          write_exact_file(csr_output_file, csr, sizeof(csr)) != 0) {
+      if (write_exact_file(csr_output_file, csr, sizeof(csr)) != 0) {
         return -1;
       }
-      if (is_wrapped_key_output_provided &&
-          write_exact_file(wrapped_key_output_file, wrapped_key,
+      if (write_exact_file(wrapped_key_output_file, wrapped_key,
                            sizeof(wrapped_key)) != 0) {
         return -1;
       }
@@ -614,14 +608,10 @@ int htool_gen_attestation_key_v2(const struct htool_invocation* inv) {
     return -1;
   }
 
-  bool is_csr_output_provided = strlen(csr_output_file) > 0;
-  bool is_wrapped_key_output_provided = strlen(wrapped_key_output_file) > 0;
-
-  if (!is_csr_output_provided && !is_wrapped_key_output_provided) {
-    fprintf(
-        stderr,
-        "Error: No valid csr_output provided and no valid wrapped_key_output "
-        "provided.\n");
+  if (strlen(csr_output_file) == 0 || strlen(wrapped_key_output_file) == 0) {
+    fprintf(stderr,
+            "Error: Both csr_output and wrapped_key_output files must be "
+            "provided.\n");
     return -1;
   }
 
@@ -635,12 +625,10 @@ int htool_gen_attestation_key_v2(const struct htool_invocation* inv) {
       if (hoth_status != 0) {
         return hoth_status;
       }
-      if (is_csr_output_provided &&
-          write_exact_file(csr_output_file, csr, sizeof(csr)) != 0) {
+      if (write_exact_file(csr_output_file, csr, sizeof(csr)) != 0) {
         return -1;
       }
-      if (is_wrapped_key_output_provided &&
-          write_exact_file(wrapped_key_output_file, wrapped_key,
+      if (write_exact_file(wrapped_key_output_file, wrapped_key,
                            sizeof(wrapped_key)) != 0) {
         return -1;
       }
