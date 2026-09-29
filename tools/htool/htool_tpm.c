@@ -49,9 +49,14 @@ int htool_set_tpm_mode(const struct htool_invocation* inv) {
       .mode = mode,
   };
 
-  return libhoth_hostcmd_exec(
+  libhoth_error err = libhoth_hostcmd_exec_v2(
       dev, HOTH_CMD_BOARD_SPECIFIC_BASE + HOTH_PRV_CMD_SET_TPM_MODE, 0, &req,
       sizeof(req), NULL, 0, NULL);
+  if (err != HOTH_SUCCESS) {
+    htool_report_error("set_tpm_mode", err);
+    return -1;
+  }
+  return 0;
 }
 
 int htool_get_tpm_mode(const struct htool_invocation* inv) {
@@ -61,11 +66,12 @@ int htool_get_tpm_mode(const struct htool_invocation* inv) {
   }
 
   struct tpm_mode resp;
-  int ret = libhoth_hostcmd_exec(
+  libhoth_error err = libhoth_hostcmd_exec_v2(
       dev, HOTH_CMD_BOARD_SPECIFIC_BASE + HOTH_PRV_CMD_GET_TPM_MODE, 0, NULL, 0,
       &resp, sizeof(resp), NULL);
-  if (ret) {
-    return ret;
+  if (err != HOTH_SUCCESS) {
+    htool_report_error("get_tpm_mode", err);
+    return -1;
   }
 
   const char* mode_str;
@@ -111,12 +117,12 @@ int htool_security_startup(const struct htool_invocation* inv) {
 
       uint8_t resp[32];
       size_t resp_size = 0;
-      int ret = libhoth_hostcmd_exec(
+      libhoth_error err = libhoth_hostcmd_exec_v2(
           dev, HOTH_CMD_BOARD_SPECIFIC_BASE + HOTH_PRV_CMD_HOTH_TPM, 0, req,
           sizeof(req), resp, sizeof(resp), &resp_size);
-      if (ret) {
-        htool_report_error("security startup", ret);
-        return ret;
+      if (err != HOTH_SUCCESS) {
+        htool_report_error("security startup", err);
+        return -1;
       }
 
       printf("TPM2_Startup(CLEAR) sent successfully.\n");
