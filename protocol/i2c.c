@@ -27,7 +27,7 @@ libhoth_error libhoth_i2c_detect(struct libhoth_device* dev,
                                  LIBHOTH_ERR_INVALID_PARAMETER);
   }
   size_t rLen = 0;
-  libhoth_error err = libhoth_hostcmd_exec_v2(
+  libhoth_error err = libhoth_hostcmd_exec(
       dev, HOTH_CMD_BOARD_SPECIFIC_BASE + HOTH_PRV_CMD_HOTH_I2C_DETECT, 0, req,
       sizeof(*req), resp, sizeof(*resp), &rLen);
   if (err != HOTH_SUCCESS) {
@@ -72,7 +72,7 @@ libhoth_error libhoth_i2c_transfer(struct libhoth_device* dev,
                                  LIBHOTH_ERR_INVALID_PARAMETER);
   }
   size_t rLen = 0;
-  libhoth_error err = libhoth_hostcmd_exec_v2(
+  libhoth_error err = libhoth_hostcmd_exec(
       dev, HOTH_CMD_BOARD_SPECIFIC_BASE + HOTH_PRV_CMD_HOTH_I2C_TRANSFER, 0,
       req, sizeof(*req), resp, sizeof(*resp), &rLen);
   if (err != HOTH_SUCCESS) {

@@ -30,7 +30,7 @@ libhoth_error libhoth_controlled_storage_read(
 
   req.operation = CONTROLLED_STORAGE_READ;
   req.slot = slot;
-  return libhoth_hostcmd_exec_v2(
+  return libhoth_hostcmd_exec(
       dev, HOTH_CMD_BOARD_SPECIFIC_BASE + HOTH_PRV_CMD_HOTH_CONTROLLED_STORAGE,
       /*version=*/0, &req, sizeof(req), payload, sizeof(*payload), payload_len);
 }
@@ -50,7 +50,7 @@ libhoth_error libhoth_controlled_storage_write(struct libhoth_device* dev,
   req.operation = CONTROLLED_STORAGE_WRITE;
   req.slot = slot;
   memcpy(req.payload.data, data, len);
-  return libhoth_hostcmd_exec_v2(
+  return libhoth_hostcmd_exec(
       dev, HOTH_CMD_BOARD_SPECIFIC_BASE + HOTH_PRV_CMD_HOTH_CONTROLLED_STORAGE,
       /*version=*/0, &req,
       sizeof(req) - sizeof(struct hoth_payload_controlled_storage) + len, NULL,
@@ -67,7 +67,7 @@ libhoth_error libhoth_controlled_storage_delete(struct libhoth_device* dev,
 
   req.operation = CONTROLLED_STORAGE_DELETE;
   req.slot = slot;
-  return libhoth_hostcmd_exec_v2(
+  return libhoth_hostcmd_exec(
       dev, HOTH_CMD_BOARD_SPECIFIC_BASE + HOTH_PRV_CMD_HOTH_CONTROLLED_STORAGE,
       /*version=*/0, &req,
       sizeof(req) - sizeof(struct hoth_payload_controlled_storage), NULL, 0,

@@ -29,8 +29,8 @@ libhoth_error libhoth_firmware_update_from_flash_and_reset(
       .offset = offset,
   };
   const libhoth_error err =
-      libhoth_hostcmd_exec_v2(dev, HOTH_CMD_FIRMWARE_UPDATE, /*version=*/0,
-                              &request, sizeof(request), NULL, 0, NULL);
+      libhoth_hostcmd_exec(dev, HOTH_CMD_FIRMWARE_UPDATE, /*version=*/0,
+                           &request, sizeof(request), NULL, 0, NULL);
   if (err == HOTH_SUCCESS) {
     fprintf(stderr,
             "Skipped update package at flash offset 0x%x containing same "

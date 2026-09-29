@@ -37,7 +37,7 @@ libhoth_error libhoth_jtag_read_idcode(struct libhoth_device* dev,
   struct hoth_response_jtag_read_idcode_operation response;
 
   size_t response_length = 0;
-  libhoth_error ret = libhoth_hostcmd_exec_v2(
+  libhoth_error ret = libhoth_hostcmd_exec(
       dev, HOTH_CMD_BOARD_SPECIFIC_BASE + HOTH_PRV_CMD_HOTH_JTAG_OPERATION,
       /*version=*/0, &request, sizeof(request), &response, sizeof(response),
       &response_length);
@@ -86,7 +86,7 @@ libhoth_error libhoth_jtag_test_bypass(
 
   struct hoth_response_jtag_test_bypass_operation response;
   size_t response_len = 0;
-  libhoth_error ret = libhoth_hostcmd_exec_v2(
+  libhoth_error ret = libhoth_hostcmd_exec(
       dev, HOTH_CMD_BOARD_SPECIFIC_BASE + HOTH_PRV_CMD_HOTH_JTAG_OPERATION,
       /*version=*/0, &request, sizeof(request), &response, sizeof(response),
       &response_len);
@@ -134,7 +134,7 @@ libhoth_error libhoth_jtag_program_and_verify_pld(struct libhoth_device* dev,
   };
 
   size_t response_length = 0;
-  libhoth_error ret = libhoth_hostcmd_exec_v2(
+  libhoth_error ret = libhoth_hostcmd_exec(
       dev, HOTH_CMD_BOARD_SPECIFIC_BASE + HOTH_PRV_CMD_HOTH_JTAG_OPERATION,
       /*version=*/0, &request, sizeof(request), /*resp_buf=*/NULL,
       /*resp_buf_size=*/0, &response_length);
@@ -179,7 +179,7 @@ libhoth_error libhoth_jtag_verify_pld(struct libhoth_device* dev,
   };
 
   size_t response_length = 0;
-  libhoth_error ret = libhoth_hostcmd_exec_v2(
+  libhoth_error ret = libhoth_hostcmd_exec(
       dev, HOTH_CMD_BOARD_SPECIFIC_BASE + HOTH_PRV_CMD_HOTH_JTAG_OPERATION,
       /*version=*/0, &request, sizeof(request), /*resp_buf=*/NULL,
       /*resp_buf_size=*/0, &response_length);

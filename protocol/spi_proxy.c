@@ -65,7 +65,7 @@ static libhoth_error spi_operation_execute(struct spi_operation* op,
   uint8_t response_buf[MAX_SPI_OP_PAYLOAD_BYTES] = {0};
   size_t response_len = 0;
 
-  libhoth_error status = libhoth_hostcmd_exec_v2(
+  libhoth_error status = libhoth_hostcmd_exec(
       dev, HOTH_CMD_BOARD_SPECIFIC_BASE + HOTH_PRV_CMD_HOTH_SPI_OPERATION,
       /*version=*/0, op->buf, op->pos, response_buf, sizeof(response_buf),
       &response_len);

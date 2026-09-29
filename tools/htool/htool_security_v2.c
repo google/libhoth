@@ -64,11 +64,11 @@ libhoth_error htool_exec_security_v2_cmd(
   // May need to remove bytes_read and replace it with Null in
   // libhoth_hostcmd_exec
   size_t bytes_read;
-  libhoth_error err = libhoth_hostcmd_exec_v2(
+  libhoth_error err = libhoth_hostcmd_exec(
       dev, base_command, 0, request_buffer->data, request_buffer->size,
       response_buffer->data, response_buffer->size, &bytes_read);
   if (err != HOTH_SUCCESS) {
-    // libhoth_hostcmd_exec_v2 logs to stderr, don't repeat here.
+    // libhoth_hostcmd_exec logs to stderr, don't repeat here.
     return err;
   }
   response_buffer->size = (uint16_t)bytes_read;

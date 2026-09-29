@@ -39,7 +39,7 @@ int target_control_perform_action(
   };
 
   size_t response_length = 0;
-  libhoth_error err = libhoth_hostcmd_exec_v2(
+  libhoth_error err = libhoth_hostcmd_exec(
       dev, HOTH_CMD_BOARD_SPECIFIC_BASE + HOTH_PRV_CMD_HOTH_TARGET_CONTROL,
       /*version=*/0, &request, sizeof(request), response, sizeof(*response),
       &response_length);

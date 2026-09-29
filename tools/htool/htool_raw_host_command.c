@@ -126,7 +126,7 @@ int command_raw_host_command(const struct htool_invocation* inv) {
     uint8_t resp_payload[RESP_BUF_LEN] = {0};
 
     size_t actual_resp_size = 0;
-    libhoth_error err = libhoth_hostcmd_exec_v2(
+    libhoth_error err = libhoth_hostcmd_exec(
         dev, req.command, req.command_version, req_payload, req.data_len,
         resp_payload, RESP_BUF_LEN, &actual_resp_size);
     if (err != HOTH_SUCCESS) {

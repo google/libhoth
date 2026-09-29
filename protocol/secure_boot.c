@@ -31,10 +31,10 @@ libhoth_error libhoth_secure_boot_get_enforcement(
   struct secure_boot_enforcement_state response;
   size_t rlen = 0;
   libhoth_error err =
-      libhoth_hostcmd_exec_v2(dev,
-                              HOTH_CMD_BOARD_SPECIFIC_BASE +
-                                  HOTH_PRV_CMD_HOTH_GET_SECURE_BOOT_ENFORCEMENT,
-                              0, NULL, 0, &response, sizeof(response), &rlen);
+      libhoth_hostcmd_exec(dev,
+                           HOTH_CMD_BOARD_SPECIFIC_BASE +
+                               HOTH_PRV_CMD_HOTH_GET_SECURE_BOOT_ENFORCEMENT,
+                           0, NULL, 0, &response, sizeof(response), &rlen);
   if (err != HOTH_SUCCESS) {
     return err;
   }
@@ -51,9 +51,8 @@ libhoth_error libhoth_secure_boot_enable_enforcement(
   struct secure_boot_enforcement_state request = {
       .enabled = SECURE_BOOT_ENFORCEMENT_ENABLED};
   size_t rlen = 0;
-  return libhoth_hostcmd_exec_v2(
-      dev,
-      HOTH_CMD_BOARD_SPECIFIC_BASE +
-          HOTH_PRV_CMD_HOTH_SET_SECURE_BOOT_ENFORCEMENT,
-      0, &request, sizeof(request), NULL, 0, &rlen);
+  return libhoth_hostcmd_exec(dev,
+                              HOTH_CMD_BOARD_SPECIFIC_BASE +
+                                  HOTH_PRV_CMD_HOTH_SET_SECURE_BOOT_ENFORCEMENT,
+                              0, &request, sizeof(request), NULL, 0, &rlen);
 }

@@ -49,7 +49,7 @@ int htool_set_tpm_mode(const struct htool_invocation* inv) {
       .mode = mode,
   };
 
-  libhoth_error err = libhoth_hostcmd_exec_v2(
+  libhoth_error err = libhoth_hostcmd_exec(
       dev, HOTH_CMD_BOARD_SPECIFIC_BASE + HOTH_PRV_CMD_SET_TPM_MODE, 0, &req,
       sizeof(req), NULL, 0, NULL);
   if (err != HOTH_SUCCESS) {
@@ -66,7 +66,7 @@ int htool_get_tpm_mode(const struct htool_invocation* inv) {
   }
 
   struct tpm_mode resp;
-  libhoth_error err = libhoth_hostcmd_exec_v2(
+  libhoth_error err = libhoth_hostcmd_exec(
       dev, HOTH_CMD_BOARD_SPECIFIC_BASE + HOTH_PRV_CMD_GET_TPM_MODE, 0, NULL, 0,
       &resp, sizeof(resp), NULL);
   if (err != HOTH_SUCCESS) {
@@ -117,7 +117,7 @@ int htool_security_startup(const struct htool_invocation* inv) {
 
       uint8_t resp[32];
       size_t resp_size = 0;
-      libhoth_error err = libhoth_hostcmd_exec_v2(
+      libhoth_error err = libhoth_hostcmd_exec(
           dev, HOTH_CMD_BOARD_SPECIFIC_BASE + HOTH_PRV_CMD_HOTH_TPM, 0, req,
           sizeof(req), resp, sizeof(resp), &resp_size);
       if (err != HOTH_SUCCESS) {

@@ -19,7 +19,7 @@ libhoth_security_version htool_get_security_version(
 
   // Check if SecurityV2 is supported.
   command = HOTH_BASE_CMD(HOTH_PRV_CMD_HOTH_SECURITY_V2);
-  status = libhoth_hostcmd_exec_v2(
+  status = libhoth_hostcmd_exec(
       dev, HOTH_BASE_CMD(HOTH_PRV_CMD_HOTH_IS_HOST_COMMAND_SUPPORTED), 0,
       &command, sizeof(command), &is_supported, sizeof(is_supported), NULL);
   if (status != HOTH_SUCCESS) {
@@ -34,7 +34,7 @@ libhoth_security_version htool_get_security_version(
 
   // Check if SecurityV3 is supported.
   command = HOTH_BASE_CMD(HOTH_PRV_CMD_HOTH_SECURITY_V3);
-  status = libhoth_hostcmd_exec_v2(
+  status = libhoth_hostcmd_exec(
       dev, HOTH_BASE_CMD(HOTH_PRV_CMD_HOTH_IS_HOST_COMMAND_SUPPORTED), 0,
       &command, sizeof(command), &is_supported, sizeof(is_supported), NULL);
   if (status != HOTH_SUCCESS) {

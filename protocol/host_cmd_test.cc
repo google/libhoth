@@ -45,9 +45,13 @@ TEST_F(LibHothTest, response_failure_legacy) {
 
   uint8_t resp_buf[1024];
   size_t out_resp_size;
-  EXPECT_EQ(libhoth_hostcmd_exec(&hoth_dev_, kCmd, 0, nullptr, 0, resp_buf,
-                                 sizeof(resp_buf), &out_resp_size),
-            HTOOL_ERROR_HOST_COMMAND_START + 2);
+  libhoth_error err =
+      libhoth_hostcmd_exec(&hoth_dev_, kCmd, 0, nullptr, 0, resp_buf,
+                           sizeof(resp_buf), &out_resp_size);
+  EXPECT_NE(err, HOTH_SUCCESS);
+  EXPECT_EQ(LIBHOTH_ERR_GET_CTX(err), HOTH_CTX_CMD_EXEC);
+  EXPECT_EQ(LIBHOTH_ERR_GET_SPACE(err), HOTH_HOST_SPACE_EC);
+  EXPECT_EQ(LIBHOTH_ERR_GET_CODE(err), 2);
 }
 
 TEST_F(LibHothTest, response_failure_extended) {
@@ -60,43 +64,9 @@ TEST_F(LibHothTest, response_failure_extended) {
 
   uint8_t resp_buf[1024];
   size_t out_resp_size;
-  EXPECT_EQ(libhoth_hostcmd_exec(&hoth_dev_, kCmd, 0, nullptr, 0, resp_buf,
-                                 sizeof(resp_buf), &out_resp_size),
-            static_cast<int>(0x89c70005ULL));
-}
-
-TEST_F(LibHothTest, response_failure_legacy_v2) {
-  EXPECT_CALL(mock_, send(_, UsesCommand(kCmd), _))
-      .WillOnce(Return(LIBHOTH_OK));
-  EXPECT_CALL(mock_, receive)
-      .WillOnce(DoAll(
-          CopyRespRaw(&ERROR_RESPONSE_LEGACY, sizeof(ERROR_RESPONSE_LEGACY)),
-          Return(LIBHOTH_OK)));
-
-  uint8_t resp_buf[1024];
-  size_t out_resp_size;
   libhoth_error err =
-      libhoth_hostcmd_exec_v2(&hoth_dev_, kCmd, 0, nullptr, 0, resp_buf,
-                              sizeof(resp_buf), &out_resp_size);
-  EXPECT_NE(err, HOTH_SUCCESS);
-  EXPECT_EQ(LIBHOTH_ERR_GET_CTX(err), HOTH_CTX_CMD_EXEC);
-  EXPECT_EQ(LIBHOTH_ERR_GET_SPACE(err), HOTH_HOST_SPACE_EC);
-  EXPECT_EQ(LIBHOTH_ERR_GET_CODE(err), 2);
-}
-
-TEST_F(LibHothTest, response_failure_extended_v2) {
-  EXPECT_CALL(mock_, send(_, UsesCommand(kCmd), _))
-      .WillOnce(Return(LIBHOTH_OK));
-  EXPECT_CALL(mock_, receive)
-      .WillOnce(DoAll(CopyRespRaw(&ERROR_RESPONSE_EXTENDED,
-                                  sizeof(ERROR_RESPONSE_EXTENDED)),
-                      Return(LIBHOTH_OK)));
-
-  uint8_t resp_buf[1024];
-  size_t out_resp_size;
-  libhoth_error err =
-      libhoth_hostcmd_exec_v2(&hoth_dev_, kCmd, 0, nullptr, 0, resp_buf,
-                              sizeof(resp_buf), &out_resp_size);
+      libhoth_hostcmd_exec(&hoth_dev_, kCmd, 0, nullptr, 0, resp_buf,
+                           sizeof(resp_buf), &out_resp_size);
   EXPECT_NE(err, HOTH_SUCCESS);
   EXPECT_EQ(LIBHOTH_ERR_GET_CTX(err), HOTH_CTX_CMD_EXEC);
   EXPECT_EQ(LIBHOTH_ERR_GET_SPACE(err), HOTH_HOST_SPACE_PIEROT_ERR);

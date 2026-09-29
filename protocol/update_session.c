@@ -32,7 +32,7 @@ libhoth_error libhoth_update_session_start(struct libhoth_device* dev,
       .timeout_seconds = timeout_seconds,
   };
   size_t rlen = 0;
-  return libhoth_hostcmd_exec_v2(
+  return libhoth_hostcmd_exec(
       dev,
       HOTH_CMD_BOARD_SPECIFIC_BASE + HOTH_PRV_CMD_HOTH_UPDATE_SESSION_START, 0,
       &req, sizeof(req), NULL, 0, &rlen);
@@ -45,7 +45,7 @@ libhoth_error libhoth_update_session_finalize(struct libhoth_device* dev) {
   }
 
   size_t rlen = 0;
-  return libhoth_hostcmd_exec_v2(
+  return libhoth_hostcmd_exec(
       dev,
       HOTH_CMD_BOARD_SPECIFIC_BASE + HOTH_PRV_CMD_HOTH_UPDATE_SESSION_FINALIZE,
       0, NULL, 0, NULL, 0, &rlen);
@@ -60,10 +60,10 @@ libhoth_error libhoth_update_session_get_status(
 
   size_t rlen = 0;
   libhoth_error err =
-      libhoth_hostcmd_exec_v2(dev,
-                              HOTH_CMD_BOARD_SPECIFIC_BASE +
-                                  HOTH_PRV_CMD_HOTH_UPDATE_SESSION_GET_STATUS,
-                              0, NULL, 0, status, sizeof(*status), &rlen);
+      libhoth_hostcmd_exec(dev,
+                           HOTH_CMD_BOARD_SPECIFIC_BASE +
+                               HOTH_PRV_CMD_HOTH_UPDATE_SESSION_GET_STATUS,
+                           0, NULL, 0, status, sizeof(*status), &rlen);
   if (err != HOTH_SUCCESS) {
     return err;
   }

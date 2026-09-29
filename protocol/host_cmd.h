@@ -36,7 +36,6 @@ extern "C" {
 #define __hoth_align2 __packed __aligned(2)
 #define __hoth_align4 __packed __aligned(4)
 
-#define HTOOL_ERROR_HOST_COMMAND_START 537200
 #define HTOOL_CMD_INITIATE_FAIL                                     \
   LIBHOTH_ERR_CONSTRUCT(HOTH_CTX_CMD_EXEC, HOTH_HOST_SPACE_LIBHOTH, \
                         LIBHOTH_ERR_INITIATE_FAIL)
@@ -83,17 +82,10 @@ struct hoth_host_response {
   uint16_t reserved;
 } __hoth_align4;
 
-int libhoth_hostcmd_exec(struct libhoth_device* dev, uint16_t command,
-                         uint8_t version, const void* req_payload,
-                         size_t req_payload_size, void* resp_buf,
-                         size_t resp_buf_size, size_t* out_resp_size);
-
-libhoth_error libhoth_hostcmd_exec_v2(struct libhoth_device* dev,
-                                      uint16_t command, uint8_t version,
-                                      const void* req_payload,
-                                      size_t req_payload_size, void* resp_buf,
-                                      size_t resp_buf_size,
-                                      size_t* out_resp_size);
+libhoth_error libhoth_hostcmd_exec(struct libhoth_device* dev, uint16_t command,
+                                   uint8_t version, const void* req_payload,
+                                   size_t req_payload_size, void* resp_buf,
+                                   size_t resp_buf_size, size_t* out_resp_size);
 
 uint8_t libhoth_calculate_checksum(const void* header, size_t header_size,
                                    const void* data, size_t data_size);

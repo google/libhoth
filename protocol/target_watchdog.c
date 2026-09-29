@@ -30,7 +30,7 @@ libhoth_error libhoth_pet_target_watchdog(struct libhoth_device* dev,
       .notify_cookie = notify_cookie,
   };
 
-  return libhoth_hostcmd_exec_v2(
+  return libhoth_hostcmd_exec(
       dev, HOTH_CMD_BOARD_SPECIFIC_BASE + HOTH_PRV_CMD_HOTH_PET_TARGET_WATCHDOG,
       /*version=*/0, &req, sizeof(req), /*resp_buf=*/NULL,
       /*resp_buf_size=*/0, /*out_resp_size=*/NULL);
