@@ -71,7 +71,7 @@ libhoth_security_version htool_get_security_version(
 
 // Mock for htool_exec_security_v2_cmd
 static HtoolSecurityV2Mock* g_htool_security_v2_mock = nullptr;
-extern "C" int htool_exec_security_v2_cmd(
+extern "C" libhoth_error htool_exec_security_v2_cmd(
     struct libhoth_device* dev, uint8_t major, uint8_t minor,
     uint16_t base_command, struct security_v2_buffer* request_buffer,
     const struct security_v2_param* request_params,
@@ -83,7 +83,7 @@ extern "C" int htool_exec_security_v2_cmd(
         request_param_count, response_buffer, response_params,
         response_param_count);
   }
-  return -1;
+  return LIBHOTH_ERR_FAIL;
 }
 
 class HtoolSecurityCertificatesTest : public ::testing::Test {
@@ -180,7 +180,7 @@ TEST_F(HtoolSecurityCertificatesTest, GetAttestationPubCertCommandFails) {
 
   EXPECT_CALL(security_v2_mock_,
               htool_exec_security_v2_cmd(_, _, _, _, _, _, _, _, _, _))
-      .WillOnce(Return(-1));
+      .WillOnce(Return(LIBHOTH_ERR_FAIL));
 
   EXPECT_EQ(htool_get_attestation_pub_cert(&inv), -1);
 }
@@ -238,7 +238,7 @@ TEST_F(HtoolSecurityCertificatesTest, GetSignedAttestationPubCertCommandFails) {
 
   EXPECT_CALL(security_v2_mock_,
               htool_exec_security_v2_cmd(_, _, _, _, _, _, _, _, _, _))
-      .WillOnce(Return(-1));
+      .WillOnce(Return(LIBHOTH_ERR_FAIL));
 
   EXPECT_EQ(htool_get_signed_attestation_pub_cert(&inv), -1);
 }
@@ -343,7 +343,7 @@ TEST_F(HtoolSecurityCertificatesTest, GetAliasKeyV0CertCommandFails) {
 
   EXPECT_CALL(security_v2_mock_,
               htool_exec_security_v2_cmd(_, _, _, _, _, _, _, _, _, _))
-      .WillOnce(Return(-1));
+      .WillOnce(Return(LIBHOTH_ERR_FAIL));
 
   EXPECT_EQ(htool_get_alias_key_cert(&inv), -1);
 }
@@ -358,7 +358,7 @@ TEST_F(HtoolSecurityCertificatesTest, GetAliasKeyV1CertCommandFails) {
 
   EXPECT_CALL(security_v2_mock_,
               htool_exec_security_v2_cmd(_, _, _, _, _, _, _, _, _, _))
-      .WillOnce(Return(-1));
+      .WillOnce(Return(LIBHOTH_ERR_FAIL));
 
   EXPECT_EQ(htool_get_alias_key_cert(&inv), -1);
 }
@@ -570,7 +570,7 @@ TEST_F(HtoolSecurityCertificatesTest, GetDeviceIdCertCommandFails) {
           DoAll(SetArgPointee<1>(endorsement_output_file.c_str()), Return(0)));
   EXPECT_CALL(security_v2_mock_,
               htool_exec_security_v2_cmd(_, _, _, _, _, _, _, _, _, _))
-      .WillOnce(Return(-1));
+      .WillOnce(Return(LIBHOTH_ERR_FAIL));
   EXPECT_EQ(htool_get_device_id_cert(&inv), -1);
 }
 
@@ -601,7 +601,7 @@ TEST_F(HtoolSecurityCertificatesTest, GetAttestationPubCertFailCommand) {
       .WillOnce(DoAll(SetArgPointee<1>(tmp_output_file.c_str()), Return(0)));
   EXPECT_CALL(security_v2_mock_,
               htool_exec_security_v2_cmd(_, _, _, _, _, _, _, _, _, _))
-      .WillOnce(Return(-1));
+      .WillOnce(Return(LIBHOTH_ERR_FAIL));
   EXPECT_EQ(htool_get_attestation_pub_cert(&inv), -1);
 }
 
@@ -622,7 +622,7 @@ TEST_F(HtoolSecurityCertificatesTest, UnloadAttestationKeyFailure) {
   struct htool_invocation inv{};
   EXPECT_CALL(security_v2_mock_,
               htool_exec_security_v2_cmd(_, _, _, _, _, _, _, _, _, _))
-      .WillOnce(Return(-1));
+      .WillOnce(Return(LIBHOTH_ERR_FAIL));
 
   EXPECT_EQ(htool_unload_attestation_key(&inv), -1);
 }
@@ -975,7 +975,7 @@ TEST_F(HtoolSecurityCertificatesTest,
 
   EXPECT_CALL(security_v2_mock_,
               htool_exec_security_v2_cmd(_, _, _, _, _, _, _, _, _, _))
-      .WillOnce(Return(-1));
+      .WillOnce(Return(LIBHOTH_ERR_FAIL));
 
   EXPECT_EQ(htool_gen_attestation_key_v1(&inv), -1);
   EXPECT_FALSE(std::filesystem::exists(csr_output_file));

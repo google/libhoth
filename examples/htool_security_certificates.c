@@ -1,6 +1,7 @@
 #include "htool_security_certificates.h"
 
 #include <errno.h>
+#include <inttypes.h>
 #include <stdbool.h>
 #include <stdint.h>
 #include <stdio.h>
@@ -51,7 +52,7 @@ static int get_cert_v2_data(const struct htool_invocation* inv,
               .size = cert_size,
           },
       };
-      int hoth_status = htool_exec_security_v2_cmd(
+      libhoth_error hoth_status = htool_exec_security_v2_cmd(
           dev, /*major=*/
           major_command,
           /*minor=*/
@@ -61,12 +62,11 @@ static int get_cert_v2_data(const struct htool_invocation* inv,
           SECURITY_V2_BUFFER_PARAM_WITH_VARIABLE_SIZE(
               response_storage_hdr, response_storage_hdr_size),
           response_params, ARRAY_SIZE(response_params));
-      if (hoth_status != 0) {
+      if (hoth_status != HOTH_SUCCESS) {
         fprintf(stderr,
-                "Unexpected Error: Returned status %d, while trying to send "
-                "command to get the Certificate\n",
+                "Unexpected Error: Returned status 0x%016" PRIx64
+                ", while trying to send command to get the Certificate\n",
                 hoth_status);
-        status = hoth_status;
         goto cleanup;
       }
       // Write the certificate that was read into the output file
@@ -244,7 +244,7 @@ int htool_get_device_id_cert(const struct htool_invocation* inv) {
       };
       // This single command returns both the device_id_certificate and the
       // device_id_endorsement_certificate
-      int hoth_status = htool_exec_security_v2_cmd(
+      libhoth_error hoth_status = htool_exec_security_v2_cmd(
           dev, /*major=*/
           HOTH_PRV_CMD_HOTH_SECURITY_V2_GET_CERTIFICATES_MAJOR_COMMAND,
           /*minor=*/HOTH_PRV_CMD_HOTH_SECURITY_V2_GET_DEVICE_ID_MINOR_COMMAND,
@@ -252,12 +252,12 @@ int htool_get_device_id_cert(const struct htool_invocation* inv) {
           SECURITY_V2_BUFFER_PARAM(request_storage_hdr), NULL, 0,
           SECURITY_V2_BUFFER_PARAM(response_storage_hdr), response_params,
           ARRAY_SIZE(response_params));
-      if (hoth_status != 0) {
+      if (hoth_status != HOTH_SUCCESS) {
         fprintf(stderr,
-                "Unexpected Error: Returned status %d, while trying to send "
-                "command to get the Device ID Certificates\n",
+                "Unexpected Error: Returned status 0x%016" PRIx64
+                ", while trying to send command to get the Device ID "
+                "Certificates\n",
                 hoth_status);
-        status = hoth_status;
         goto cleanup;
       }
       // Write the certificates that were read into the output files
@@ -340,7 +340,7 @@ static int exec_unload_attestation_key(struct libhoth_device* dev) {
   uint8_t request_storage_hdr[HOTH_SECURITY_V2_REQUEST_SIZE(0)] = {};
   uint8_t response_storage_hdr[HOTH_SECURITY_V2_RESPONSE_SIZE(0)] = {};
 
-  int hoth_status = htool_exec_security_v2_cmd(
+  libhoth_error hoth_status = htool_exec_security_v2_cmd(
       dev,
       /*major=*/HOTH_PRV_CMD_HOTH_SECURITY_V2_GET_CERTIFICATES_MAJOR_COMMAND,
       /*minor=*/
@@ -348,14 +348,14 @@ static int exec_unload_attestation_key(struct libhoth_device* dev) {
       /*base_command=*/HOTH_BASE_CMD(HOTH_PRV_CMD_HOTH_SECURITY_V2),
       SECURITY_V2_BUFFER_PARAM(request_storage_hdr), NULL, 0,
       SECURITY_V2_BUFFER_PARAM(response_storage_hdr), NULL, 0);
-  if (hoth_status != 0) {
-    fprintf(
-        stderr,
-        "Unexpected Error: Returned status %d, while trying to send command to "
-        "unload the Attestation Key\n",
-        hoth_status);
+  if (hoth_status != HOTH_SUCCESS) {
+    fprintf(stderr,
+            "Unexpected Error: Returned status 0x%016" PRIx64
+            ", while trying to send command to unload the Attestation Key\n",
+            hoth_status);
+    return -1;
   }
-  return hoth_status;
+  return 0;
 }
 
 static int exec_gen_attestation_key_v1(
@@ -375,7 +375,7 @@ static int exec_gen_attestation_key_v1(
           .size = WRAPPED_ATTESTATION_KEY_SIZE,
       },
   };
-  int hoth_status = htool_exec_security_v2_cmd(
+  libhoth_error hoth_status = htool_exec_security_v2_cmd(
       dev,
       /*major=*/HOTH_PRV_CMD_HOTH_SECURITY_V2_GET_CERTIFICATES_MAJOR_COMMAND,
       /*minor=*/
@@ -384,14 +384,14 @@ static int exec_gen_attestation_key_v1(
       SECURITY_V2_BUFFER_PARAM(request_storage_hdr), NULL, 0,
       SECURITY_V2_BUFFER_PARAM(response_storage_hdr), response_params,
       ARRAY_SIZE(response_params));
-  if (hoth_status != 0) {
-    fprintf(
-        stderr,
-        "Unexpected Error: Returned status %d, while trying to send command to "
-        "generate the Attestation Key\n",
-        hoth_status);
+  if (hoth_status != HOTH_SUCCESS) {
+    fprintf(stderr,
+            "Unexpected Error: Returned status 0x%016" PRIx64
+            ", while trying to send command to generate the Attestation Key\n",
+            hoth_status);
+    return -1;
   }
-  return hoth_status;
+  return 0;
 }
 
 static int exec_gen_attestation_key_v2(
@@ -425,7 +425,7 @@ static int exec_gen_attestation_key_v2(
           .size = WRAPPED_ATTESTATION_KEY_SIZE,
       },
   };
-  int hoth_status = htool_exec_security_v2_cmd(
+  libhoth_error hoth_status = htool_exec_security_v2_cmd(
       dev,
       /*major=*/HOTH_PRV_CMD_HOTH_SECURITY_V2_GET_CERTIFICATES_MAJOR_COMMAND,
       /*minor=*/
@@ -435,14 +435,14 @@ static int exec_gen_attestation_key_v2(
       ARRAY_SIZE(request_params),
       SECURITY_V2_BUFFER_PARAM(response_storage_hdr), response_params,
       ARRAY_SIZE(response_params));
-  if (hoth_status != 0) {
-    fprintf(
-        stderr,
-        "Unexpected Error: Returned status %d, while trying to send command to "
-        "generate the Attestation Key\n",
-        hoth_status);
+  if (hoth_status != HOTH_SUCCESS) {
+    fprintf(stderr,
+            "Unexpected Error: Returned status 0x%016" PRIx64
+            ", while trying to send command to generate the Attestation Key\n",
+            hoth_status);
+    return -1;
   }
-  return hoth_status;
+  return 0;
 }
 
 static int exec_load_attestation_key(
@@ -463,7 +463,7 @@ static int exec_load_attestation_key(
           .size = ATTESTATION_CERT_SIZE,
       },
   };
-  int hoth_status = htool_exec_security_v2_cmd(
+  libhoth_error hoth_status = htool_exec_security_v2_cmd(
       dev,
       /*major=*/HOTH_PRV_CMD_HOTH_SECURITY_V2_GET_CERTIFICATES_MAJOR_COMMAND,
       /*minor=*/
@@ -472,14 +472,14 @@ static int exec_load_attestation_key(
       SECURITY_V2_BUFFER_PARAM(request_storage_hdr), request_params,
       ARRAY_SIZE(request_params),
       SECURITY_V2_BUFFER_PARAM(response_storage_hdr), NULL, 0);
-  if (hoth_status != 0) {
-    fprintf(
-        stderr,
-        "Unexpected Error: Returned status %d, while trying to send command to "
-        "load the Attestation Key\n",
-        hoth_status);
+  if (hoth_status != HOTH_SUCCESS) {
+    fprintf(stderr,
+            "Unexpected Error: Returned status 0x%016" PRIx64
+            ", while trying to send command to load the Attestation Key\n",
+            hoth_status);
+    return -1;
   }
-  return hoth_status;
+  return 0;
 }
 
 static int exec_load_attestation_key_from_csr_v1(
@@ -500,7 +500,7 @@ static int exec_load_attestation_key_from_csr_v1(
           .size = ATTESTATION_KEY_CSR_V1_SIZE,
       },
   };
-  int hoth_status = htool_exec_security_v2_cmd(
+  libhoth_error hoth_status = htool_exec_security_v2_cmd(
       dev,
       /*major=*/HOTH_PRV_CMD_HOTH_SECURITY_V2_GET_CERTIFICATES_MAJOR_COMMAND,
       /*minor=*/
@@ -509,14 +509,15 @@ static int exec_load_attestation_key_from_csr_v1(
       SECURITY_V2_BUFFER_PARAM(request_storage_hdr), request_params,
       ARRAY_SIZE(request_params),
       SECURITY_V2_BUFFER_PARAM(response_storage_hdr), NULL, 0);
-  if (hoth_status != 0) {
-    fprintf(
-        stderr,
-        "Unexpected Error: Returned status %d, while trying to send command to "
-        "load the Attestation Key from CSR\n",
-        hoth_status);
+  if (hoth_status != HOTH_SUCCESS) {
+    fprintf(stderr,
+            "Unexpected Error: Returned status 0x%016" PRIx64
+            ", while trying to send command to load the Attestation Key from "
+            "CSR\n",
+            hoth_status);
+    return -1;
   }
-  return hoth_status;
+  return 0;
 }
 
 int htool_unload_attestation_key(const struct htool_invocation* inv) {
