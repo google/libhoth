@@ -55,6 +55,7 @@
 #include "htool_srtm.h"
 #include "htool_statistics.h"
 #include "htool_target_control.h"
+#include "htool_target_watchdog.h"
 #include "htool_tpm.h"
 #include "htool_update_session.h"
 #include "htool_usb.h"
@@ -69,6 +70,7 @@
 #include "protocol/reboot.h"
 #include "protocol/rot_firmware_version.h"
 #include "protocol/spi_proxy.h"
+#include "protocol/target_watchdog.h"
 #include "protocol/util.h"
 #include "transports/libhoth_device.h"
 #include "transports/libhoth_spi.h"
@@ -1163,6 +1165,16 @@ static const struct htool_cmd CMDS[] = {
         .desc = "Get target debug status.",
         .params = (const struct htool_param[]){{}},
         .func = htool_target_debug_get,
+    },
+    {
+        .verbs = (const char*[]){"target", "watchdog", "pet", NULL},
+        .desc = "Pet the target watchdog.",
+        .params =
+            (const struct htool_param[]){
+                {HTOOL_FLAG_VALUE, 'c', "cookie", "0",
+                 .desc = "64-bit notify cookie to pet the watchdog with."},
+                {}},
+        .func = htool_target_watchdog_pet,
     },
     {
         .verbs = (const char*[]){"console", NULL},

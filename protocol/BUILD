@@ -669,3 +669,28 @@ cc_test(
         "@googletest//:gtest_main",
     ],
 )
+
+cc_library(
+    name = "target_watchdog",
+    srcs = ["target_watchdog.c"],
+    hdrs = ["target_watchdog.h"],
+    deps = [
+        ":host_cmd",
+        ":libhoth_status",
+        "//transports:libhoth_device",
+    ],
+)
+
+cc_test(
+    name = "target_watchdog_test",
+    srcs = ["target_watchdog_test.cc"],
+    deps = [
+        ":host_cmd",
+        ":libhoth_status",
+        ":target_watchdog",
+        "//protocol/test:libhoth_device_mock",
+        "//transports:libhoth_device",
+        "@googletest//:gtest",
+        "@googletest//:gtest_main",
+    ],
+)
