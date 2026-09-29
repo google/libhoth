@@ -39,6 +39,11 @@ class LibHothDeviceMock {
                const void* request, size_t request_size, void* response,
                size_t max_response_size, size_t* bytes_read),
               ());
+  MOCK_METHOD(libhoth_error, hostcmd_exec_v2,
+              (struct libhoth_device * dev, uint16_t command, uint8_t version,
+               const void* request, size_t request_size, void* response,
+               size_t max_response_size, size_t* bytes_read),
+              ());
   MOCK_METHOD(libhoth_error, reconnect, (struct libhoth_device * dev), ());
 };
 
