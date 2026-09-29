@@ -39,32 +39,35 @@ int target_control_perform_action(
   };
 
   size_t response_length = 0;
-  int ret = libhoth_hostcmd_exec(
+  libhoth_error err = libhoth_hostcmd_exec_v2(
       dev, HOTH_CMD_BOARD_SPECIFIC_BASE + HOTH_PRV_CMD_HOTH_TARGET_CONTROL,
       /*version=*/0, &request, sizeof(request), response, sizeof(*response),
       &response_length);
 
-  if (ret != 0) {
-    fprintf(stderr, "HOTH_TARGET_CONTROL error code: %d\n", ret);
-    switch (ret) {
-      case (HTOOL_ERROR_HOST_COMMAND_START + HOTH_RES_INVALID_COMMAND):
-        fprintf(stderr,
-                "Command not supported, or requested action is forbidden on "
-                "function. Please confirm if the RoT FW version supports this "
-                "command, and requested action is allowed on the function\n");
-        break;
-      case (HTOOL_ERROR_HOST_COMMAND_START + HOTH_RES_INVALID_PARAM):
-        fprintf(stderr,
-                "Invalid function or action. Please confirm if the RoT "
-                "firmware version supports the given function, and action on "
-                "that function is correct\n");
-        break;
-      case (HTOOL_ERROR_HOST_COMMAND_START + HOTH_RES_ACCESS_DENIED):
-        fprintf(stderr,
-                "Not authorized to perform requested action on function. "
-                "Please use `authz_host_command` commands to authorize RoT to "
-                "perform requested action on function\n");
-        break;
+  if (err != HOTH_SUCCESS) {
+    htool_report_error("HOTH_TARGET_CONTROL", err);
+    if (LIBHOTH_ERR_GET_SPACE(err) == HOTH_HOST_SPACE_EC) {
+      switch (LIBHOTH_ERR_GET_CODE(err)) {
+        case HOTH_RES_INVALID_COMMAND:
+          fprintf(
+              stderr,
+              "Command not supported, or requested action is forbidden on "
+              "function. Please confirm if the RoT FW version supports this "
+              "command, and requested action is allowed on the function\n");
+          break;
+        case HOTH_RES_INVALID_PARAM:
+          fprintf(stderr,
+                  "Invalid function or action. Please confirm if the RoT "
+                  "firmware version supports the given function, and action on "
+                  "that function is correct\n");
+          break;
+        case HOTH_RES_ACCESS_DENIED:
+          fprintf(stderr,
+                  "Not authorized to perform requested action on function. "
+                  "Please use `authz_host_command` commands to authorize RoT "
+                  "to perform requested action on function\n");
+          break;
+      }
     }
     return -1;
   }
