@@ -278,9 +278,28 @@ cc_library(
     }),
 )
 
+config_setting(
+    name = "static_build",
+    define_values = {
+        "static": "true",
+    },
+)
+
 cc_binary(
     name = "htool",
-    features = ["fully_static_link_target"],
+    features = select({
+        ":static_build": [
+            "fully_static_link",
+            "fully_static_link_target",
+        ],
+        "//conditions:default": [
+            "fully_static_link_target",
+        ],
+    }),
+    linkopts = select({
+        ":static_build": ["-static"],
+        "//conditions:default": [],
+    }),
     deps = [":htool_lib"],
 )
 

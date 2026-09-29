@@ -12,6 +12,12 @@ on:
 
   # Allows you to run this workflow manually from the Actions tab
   workflow_dispatch:
+    inputs:
+      static_link:
+        description: 'Statically link Linux htool binary'
+        required: false
+        default: false
+        type: boolean
 
 permissions:
   contents: read
@@ -49,7 +55,7 @@ jobs:
 
       - name: Build with Bazel
         run: |
-          bazel build --copt="-Werror" ...
+          bazel build --copt="-Werror" ${{ inputs.static_link && '--config=static' || '' }} ...
 
       - name: Build htool with D-Bus
         run: |
