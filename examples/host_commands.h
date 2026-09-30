@@ -170,6 +170,36 @@ struct hoth_security_v2_parameter {
   25
 
 /**
+ * The command to load a signed attestation key certificate and wrapped key onto
+ * the device.
+ */
+#define HOTH_PRV_CMD_HOTH_SECURITY_V2_LOAD_ATTESTATION_KEY_MINOR_COMMAND 1
+
+/**
+ * The command to unload the attestation key from the device.
+ */
+#define HOTH_PRV_CMD_HOTH_SECURITY_V2_UNLOAD_ATTESTATION_KEY_MINOR_COMMAND 3
+
+/**
+ * The command to generate an attestation key using CSR v1 on the device.
+ */
+#define HOTH_PRV_CMD_HOTH_SECURITY_V2_GEN_ATTESTATION_KEY_USING_CSR_V1_MINOR_COMMAND \
+  15
+
+/**
+ * The command to load a self-signed attestation key from CSR v1 on the device
+ * (requires firmware built with self-signed attestation key support).
+ */
+#define HOTH_PRV_CMD_HOTH_SECURITY_V2_LOAD_ATTESTATION_KEY_FROM_CSR_V1_MINOR_COMMAND \
+  16
+
+/**
+ * The command to generate a versioned attestation key on the device.
+ */
+#define HOTH_PRV_CMD_HOTH_SECURITY_V2_GEN_VERSIONED_ATTESTATION_KEY_MINOR_COMMAND \
+  18
+
+/**
  * The command to get token information from the device.
  */
 #define HOTH_PRV_CMD_HOTH_SECURITY_V2_TOKENS_MAJOR_COMMAND 5
