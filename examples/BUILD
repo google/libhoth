@@ -231,6 +231,8 @@ cc_binary(
         "htool_statistics.h",
         "htool_target_control.c",
         "htool_target_control.h",
+        "htool_target_watchdog.c",
+        "htool_target_watchdog.h",
         "htool_tpm.c",
         "htool_tpm.h",
         "htool_update_failure_reasons.h",
@@ -271,6 +273,7 @@ cc_binary(
         "//protocol:secure_boot",
         "//protocol:spi_proxy",
         "//protocol:statistics",
+        "//protocol:target_watchdog",
         "//protocol:update_session",
         "//protocol:util",
         "//transports:libhoth_device",
@@ -300,3 +303,20 @@ cc_test(
         "@googletest//:gtest_main",
     ],
 )
+
+cc_library(
+    name = "htool_target_watchdog",
+    srcs = ["htool_target_watchdog.c"],
+    hdrs = ["htool_target_watchdog.h"],
+    deps = [
+        ":htool_cmd",
+        ":htool_header",
+        "//protocol:host_cmd",
+        "//protocol:libhoth_status",
+        "//protocol:target_watchdog",
+        "//transports:libhoth_device",
+    ],
+)
+
+
+

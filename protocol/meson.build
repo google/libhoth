@@ -28,7 +28,8 @@ protocol_srcs = [
     'provisioning.c',
     'gpio_drive_strength.c',
     'update_session.c',
-    'status.c'
+    'status.c',
+    'target_watchdog.c',
 ]
 
 incdir = libhoth_include_dirs

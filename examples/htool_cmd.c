@@ -15,6 +15,7 @@
 #include "htool_cmd.h"
 
 #include <ctype.h>
+#include <errno.h>
 #include <stddef.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -249,6 +250,44 @@ int htool_get_param_u32(const struct htool_invocation* inv, const char* name,
   int status = parse_u32(s, value);
   if (status) {
     fprintf(stderr, "Unable to parse %s=\"%s\" as u32\n", name, s);
+    return -1;
+  }
+  return 0;
+}
+
+// Parses a uint64_t in decimal or hexadecimal (with '0x'/'0X' prefix).
+// Rejects negative numbers, overflow, and trailing characters.
+static int parse_u64(const char* s, uint64_t* value) {
+  if (s == NULL || s[0] == '\0' || s[0] == '-') {
+    return -1;
+  }
+
+  int base = 10;
+  if (s[0] == '0' && (s[1] == 'x' || s[1] == 'X')) {
+    base = 16;
+    s += 2;
+  }
+
+  char* endptr = NULL;
+  errno = 0;
+  unsigned long long lval = strtoull(s, &endptr, base);
+  if (errno == ERANGE || endptr == s || *endptr != '\0') {
+    return -1;
+  }
+
+  *value = (uint64_t)lval;
+  return 0;
+}
+
+int htool_get_param_u64(const struct htool_invocation* inv, const char* name,
+                        uint64_t* value) {
+  const char* s = get_param_required(inv, name);
+  if (!s) {
+    return -1;
+  }
+  int status = parse_u64(s, value);
+  if (status) {
+    fprintf(stderr, "Unable to parse %s=\"%s\" as u64\n", name, s);
     return -1;
   }
   return 0;
