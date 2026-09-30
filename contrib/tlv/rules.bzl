@@ -205,13 +205,13 @@ def tlv_codegen(name, proto, deps = [], src = None, visibility = None, **kwargs)
         visibility = visibility,
         compile_data = compile_data,
         deps = [
-            "//contrib/aligned",
-            "//contrib/tlv",
-            "//third_party:bstr",
-            "//third_party:zerocopy",
+            Label("//contrib/aligned"),
+            Label("//contrib/tlv"),
+            Label("//third_party:bstr"),
+            Label("//third_party:zerocopy"),
         ] + deps,
         proc_macro_deps = [
-            "//third_party:bitfield_struct",
+            Label("//third_party:bitfield_struct"),
         ],
         **kwargs
     )
