@@ -207,6 +207,51 @@ static int get_secrets(const struct htool_invocation* inv, uint8_t* secrets,
                           secrets_size);
 }
 
+int htool_provisioning_get_encryption_key(const struct htool_invocation* inv) {
+  struct libhoth_device* dev = htool_libhoth_device();
+  if (!dev) {
+    fprintf(stderr, "Unable to retrieve libhoth_device\n");
+    return -1;
+  }
+
+  const char* output_file;
+  if (htool_get_param_string(inv, "output", &output_file) != 0 ||
+      strlen(output_file) == 0) {
+    fprintf(stderr, "--output must be specified.\n");
+    return -1;
+  }
+
+  uint8_t cert_chain[HOTH_KEY_PROVISIONING_MAX_ENCRYPTION_KEY_CERT_CHAIN_SIZE];
+  size_t cert_chain_size = 0;
+  libhoth_error err = libhoth_key_provisioning_get_encryption_key(
+      dev, cert_chain, sizeof(cert_chain), &cert_chain_size);
+  if (err != HOTH_SUCCESS) {
+    fprintf(stderr,
+            "Error: 'key_provisioning_get_encryption_key' failed (0x%016" PRIx64
+            "): ",
+            err);
+    libhoth_log_err(stderr, err);
+    return -1;
+  }
+
+  FILE* output_ptr = fopen(output_file, "wb");
+  if (output_ptr == NULL) {
+    fprintf(stderr, "Error: %s, when attempting to open file: %s\n",
+            strerror(errno), output_file);
+    return -1;
+  }
+
+  if (fwrite(cert_chain, sizeof(uint8_t), cert_chain_size, output_ptr) !=
+      cert_chain_size) {
+    fprintf(stderr, "Error writing to %s\n", output_file);
+    fclose(output_ptr);
+    return -1;
+  }
+
+  fclose(output_ptr);
+  return 0;
+}
+
 int htool_provisioning_store_secrets(const struct htool_invocation* inv) {
   struct libhoth_device* dev = htool_libhoth_device();
   if (!dev) {

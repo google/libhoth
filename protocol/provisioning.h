@@ -46,6 +46,9 @@ struct hoth_key_provisioning_request_header {
   uint16_t size;
 } __attribute__((packed));
 
+#define HOTH_KEY_PROVISIONING_MAX_ENCRYPTION_KEY_CERT_CHAIN_SIZE \
+  (LIBHOTH_MAILBOX_SIZE - sizeof(struct hoth_host_response))
+
 #define HOTH_KEY_PROVISIONING_MAX_SECRETS_SIZE               \
   (LIBHOTH_MAILBOX_SIZE - sizeof(struct hoth_host_request) - \
    sizeof(struct hoth_key_provisioning_request_header))
@@ -154,6 +157,13 @@ libhoth_error libhoth_provisioning_log_write(struct libhoth_device* dev,
 // compute the checksum the device verifies.
 libhoth_error libhoth_provisioning_log_commit(struct libhoth_device* dev,
                                               const uint8_t* data, size_t size);
+
+// Retrieves the provisioning encryption key certificate chain from the device
+// into |cert_chain|, which must be able to hold |cert_chain_capacity| bytes.
+// On success |out_size| receives the number of bytes written to |cert_chain|.
+libhoth_error libhoth_key_provisioning_get_encryption_key(
+    struct libhoth_device* dev, uint8_t* cert_chain, size_t cert_chain_capacity,
+    size_t* out_size);
 
 // Stores |size| bytes of secrets that were encrypted with the provisioning
 // encryption key.
