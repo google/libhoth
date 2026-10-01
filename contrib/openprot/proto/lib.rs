@@ -14,6 +14,10 @@
 
 #![cfg_attr(not(test), no_std)]
 
+pub mod chipid {
+    pub use chipid_tlv::*;
+}
+
 pub mod crypto {
     pub use crypto_tlv::*;
 }
