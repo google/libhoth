@@ -20,6 +20,30 @@ load("//contrib/tlv:rules.bzl", "tlv_codegen")
 package(default_visibility = ["//visibility:public"])
 
 proto_library(
+    name = "chipid_proto",
+    srcs = ["chipid.proto"],
+    visibility = ["//visibility:public"],
+    deps = [
+        "//contrib/tlv:options_proto",
+    ],
+)
+
+rust_proto_library(
+    name = "chipid_rust_proto",
+    tags = ["manual"],
+    visibility = ["//visibility:public"],
+    deps = [":chipid_proto"],
+)
+
+tlv_codegen(
+    name = "chipid_tlv",
+    src = "chipid_tlv.rs",
+    file_prefix = "//contrib/tlv:apache2_header.txt",
+    proto = ":chipid_proto",
+    visibility = ["//visibility:public"],
+)
+
+proto_library(
     name = "crypto_proto",
     srcs = ["crypto.proto"],
     visibility = ["//visibility:public"],
@@ -105,6 +129,7 @@ rust_library(
     edition = "2024",
     visibility = ["//visibility:public"],
     deps = [
+        ":chipid_tlv",
         ":crypto_tlv",
         ":identity_tlv",
         ":key_rotation_tlv",
@@ -117,6 +142,7 @@ rust_test(
     name = "proto_test",
     crate = ":proto",
     deps = [
+        ":chipid_rust_proto",
         ":crypto_rust_proto",
         ":identity_rust_proto",
         ":key_rotation_rust_proto",

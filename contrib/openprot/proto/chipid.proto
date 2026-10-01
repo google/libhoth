@@ -1,0 +1,36 @@
+// Copyright 2026 Google LLC
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+syntax = "proto3";
+
+package mutask.chipid;
+
+import "contrib/tlv/options.proto";
+
+enum ChipFamily {
+  option (openprot.tlv.raw_type) = "u32";
+  CHIP_FAMILY_UNKNOWN = 0;
+  CHIP_FAMILY_HOTH = 1;
+  CHIP_FAMILY_OPENTITAN = 2;
+}
+
+message ChipId {
+  option (openprot.tlv.tlv_fourcc) = "C_ID";
+
+  ChipFamily chip_family = 1 [(openprot.tlv.offset) = 0];
+  bytes chip_id = 2 [
+    (openprot.tlv.extra_data) = true,
+    (openprot.tlv.type) = "[u8]"
+  ];
+}
