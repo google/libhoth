@@ -71,13 +71,15 @@ static int exec_provisioning_log_cmd_legacy(struct libhoth_device* dev,
 // Executes a key provisioning host command (0x3E43)
 static libhoth_error exec_key_provisioning_cmd(struct libhoth_device* dev,
                                                const void* req_payload,
-                                               size_t req_payload_size) {
-  size_t response_size = 0;
+                                               size_t req_payload_size,
+                                               void* resp_buf,
+                                               size_t resp_buf_size,
+                                               size_t* out_resp_size) {
   return libhoth_hostcmd_exec_v2(dev,
                                  /*command=*/HOTH_CMD_BOARD_SPECIFIC_BASE +
                                      HOTH_PRV_CMD_HOTH_KEY_PROVISIONING,
                                  /*version=*/0, req_payload, req_payload_size,
-                                 NULL, 0, &response_size);
+                                 resp_buf, resp_buf_size, out_resp_size);
 }
 
 int libhoth_provisioning_log_read(struct libhoth_device* dev, uint8_t* buf,
@@ -249,6 +251,24 @@ libhoth_error libhoth_provisioning_log_commit(struct libhoth_device* dev,
                                    0, &response_size);
 }
 
+libhoth_error libhoth_key_provisioning_get_encryption_key(
+    struct libhoth_device* dev, uint8_t* cert_chain, size_t cert_chain_capacity,
+    size_t* out_size) {
+  if (cert_chain == NULL || out_size == NULL) {
+    return LIBHOTH_ERR_CONSTRUCT(HOTH_CTX_CMD_EXEC, HOTH_HOST_SPACE_LIBHOTH,
+                                 LIBHOTH_ERR_INVALID_PARAMETER);
+  }
+
+  struct hoth_key_provisioning_request_header req = {
+      .version = HOTH_KEY_PROVISIONING_REQUEST_VERSION,
+      .command = HOTH_KEY_PROVISIONING_GET_ENCRYPTION_KEY,
+      .size = sizeof(req),
+  };
+
+  return exec_key_provisioning_cmd(dev, &req, sizeof(req), cert_chain,
+                                   cert_chain_capacity, out_size);
+}
+
 libhoth_error libhoth_key_provisioning_store_secrets(struct libhoth_device* dev,
                                                      const uint8_t* secrets,
                                                      size_t size) {
@@ -270,7 +290,9 @@ libhoth_error libhoth_key_provisioning_store_secrets(struct libhoth_device* dev,
   };
   memcpy(req.secrets, secrets, size);
 
-  return exec_key_provisioning_cmd(dev, &req, request_size);
+  size_t response_size = 0;
+  return exec_key_provisioning_cmd(dev, &req, request_size, NULL, 0,
+                                   &response_size);
 }
 
 libhoth_error libhoth_key_provisioning_load_mldsa_key(
@@ -306,7 +328,9 @@ libhoth_error libhoth_key_provisioning_load_mldsa_key(
     };
     memcpy(req.data, key + offset, chunk_size);
 
-    libhoth_error err = exec_key_provisioning_cmd(dev, &req, req_size);
+    size_t response_size = 0;
+    libhoth_error err =
+        exec_key_provisioning_cmd(dev, &req, req_size, NULL, 0, &response_size);
     if (err != HOTH_SUCCESS) {
       return err;
     }

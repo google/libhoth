@@ -33,6 +33,9 @@ int htool_get_provisioning_log(const struct htool_invocation* inv);
 // Validate and Sign the provisioning log.
 int htool_validate_and_sign(const struct htool_invocation* inv);
 
+// Retrieves the provisioning encryption key certificate chain from the device.
+int htool_provisioning_get_encryption_key(const struct htool_invocation* inv);
+
 // Loads secrets that were encrypted with the provisioning encryption key.
 int htool_provisioning_store_secrets(const struct htool_invocation* inv);
 
