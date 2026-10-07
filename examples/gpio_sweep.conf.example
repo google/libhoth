@@ -1,0 +1,70 @@
+# Copyright 2026 Google LLC
+#
+# Reference GPIO Drive Strength Tuning Configuration for htool
+#
+# Usage:
+#   htool --transport usb gpio sweep --config gpio_sweep.conf.example --spi <spidev|spihost0|spihost1> [--dry_run]
+#
+# Supported SPI targets:
+#   - spidev
+#   - spihost0
+#   - spihost1
+#
+# Supported drive strength values (swept in the exact order written):
+#   0, 1, 2, 3
+#
+# Required per-signal keys (all 6 must be mapped for a configured SPI target):
+#   <spi>.clk
+#   <spi>.cs
+#   <spi>.d0
+#   <spi>.d1
+#   <spi>.d2
+#   <spi>.d3
+#
+# Supported pad specifiers (case-insensitive, matching 'htool gpio set_drive_strength'):
+#   - DIO0..DIO15:
+#       0     => USB_DP
+#       1     => USB_DN
+#       2-5   => SPI_HOST0_D0-3
+#       6-9   => SPI_DEV_D0-3
+#       12    => SPI_DEV_CLK
+#       13    => SPI_DEV_CSB
+#       14    => SPI_HOST0_CLK
+#       15    => SPI_HOST0_CSB
+#   - MIO0..MIO46:
+#       0-8   => IOA0-8
+#       9-21  => IOB0-12
+#       22-34 => IOC0-12
+#       35-42 => IOR0-7
+#       43-46 => IOR10-13
+
+# 1. SPI Device (spidev)
+# Dedicated DIO pads: CLK (DIO12), CS (DIO13), D0-D3 (DIO6..DIO9)
+spidev.clk = DIO12
+spidev.cs = DIO13
+spidev.d0 = DIO6
+spidev.d1 = DIO7
+spidev.d2 = DIO8
+spidev.d3 = DIO9
+spidev.drive_strengths = 0, 1, 2, 3
+
+# 2. SPI Host 0 (spihost0)
+# Dedicated DIO pads: CLK (DIO14), CS (DIO15), D0-D3 (DIO2..DIO5)
+spihost0.clk = DIO14
+spihost0.cs = DIO15
+spihost0.d0 = DIO2
+spihost0.d1 = DIO3
+spihost0.d2 = DIO4
+spihost0.d3 = DIO5
+spihost0.drive_strengths = 0, 1, 2, 3
+
+# 3. SPI Host 1 (spihost1)
+# SPI Host 1 is pinmuxed to board-specific MIO pads. Uncomment and replace
+# MIO0..MIO5 below with your board's actual MIO pinout before sweeping spihost1.
+# spihost1.clk = MIO0
+# spihost1.cs = MIO1
+# spihost1.d0 = MIO2
+# spihost1.d1 = MIO3
+# spihost1.d2 = MIO4
+# spihost1.d3 = MIO5
+# spihost1.drive_strengths = 0, 1, 2, 3
