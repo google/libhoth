@@ -958,6 +958,130 @@ TEST_F(HtoolProvisioningTest, LoadMldsaKeyMissingKey) {
   ASSERT_EQ(htool_provisioning_load_mldsa_key(&inv), -1);
 }
 
+TEST_F(HtoolProvisioningTest, GetEncryptionKeySuccess) {
+  struct htool_invocation inv{};
+  std::string tmp_output_file =
+      tmp_dir_path_ + "/encryption_key_cert_chain.bin";
+  EXPECT_CALL(invocation_mock_, GetParamString("output", _))
+      .WillOnce(DoAll(SetArgPointee<1>(tmp_output_file.c_str()), Return(0)));
+
+  std::vector<uint8_t> cert_chain(724);
+  for (size_t i = 0; i < cert_chain.size(); ++i) {
+    cert_chain[i] = static_cast<uint8_t>(i & 0xff);
+  }
+
+  EXPECT_CALL(mock_, send(_, _, _))
+      .WillOnce([&](struct libhoth_device*, const void* req, size_t size) {
+        EXPECT_EQ(size,
+                  sizeof(struct hoth_host_request) +
+                      sizeof(struct hoth_key_provisioning_request_header));
+        const auto* hoth_req =
+            static_cast<const struct hoth_host_request*>(req);
+        EXPECT_EQ(hoth_req->command,
+                  HOTH_BASE_CMD(HOTH_PRV_CMD_HOTH_KEY_PROVISIONING));
+        EXPECT_EQ(hoth_req->data_len,
+                  sizeof(struct hoth_key_provisioning_request_header));
+        const auto* prov_req = reinterpret_cast<
+            const struct hoth_key_provisioning_request_header*>(
+            static_cast<const uint8_t*>(req) +
+            sizeof(struct hoth_host_request));
+        EXPECT_EQ(prov_req->version, HOTH_KEY_PROVISIONING_REQUEST_VERSION);
+        EXPECT_EQ(prov_req->command, HOTH_KEY_PROVISIONING_GET_ENCRYPTION_KEY);
+        EXPECT_EQ(prov_req->size,
+                  sizeof(struct hoth_key_provisioning_request_header));
+        return LIBHOTH_OK;
+      });
+
+  EXPECT_CALL(mock_, receive(_, _, _, _, _))
+      .WillOnce(DoAll(CopyResp(cert_chain.data(), cert_chain.size()),
+                      Return(LIBHOTH_OK)));
+
+  ASSERT_EQ(htool_provisioning_get_encryption_key(&inv), 0);
+
+  FILE* fp = fopen(tmp_output_file.c_str(), "rb");
+  ASSERT_NE(fp, nullptr);
+  std::vector<uint8_t> file_contents(cert_chain.size());
+  ASSERT_EQ(fread(file_contents.data(), 1, file_contents.size(), fp),
+            cert_chain.size());
+  EXPECT_EQ(fgetc(fp), EOF);
+  EXPECT_EQ(memcmp(file_contents.data(), cert_chain.data(), cert_chain.size()),
+            0);
+  fclose(fp);
+  remove(tmp_output_file.c_str());
+}
+
+TEST_F(HtoolProvisioningTest, GetEncryptionKeyDeviceError) {
+  struct htool_invocation inv{};
+  std::string tmp_output_file =
+      tmp_dir_path_ + "/encryption_key_cert_chain_err.bin";
+  EXPECT_CALL(invocation_mock_, GetParamString("output", _))
+      .WillOnce(DoAll(SetArgPointee<1>(tmp_output_file.c_str()), Return(0)));
+
+  EXPECT_CALL(mock_, send(_, _, _)).WillOnce(Return(LIBHOTH_OK));
+  EXPECT_CALL(mock_, receive(_, _, _, _, _))
+      .WillOnce(Return(LIBHOTH_ERR_INTERFACE_NOT_FOUND));
+
+  ASSERT_EQ(htool_provisioning_get_encryption_key(&inv), -1);
+  EXPECT_EQ(fopen(tmp_output_file.c_str(), "rb"), nullptr);
+}
+
+TEST_F(HtoolProvisioningTest, GetEncryptionKeyMissingOutput) {
+  struct htool_invocation inv{};
+  EXPECT_CALL(invocation_mock_, GetParamString("output", _))
+      .WillOnce(Return(-1))
+      .WillOnce(DoAll(SetArgPointee<1>(""), Return(0)));
+  EXPECT_CALL(mock_, send(_, _, _)).Times(0);
+  EXPECT_CALL(mock_, receive(_, _, _, _, _)).Times(0);
+
+  ASSERT_EQ(htool_provisioning_get_encryption_key(&inv), -1);
+  ASSERT_EQ(htool_provisioning_get_encryption_key(&inv), -1);
+}
+
+TEST_F(HtoolProvisioningTest, GetEncryptionKeyOutputFileNotAbleToBeOpened) {
+  struct htool_invocation inv{};
+  std::string tmp_output_file = "/path/to/nonexistent/file";
+  EXPECT_CALL(invocation_mock_, GetParamString("output", _))
+      .WillOnce(DoAll(SetArgPointee<1>(tmp_output_file.c_str()), Return(0)));
+
+  std::vector<uint8_t> cert_chain(724, 0xab);
+  EXPECT_CALL(mock_, send(_, _, _)).WillOnce(Return(LIBHOTH_OK));
+  EXPECT_CALL(mock_, receive(_, _, _, _, _))
+      .WillOnce(DoAll(CopyResp(cert_chain.data(), cert_chain.size()),
+                      Return(LIBHOTH_OK)));
+
+  ASSERT_EQ(htool_provisioning_get_encryption_key(&inv), -1);
+}
+
+TEST_F(HtoolProvisioningTest, GetEncryptionKeyProtocolNullParams) {
+  uint8_t cert_chain[16] = {};
+  size_t out_size = 0;
+  EXPECT_CALL(mock_, send(_, _, _)).Times(0);
+  EXPECT_EQ(libhoth_key_provisioning_get_encryption_key(
+                &hoth_dev_, nullptr, sizeof(cert_chain), &out_size),
+            LIBHOTH_ERR_CONSTRUCT(HOTH_CTX_CMD_EXEC, HOTH_HOST_SPACE_LIBHOTH,
+                                  LIBHOTH_ERR_INVALID_PARAMETER));
+  EXPECT_EQ(libhoth_key_provisioning_get_encryption_key(
+                &hoth_dev_, cert_chain, sizeof(cert_chain), nullptr),
+            LIBHOTH_ERR_CONSTRUCT(HOTH_CTX_CMD_EXEC, HOTH_HOST_SPACE_LIBHOTH,
+                                  LIBHOTH_ERR_INVALID_PARAMETER));
+}
+
+TEST_F(HtoolProvisioningTest, GetEncryptionKeyProtocolBufferOverflow) {
+  std::vector<uint8_t> cert_chain(32, 0xab);
+  uint8_t small_buf[16] = {};
+  size_t out_size = 0;
+
+  EXPECT_CALL(mock_, send(_, _, _)).WillOnce(Return(LIBHOTH_OK));
+  EXPECT_CALL(mock_, receive(_, _, _, _, _))
+      .WillOnce(DoAll(CopyResp(cert_chain.data(), cert_chain.size()),
+                      Return(LIBHOTH_OK)));
+
+  EXPECT_EQ(libhoth_key_provisioning_get_encryption_key(
+                &hoth_dev_, small_buf, sizeof(small_buf), &out_size),
+            LIBHOTH_ERR_CONSTRUCT(HOTH_CTX_CMD_EXEC, HOTH_HOST_SPACE_LIBHOTH,
+                                  LIBHOTH_ERR_RESPONSE_BUFFER_OVERFLOW));
+}
+
 TEST_F(HtoolProvisioningTest, StoreSecretsProtocolTooLarge) {
   std::vector<uint8_t> data(HOTH_KEY_PROVISIONING_MAX_SECRETS_SIZE + 1, 0x11);
   EXPECT_CALL(mock_, send(_, _, _)).Times(0);

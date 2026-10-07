@@ -2078,6 +2078,17 @@ static const struct htool_cmd CMDS[] = {
                 {}},
     },
     {
+        .verbs = (const char*[]){"provisioning", "get_encryption_key", NULL},
+        .desc = "Get the provisioning encryption key certificate chain",
+        .func = htool_provisioning_get_encryption_key,
+        .params =
+            (const struct htool_param[]){
+                {HTOOL_FLAG_VALUE, .name = "output",
+                 .desc = "File to write the provisioning encryption key "
+                         "certificate chain to."},
+                {}},
+    },
+    {
         .verbs = (const char*[]){"provisioning", "store_secrets", NULL},
         .desc = "Store secrets encrypted with the provisioning encryption key",
         .func = htool_provisioning_store_secrets,
