@@ -26,7 +26,7 @@ const struct image_descriptor* libhoth_find_image_descriptor(
       struct image_descriptor* img_dsc =
           (struct image_descriptor*)(image + off);
 
-      if (img_dsc->descriptor_area_size + off > len) {
+      if (img_dsc->descriptor_area_size > len - off) {
         // Image descriptor is clipped
         return NULL;
       }
