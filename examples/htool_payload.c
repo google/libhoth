@@ -272,6 +272,34 @@ int htool_payload_info_all(const struct htool_invocation* inv) {
   return htool_payload_image_close(&img);
 }
 
+int htool_payload_info_target_watchdog(const struct htool_invocation* inv) {
+  struct htool_payload_image img;
+  if (htool_payload_image_open(inv, &img) != 0) {
+    return -1;
+  }
+
+  struct target_watchdog_config config;
+  enum image_blob_status status =
+      libhoth_payload_target_watchdog_config(img.image, img.size, &config);
+  int rv = htool_payload_image_close(&img);
+  if (status == IMAGE_BLOB_NOT_FOUND) {
+    fprintf(stderr, "Image has no target watchdog (TWCH) blob\n");
+    return -1;
+  }
+  if (status != IMAGE_BLOB_OK) {
+    fprintf(stderr, "Invalid target watchdog config in image: %s\n",
+            libhoth_image_blob_status_string(status));
+    return -1;
+  }
+
+  printf("initial_delay_seconds=%" PRIu32 "\n", config.initial_delay_seconds);
+  printf("watchdog_timeout_seconds=%" PRIu32 "\n",
+         config.watchdog_timeout_seconds);
+  printf("hold_in_reset_microseconds=%" PRIu32 "\n",
+         config.hold_in_reset_microseconds);
+  return rv;
+}
+
 int htool_payload_info_nonstatic(const struct htool_invocation* inv) {
   struct htool_payload_image img;
   if (htool_payload_image_open(inv, &img) != 0) {
