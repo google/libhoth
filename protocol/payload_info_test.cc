@@ -21,6 +21,7 @@
 #include <cstdint>
 #include <cstring>
 #include <iomanip>
+#include <vector>
 
 #include "payload_info.h"
 
@@ -230,4 +231,321 @@ TEST(PayloadInfotest, payload_info_all) {
 
   (void)munmap(image, statbuf.st_size);
   close(fd);
+}
+
+namespace {
+
+constexpr uint32_t kBlobListMagic = 0x424f4c42;           // "BLOB"
+constexpr uint32_t kTargetWatchdogBlobType = 0x48435754;  // "TWCH"
+constexpr uint32_t kOtherBlobType = 0x5248544f;           // "OTHR"
+constexpr size_t kBlobHeaderSize = 8;
+constexpr uint32_t kDescriptorOffset = TITAN_IMAGE_DESCRIPTOR_ALIGNMENT;
+constexpr uint32_t kDescriptorAreaSize = 4096;
+constexpr uint8_t kRegionCount = 1;
+
+using Bytes = std::vector<uint8_t>;
+
+void AppendLe32(Bytes& bytes, uint32_t value) {
+  for (int shift = 0; shift < 32; shift += 8) {
+    bytes.push_back(static_cast<uint8_t>(value >> shift));
+  }
+}
+
+Bytes BlobEntry(uint32_t blob_type, const Bytes& payload) {
+  Bytes entry;
+  AppendLe32(entry, blob_type);
+  AppendLe32(entry, payload.size());
+  entry.insert(entry.end(), payload.begin(), payload.end());
+  while (entry.size() % 4 != 0) {
+    entry.push_back(0xff);
+  }
+  return entry;
+}
+
+Bytes TargetWatchdogEntry(const struct target_watchdog_config& config) {
+  Bytes payload;
+  AppendLe32(payload, config.initial_delay_seconds);
+  AppendLe32(payload, config.watchdog_timeout_seconds);
+  AppendLe32(payload, config.hold_in_reset_microseconds);
+  return BlobEntry(kTargetWatchdogBlobType, payload);
+}
+
+Bytes Concat(std::initializer_list<Bytes> entries) {
+  Bytes list;
+  for (const auto& entry : entries) {
+    list.insert(list.end(), entry.begin(), entry.end());
+  }
+  return list;
+}
+
+// Lays out a payload image as:
+// the descriptor, its regions, the hash, the optional denylist, then the blob
+// list.
+struct TestImage {
+  Bytes blob_list;
+  uint8_t denylist_size = 0;
+  uint32_t blob_list_magic = kBlobListMagic;
+  uint8_t descriptor_major = 1;
+  uint8_t hash_type = HASH_SHA2_256;
+
+  size_t BlobListMagicOffset() const {
+    size_t offset = sizeof(struct image_descriptor) +
+                    kRegionCount * sizeof(struct image_region) +
+                    sizeof(struct hash_sha256);
+    if (denylist_size != 0) {
+      offset += sizeof(uint32_t) + denylist_size * sizeof(payload_version);
+    }
+    return offset;
+  }
+
+  Bytes DescriptorArea() const {
+    Bytes area(kDescriptorAreaSize, 0xff);
+
+    struct image_descriptor descr = {};
+    descr.descriptor_magic = TITAN_IMAGE_DESCRIPTOR_MAGIC;
+    descr.descriptor_major = descriptor_major;
+    descr.descriptor_area_size = kDescriptorAreaSize;
+    descr.hash_type = hash_type;
+    descr.denylist_size = denylist_size;
+    descr.region_count = kRegionCount;
+    descr.image_size = kDescriptorOffset + kDescriptorAreaSize;
+    descr.blob_size = blob_list.size();
+    std::memcpy(area.data(), &descr, sizeof(descr));
+
+    struct image_region region = {};
+    region.region_offset = kDescriptorOffset;
+    region.region_size = kDescriptorAreaSize;
+    region.region_attributes = IMAGE_REGION_STATIC;
+    std::memcpy(area.data() + sizeof(descr), &region, sizeof(region));
+
+    struct hash_sha256 hash = {};
+    hash.hash_magic = TITAN_IMAGE_DESCRIPTOR_HASH_MAGIC;
+    std::memcpy(area.data() + sizeof(descr) + sizeof(region), &hash,
+                sizeof(hash));
+
+    if (!blob_list.empty()) {
+      Bytes blob_section;
+      AppendLe32(blob_section, blob_list_magic);
+      blob_section.insert(blob_section.end(), blob_list.begin(),
+                          blob_list.end());
+      std::copy(blob_section.begin(), blob_section.end(),
+                area.begin() + BlobListMagicOffset());
+    }
+    return area;
+  }
+
+  Bytes Image() const {
+    Bytes image(kDescriptorOffset, 0xff);
+    Bytes area = DescriptorArea();
+    image.insert(image.end(), area.begin(), area.end());
+    return image;
+  }
+};
+
+enum image_blob_status ReadTargetWatchdog(
+    const Bytes& image, struct target_watchdog_config* config) {
+  return libhoth_payload_target_watchdog_config(image.data(), image.size(),
+                                                config);
+}
+
+constexpr struct target_watchdog_config kConfig = {600, 60, 100000};
+
+}  // namespace
+
+bool operator==(const struct target_watchdog_config& a,
+                const struct target_watchdog_config& b) {
+  return a.initial_delay_seconds == b.initial_delay_seconds &&
+         a.watchdog_timeout_seconds == b.watchdog_timeout_seconds &&
+         a.hold_in_reset_microseconds == b.hold_in_reset_microseconds;
+}
+
+TEST(PayloadTargetWatchdogTest, FullImageWithTargetWatchdog) {
+  TestImage image{.blob_list = TargetWatchdogEntry(kConfig)};
+
+  struct target_watchdog_config config;
+  ASSERT_EQ(ReadTargetWatchdog(image.Image(), &config), IMAGE_BLOB_OK);
+  EXPECT_EQ(config, kConfig);
+}
+
+TEST(PayloadTargetWatchdogTest, RawDescriptorWithTargetWatchdog) {
+  TestImage image{.blob_list = TargetWatchdogEntry(kConfig)};
+
+  struct target_watchdog_config config;
+  ASSERT_EQ(ReadTargetWatchdog(image.DescriptorArea(), &config), IMAGE_BLOB_OK);
+  EXPECT_EQ(config, kConfig);
+}
+
+TEST(PayloadTargetWatchdogTest, TruncatedRawDescriptorIsRejected) {
+  TestImage image{.blob_list = TargetWatchdogEntry(kConfig)};
+  Bytes raw_descriptor = image.DescriptorArea();
+  raw_descriptor.pop_back();
+
+  struct target_watchdog_config config;
+  EXPECT_EQ(ReadTargetWatchdog(raw_descriptor, &config),
+            IMAGE_BLOB_NO_DESCRIPTOR);
+}
+
+TEST(PayloadTargetWatchdogTest, NoBlobs) {
+  TestImage image;
+
+  struct target_watchdog_config config;
+  EXPECT_EQ(ReadTargetWatchdog(image.Image(), &config), IMAGE_BLOB_NOT_FOUND);
+}
+
+TEST(PayloadTargetWatchdogTest, TestPayloadHasNoTargetWatchdog) {
+  int fd = open(kTestData, O_RDONLY, 0);
+  ASSERT_NE(fd, -1);
+  struct stat statbuf;
+  ASSERT_EQ(fstat(fd, &statbuf), 0);
+  uint8_t* image = reinterpret_cast<uint8_t*>(
+      mmap(NULL, statbuf.st_size, PROT_READ, MAP_PRIVATE, fd, 0));
+  ASSERT_NE(image, MAP_FAILED);
+
+  struct target_watchdog_config config;
+  EXPECT_EQ(
+      libhoth_payload_target_watchdog_config(image, statbuf.st_size, &config),
+      IMAGE_BLOB_NOT_FOUND);
+
+  (void)munmap(image, statbuf.st_size);
+  close(fd);
+}
+
+TEST(PayloadTargetWatchdogTest, UnknownBlobsAndTargetWatchdog) {
+  TestImage image{.blob_list = Concat({
+                      BlobEntry(kOtherBlobType, {0xaa, 0xaa, 0xaa}),
+                      TargetWatchdogEntry(kConfig),
+                      BlobEntry(kOtherBlobType, {}),
+                  })};
+
+  struct target_watchdog_config config;
+  ASSERT_EQ(ReadTargetWatchdog(image.Image(), &config), IMAGE_BLOB_OK);
+  EXPECT_EQ(config, kConfig);
+}
+
+TEST(PayloadTargetWatchdogTest, OnlyUnknownBlobs) {
+  TestImage image{.blob_list = BlobEntry(kOtherBlobType, {1, 2, 3, 4})};
+
+  struct target_watchdog_config config;
+  EXPECT_EQ(ReadTargetWatchdog(image.Image(), &config), IMAGE_BLOB_NOT_FOUND);
+}
+
+TEST(PayloadTargetWatchdogTest, DenylistPrecedesBlobList) {
+  TestImage image{.blob_list = TargetWatchdogEntry(kConfig),
+                  .denylist_size = 2};
+
+  struct target_watchdog_config config;
+  ASSERT_EQ(ReadTargetWatchdog(image.Image(), &config), IMAGE_BLOB_OK);
+  EXPECT_EQ(config, kConfig);
+}
+
+TEST(PayloadTargetWatchdogTest, ListMayEndInPadding) {
+  Bytes unpadded_entry = BlobEntry(kOtherBlobType, {0xaa});
+  unpadded_entry.resize(kBlobHeaderSize + 1);
+  TestImage image{.blob_list =
+                      Concat({TargetWatchdogEntry(kConfig), unpadded_entry})};
+
+  struct target_watchdog_config config;
+  ASSERT_EQ(ReadTargetWatchdog(image.Image(), &config), IMAGE_BLOB_OK);
+  EXPECT_EQ(config, kConfig);
+}
+
+TEST(PayloadTargetWatchdogTest, InvalidBlobListMagic) {
+  TestImage image{.blob_list = TargetWatchdogEntry(kConfig),
+                  .blob_list_magic = 0x12345678};
+
+  struct target_watchdog_config config;
+  EXPECT_EQ(ReadTargetWatchdog(image.Image(), &config),
+            IMAGE_BLOB_LIST_INVALID_MAGIC);
+}
+
+TEST(PayloadTargetWatchdogTest, MalformedEntries) {
+  Bytes entry = TargetWatchdogEntry(kConfig);
+  Bytes truncated_header(kBlobHeaderSize - 1, 0);
+  Bytes truncated_payload(entry.begin(), entry.end() - 1);
+  Bytes oversized_payload = BlobEntry(kOtherBlobType, Bytes(4));
+  std::fill(oversized_payload.begin() + 4, oversized_payload.begin() + 8, 0xff);
+
+  for (const Bytes& list : {
+           truncated_header,
+           truncated_payload,
+           oversized_payload,
+           // The firmware validates the whole list, not just up to the
+           // target watchdog blob.
+           Concat({entry, truncated_header}),
+       }) {
+    TestImage image{.blob_list = list};
+
+    struct target_watchdog_config config;
+    EXPECT_EQ(ReadTargetWatchdog(image.Image(), &config),
+              IMAGE_BLOB_LIST_MALFORMED);
+  }
+}
+
+TEST(PayloadTargetWatchdogTest, DuplicateTargetWatchdog) {
+  TestImage image{.blob_list = Concat({TargetWatchdogEntry(kConfig),
+                                       TargetWatchdogEntry(kConfig)})};
+
+  struct target_watchdog_config config;
+  EXPECT_EQ(ReadTargetWatchdog(image.Image(), &config), IMAGE_BLOB_DUPLICATE);
+}
+
+TEST(PayloadTargetWatchdogTest, WrongTargetWatchdogSize) {
+  TestImage image{.blob_list = BlobEntry(kTargetWatchdogBlobType, Bytes(8))};
+
+  struct target_watchdog_config config;
+  EXPECT_EQ(ReadTargetWatchdog(image.Image(), &config),
+            IMAGE_BLOB_INVALID_SIZE);
+}
+
+TEST(PayloadTargetWatchdogTest, ValuesTheRotWouldRejectAreReturnedAsStored) {
+  constexpr struct target_watchdog_config kRejected = {UINT32_MAX, 0,
+                                                       UINT32_MAX};
+  TestImage image{.blob_list = TargetWatchdogEntry(kRejected)};
+
+  struct target_watchdog_config config;
+  ASSERT_EQ(ReadTargetWatchdog(image.Image(), &config), IMAGE_BLOB_OK);
+  EXPECT_EQ(config, kRejected);
+}
+
+TEST(PayloadTargetWatchdogTest, BlobListFillingDescriptorArea) {
+  TestImage image;
+  size_t list_size = kDescriptorAreaSize - image.BlobListMagicOffset() - 4;
+  Bytes entry = TargetWatchdogEntry(kConfig);
+  image.blob_list = Concat(
+      {entry,
+       BlobEntry(kOtherBlobType,
+                 Bytes(list_size - entry.size() - kBlobHeaderSize, 0xaa))});
+  ASSERT_EQ(image.blob_list.size(), list_size);
+  Bytes bytes = image.DescriptorArea();
+  auto* descr = reinterpret_cast<struct image_descriptor*>(bytes.data());
+
+  struct target_watchdog_config config;
+  ASSERT_EQ(ReadTargetWatchdog(bytes, &config), IMAGE_BLOB_OK);
+  EXPECT_EQ(config, kConfig);
+
+  for (uint32_t blob_size :
+       {static_cast<uint32_t>(list_size + 1), UINT32_MAX}) {
+    descr->blob_size = blob_size;
+    EXPECT_EQ(ReadTargetWatchdog(bytes, &config), IMAGE_BLOB_LIST_MALFORMED);
+  }
+}
+
+TEST(PayloadTargetWatchdogTest, UnsupportedDescriptor) {
+  TestImage newer_major{.blob_list = TargetWatchdogEntry(kConfig),
+                        .descriptor_major = 2};
+  TestImage sha512{.blob_list = TargetWatchdogEntry(kConfig),
+                   .hash_type = HASH_SHA2_512};
+
+  struct target_watchdog_config config;
+  EXPECT_EQ(ReadTargetWatchdog(newer_major.Image(), &config),
+            IMAGE_BLOB_UNSUPPORTED_DESCRIPTOR);
+  EXPECT_EQ(ReadTargetWatchdog(sha512.Image(), &config),
+            IMAGE_BLOB_UNSUPPORTED_DESCRIPTOR);
+}
+
+TEST(PayloadTargetWatchdogTest, NoDescriptor) {
+  Bytes bytes(kDescriptorAreaSize, 0xff);
+
+  struct target_watchdog_config config;
+  EXPECT_EQ(ReadTargetWatchdog(bytes, &config), IMAGE_BLOB_NO_DESCRIPTOR);
 }

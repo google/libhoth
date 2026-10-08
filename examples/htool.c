@@ -1320,6 +1320,15 @@ static const struct htool_cmd CMDS[] = {
         .func = htool_payload_info_nonstatic,
     },
     {
+        .verbs = (const char*[]){"payload", "info", "target_watchdog", NULL},
+        .desc = "Print the target watchdog config of a Titan image or image "
+                "descriptor as key=value lines.",
+        .params =
+            (const struct htool_param[]){
+                {HTOOL_POSITIONAL, .name = "source-file"}, {}},
+        .func = htool_payload_info_target_watchdog,
+    },
+    {
         .verbs = (const char*[]){"payload", "info", NULL},
         .desc = "Display payload info for a Titan image.",
         .params =

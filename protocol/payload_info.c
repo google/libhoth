@@ -26,7 +26,7 @@ const struct image_descriptor* libhoth_find_image_descriptor(
       struct image_descriptor* img_dsc =
           (struct image_descriptor*)(image + off);
 
-      if (img_dsc->descriptor_area_size + off > len) {
+      if (img_dsc->descriptor_area_size > len - off) {
         // Image descriptor is clipped
         return NULL;
       }
@@ -129,4 +129,109 @@ bool libhoth_payload_info_all(const uint8_t* image, size_t len,
   }
 
   return true;
+}
+
+#define TITAN_IMAGE_DESCRIPTOR_MAX_MAJOR_VERSION 1
+#define TITAN_IMAGE_DESCRIPTOR_BLOB_MAGIC 0x424f4c42  // "BLOB"
+#define IMAGE_BLOB_ALIGNMENT 4
+#define IMAGE_BLOB_TYPE_TARGET_WATCHDOG 0x48435754  // "TWCH"
+
+struct image_blob_header {
+  uint32_t blob_type;
+  // Size of the blob in bytes. Does NOT include `sizeof(image_blob_header)`.
+  uint32_t payload_size;
+} __attribute__((__packed__));
+
+static uint32_t blob_list_magic_offset(const struct image_descriptor* descr) {
+  uint32_t offset = sizeof(struct image_descriptor) +
+                    descr->region_count * sizeof(struct image_region) +
+                    sizeof(struct hash_sha256);
+  if (descr->denylist_size != 0) {
+    offset += sizeof(uint32_t) +
+              descr->denylist_size * sizeof(struct payload_version);
+  }
+  return offset;
+}
+
+const char* libhoth_image_blob_status_string(enum image_blob_status status) {
+  switch (status) {
+    case IMAGE_BLOB_OK:
+      return "ok";
+    case IMAGE_BLOB_NOT_FOUND:
+      return "blob not found";
+    case IMAGE_BLOB_NO_DESCRIPTOR:
+      return "no image descriptor found";
+    case IMAGE_BLOB_UNSUPPORTED_DESCRIPTOR:
+      return "unsupported image descriptor version or hash type";
+    case IMAGE_BLOB_LIST_INVALID_MAGIC:
+      return "invalid blob list magic";
+    case IMAGE_BLOB_LIST_MALFORMED:
+      return "malformed blob list";
+    case IMAGE_BLOB_DUPLICATE:
+      return "duplicate blob";
+    case IMAGE_BLOB_INVALID_SIZE:
+      return "invalid blob payload size";
+  }
+  return "unknown error";
+}
+
+enum image_blob_status libhoth_payload_target_watchdog_config(
+    const uint8_t* image, size_t len, struct target_watchdog_config* config) {
+  const struct image_descriptor* descr =
+      libhoth_find_image_descriptor(image, len);
+  if (descr == NULL) {
+    return IMAGE_BLOB_NO_DESCRIPTOR;
+  }
+  // The blob list's location depends on the descriptor's layout.
+  if (descr->descriptor_major > TITAN_IMAGE_DESCRIPTOR_MAX_MAJOR_VERSION ||
+      descr->hash_type != HASH_SHA2_256) {
+    return IMAGE_BLOB_UNSUPPORTED_DESCRIPTOR;
+  }
+  if (descr->blob_size == 0) {
+    return IMAGE_BLOB_NOT_FOUND;
+  }
+
+  // libhoth_find_image_descriptor() guarantees that the whole descriptor area
+  // is inside `image`, so bounding the list by it keeps every read in bounds.
+  const uint8_t* descr_bytes = (const uint8_t*)descr;
+  uint64_t magic_offset = blob_list_magic_offset(descr);
+  uint64_t list_end = magic_offset + sizeof(uint32_t) + descr->blob_size;
+  if (list_end > descr->descriptor_area_size) {
+    return IMAGE_BLOB_LIST_MALFORMED;
+  }
+  uint32_t magic;
+  memcpy(&magic, descr_bytes + magic_offset, sizeof(magic));
+  if (magic != TITAN_IMAGE_DESCRIPTOR_BLOB_MAGIC) {
+    return IMAGE_BLOB_LIST_INVALID_MAGIC;
+  }
+
+  bool found = false;
+  uint64_t offset = magic_offset + sizeof(magic);
+  while (offset < list_end) {
+    struct image_blob_header header;
+    if (list_end - offset < sizeof(header)) {
+      return IMAGE_BLOB_LIST_MALFORMED;
+    }
+    memcpy(&header, descr_bytes + offset, sizeof(header));
+    offset += sizeof(header);
+    if (header.payload_size > list_end - offset) {
+      return IMAGE_BLOB_LIST_MALFORMED;
+    }
+
+    if (header.blob_type == IMAGE_BLOB_TYPE_TARGET_WATCHDOG) {
+      if (found) {
+        return IMAGE_BLOB_DUPLICATE;
+      }
+      if (header.payload_size != sizeof(*config)) {
+        return IMAGE_BLOB_INVALID_SIZE;
+      }
+      memcpy(config, descr_bytes + offset, sizeof(*config));
+      found = true;
+    }
+
+    offset += header.payload_size;
+    offset = (offset + IMAGE_BLOB_ALIGNMENT - 1) / IMAGE_BLOB_ALIGNMENT *
+             IMAGE_BLOB_ALIGNMENT;
+  }
+  return found ? IMAGE_BLOB_OK : IMAGE_BLOB_NOT_FOUND;
 }

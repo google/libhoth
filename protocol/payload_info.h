@@ -116,7 +116,7 @@ struct image_descriptor {
   /* image_type enum { DEV, PROD, BREAKOUT, UNSIGNED_INTEGRITY} */
   uint8_t image_type;
 
-  uint8_t reserved_3;
+  uint8_t denylist_size;
 
   /* hash_type enum { NONE, SHA2_224, SHA2_256, ...} */
   uint8_t hash_type;
@@ -185,6 +185,29 @@ bool libhoth_payload_info(const uint8_t* image, size_t len,
                           struct payload_info* payload_info);
 bool libhoth_payload_info_all(const uint8_t* image, size_t len,
                               struct payload_info_all* info_all);
+
+enum image_blob_status {
+  IMAGE_BLOB_OK = 0,
+  IMAGE_BLOB_NOT_FOUND,
+  IMAGE_BLOB_NO_DESCRIPTOR,
+  IMAGE_BLOB_UNSUPPORTED_DESCRIPTOR,
+  IMAGE_BLOB_LIST_INVALID_MAGIC,
+  // The blob list overruns the descriptor area, or an entry overruns the list.
+  IMAGE_BLOB_LIST_MALFORMED,
+  IMAGE_BLOB_DUPLICATE,
+  IMAGE_BLOB_INVALID_SIZE,
+};
+
+const char* libhoth_image_blob_status_string(enum image_blob_status status);
+
+struct target_watchdog_config {
+  uint32_t initial_delay_seconds;
+  uint32_t watchdog_timeout_seconds;
+  uint32_t hold_in_reset_microseconds;
+} __attribute__((__packed__));
+
+enum image_blob_status libhoth_payload_target_watchdog_config(
+    const uint8_t* image, size_t len, struct target_watchdog_config* config);
 
 #ifdef __cplusplus
 }
