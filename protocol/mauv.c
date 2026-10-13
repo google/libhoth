@@ -41,9 +41,22 @@ libhoth_error libhoth_fetch_mauv(struct libhoth_device* dev, uint8_t state,
     return HOTH_SUCCESS;
   }
 
-  if (rlen != sizeof(struct hoth_response_mauv)) {
+  if (category == HAVEN_MAUV) {
+    if (rlen != sizeof(struct haven_mauv)) {
+      return LIBHOTH_ERR_CONSTRUCT(HOTH_CTX_CMD_EXEC, HOTH_HOST_SPACE_LIBHOTH,
+                                   LIBHOTH_ERR_FAIL);
+    }
+  } else if (category == IMAGE_MAUV) {
+    if (rlen < sizeof(struct image_mauv) ||
+        (rlen - sizeof(struct image_mauv)) % sizeof(uint64_t) != 0 ||
+        (rlen - sizeof(struct image_mauv)) / sizeof(uint64_t) !=
+            mauv->image.version_denylist_num_entries) {
+      return LIBHOTH_ERR_CONSTRUCT(HOTH_CTX_CMD_EXEC, HOTH_HOST_SPACE_LIBHOTH,
+                                   LIBHOTH_ERR_FAIL);
+    }
+  } else {
     return LIBHOTH_ERR_CONSTRUCT(HOTH_CTX_CMD_EXEC, HOTH_HOST_SPACE_LIBHOTH,
-                                 LIBHOTH_ERR_FAIL);
+                                 LIBHOTH_ERR_INVALID_PARAMETER);
   }
 
   return HOTH_SUCCESS;

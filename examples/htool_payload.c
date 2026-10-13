@@ -318,6 +318,21 @@ int htool_payload_info_nonstatic(const struct htool_invocation* inv) {
   return htool_payload_image_close(&img);
 }
 
+static void print_payload_mauv(const struct image_mauv* mauv,
+                               const char* state) {
+  printf("Payload MAUV (%s):\n", state);
+  printf("  Struct Version: %u\n", mauv->mauv_struct_version);
+  printf("  Security Version: %" PRIu64 "\n", mauv->payload_security_version);
+  printf("  Update Timestamp: %" PRIu64 "\n", mauv->mauv_update_timestamp);
+  printf("  Min Acceptable Version: %" PRIu64 "\n",
+         mauv->minimum_acceptable_update_version);
+  printf("  Denylist Entries: %u\n", mauv->version_denylist_num_entries);
+
+  for (uint32_t i = 0; i < mauv->version_denylist_num_entries; i++) {
+    printf("    [%u]: %" PRIu64 "\n", i, mauv->version_denylist[i]);
+  }
+}
+
 int htool_get_compiled_payload_mauv(const struct htool_invocation* inv) {
   (void)inv;
   struct libhoth_device* dev = htool_libhoth_device();
@@ -333,24 +348,25 @@ int htool_get_compiled_payload_mauv(const struct htool_invocation* inv) {
     return -1;
   }
 
-  const struct image_mauv* mauv = &mauv_resp.image;
-
-  printf("Payload MAUV (Compiled):\n");
-  printf("  Struct Version: %u\n", mauv->mauv_struct_version);
-  printf("  Security Version: %" PRIu64 "\n", mauv->payload_security_version);
-  printf("  Update Timestamp: %" PRIu64 "\n", mauv->mauv_update_timestamp);
-  printf("  Min Acceptable Version: %" PRIu64 "\n",
-         mauv->minimum_acceptable_update_version);
-  printf("  Denylist Entries: %u\n", mauv->version_denylist_num_entries);
-
-  for (uint32_t i = 0; i < mauv->version_denylist_num_entries; i++) {
-    printf("    [%u]: %" PRIu64 "\n", i, mauv->version_denylist[i]);
-  }
-
+  print_payload_mauv(&mauv_resp.image, "Compiled");
   return 0;
 }
 
 int htool_get_effective_payload_mauv(const struct htool_invocation* inv) {
-  // TODO: implement once effective payload MAUV is supported in firmware.
+  (void)inv;
+  struct libhoth_device* dev = htool_libhoth_device();
+  if (!dev) {
+    return -1;
+  }
+
+  struct hoth_response_mauv mauv_resp = {0};
+  libhoth_error err =
+      libhoth_fetch_mauv(dev, MAUV_STATE_EFFECTIVE, IMAGE_MAUV, &mauv_resp);
+  if (err != HOTH_SUCCESS) {
+    htool_report_error("fetch_mauv", err);
+    return -1;
+  }
+
+  print_payload_mauv(&mauv_resp.image, "Effective");
   return 0;
 }
