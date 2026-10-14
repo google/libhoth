@@ -267,6 +267,7 @@ Bytes TargetWatchdogEntry(const struct target_watchdog_config& config) {
   AppendLe32(payload, config.initial_delay_seconds);
   AppendLe32(payload, config.watchdog_timeout_seconds);
   AppendLe32(payload, config.hold_in_reset_microseconds);
+  AppendLe32(payload, config.disarm_after_seconds);
   return BlobEntry(kTargetWatchdogBlobType, payload);
 }
 
@@ -348,7 +349,7 @@ enum image_blob_status ReadTargetWatchdog(
                                                 config);
 }
 
-constexpr struct target_watchdog_config kConfig = {600, 60, 100000};
+constexpr struct target_watchdog_config kConfig = {600, 60, 100000, 3600};
 
 }  // namespace
 
@@ -356,7 +357,8 @@ bool operator==(const struct target_watchdog_config& a,
                 const struct target_watchdog_config& b) {
   return a.initial_delay_seconds == b.initial_delay_seconds &&
          a.watchdog_timeout_seconds == b.watchdog_timeout_seconds &&
-         a.hold_in_reset_microseconds == b.hold_in_reset_microseconds;
+         a.hold_in_reset_microseconds == b.hold_in_reset_microseconds &&
+         a.disarm_after_seconds == b.disarm_after_seconds;
 }
 
 TEST(PayloadTargetWatchdogTest, FullImageWithTargetWatchdog) {
@@ -490,16 +492,20 @@ TEST(PayloadTargetWatchdogTest, DuplicateTargetWatchdog) {
 }
 
 TEST(PayloadTargetWatchdogTest, WrongTargetWatchdogSize) {
-  TestImage image{.blob_list = BlobEntry(kTargetWatchdogBlobType, Bytes(8))};
+  for (size_t size : {8, 12, 20}) {
+    TestImage image{.blob_list =
+                        BlobEntry(kTargetWatchdogBlobType, Bytes(size))};
 
-  struct target_watchdog_config config;
-  EXPECT_EQ(ReadTargetWatchdog(image.Image(), &config),
-            IMAGE_BLOB_INVALID_SIZE);
+    struct target_watchdog_config config;
+    EXPECT_EQ(ReadTargetWatchdog(image.Image(), &config),
+              IMAGE_BLOB_INVALID_SIZE)
+        << "size=" << size;
+  }
 }
 
 TEST(PayloadTargetWatchdogTest, ValuesTheRotWouldRejectAreReturnedAsStored) {
   constexpr struct target_watchdog_config kRejected = {UINT32_MAX, 0,
-                                                       UINT32_MAX};
+                                                       UINT32_MAX, UINT32_MAX};
   TestImage image{.blob_list = TargetWatchdogEntry(kRejected)};
 
   struct target_watchdog_config config;
