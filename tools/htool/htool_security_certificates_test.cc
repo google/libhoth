@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "examples/htool_security_certificates.h"
+#include "tools/htool/htool_security_certificates.h"
 
 #include <errno.h>
 #include <gmock/gmock.h>
@@ -28,10 +28,10 @@
 #include <string>
 #include <vector>
 
-#include "examples/test/test_util.h"
 #include "htool_security_v2.h"
 #include "htool_security_version.h"
 #include "protocol/test/libhoth_device_mock.h"
+#include "tools/htool/test/test_util.h"
 
 using ::testing::_;
 using ::testing::DoAll;
