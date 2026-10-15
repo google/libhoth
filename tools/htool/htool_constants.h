@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef THIRD_PARTY_LIBHOTH_LIBHOTH_EXAMPLES_HTOOL_CONSTANTS_H_
-#define THIRD_PARTY_LIBHOTH_LIBHOTH_EXAMPLES_HTOOL_CONSTANTS_H_
+#ifndef LIBHOTH_TOOLS_HTOOL_HTOOL_CONSTANTS_H_
+#define LIBHOTH_TOOLS_HTOOL_HTOOL_CONSTANTS_H_
 
 #include <stdint.h>
 
@@ -48,4 +48,4 @@ const uint32_t kResetFlagApWatchdog = BIT(18); /* AP watchdog reset */
 }
 #endif
 
-#endif  // THIRD_PARTY_LIBHOTH_LIBHOTH_EXAMPLES_HTOOL_CONSTANTS_H_
+#endif  // LIBHOTH_TOOLS_HTOOL_HTOOL_CONSTANTS_H_

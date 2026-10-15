@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef LIBHOTH_EXAMPLES_HTOOL_SECURITY_V2_DEFS_H_
-#define LIBHOTH_EXAMPLES_HTOOL_SECURITY_V2_DEFS_H_
+#ifndef LIBHOTH_TOOLS_HTOOL_HTOOL_SECURITY_V2_DEFS_H_
+#define LIBHOTH_TOOLS_HTOOL_HTOOL_SECURITY_V2_DEFS_H_
 
 #include <stdint.h>
 
@@ -37,4 +37,4 @@ struct ec_p256_public_key {
   uint8_t q_a_y[32];
 };
 
-#endif
+#endif  // LIBHOTH_TOOLS_HTOOL_HTOOL_SECURITY_V2_DEFS_H_

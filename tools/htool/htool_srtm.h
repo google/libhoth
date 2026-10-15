@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef LIBHOTH_EXAMPLES_SRTM_H_
-#define LIBHOTH_EXAMPLES_SRTM_H_
+#ifndef LIBHOTH_TOOLS_HTOOL_HTOOL_SRTM_H_
+#define LIBHOTH_TOOLS_HTOOL_HTOOL_SRTM_H_
 
 #include "host_commands.h"
 
@@ -30,4 +30,4 @@ int srtm_request_from_hex_measurement(struct hoth_srtm_request* request,
 }
 #endif
 
-#endif  // LIBHOTH_EXAMPLES_SRTM_H_
+#endif  // LIBHOTH_TOOLS_HTOOL_HTOOL_SRTM_H_

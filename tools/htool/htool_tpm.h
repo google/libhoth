@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef LIBHOTH_EXAMPLES_HTOOL_TPM_H_
-#define LIBHOTH_EXAMPLES_HTOOL_TPM_H_
+#ifndef LIBHOTH_TOOLS_HTOOL_HTOOL_TPM_H_
+#define LIBHOTH_TOOLS_HTOOL_HTOOL_TPM_H_
 
 #include "tools/common/htool_cmd.h"
 
@@ -45,4 +45,4 @@ int htool_security_startup(const struct htool_invocation* inv);
 }
 #endif
 
-#endif  // LIBHOTH_EXAMPLES_HTOOL_TPM_H_
+#endif  // LIBHOTH_TOOLS_HTOOL_HTOOL_TPM_H_

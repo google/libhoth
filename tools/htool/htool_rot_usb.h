@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef LIBHOTH_EXAMPLES_HTOOL_ROT_USB_H_
-#define LIBHOTH_EXAMPLES_HTOOL_ROT_USB_H_
+#ifndef LIBHOTH_TOOLS_HTOOL_HTOOL_ROT_USB_H_
+#define LIBHOTH_TOOLS_HTOOL_HTOOL_ROT_USB_H_
 
 #ifdef __cplusplus
 extern "C" {
@@ -43,4 +43,4 @@ int htool_rot_usb_muxctrl_connect_rot_to_front_panel(
 }
 #endif
 
-#endif  // LIBHOTH_EXAMPLES_HTOOL_ROT_USB_H_
+#endif  // LIBHOTH_TOOLS_HTOOL_HTOOL_ROT_USB_H_

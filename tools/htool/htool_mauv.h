@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef _LIBHOTH_EXAMPLES_HTOOL_MAUV_H_
-#define _LIBHOTH_EXAMPLES_HTOOL_MAUV_H_
+#ifndef LIBHOTH_TOOLS_HTOOL_HTOOL_MAUV_H_
+#define LIBHOTH_TOOLS_HTOOL_HTOOL_MAUV_H_
 
 #include "tools/common/htool_cmd.h"
 
@@ -21,4 +21,4 @@ int htool_mauv_compiled(const struct htool_invocation* inv);
 int htool_mauv_effective(const struct htool_invocation* inv);
 int htool_mauv_update(const struct htool_invocation* inv);
 
-#endif  // _LIBHOTH_EXAMPLES_HTOOL_MAUV_H_
+#endif  // LIBHOTH_TOOLS_HTOOL_HTOOL_MAUV_H_

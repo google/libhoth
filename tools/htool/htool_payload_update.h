@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef LIBHOTH_EXAMPLES_HTOOL_PAYLOAD_UPDATE_H_
-#define LIBHOTH_EXAMPLES_HTOOL_PAYLOAD_UPDATE_H_
+#ifndef LIBHOTH_TOOLS_HTOOL_HTOOL_PAYLOAD_UPDATE_H_
+#define LIBHOTH_TOOLS_HTOOL_HTOOL_PAYLOAD_UPDATE_H_
 
 #include "host_commands.h"
 #include "htool.h"
@@ -37,4 +37,4 @@ int htool_payload_update_confirm_enable(const struct htool_invocation* inv);
 }
 #endif
 
-#endif
+#endif  // LIBHOTH_TOOLS_HTOOL_HTOOL_PAYLOAD_UPDATE_H_

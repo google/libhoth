@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef LIBHOTH_EXAMPLES_AUTHZ_COMMAND_H_
-#define LIBHOTH_EXAMPLES_AUTHZ_COMMAND_H_
+#ifndef LIBHOTH_TOOLS_HTOOL_HTOOL_AUTHZ_COMMAND_H_
+#define LIBHOTH_TOOLS_HTOOL_HTOOL_AUTHZ_COMMAND_H_
 
 #include <stdint.h>
 
@@ -37,4 +37,4 @@ int authz_command_hex_to_struct(const char* hexstring,
 }
 #endif
 
-#endif  // LIBHOTH_EXAMPLES_AUTHZ_COMMAND_H_
+#endif  // LIBHOTH_TOOLS_HTOOL_HTOOL_AUTHZ_COMMAND_H_

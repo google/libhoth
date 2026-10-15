@@ -1,5 +1,5 @@
-#ifndef HTOOL_SBS_SINGLE_H_
-#define HTOOL_SBS_SINGLE_H_
+#ifndef LIBHOTH_TOOLS_HTOOL_HTOOL_SBS_SINGLE_H_
+#define LIBHOTH_TOOLS_HTOOL_HTOOL_SBS_SINGLE_H_
 
 #include "tools/common/htool_cmd.h"
 
@@ -9,4 +9,4 @@
 
 int htool_sbs_single_run(const struct htool_invocation* inv);
 
-#endif  // HTOOL_SBS_SINGLE_H_
+#endif  // LIBHOTH_TOOLS_HTOOL_HTOOL_SBS_SINGLE_H_
