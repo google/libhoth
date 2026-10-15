@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef LIBHOTH_EXAMPLES_HTOOL_DFU_H_
-#define LIBHOTH_EXAMPLES_HTOOL_DFU_H_
+#ifndef LIBHOTH_TOOLS_HTOOL_HTOOL_DFU_H_
+#define LIBHOTH_TOOLS_HTOOL_HTOOL_DFU_H_
 
 #include "protocol/opentitan_version.h"
 
@@ -30,4 +30,4 @@ int htool_dfu_check(const struct htool_invocation* inv);
 }
 #endif
 
-#endif  // LIBHOTH_EXAMPLES_HTOOL_DFU_H_
+#endif  // LIBHOTH_TOOLS_HTOOL_HTOOL_DFU_H_

@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef THIRD_PARTY_LIBHOTH_LIBHOTH_EXAMPLES_HTOOL_STATISTICS_H_
-#define THIRD_PARTY_LIBHOTH_LIBHOTH_EXAMPLES_HTOOL_STATISTICS_H_
+#ifndef LIBHOTH_TOOLS_HTOOL_HTOOL_STATISTICS_H_
+#define LIBHOTH_TOOLS_HTOOL_HTOOL_STATISTICS_H_
 
 #ifdef __cplusplus
 extern "C" {
@@ -26,4 +26,4 @@ int htool_statistics(const struct htool_invocation* inv);
 }
 #endif
 
-#endif  // THIRD_PARTY_LIBHOTH_LIBHOTH_EXAMPLES_HTOOL_STATISTICS_H_
+#endif  // LIBHOTH_TOOLS_HTOOL_HTOOL_STATISTICS_H_

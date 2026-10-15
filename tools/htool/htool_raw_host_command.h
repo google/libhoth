@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef LIBHOTH_EXAMPLES_HTOOL_RAW_HOST_COMMAND_H_
-#define LIBHOTH_EXAMPLES_HTOOL_RAW_HOST_COMMAND_H_
+#ifndef LIBHOTH_TOOLS_HTOOL_HTOOL_RAW_HOST_COMMAND_H_
+#define LIBHOTH_TOOLS_HTOOL_HTOOL_RAW_HOST_COMMAND_H_
 
 #include <stdint.h>
 
@@ -28,4 +28,4 @@ int command_raw_host_command(const struct htool_invocation* inv);
 }
 #endif
 
-#endif
+#endif  // LIBHOTH_TOOLS_HTOOL_HTOOL_RAW_HOST_COMMAND_H_

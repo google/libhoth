@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef LIBHOTH_EXAMPLES_HTOOL_USB_H_
-#define LIBHOTH_EXAMPLES_HTOOL_USB_H_
+#ifndef LIBHOTH_TOOLS_HTOOL_HTOOL_USB_H_
+#define LIBHOTH_TOOLS_HTOOL_HTOOL_USB_H_
 
 #include <stddef.h>
 #include <stdint.h>
@@ -35,4 +35,4 @@ int htool_usb_print_devices(void);
 }
 #endif
 
-#endif  // LIBHOTH_EXAMPLES_HTOOL_USB_H_
+#endif  // LIBHOTH_TOOLS_HTOOL_HTOOL_USB_H_

@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef LIBHOTH_EXAMPLES_HTOOL_SECURITY_V2_H_
-#define LIBHOTH_EXAMPLES_HTOOL_SECURITY_V2_H_
+#ifndef LIBHOTH_TOOLS_HTOOL_HTOOL_SECURITY_V2_H_
+#define LIBHOTH_TOOLS_HTOOL_HTOOL_SECURITY_V2_H_
 
 #include <stdint.h>
 
@@ -103,4 +103,4 @@ static inline size_t padding_size(uint16_t size) {
 }
 #endif
 
-#endif
+#endif  // LIBHOTH_TOOLS_HTOOL_HTOOL_SECURITY_V2_H_

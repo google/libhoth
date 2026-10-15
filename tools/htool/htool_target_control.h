@@ -13,8 +13,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef LIBHOTH_EXAMPLES_HTOOL_TARGET_CONTROL_H_
-#define LIBHOTH_EXAMPLES_HTOOL_TARGET_CONTROL_H_
+#ifndef LIBHOTH_TOOLS_HTOOL_HTOOL_TARGET_CONTROL_H_
+#define LIBHOTH_TOOLS_HTOOL_HTOOL_TARGET_CONTROL_H_
 
 #include "host_commands.h"
 #ifdef __cplusplus
@@ -30,4 +30,4 @@ int target_control_perform_action(
 }
 #endif
 
-#endif  // LIBHOTH_EXAMPLES_HTOOL_I2C_H_
+#endif  // LIBHOTH_TOOLS_HTOOL_HTOOL_TARGET_CONTROL_H_
