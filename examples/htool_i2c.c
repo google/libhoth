@@ -22,9 +22,9 @@
 
 #include "host_commands.h"
 #include "htool.h"
-#include "htool_cmd.h"
 #include "htool_target_control.h"
 #include "protocol/i2c.h"
+#include "tools/common/htool_cmd.h"
 
 static int i2c_detect(struct libhoth_device* dev,
                       const struct htool_invocation* inv) {

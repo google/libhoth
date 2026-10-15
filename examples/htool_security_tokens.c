@@ -11,11 +11,11 @@
 
 #include "host_commands.h"
 #include "htool.h"
-#include "htool_cmd.h"
-#include "htool_macros.h"
 #include "htool_security_v2.h"
 #include "htool_security_version.h"
 #include "protocol/host_cmd.h"
+#include "tools/common/htool_cmd.h"
+#include "tools/common/macros.h"
 #include "transports/libhoth_device.h"
 
 static int get_zero_challenge_nonce(struct nonce* challenge) {

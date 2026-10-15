@@ -20,8 +20,8 @@
 #include <string.h>
 
 #include "htool.h"
-#include "htool_cmd.h"
 #include "protocol/update_session.h"
+#include "tools/common/htool_cmd.h"
 
 int htool_update_session_start(const struct htool_invocation* inv) {
   struct libhoth_device* dev = htool_libhoth_device();

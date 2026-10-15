@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "htool_cmd.h"
+#include "tools/common/htool_cmd.h"
 
 #include <ctype.h>
 #include <errno.h>

@@ -20,7 +20,7 @@ executable(
     sources: [
         'htool.c',
         'htool_authz_command.c',
-        'htool_cmd.c',
+        '../tools/common/htool_cmd.c',
         'htool_console.c',
         'htool_dbus.c',
         'htool_debug.c',
@@ -54,7 +54,6 @@ executable(
         'htool_security_version.c',
         'htool_security_v2.h',
         'htool_security_v2.c',
-        'htool_macros.h',
         'htool_security_info.h',
         'htool_security_info.c',
         'htool_provisioning.h',

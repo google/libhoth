@@ -26,8 +26,8 @@
 #include <unistd.h>
 
 #include "host_commands.h"
-#include "htool_cmd.h"
 #include "protocol/util.h"
+#include "tools/common/htool_cmd.h"
 #include "transports/libhoth_usb.h"
 #include "transports/libhoth_usb_device.h"
 

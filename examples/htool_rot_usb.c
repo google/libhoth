@@ -18,8 +18,8 @@
 #include <stdio.h>
 
 #include "host_commands.h"
-#include "htool_cmd.h"
 #include "htool_target_control.h"
+#include "tools/common/htool_cmd.h"
 
 // USB mux control actions to Target control actions mapping
 enum {
