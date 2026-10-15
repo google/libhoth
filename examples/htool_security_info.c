@@ -6,10 +6,10 @@
 
 #include "host_commands.h"
 #include "htool.h"
-#include "htool_macros.h"
 #include "htool_security_v2.h"
 #include "htool_security_version.h"
 #include "protocol/rot_firmware_version.h"
+#include "tools/common/macros.h"
 
 int htool_info(const struct htool_invocation* inv) {
   struct libhoth_device* dev = htool_libhoth_device();

@@ -21,9 +21,9 @@
 
 #include "host_commands.h"
 #include "htool.h"
-#include "htool_cmd.h"
 #include "protocol/host_cmd.h"
 #include "protocol/jtag.h"
+#include "tools/common/htool_cmd.h"
 
 // Used if no data is provided for data to send over TDI. This needs to be
 // modifiable for use with `strtok_r` later

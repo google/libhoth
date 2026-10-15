@@ -25,10 +25,10 @@
 #include <unistd.h>
 
 #include "htool.h"
-#include "htool_cmd.h"
 #include "protocol/dfu_check.h"
 #include "protocol/dfu_hostcmd.h"
 #include "protocol/opentitan_version.h"
+#include "tools/common/htool_cmd.h"
 
 int htool_dfu_update(const struct htool_invocation* inv) {
   struct libhoth_device* dev = htool_libhoth_device();

@@ -22,7 +22,7 @@
 #include "../transports/libhoth_spi.h"
 #include "host_commands.h"
 #include "htool.h"
-#include "htool_cmd.h"
+#include "tools/common/htool_cmd.h"
 
 struct libhoth_device* htool_libhoth_spi_device(void) {
   static struct libhoth_device* result;

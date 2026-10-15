@@ -17,8 +17,8 @@
 #include <stdint.h>
 
 #include "htool.h"
-#include "htool_cmd.h"
 #include "protocol/target_watchdog.h"
+#include "tools/common/htool_cmd.h"
 
 int htool_target_watchdog_pet(const struct htool_invocation* inv) {
   struct libhoth_device* dev = htool_libhoth_device();

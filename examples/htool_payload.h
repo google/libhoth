@@ -18,7 +18,7 @@
 #include <stdint.h>
 
 #include "htool.h"
-#include "htool_cmd.h"
+#include "tools/common/htool_cmd.h"
 
 #ifdef __cplusplus
 extern "C" {
