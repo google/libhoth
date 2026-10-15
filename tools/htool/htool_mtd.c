@@ -19,10 +19,10 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "../transports/libhoth_mtd.h"
 #include "host_commands.h"
 #include "htool.h"
 #include "tools/common/htool_cmd.h"
+#include "transports/libhoth_mtd.h"
 
 struct libhoth_device* htool_libhoth_mtd_device(void) {
   static struct libhoth_device* result;

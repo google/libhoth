@@ -27,10 +27,10 @@
 #include <string>
 #include <vector>
 
-#include "examples/test/test_util.h"
 #include "host_commands.h"
 #include "protocol/host_cmd.h"
 #include "protocol/test/libhoth_device_mock.h"
+#include "tools/htool/test/test_util.h"
 #include "transports/libhoth_device.h"
 
 using ::testing::_;

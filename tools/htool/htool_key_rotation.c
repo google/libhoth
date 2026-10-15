@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "examples/htool_key_rotation.h"
+#include "tools/htool/htool_key_rotation.h"
 
 #include <errno.h>
 #include <fcntl.h>
@@ -25,10 +25,10 @@
 #include <sys/types.h>
 #include <unistd.h>
 
-#include "examples/htool.h"
 #include "protocol/key_rotation.h"
 #include "protocol/status.h"
 #include "tools/common/htool_cmd.h"
+#include "tools/htool/htool.h"
 
 static const char* get_validation_method_string(uint32_t validation_method) {
   switch (validation_method) {

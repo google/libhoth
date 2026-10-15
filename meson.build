@@ -28,4 +28,4 @@ pkg.generate(
     libraries_private: libhoth_deps,
 )
 
-subdir('examples')
+subdir('tools/htool')
