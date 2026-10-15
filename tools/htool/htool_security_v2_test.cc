@@ -7,9 +7,9 @@
 #include <cstdint>
 #include <vector>
 
-#include "examples/host_commands.h"
-#include "examples/test/test_util.h"
 #include "protocol/test/libhoth_device_mock.h"
+#include "tools/htool/host_commands.h"
+#include "tools/htool/test/test_util.h"
 
 using ::testing::_;
 using ::testing::DoAll;

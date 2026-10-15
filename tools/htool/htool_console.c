@@ -25,10 +25,10 @@
 #include <termios.h>
 #include <unistd.h>
 
-#include "../transports/libhoth_device.h"
 #include "host_commands.h"
 #include "htool.h"
 #include "htool_console.h"
+#include "transports/libhoth_device.h"
 
 const char kAnsiReset[] = "\033[0m";
 const char kAnsiRed[] = "\033[31m";

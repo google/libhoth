@@ -27,10 +27,10 @@
 #include <string>
 #include <vector>
 
-#include "examples/test/test_util.h"
 #include "htool_security_v2.h"
 #include "htool_security_version.h"
 #include "protocol/test/libhoth_device_mock.h"
+#include "tools/htool/test/test_util.h"
 
 using ::testing::_;
 using ::testing::DoAll;

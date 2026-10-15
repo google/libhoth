@@ -47,7 +47,7 @@ jobs:
 
       - name: Build htool with D-Bus
         run: |
-          bazel build --define dbus_backend=true  //examples:htool
+          bazel build --define dbus_backend=true  //tools/htool:htool
 
       - name: Bazel tests
         run: |

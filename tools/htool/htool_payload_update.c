@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "examples/htool_payload_update.h"
+#include "tools/htool/htool_payload_update.h"
 
 #include <errno.h>
 #include <fcntl.h>
@@ -24,10 +24,10 @@
 #include <sys/types.h>
 #include <unistd.h>
 
-#include "examples/htool.h"
 #include "protocol/payload_update.h"
 #include "protocol/status.h"
 #include "tools/common/htool_cmd.h"
+#include "tools/htool/htool.h"
 
 int htool_payload_update(const struct htool_invocation* inv) {
   struct libhoth_device* dev = htool_libhoth_device();

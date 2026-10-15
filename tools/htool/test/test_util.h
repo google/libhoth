@@ -15,13 +15,13 @@
 #include <tuple>
 #include <vector>
 
-#include "examples/host_commands.h"
-#include "examples/htool.h"
-#include "examples/htool_security_v2.h"
-#include "examples/htool_security_version.h"
 #include "protocol/host_cmd.h"
 #include "protocol/test/libhoth_device_mock.h"
 #include "tools/common/htool_cmd.h"
+#include "tools/htool/host_commands.h"
+#include "tools/htool/htool.h"
+#include "tools/htool/htool_security_v2.h"
+#include "tools/htool/htool_security_version.h"
 #include "transports/libhoth_device.h"
 
 using ::testing::_;

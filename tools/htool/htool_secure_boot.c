@@ -17,9 +17,9 @@
 #include <stdint.h>
 #include <stdio.h>
 
-#include "examples/htool.h"
 #include "protocol/secure_boot.h"
 #include "tools/common/htool_cmd.h"
+#include "tools/htool/htool.h"
 
 int htool_secure_boot_get_enforcement(const struct htool_invocation* inv) {
   struct libhoth_device* dev = htool_libhoth_device();
