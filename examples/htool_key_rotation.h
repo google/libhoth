@@ -16,7 +16,7 @@
 #define LIBHOTH_EXAMPLES_HTOOL_KEY_ROTATION_H_
 
 #include "htool.h"
-#include "htool_cmd.h"
+#include "tools/common/htool_cmd.h"
 
 #ifdef __cplusplus
 extern "C" {

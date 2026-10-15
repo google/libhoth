@@ -20,8 +20,8 @@
 
 #include "host_commands.h"
 #include "htool.h"
-#include "htool_cmd.h"
 #include "htool_security_version.h"
+#include "tools/common/htool_cmd.h"
 #include "transports/libhoth_device.h"
 
 int htool_set_tpm_mode(const struct htool_invocation* inv) {

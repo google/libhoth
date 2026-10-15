@@ -26,9 +26,9 @@
 #include <unistd.h>
 
 #include "examples/htool.h"
-#include "examples/htool_cmd.h"
 #include "protocol/key_rotation.h"
 #include "protocol/status.h"
+#include "tools/common/htool_cmd.h"
 
 static const char* get_validation_method_string(uint32_t validation_method) {
   switch (validation_method) {

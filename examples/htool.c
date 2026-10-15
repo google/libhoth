@@ -31,7 +31,6 @@
 
 #include "host_commands.h"
 #include "htool_authz_command.h"
-#include "htool_cmd.h"
 #include "htool_console.h"
 #include "htool_debug.h"
 #include "htool_dfu.h"
@@ -72,6 +71,7 @@
 #include "protocol/spi_proxy.h"
 #include "protocol/target_watchdog.h"
 #include "protocol/util.h"
+#include "tools/common/htool_cmd.h"
 #include "transports/libhoth_device.h"
 #include "transports/libhoth_spi.h"
 

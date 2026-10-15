@@ -1,7 +1,7 @@
 #ifndef HTOOL_SBS_DUAL_H_
 #define HTOOL_SBS_DUAL_H_
 
-#include "htool_cmd.h"
+#include "tools/common/htool_cmd.h"
 
 #define SBS_DUAL_GET_CMD_STR "get"
 #define SBS_DUAL_CONNECT_TARGET_TO_SPI_FLASH_0_CMD_STR \

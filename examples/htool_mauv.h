@@ -15,7 +15,7 @@
 #ifndef _LIBHOTH_EXAMPLES_HTOOL_MAUV_H_
 #define _LIBHOTH_EXAMPLES_HTOOL_MAUV_H_
 
-#include "htool_cmd.h"
+#include "tools/common/htool_cmd.h"
 
 int htool_mauv_compiled(const struct htool_invocation* inv);
 int htool_mauv_effective(const struct htool_invocation* inv);

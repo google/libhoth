@@ -22,8 +22,8 @@
 
 #include "host_commands.h"
 #include "htool.h"
-#include "htool_cmd.h"
 #include "protocol/panic.h"
+#include "tools/common/htool_cmd.h"
 
 int dump_panic_record_to_file(
     const char* filename,

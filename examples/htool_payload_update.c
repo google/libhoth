@@ -25,9 +25,9 @@
 #include <unistd.h>
 
 #include "examples/htool.h"
-#include "examples/htool_cmd.h"
 #include "protocol/payload_update.h"
 #include "protocol/status.h"
+#include "tools/common/htool_cmd.h"
 
 int htool_payload_update(const struct htool_invocation* inv) {
   struct libhoth_device* dev = htool_libhoth_device();

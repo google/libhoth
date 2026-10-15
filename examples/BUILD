@@ -32,18 +32,6 @@ config_setting(
 )
 
 cc_library(
-    name = "htool_cmd",
-    srcs = ["htool_cmd.c"],
-    hdrs = ["htool_cmd.h"],
-    deps = ["//:git_version"],
-)
-
-cc_library(
-    name = "htool_macros",
-    hdrs = ["htool_macros.h"],
-)
-
-cc_library(
     name = "htool_header",
     hdrs = ["htool.h"],
     deps = [
@@ -68,10 +56,10 @@ cc_library(
     srcs = ["htool_provisioning.c"],
     hdrs = ["htool_provisioning.h"],
     deps = [
-        ":htool_cmd",
         ":htool_header",
-        ":htool_macros",
         "//protocol:provisioning",
+        "//tools/common:htool_cmd",
+        "//tools/common:macros",
         "//transports:libhoth_device",
     ],
 )
@@ -100,13 +88,13 @@ cc_library(
     hdrs = ["htool_security_certificates.h"],
     deps = [
         ":host_commands",
-        ":htool_cmd",
         ":htool_header",
-        ":htool_macros",
         ":htool_security_v2",
         ":htool_security_v2_defs",
         ":htool_security_version",
         "//protocol:host_cmd",
+        "//tools/common:htool_cmd",
+        "//tools/common:macros",
     ],
 )
 
@@ -116,13 +104,13 @@ cc_library(
     hdrs = ["htool_security_tokens.h"],
     deps = [
         ":host_commands",
-        ":htool_cmd",
         ":htool_header",
-        ":htool_macros",
         ":htool_security_v2",
         ":htool_security_v2_defs",
         ":htool_security_version",
         "//protocol:host_cmd",
+        "//tools/common:htool_cmd",
+        "//tools/common:macros",
         "//transports:libhoth_device",
     ],
 )
@@ -177,8 +165,6 @@ cc_binary(
         "htool.h",
         "htool_authz_command.c",
         "htool_authz_command.h",
-        "htool_cmd.c",
-        "htool_cmd.h",
         "htool_console.c",
         "htool_console.h",
         "htool_constants.h",
@@ -195,7 +181,6 @@ cc_binary(
         "htool_jtag.h",
         "htool_key_rotation.c",
         "htool_key_rotation.h",
-        "htool_macros.h",
         "htool_mauv.c",
         "htool_mauv.h",
         "htool_mtd.c",
@@ -278,6 +263,8 @@ cc_binary(
         "//protocol:target_watchdog",
         "//protocol:update_session",
         "//protocol:util",
+        "//tools/common:htool_cmd",
+        "//tools/common:macros",
         "//transports:libhoth_device",
         "//transports:libhoth_mtd",
         "//transports:libhoth_spi",
@@ -295,11 +282,11 @@ cc_test(
     srcs = ["htool_provisioning_test.cc"],
     deps = [
         ":host_commands",
-        ":htool_cmd",
         ":htool_provisioning",
         "//examples/test:test_util",
         "//protocol:host_cmd",
         "//protocol/test:libhoth_device_mock",
+        "//tools/common:htool_cmd",
         "//transports:libhoth_device",
         "@googletest//:gtest",
         "@googletest//:gtest_main",
@@ -311,14 +298,11 @@ cc_library(
     srcs = ["htool_target_watchdog.c"],
     hdrs = ["htool_target_watchdog.h"],
     deps = [
-        ":htool_cmd",
         ":htool_header",
         "//protocol:host_cmd",
         "//protocol:libhoth_status",
         "//protocol:target_watchdog",
+        "//tools/common:htool_cmd",
         "//transports:libhoth_device",
     ],
 )
-
-
-

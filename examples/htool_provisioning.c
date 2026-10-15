@@ -10,8 +10,8 @@
 #include <string.h>
 
 #include "htool.h"
-#include "htool_cmd.h"
 #include "protocol/provisioning.h"
+#include "tools/common/htool_cmd.h"
 #include "transports/libhoth_device.h"
 
 int htool_get_provisioning_log(const struct htool_invocation* inv) {
