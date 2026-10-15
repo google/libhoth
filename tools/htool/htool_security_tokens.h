@@ -1,5 +1,5 @@
-#ifndef LIBHOTH_EXAMPLES_HTOOL_SECURITY_TOKENS_H_
-#define LIBHOTH_EXAMPLES_HTOOL_SECURITY_TOKENS_H_
+#ifndef LIBHOTH_TOOLS_HTOOL_HTOOL_SECURITY_TOKENS_H_
+#define LIBHOTH_TOOLS_HTOOL_HTOOL_SECURITY_TOKENS_H_
 
 #include <stdint.h>
 
@@ -63,4 +63,4 @@ int htool_fetch_attestation(const struct htool_invocation* inv);
 }
 #endif
 
-#endif  // LIBHOTH_EXAMPLES_HTOOL_SECURITY_TOKENS_H_
+#endif  // LIBHOTH_TOOLS_HTOOL_HTOOL_SECURITY_TOKENS_H_

@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef LIBHOTH_EXAMPLES_HTOOL_CMD_H_
-#define LIBHOTH_EXAMPLES_HTOOL_CMD_H_
+#ifndef LIBHOTH_TOOLS_COMMON_HTOOL_CMD_H_
+#define LIBHOTH_TOOLS_COMMON_HTOOL_CMD_H_
 
 #include <stdbool.h>
 #include <stdint.h>
@@ -87,4 +87,4 @@ int64_t parse_time_string_us(const char* time_str);
 }
 #endif
 
-#endif  // LIBHOTH_EXAMPLES_HTOOL_CMD_H_
+#endif  // LIBHOTH_TOOLS_COMMON_HTOOL_CMD_H_

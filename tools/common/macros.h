@@ -12,9 +12,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef LIBHOTH_EXAMPLES_HTOOL_MACROS_H_
-#define LIBHOTH_EXAMPLES_HTOOL_MACROS_H_
+#ifndef LIBHOTH_TOOLS_COMMON_MACROS_H_
+#define LIBHOTH_TOOLS_COMMON_MACROS_H_
 
 #define ARRAY_SIZE(arr) (sizeof(arr) / sizeof(arr[0]))
 
-#endif
+#endif  // LIBHOTH_TOOLS_COMMON_MACROS_H_

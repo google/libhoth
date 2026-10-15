@@ -1,5 +1,5 @@
-#ifndef LIBHOTH_EXAMPLES_TEST_TEST_UTIL_H_
-#define LIBHOTH_EXAMPLES_TEST_TEST_UTIL_H_
+#ifndef LIBHOTH_TOOLS_HTOOL_TEST_TEST_UTIL_H_
+#define LIBHOTH_TOOLS_HTOOL_TEST_TEST_UTIL_H_
 
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
@@ -309,4 +309,4 @@ ACTION_P(SetHostCmdResponse, response_data) {
   *bytes_read = response_data.size();
 }
 
-#endif  // LIBHOTH_EXAMPLES_TEST_TEST_UTIL_H_
+#endif  // LIBHOTH_TOOLS_HTOOL_TEST_TEST_UTIL_H_

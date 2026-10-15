@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef LIBHOTH_EXAMPLES_HTOOL_KEY_ROTATION_H_
-#define LIBHOTH_EXAMPLES_HTOOL_KEY_ROTATION_H_
+#ifndef LIBHOTH_TOOLS_HTOOL_HTOOL_KEY_ROTATION_H_
+#define LIBHOTH_TOOLS_HTOOL_HTOOL_KEY_ROTATION_H_
 
 #include "htool.h"
 #include "tools/common/htool_cmd.h"
@@ -38,4 +38,4 @@ int htool_key_rotation_get_mauv(const struct htool_invocation* inv);
 }
 #endif
 
-#endif  // LIBHOTH_EXAMPLES_HTOOL_KEY_ROTATION_H_
+#endif  // LIBHOTH_TOOLS_HTOOL_HTOOL_KEY_ROTATION_H_

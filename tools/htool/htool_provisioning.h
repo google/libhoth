@@ -11,8 +11,8 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
-#ifndef LIBHOTH_EXAMPLES_HTOOL_PROVISIONING_H_
-#define LIBHOTH_EXAMPLES_HTOOL_PROVISIONING_H_
+#ifndef LIBHOTH_TOOLS_HTOOL_HTOOL_PROVISIONING_H_
+#define LIBHOTH_TOOLS_HTOOL_HTOOL_PROVISIONING_H_
 
 #include <stdbool.h>
 #include <stddef.h>
@@ -49,4 +49,4 @@ int htool_provisioning_load_mldsa_key(const struct htool_invocation* inv);
 }
 #endif
 
-#endif  // LIBHOTH_EXAMPLES_HTOOL_PROVISIONING_H_
+#endif  // LIBHOTH_TOOLS_HTOOL_HTOOL_PROVISIONING_H_

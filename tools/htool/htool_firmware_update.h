@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef LIBHOTH_EXAMPLES_HTOOL_FIRMWARE_UPDATE_H_
-#define LIBHOTH_EXAMPLES_HTOOL_FIRMWARE_UPDATE_H_
+#ifndef LIBHOTH_TOOLS_HTOOL_HTOOL_FIRMWARE_UPDATE_H_
+#define LIBHOTH_TOOLS_HTOOL_HTOOL_FIRMWARE_UPDATE_H_
 
 #include "protocol/firmware_update.h"
 
@@ -29,4 +29,4 @@ int htool_firmware_update(const struct htool_invocation* inv);
 }
 #endif
 
-#endif  // LIBHOTH_EXAMPLES_HTOOL_FIRMWARE_UPDATE_H_
+#endif  // LIBHOTH_TOOLS_HTOOL_HTOOL_FIRMWARE_UPDATE_H_

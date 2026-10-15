@@ -11,8 +11,8 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
-#ifndef LIBHOTH_EXAMPLES_HTOOL_INFO_H_
-#define LIBHOTH_EXAMPLES_HTOOL_INFO_H_
+#ifndef LIBHOTH_TOOLS_HTOOL_HTOOL_SECURITY_INFO_H_
+#define LIBHOTH_TOOLS_HTOOL_HTOOL_SECURITY_INFO_H_
 
 #include <stdint.h>
 
@@ -53,4 +53,4 @@ int htool_info(const struct htool_invocation* inv);
 #ifdef __cplusplus
 }
 #endif
-#endif  // LIBHOTH_EXAMPLES_HTOOL_INFO_H_
+#endif  // LIBHOTH_TOOLS_HTOOL_HTOOL_SECURITY_INFO_H_

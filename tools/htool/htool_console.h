@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef LIBHOTH_EXAMPLES_HTOOL_CONSOLE_H_
-#define LIBHOTH_EXAMPLES_HTOOL_CONSOLE_H_
+#ifndef LIBHOTH_TOOLS_HTOOL_HTOOL_CONSOLE_H_
+#define LIBHOTH_TOOLS_HTOOL_HTOOL_CONSOLE_H_
 
 #include <stdbool.h>
 #include <stdint.h>
@@ -37,4 +37,4 @@ libhoth_error htool_console_snapshot(
 }
 #endif
 
-#endif  // LIBHOTH_EXAMPLES_HTOOL_CONSOLE_H_
+#endif  // LIBHOTH_TOOLS_HTOOL_HTOOL_CONSOLE_H_

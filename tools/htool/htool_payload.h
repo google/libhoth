@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef LIBHOTH_EXAMPLES_HTOOL_PAYLOAD_H_
-#define LIBHOTH_EXAMPLES_HTOOL_PAYLOAD_H_
+#ifndef LIBHOTH_TOOLS_HTOOL_HTOOL_PAYLOAD_H_
+#define LIBHOTH_TOOLS_HTOOL_HTOOL_PAYLOAD_H_
 
 #include <stdint.h>
 
@@ -36,4 +36,4 @@ int htool_get_effective_payload_mauv(const struct htool_invocation* inv);
 }
 #endif
 
-#endif
+#endif  // LIBHOTH_TOOLS_HTOOL_HTOOL_PAYLOAD_H_

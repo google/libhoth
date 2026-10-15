@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef LIBHOTH_EXAMPLES_HTOOL_SPI_PROXY_H_
-#define LIBHOTH_EXAMPLES_HTOOL_SPI_PROXY_H_
+#ifndef LIBHOTH_TOOLS_HTOOL_HTOOL_SPI_PROXY_H_
+#define LIBHOTH_TOOLS_HTOOL_HTOOL_SPI_PROXY_H_
 
 #include <stddef.h>
 #include <stdint.h>
@@ -43,4 +43,4 @@ int htool_spi_proxy_update(const struct htool_spi_proxy* spi, uint32_t addr,
 }
 #endif
 
-#endif  // LIBHOTH_EXAMPLES_HTOOL_SPI_PROXY_H_
+#endif  // LIBHOTH_TOOLS_HTOOL_HTOOL_SPI_PROXY_H_

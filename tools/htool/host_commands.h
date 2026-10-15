@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef LIBHOTH_EXAMPLES_HOST_COMMANDS_H_
-#define LIBHOTH_EXAMPLES_HOST_COMMANDS_H_
+#ifndef LIBHOTH_TOOLS_HTOOL_HOST_COMMANDS_H_
+#define LIBHOTH_TOOLS_HTOOL_HOST_COMMANDS_H_
 
 #include <stdint.h>
 
@@ -394,4 +394,4 @@ struct hoth_response_target_control {
 }
 #endif
 
-#endif  // LIBHOTH_EXAMPLES_HOST_COMMANDS_H_
+#endif  // LIBHOTH_TOOLS_HTOOL_HOST_COMMANDS_H_
