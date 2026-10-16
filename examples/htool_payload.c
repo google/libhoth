@@ -297,6 +297,7 @@ int htool_payload_info_target_watchdog(const struct htool_invocation* inv) {
          config.watchdog_timeout_seconds);
   printf("hold_in_reset_microseconds=%" PRIu32 "\n",
          config.hold_in_reset_microseconds);
+  printf("disarm_after_seconds=%" PRIu32 "\n", config.disarm_after_seconds);
   return rv;
 }
 

@@ -19,6 +19,7 @@
 extern "C" {
 #endif
 
+#include <assert.h>
 #include <stdbool.h>
 #include <stddef.h>
 #include <stdint.h>
@@ -204,7 +205,10 @@ struct target_watchdog_config {
   uint32_t initial_delay_seconds;
   uint32_t watchdog_timeout_seconds;
   uint32_t hold_in_reset_microseconds;
+  uint32_t disarm_after_seconds;
 } __attribute__((__packed__));
+static_assert(sizeof(struct target_watchdog_config) == 16,
+              "Unexpected struct size for target_watchdog_config");
 
 enum image_blob_status libhoth_payload_target_watchdog_config(
     const uint8_t* image, size_t len, struct target_watchdog_config* config);
