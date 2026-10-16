@@ -23,19 +23,18 @@ static void* consume_bytes(struct security_v2_buffer* buffer, uint16_t bytes) {
   return output;
 }
 
-int htool_exec_security_v2_cmd(struct libhoth_device* dev, uint8_t major,
-                               uint8_t minor, uint16_t base_command,
-                               struct security_v2_buffer* request_buffer,
-                               const struct security_v2_param* request_params,
-                               uint16_t request_param_count,
-                               struct security_v2_buffer* response_buffer,
-                               struct security_v2_param* response_params,
-                               uint16_t response_param_count) {
+libhoth_error htool_exec_security_v2_cmd(
+    struct libhoth_device* dev, uint8_t major, uint8_t minor,
+    uint16_t base_command, struct security_v2_buffer* request_buffer,
+    const struct security_v2_param* request_params,
+    uint16_t request_param_count, struct security_v2_buffer* response_buffer,
+    struct security_v2_param* response_params, uint16_t response_param_count) {
   struct hoth_security_v2_request_header* request_header =
       consume_bytes(request_buffer, sizeof(*request_header));
   if (!request_header) {
     fprintf(stderr, "insufficient bytes for request header\n");
-    return -1;
+    return LIBHOTH_ERR_CONSTRUCT(HOTH_CTX_CMD_EXEC, HOTH_HOST_SPACE_LIBHOTH,
+                                 LIBHOTH_ERR_FAIL);
   }
   request_header->major_command = major;
   request_header->minor_command = minor;
@@ -46,7 +45,8 @@ int htool_exec_security_v2_cmd(struct libhoth_device* dev, uint8_t major,
         consume_bytes(request_buffer, sizeof(*request_param));
     if (!request_param) {
       fprintf(stderr, "insufficient bytes for request param %d\n", i);
-      return -1;
+      return LIBHOTH_ERR_CONSTRUCT(HOTH_CTX_CMD_EXEC, HOTH_HOST_SPACE_LIBHOTH,
+                                   LIBHOTH_ERR_FAIL);
     }
     request_param->size = request_params[i].size;
 
@@ -55,7 +55,8 @@ int htool_exec_security_v2_cmd(struct libhoth_device* dev, uint8_t major,
                                           padding_size(request_params[i].size));
     if (!request_param_value) {
       fprintf(stderr, "insufficient bytes for request param %d\n", i);
-      return -1;
+      return LIBHOTH_ERR_CONSTRUCT(HOTH_CTX_CMD_EXEC, HOTH_HOST_SPACE_LIBHOTH,
+                                   LIBHOTH_ERR_FAIL);
     }
     memcpy(request_param_value, request_params[i].data, request_params[i].size);
   }
@@ -63,31 +64,33 @@ int htool_exec_security_v2_cmd(struct libhoth_device* dev, uint8_t major,
   // May need to remove bytes_read and replace it with Null in
   // libhoth_hostcmd_exec
   size_t bytes_read;
-  int status = libhoth_hostcmd_exec(dev, base_command, 0, request_buffer->data,
-                                    request_buffer->size, response_buffer->data,
-                                    response_buffer->size, &bytes_read);
-  if (status != 0) {
-    // htool_exec_hostcmd logs to stderr, don't repeat here.
-    return status;
+  libhoth_error err = libhoth_hostcmd_exec_v2(
+      dev, base_command, 0, request_buffer->data, request_buffer->size,
+      response_buffer->data, response_buffer->size, &bytes_read);
+  if (err != HOTH_SUCCESS) {
+    // libhoth_hostcmd_exec_v2 logs to stderr, don't repeat here.
+    return err;
   }
   response_buffer->size = (uint16_t)bytes_read;
 
-  // Return 0 as there are no other actions needed under this case.
+  // Return HOTH_SUCCESS as there are no other actions needed under this case.
   if (response_param_count == 0) {
-    return 0;
+    return HOTH_SUCCESS;
   }
 
   struct hoth_security_v2_response_header* response_header =
       consume_bytes(response_buffer, sizeof(*response_header));
   if (!response_header) {
     fprintf(stderr, "insufficient bytes for response header\n");
-    return -1;
+    return LIBHOTH_ERR_CONSTRUCT(HOTH_CTX_CMD_EXEC, HOTH_HOST_SPACE_LIBHOTH,
+                                 LIBHOTH_ERR_FAIL);
   }
   if (response_header->param_count != response_param_count) {
     fprintf(stderr,
             "response_header->param_count (%d) != response_param_count (%d)\n",
             response_header->param_count, response_param_count);
-    return -1;
+    return LIBHOTH_ERR_CONSTRUCT(HOTH_CTX_CMD_EXEC, HOTH_HOST_SPACE_LIBHOTH,
+                                 LIBHOTH_ERR_FAIL);
   }
 
   // We're intentionally lax here and not checking for 0s in reserved
@@ -97,13 +100,15 @@ int htool_exec_security_v2_cmd(struct libhoth_device* dev, uint8_t major,
         consume_bytes(response_buffer, sizeof(*response_param));
     if (!response_param) {
       fprintf(stderr, "insufficient bytes for response param %d\n", i);
-      return -1;
+      return LIBHOTH_ERR_CONSTRUCT(HOTH_CTX_CMD_EXEC, HOTH_HOST_SPACE_LIBHOTH,
+                                   LIBHOTH_ERR_FAIL);
     }
     if (response_param->size != response_params[i].size) {
       fprintf(stderr,
               "response_param->size (%d) != response_params[%d]->size (%d)\n",
               response_param->size, i, response_params[i].size);
-      return -1;
+      return LIBHOTH_ERR_CONSTRUCT(HOTH_CTX_CMD_EXEC, HOTH_HOST_SPACE_LIBHOTH,
+                                   LIBHOTH_ERR_FAIL);
     }
 
     uint8_t* response_param_value = consume_bytes(
@@ -111,13 +116,14 @@ int htool_exec_security_v2_cmd(struct libhoth_device* dev, uint8_t major,
         response_params[i].size + padding_size(response_params[i].size));
     if (!response_param_value) {
       fprintf(stderr, "insufficient bytes for response param %d\n", i);
-      return -1;
+      return LIBHOTH_ERR_CONSTRUCT(HOTH_CTX_CMD_EXEC, HOTH_HOST_SPACE_LIBHOTH,
+                                   LIBHOTH_ERR_FAIL);
     }
     memcpy(response_params[i].data, response_param_value,
            response_params[i].size);
   }
 
-  return 0;
+  return HOTH_SUCCESS;
 }
 
 static int read_security_v2_serialized_header(
@@ -218,42 +224,42 @@ static int read_security_v2_serialized_params(
   return 0;
 }
 
-int htool_exec_security_v2_serialized_cmd(
+libhoth_error htool_exec_security_v2_serialized_cmd(
     struct libhoth_device* dev, uint8_t major, uint8_t minor,
     uint16_t base_command, struct security_v2_buffer* request_buffer,
     const struct security_v2_param* request_params,
     uint16_t request_param_count, struct security_v2_buffer* response_buffer,
     const struct security_v2_serialized_param** response_params[],
     uint16_t response_param_count) {
-  int status = 0;
   const struct security_v2_serialized_response_hdr* response_hdr;
-  status = htool_exec_security_v2_cmd(
+  libhoth_error err = htool_exec_security_v2_cmd(
       dev, major, minor, base_command, request_buffer, request_params,
       request_param_count, response_buffer, /*response_params=*/NULL,
       /*response_param_count=*/0);
-  if (status != 0) {
-    return -1;
+  if (err != HOTH_SUCCESS) {
+    return err;
   }
 
-  status = read_security_v2_serialized_header(response_buffer, &response_hdr);
-  if (status != 0) {
-    return -1;
+  if (read_security_v2_serialized_header(response_buffer, &response_hdr) != 0) {
+    return LIBHOTH_ERR_CONSTRUCT(HOTH_CTX_CMD_EXEC, HOTH_HOST_SPACE_LIBHOTH,
+                                 LIBHOTH_ERR_FAIL);
   }
 
   if (response_hdr->param_count != response_param_count) {
     fprintf(stderr, "Expected a %u response params, Got %u\n",
             response_param_count, response_hdr->param_count);
-    return -1;
+    return LIBHOTH_ERR_CONSTRUCT(HOTH_CTX_CMD_EXEC, HOTH_HOST_SPACE_LIBHOTH,
+                                 LIBHOTH_ERR_FAIL);
   }
 
   for (int i = 0; i < response_param_count; ++i) {
-    status =
-        read_security_v2_serialized_params(response_buffer, response_params[i]);
-    if (status != 0) {
-      return status;
+    if (read_security_v2_serialized_params(response_buffer,
+                                           response_params[i]) != 0) {
+      return LIBHOTH_ERR_CONSTRUCT(HOTH_CTX_CMD_EXEC, HOTH_HOST_SPACE_LIBHOTH,
+                                   LIBHOTH_ERR_FAIL);
     }
   }
-  return status;
+  return HOTH_SUCCESS;
 }
 
 int copy_param(const struct security_v2_serialized_param* param, void* output,
