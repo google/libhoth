@@ -1,0 +1,196 @@
+// Copyright 2026 Google LLC
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//      http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+#include "htool_dfu.h"
+
+#include <errno.h>
+#include <fcntl.h>
+#include <stdint.h>
+#include <stdio.h>
+#include <string.h>
+#include <sys/mman.h>
+#include <sys/stat.h>
+#include <sys/types.h>
+#include <unistd.h>
+
+#include "htool.h"
+#include "protocol/dfu_check.h"
+#include "protocol/dfu_hostcmd.h"
+#include "protocol/opentitan_version.h"
+#include "tools/common/htool_cmd.h"
+
+int htool_dfu_update(const struct htool_invocation* inv) {
+  struct libhoth_device* dev = htool_libhoth_device();
+  if (!dev) {
+    return -1;
+  }
+
+  uint32_t complete_flags = 0;
+  const char* reset_arg;
+  if (htool_get_param_string(inv, "reset", &reset_arg)) {
+    return -1;
+  }
+  if (strcmp(reset_arg, "warm") == 0) {
+    complete_flags |= HOTH_DFU_COMPLETE_FLAGS_WARM_RESTART;
+  } else if (strcmp(reset_arg, "cold") == 0) {
+    complete_flags |= HOTH_DFU_COMPLETE_FLAGS_COLD_RESTART;
+  } else if (strcmp(reset_arg, "none") == 0) {
+    // No flags needed
+  } else {
+    fprintf(
+        stderr,
+        "Invalid value for --reset: %s. Must be 'warm', 'cold', or 'none'.\n",
+        reset_arg);
+    return -1;
+  }
+
+  bool force;
+  if (htool_get_param_bool(inv, "force", &force)) {
+    return -1;
+  }
+
+  const char* fwupdate_file;
+  if (htool_get_param_string(inv, "fwupdate-file", &fwupdate_file)) {
+    return -1;
+  }
+
+  int fd = open(fwupdate_file, O_RDONLY, 0);
+  if (fd == -1) {
+    fprintf(stderr, "Error opening file %s: %s\n", fwupdate_file,
+            strerror(errno));
+    return -1;
+  }
+
+  int retval = -1;
+
+  struct stat statbuf;
+  if (fstat(fd, &statbuf)) {
+    fprintf(stderr, "fstat error: %s\n", strerror(errno));
+    goto cleanup;
+  }
+  if (statbuf.st_size > SIZE_MAX) {
+    fprintf(stderr, "file too large\n");
+    goto cleanup;
+  }
+
+  uint8_t* image = mmap(NULL, statbuf.st_size, PROT_READ, MAP_PRIVATE, fd, 0);
+  if (image == MAP_FAILED) {
+    fprintf(stderr, "mmap error: %s\n", strerror(errno));
+    goto cleanup;
+  }
+
+  libhoth_error err = HOTH_SUCCESS;
+  if (force) {
+    for (int i = 0; i < 2; i++) {
+      err = libhoth_dfu_update(dev, image, statbuf.st_size, complete_flags);
+      if (err != HOTH_SUCCESS) {
+        break;
+      }
+    }
+  } else {
+    err = libhoth_dfu_install_firmware(dev, image, statbuf.st_size,
+                                       complete_flags);
+  }
+
+  if (err != HOTH_SUCCESS) {
+    htool_report_error("dfu_update", err);
+    fprintf(stderr, "DFU update failed (0x%016lx)\n", err);
+    libhoth_print_dfu_error(dev, NULL, err);
+    retval = -1;
+  } else {
+    retval = 0;
+  }
+
+  int ret = munmap(image, statbuf.st_size);
+  if (ret != 0) {
+    fprintf(stderr, "munmap error: %d\n", ret);
+  }
+
+cleanup:
+  ret = close(fd);
+  if (ret != 0) {
+    fprintf(stderr, "close error: %d\n", ret);
+  }
+
+  return retval;
+}
+
+int htool_dfu_check(const struct htool_invocation* inv) {
+  struct libhoth_device* dev = htool_libhoth_device();
+  if (!dev) {
+    return -1;
+  }
+
+  struct opentitan_get_version_resp resp = {0};
+
+  const char* fwupdate_file;
+  if (htool_get_param_string(inv, "fwupdate-file", &fwupdate_file)) {
+    return -1;
+  }
+
+  int fd = open(fwupdate_file, O_RDONLY, 0);
+  if (fd == -1) {
+    fprintf(stderr, "Error opening file %s: %s\n", fwupdate_file,
+            strerror(errno));
+    return -1;
+  }
+
+  int retval = -1;
+
+  struct stat statbuf;
+  if (fstat(fd, &statbuf)) {
+    fprintf(stderr, "error: fstat error: %s\n", strerror(errno));
+    goto cleanup;
+  }
+  if (statbuf.st_size > SIZE_MAX) {
+    fprintf(stderr, "error: file too large \n");
+    goto cleanup;
+  }
+
+  uint8_t* image = mmap(NULL, statbuf.st_size, PROT_READ, MAP_PRIVATE, fd, 0);
+  if (image == MAP_FAILED) {
+    fprintf(stderr, "error: mmap error: %s\n", strerror(errno));
+    goto cleanup;
+  }
+
+  libhoth_error ot_err = libhoth_opentitan_version(dev, &resp);
+  if (ot_err != HOTH_SUCCESS) {
+    htool_report_error("opentitan_version", ot_err);
+    fprintf(stderr, "error: Failed to get current version\n");
+    goto cleanup2;
+  }
+
+  libhoth_error err = libhoth_dfu_check(dev, image, statbuf.st_size, &resp);
+  if (err != HOTH_SUCCESS) {
+    htool_report_error("dfu_check", err);
+    fprintf(stderr, "error: DFU check failed.\n");
+    goto cleanup2;
+  }
+
+  retval = 0;
+
+  int ret;
+cleanup2:
+  ret = munmap(image, statbuf.st_size);
+  if (ret != 0) {
+    fprintf(stderr, "error: munmap error: %d\n", ret);
+  }
+
+cleanup:
+  ret = close(fd);
+  if (ret != 0) {
+    fprintf(stderr, "error: close error: %d\n", ret);
+  }
+  return retval;
+}

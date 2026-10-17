@@ -17,7 +17,7 @@ sudo apt-get install meson libusb-1.0-0-dev libsystemd-dev libcap-dev libgtest-d
 ```bash
 meson build
 ninja -C build
-./build/examples/htool
+./build/tools/htool/htool
 ```
 
 ### Running Tests (Meson)
@@ -39,7 +39,7 @@ ninja -C build
 
 ```bash
 bazel build //...
-./bazel-bin/examples/htool
+./bazel-bin/tools/htool/htool
 ```
 
 ### Running Tests (Bazel)
@@ -53,10 +53,10 @@ bazel test //...
 To enable the D-Bus backend:
 
 ```bash
-bazel build --define dbus_backend=true //examples:htool
+bazel build --define dbus_backend=true //tools/htool:htool
 ```
 
-## examples/htool
+## tools/htool
 
 htool is a command line tool for performing basic actions against a hoth RoT.
 

@@ -1,0 +1,236 @@
+
+git_version_h = vcs_tag(
+    command: ['git', 'describe', '--always', '--dirty', '--abbrev=40'],
+    input: 'git_version.h.in',
+    output: 'git_version.h',
+    replace_string: '@GIT_COMMIT@',
+)
+
+incdir = libhoth_include_dirs
+link_with = [libhoth.get_static_lib()]
+c_args = []
+
+if get_option('dbus_backend')
+    link_with += libhoth_dbus
+    c_args += '-DDBUS_BACKEND'
+endif
+
+executable(
+    'htool',
+    sources: [
+        'htool.c',
+        'htool_authz_command.c',
+        '../common/htool_cmd.c',
+        'htool_console.c',
+        'htool_dbus.c',
+        'htool_debug.c',
+        'htool_debug.h',
+        'htool_dfu.c',
+        'htool_firmware_update.c',
+        'htool_i2c.c',
+        'htool_jtag.c',
+        'htool_mtd.c',
+        'htool_key_rotation.c',
+        'htool_mauv.h',
+        'htool_mauv.c',
+        'htool_panic.c',
+        'htool_payload.c',
+        'htool_payload_update.c',
+        'htool_raw_host_command.c',
+        'htool_rot_usb.c',
+        'htool_spi.c',
+        'htool_statistics.c',
+        'htool_target_control.c',
+        'htool_target_watchdog.c',
+        'htool_target_watchdog.h',
+        'htool_sbs_single.c',
+        'htool_sbs_dual.c',
+        'htool_usb.c',
+        'htool_secure_boot.h',
+        'htool_secure_boot.c',
+        'htool_srtm.h',
+        'htool_srtm.c',
+        'htool_security_version.h',
+        'htool_security_version.c',
+        'htool_security_v2.h',
+        'htool_security_v2.c',
+        'htool_security_info.h',
+        'htool_security_info.c',
+        'htool_provisioning.h',
+        'htool_provisioning.c',
+        'htool_security_v2_defs.h',
+        'htool_security_certificates.h',
+        'htool_security_certificates.c',
+        'htool_security_tokens.h',
+        'htool_security_tokens.c',
+        'htool_tpm.h',
+        'htool_tpm.c',
+        'htool_update_session.h',
+        'htool_update_session.c',
+        git_version_h,
+    ],
+    dependencies: [libusb],
+    link_with: link_with,
+    include_directories: incdir,
+    c_args: c_args,
+    install: true,
+)
+
+
+gtest_dep = dependency('gtest', main: true, disabler: true, required: get_option('tests'))
+gmock_dep = dependency('gmock', main: false, disabler: true, required: get_option('tests'))
+
+if gtest_dep.found() and gmock_dep.found()
+    test(
+        'htool_provisioning_test_asan',
+        executable(
+            'htool_provisioning_test_asan_exe',
+            sources: [
+                'test/test_util.h',
+                'test/test_util.cc',
+                'htool_provisioning.c',
+                'htool_provisioning_test.cc',
+                '../../protocol/test/libhoth_device_mock.cc',
+            ],
+            include_directories: incdir,
+            link_with: [libhoth.get_static_lib()], 
+            dependencies: [gtest_dep, gmock_dep],
+            c_args: ['-fsanitize=address'],
+            cpp_args: ['-fsanitize=address'],
+            link_args: ['-fsanitize=address'],
+        ),
+    )
+    test(
+        'htool_provisioning_test',
+        executable(
+            'htool_provisioning_test_exe',
+            sources: [
+                'test/test_util.h',
+                'test/test_util.cc',
+                'htool_provisioning.c',
+                'htool_provisioning_test.cc',
+                '../../protocol/test/libhoth_device_mock.cc',
+            ],
+            include_directories: incdir,
+            link_with: [libhoth.get_static_lib()], 
+            dependencies: [gtest_dep, gmock_dep],
+        ),
+    )
+
+    test(
+        'htool_security_certificates_test_asan',
+        executable(
+            'htool_security_certificates_test_asan_exe',
+            sources: [
+                'test/test_util.h',
+                'test/test_util.cc',
+                'htool_security_certificates.c',
+                'htool_security_certificates_test.cc',
+                '../../protocol/test/libhoth_device_mock.cc',
+            ],
+            include_directories: incdir,
+            link_with: [libhoth.get_static_lib()],
+            dependencies: [gtest_dep, gmock_dep],
+            c_args: ['-fsanitize=address'],
+            cpp_args: ['-fsanitize=address'],
+            link_args: ['-fsanitize=address'],
+
+        ),
+    )
+
+    test(
+        'htool_security_certificates_test',
+        executable(
+            'htool_security_certificates_test_exe',
+            sources: [
+                'test/test_util.h',
+                'test/test_util.cc',
+                'htool_security_certificates.c',
+                'htool_security_certificates_test.cc',
+                '../../protocol/test/libhoth_device_mock.cc',
+            ],
+            include_directories: incdir,
+            link_with: [libhoth.get_static_lib()],
+            dependencies: [gtest_dep, gmock_dep],
+        ),
+    )
+
+    test(
+        'htool_security_tokens_test_asan',
+        executable(
+            'htool_security_tokens_test_asan_exe',
+            sources: [
+                'test/test_util.h',
+                'test/test_util.cc',
+                'htool_security_tokens.c',
+                'htool_security_tokens_test.cc',
+                '../../protocol/test/libhoth_device_mock.cc',
+            ],
+            include_directories: incdir,
+            link_with: [libhoth.get_static_lib()],
+            dependencies: [gtest_dep, gmock_dep],
+            c_args: ['-fsanitize=address'],
+            cpp_args: ['-fsanitize=address'],
+            link_args: ['-fsanitize=address'],
+        ),
+    )
+    test(
+        'htool_security_tokens_test',
+        executable(
+            'htool_security_tokens_test_exe',
+            sources: [
+                'test/test_util.h',
+                'test/test_util.cc',
+                'htool_security_tokens.c',
+                'htool_security_tokens_test.cc',
+                '../../protocol/test/libhoth_device_mock.cc',
+            ],
+            include_directories: incdir,
+            link_with: [libhoth.get_static_lib()],
+            dependencies: [gtest_dep, gmock_dep],
+        ),
+    )
+
+
+    test(
+        'htool_security_v2_test_asan',
+        executable(
+            'htool_security_v2_test_asan_exe',
+            sources: [
+                'test/test_util.h',
+                'test/test_util.cc',
+                'htool_security_v2.h',
+                'htool_security_v2.c',
+                'htool_security_v2_test.cc',
+                '../../protocol/test/libhoth_device_mock.cc',
+            ],
+            include_directories: incdir,
+            link_with: [libhoth.get_static_lib()],
+            dependencies: [gtest_dep, gmock_dep],
+            c_args: ['-fsanitize=address'],
+            cpp_args: ['-fsanitize=address'],
+            link_args: ['-fsanitize=address'],
+        ),
+    )
+    test(
+        'htool_security_v2_test',
+        executable(
+            'htool_security_v2_test_exe',
+            sources: [
+                'test/test_util.h',
+                'test/test_util.cc',
+                'htool_security_v2.h',
+                'htool_security_v2.c',
+                'htool_security_v2_test.cc',
+                '../../protocol/test/libhoth_device_mock.cc',
+            ],
+            include_directories: incdir,
+            link_with: [libhoth.get_static_lib()],
+            dependencies: [gtest_dep, gmock_dep],
+        ),
+    )
+
+
+
+endif
+
