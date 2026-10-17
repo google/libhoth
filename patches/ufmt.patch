@@ -1,0 +1,79 @@
+#diff -urN ufmt-0.2.0/src/lib.rs ufmt-0.2.0-patched/src/lib.rs
+#--- ufmt-0.2.0/src/lib.rs	1973-11-29 13:33:09.000000000 -0800
+#+++ ufmt-0.2.0-patched/src/lib.rs	2026-03-18 17:05:32.959301959 -0700
+#@@ -398,6 +398,7 @@
+# pub trait UnstableDoAsFormatter {
+#     type Writer: uWrite + ?Sized;
+# 
+#+    #[inline(always)]
+#     fn do_as_formatter(
+#         &mut self,
+#         f: impl FnOnce(&mut Formatter<'_, Self::Writer>) -> Result<(), <Self::Writer as uWrite>::Error>,
+#@@ -410,6 +411,7 @@
+# {
+#     type Writer = W;
+# 
+#+    #[inline(always)]
+#     fn do_as_formatter(
+#         &mut self,
+#         f: impl FnOnce(&mut Formatter<'_, W>) -> Result<(), W::Error>,
+#@@ -424,6 +426,7 @@
+# {
+#     type Writer = W;
+# 
+#+    #[inline(always)]
+#     fn do_as_formatter(
+#         &mut self,
+#         f: impl FnOnce(&mut Formatter<'_, W>) -> Result<(), W::Error>,
+diff --git a/src/impls/uxx.rs b/src/impls/uxx.rs
+index 94ed8ba..9f3ef51 100644
+--- a/src/impls/uxx.rs
++++ b/src/impls/uxx.rs
+@@ -28,6 +28,7 @@ fn usize(n: usize, buf: &mut [MaybeUninit<u8>]) -> &str {
+ }
+ 
+ impl uDebug for u8 {
++    #[inline(never)]
+     fn fmt<W>(&self, f: &mut Formatter<'_, W>) -> Result<(), W::Error>
+     where
+         W: uWrite + ?Sized,
+@@ -49,6 +50,7 @@ impl uDisplay for u8 {
+ }
+ 
+ impl uDebug for u16 {
++    #[inline(never)]
+     fn fmt<W>(&self, f: &mut Formatter<'_, W>) -> Result<(), W::Error>
+     where
+         W: uWrite + ?Sized,
+@@ -70,6 +72,7 @@ impl uDisplay for u16 {
+ }
+ 
+ impl uDebug for u32 {
++    #[inline(never)]
+     #[cfg(not(target_pointer_width = "16"))]
+     fn fmt<W>(&self, f: &mut Formatter<'_, W>) -> Result<(), W::Error>
+     where
+@@ -80,6 +83,7 @@ impl uDebug for u32 {
+         f.write_str(usize(*self as usize, &mut buf))
+     }
+ 
++    #[inline(never)]
+     #[cfg(target_pointer_width = "16")]
+     fn fmt<W>(&self, f: &mut Formatter<'_, W>) -> Result<(), W::Error>
+     where
+@@ -103,6 +107,7 @@ impl uDisplay for u32 {
+ }
+ 
+ impl uDebug for u64 {
++    #[inline(never)]
+     #[cfg(any(target_pointer_width = "32", target_pointer_width = "16"))]
+     fn fmt<W>(&self, f: &mut Formatter<'_, W>) -> Result<(), W::Error>
+     where
+@@ -136,6 +141,7 @@ impl uDisplay for u64 {
+ }
+ 
+ impl uDebug for u128 {
++    #[inline(never)]
+     fn fmt<W>(&self, f: &mut Formatter<'_, W>) -> Result<(), W::Error>
+     where
+         W: uWrite + ?Sized,
