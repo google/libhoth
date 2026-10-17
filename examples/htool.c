@@ -36,6 +36,7 @@
 #include "htool_debug.h"
 #include "htool_dfu.h"
 #include "htool_firmware_update.h"
+#include "htool_gpio.h"
 #include "htool_i2c.h"
 #include "htool_jtag.h"
 #include "htool_key_rotation.h"
@@ -1882,6 +1883,32 @@ static const struct htool_cmd CMDS[] = {
                          "          42-46 => IOR10-13"},
                 {}},
         .func = command_get_gpio_drive_strength,
+    },
+    {
+        .verbs = (const char*[]){"gpio", "sweep", NULL},
+        .desc = "Sweep GPIO drive strengths for an SPI interface from a config "
+                "file",
+        .params =
+            (const struct htool_param[]){
+                {.type = HTOOL_FLAG_VALUE,
+                 .ch = 'c',
+                 .name = "config",
+                 .default_value = NULL,
+                 .desc = "Path to the GPIO drive strength configuration file"},
+                {.type = HTOOL_FLAG_VALUE,
+                 .ch = 's',
+                 .name = "spi",
+                 .default_value = NULL,
+                 .desc = "SPI target to test: spidev, spihost0, spihost1"},
+                {.type = HTOOL_FLAG_BOOL,
+                 .ch = 'n',
+                 .name = "dry_run",
+                 .default_value = "false",
+                 .desc = "Preview the sweep sequence without connecting to the "
+                         "RoT "
+                         "or sending host commands"},
+                {}},
+        .func = htool_gpio_sweep,
     },
     {
         .verbs = (const char*[]){"hello", NULL},

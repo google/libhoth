@@ -187,6 +187,8 @@ cc_binary(
         "htool_dfu.h",
         "htool_firmware_update.c",
         "htool_firmware_update.h",
+        "htool_gpio.c",
+        "htool_gpio.h",
         "htool_i2c.c",
         "htool_i2c.h",
         "htool_jtag.c",
@@ -286,6 +288,33 @@ cc_binary(
         ":dbus_backend": ["//transports:libhoth_dbus"],
         "//conditions:default": [],
     }),
+)
+
+cc_library(
+    name = "htool_gpio",
+    srcs = ["htool_gpio.c"],
+    hdrs = ["htool_gpio.h"],
+    deps = [
+        ":htool_cmd",
+        ":htool_header",
+        "//protocol:gpio_drive_strength",
+        "//protocol:host_cmd",
+        "//protocol:libhoth_status",
+        "//transports:libhoth_device",
+    ],
+)
+
+cc_test(
+    name = "htool_gpio_test",
+    srcs = ["htool_gpio_test.cc"],
+    deps = [
+        ":htool_gpio",
+        ":htool_header",
+        "//protocol:gpio_drive_strength",
+        "//protocol/test:libhoth_device_mock",
+        "@googletest//:gtest",
+        "@googletest//:gtest_main",
+    ],
 )
 
 cc_test(
