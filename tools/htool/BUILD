@@ -157,8 +157,10 @@ cc_test(
     ],
 )
 
-cc_binary(
-    name = "htool",
+# All of htool, including main(). A library so the //examples:htool compat
+# target can link the same binary.
+cc_library(
+    name = "htool_lib",
     srcs = [
         "host_commands.h",
         "htool.c",
@@ -275,6 +277,12 @@ cc_binary(
         ":dbus_backend": ["//transports:libhoth_dbus"],
         "//conditions:default": [],
     }),
+)
+
+cc_binary(
+    name = "htool",
+    features = ["fully_static_link_target"],
+    deps = [":htool_lib"],
 )
 
 cc_test(
