@@ -59,7 +59,7 @@ extern "C" int htool_get_param_u32(const struct htool_invocation* inv,
   return -1;
 }
 
-extern "C" int htool_exec_security_v2_cmd(
+extern "C" libhoth_error htool_exec_security_v2_cmd(
     struct libhoth_device* dev, uint8_t major, uint8_t minor,
     uint16_t base_command, struct security_v2_buffer* request_buffer,
     const struct security_v2_param* request_params,
@@ -71,10 +71,10 @@ extern "C" int htool_exec_security_v2_cmd(
         request_param_count, response_buffer, response_params,
         response_param_count);
   }
-  return -1;
+  return LIBHOTH_ERR_FAIL;
 }
 
-extern "C" int htool_exec_security_v2_serialized_cmd(
+extern "C" libhoth_error htool_exec_security_v2_serialized_cmd(
     struct libhoth_device* dev, uint8_t major, uint8_t minor,
     uint16_t base_command, struct security_v2_buffer* request_buffer,
     const struct security_v2_param* request_params,
@@ -88,7 +88,7 @@ extern "C" int htool_exec_security_v2_serialized_cmd(
             request_param_count, response_buffer, response_params,
             response_param_count);
   }
-  return -1;
+  return LIBHOTH_ERR_FAIL;
 }
 
 // Mocking htool_libhoth_device
@@ -273,7 +273,7 @@ TEST_F(HtoolSecurityTokensTest, FetchAttestationGetCountFails) {
 
   EXPECT_CALL(security_v2_mock_,
               htool_exec_security_v2_cmd(_, _, _, _, _, _, _, _, _, _))
-      .WillOnce(Return(-1));
+      .WillOnce(Return(LIBHOTH_ERR_FAIL));
 
   ASSERT_NE(htool_fetch_attestation(&inv), 0);
 }
@@ -329,7 +329,7 @@ TEST_F(HtoolSecurityTokensTest, FetchAttestationGetTokensFails) {
   EXPECT_CALL(
       security_v2_serialized_mock_,
       htool_exec_security_v2_serialized_cmd(_, _, _, _, _, _, _, _, _, _))
-      .WillOnce(Return(-1));
+      .WillOnce(Return(LIBHOTH_ERR_FAIL));
 
   ASSERT_NE(htool_fetch_attestation(&inv), 0);
 }
@@ -383,8 +383,8 @@ TEST_F(HtoolSecurityTokensTest, FetchAttestationGetInfoFails) {
   EXPECT_CALL(security_v2_mock_,
               htool_exec_security_v2_cmd(_, _, _, _, _, _, _, _, _, _))
       .WillOnce(DoAll(SetSecurityV2Response(num_ids, boot_nonce, signature),
-                      Return(0)))
-      .WillOnce(Return(-1));
+                      Return(HOTH_SUCCESS)))
+      .WillOnce(Return(LIBHOTH_ERR_FAIL));
 
   // Mock for htool_get_tokens_in_set to succeed
   std::vector<uint8_t> tokens(TOKEN_BYTE_SIZE * 3);  // 3 tokens

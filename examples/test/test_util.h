@@ -70,7 +70,7 @@ libhoth_security_version htool_get_security_version(struct libhoth_device* dev);
 class HtoolSecurityV2Mock {
  public:
   virtual ~HtoolSecurityV2Mock() = default;
-  MOCK_METHOD(int, htool_exec_security_v2_cmd,
+  MOCK_METHOD(libhoth_error, htool_exec_security_v2_cmd,
               (struct libhoth_device * dev, uint8_t major, uint8_t minor,
                uint16_t base_command, struct security_v2_buffer* request_buffer,
                const struct security_v2_param* request_params,
@@ -84,7 +84,7 @@ class HtoolSecurityV2Mock {
 class HtoolSecurityV2SerializedMock {
  public:
   virtual ~HtoolSecurityV2SerializedMock() = default;
-  MOCK_METHOD(int, htool_exec_security_v2_serialized_cmd,
+  MOCK_METHOD(libhoth_error, htool_exec_security_v2_serialized_cmd,
               (struct libhoth_device * dev, uint8_t major, uint8_t minor,
                uint16_t base_command, struct security_v2_buffer* request_buffer,
                const struct security_v2_param* request_params,

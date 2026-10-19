@@ -2,6 +2,7 @@
 
 #include <assert.h>
 #include <errno.h>
+#include <inttypes.h>
 #include <stddef.h>
 #include <stdint.h>
 #include <stdio.h>
@@ -138,7 +139,7 @@ static int htool_get_tokens_in_set(const struct htool_invocation* inv,
       const struct security_v2_serialized_param** response_params[] = {
           &tokens_param, &boot_nonce_param, &sig_param};
       // Gets the Tokens in the given Set
-      int hoth_status = htool_exec_security_v2_serialized_cmd(
+      libhoth_error hoth_status = htool_exec_security_v2_serialized_cmd(
           dev, /*major=*/
           HOTH_PRV_CMD_HOTH_SECURITY_V2_TOKENS_MAJOR_COMMAND,
           /*minor=*/
@@ -148,12 +149,10 @@ static int htool_get_tokens_in_set(const struct htool_invocation* inv,
           ARRAY_SIZE(request_params),
           SECURITY_V2_BUFFER_PARAM(response_storage_hdr), response_params,
           ARRAY_SIZE(response_params));
-      if (hoth_status != 0) {
-        printf(
-            "Unexpected Error: Returned status %d, while trying to send "
-            "command to get the Tokens for Set: %d\n",
-            hoth_status, set_idx);
-        status = hoth_status;
+      if (hoth_status != HOTH_SUCCESS) {
+        printf("Unexpected Error: Returned status 0x%016" PRIx64
+               ", while trying to send command to get the Tokens for Set: %d\n",
+               hoth_status, set_idx);
         goto cleanup;
       }
 
@@ -307,7 +306,7 @@ static int htool_get_token_set_count(const struct htool_invocation* inv,
 
       };
       // Gets the number of Token Sets
-      int hoth_status = htool_exec_security_v2_cmd(
+      libhoth_error hoth_status = htool_exec_security_v2_cmd(
           dev, /*major=*/
           HOTH_PRV_CMD_HOTH_SECURITY_V2_TOKENS_MAJOR_COMMAND,
           /*minor=*/
@@ -317,12 +316,10 @@ static int htool_get_token_set_count(const struct htool_invocation* inv,
           ARRAY_SIZE(request_params),
           SECURITY_V2_BUFFER_PARAM(response_storage_hdr), response_params,
           ARRAY_SIZE(response_params));
-      if (hoth_status != 0) {
-        printf(
-            "Unexpected Error: Returned status %d, while trying to send "
-            "command to get the Token Set Count\n",
-            hoth_status);
-        status = hoth_status;
+      if (hoth_status != HOTH_SUCCESS) {
+        printf("Unexpected Error: Returned status 0x%016" PRIx64
+               ", while trying to send command to get the Token Set Count\n",
+               hoth_status);
         goto cleanup;
       }
       if (num_ids_ptr && boot_nonce_ptr && signature_ptr) {
@@ -438,7 +435,7 @@ static int htool_get_token_set_info(const struct htool_invocation* inv,
 
       };
       // Gets the Token Set Info
-      int hoth_status = htool_exec_security_v2_cmd(
+      libhoth_error hoth_status = htool_exec_security_v2_cmd(
           dev, /*major=*/
           HOTH_PRV_CMD_HOTH_SECURITY_V2_TOKENS_MAJOR_COMMAND,
           /*minor=*/
@@ -448,12 +445,10 @@ static int htool_get_token_set_info(const struct htool_invocation* inv,
           ARRAY_SIZE(request_params),
           SECURITY_V2_BUFFER_PARAM(response_storage_hdr), response_params,
           ARRAY_SIZE(response_params));
-      if (hoth_status != 0) {
-        printf(
-            "Unexpected Error: Returned status %d, while trying to send "
-            "command to get the Token Set Info\n",
-            hoth_status);
-        status = hoth_status;
+      if (hoth_status != HOTH_SUCCESS) {
+        printf("Unexpected Error: Returned status 0x%016" PRIx64
+               ", while trying to send command to get the Token Set Info\n",
+               hoth_status);
         goto cleanup;
       }
       // Return token set info into their own output file

@@ -83,6 +83,7 @@ cc_library(
         ":host_commands",
         ":htool_header",
         "//protocol:host_cmd",
+        "//protocol:libhoth_status",
         "//transports:libhoth_device",
     ],
 )

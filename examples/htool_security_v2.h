@@ -17,6 +17,7 @@
 
 #include <stdint.h>
 
+#include "protocol/status.h"
 #include "transports/libhoth_device.h"
 
 #ifdef __cplusplus
@@ -71,17 +72,15 @@ struct security_v2_serialized_response_hdr {
 // request/response buffers serve as backing storage for the command, and the
 // request/response params represent data that will be copied to/from the
 // buffers.
-int htool_exec_security_v2_cmd(struct libhoth_device* dev, uint8_t major,
-                               uint8_t minor, uint16_t base_command,
-                               struct security_v2_buffer* request_buffer,
-                               const struct security_v2_param* request_params,
-                               uint16_t request_param_count,
-                               struct security_v2_buffer* response_buffer,
-                               struct security_v2_param* response_params,
-                               uint16_t response_param_count);
+libhoth_error htool_exec_security_v2_cmd(
+    struct libhoth_device* dev, uint8_t major, uint8_t minor,
+    uint16_t base_command, struct security_v2_buffer* request_buffer,
+    const struct security_v2_param* request_params,
+    uint16_t request_param_count, struct security_v2_buffer* response_buffer,
+    struct security_v2_param* response_params, uint16_t response_param_count);
 // Executes a SECURITY_V2 host command with `major.minor` code, using serialized
 // response params
-int htool_exec_security_v2_serialized_cmd(
+libhoth_error htool_exec_security_v2_serialized_cmd(
     struct libhoth_device* dev, uint8_t major, uint8_t minor,
     uint16_t base_command, struct security_v2_buffer* request_buffer,
     const struct security_v2_param* request_params,
