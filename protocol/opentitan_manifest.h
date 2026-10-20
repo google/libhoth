@@ -23,6 +23,23 @@
 extern "C" {
 #endif
 
+// Offsets of the app (BL0) image within a flash image, for the legacy 64k and
+// the 88k ROM_EXT layouts.
+#define OPENTITAN_MANIFEST_APP_OFFSET_64K (64 * 1024)
+#define OPENTITAN_MANIFEST_APP_OFFSET_88K (88 * 1024)
+
+// Manifest identifiers ("OTRE" and "OTB0" as little-endian u32s).
+#define OPENTITAN_MANIFEST_IDENTIFIER_ROM_EXT 0x4552544f
+#define OPENTITAN_MANIFEST_IDENTIFIER_OWNER_FIRST_STAGE 0x3042544f
+
+// Value of unused manifest words, e.g. an unset manifest_base_address.
+#define OPENTITAN_MANIFEST_UNUSED_WORD 0xa5a5a5a5
+
+// The bits of a manifest_base_address that select the memory-mapped flash
+// base and the slot; the remaining bits are the offset within the slot.
+#define OPENTITAN_MANIFEST_FLASH_BASE_AND_SLOT_BITS \
+  (0xa0000000u | (512u * 1024u))
+
 // The leading fields of an OpenTitan manifest, up to and including the
 // security version. Copy it in and out of images with memcpy, since image
 // buffers may not be aligned. Manifest fields are little-endian, so this is

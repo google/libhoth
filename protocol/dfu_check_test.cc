@@ -33,6 +33,9 @@ using ::testing::ElementsAreArray;
 using ::testing::Return;
 
 constexpr char kTestData[] = "protocol/test/test_fwupdate.bin";
+// Like kTestData, but with ROM_EXT 3.1, and app 4.2 at the 88k offset instead
+// of 64k.
+constexpr char kTestData88k[] = "protocol/test/test_fwupdate_88k.bin";
 
 // Helper to manage test image lifetime
 struct MappedFile {
@@ -126,4 +129,18 @@ TEST_F(LibHothTest, extract_ot_bundle_64k_test) {
   EXPECT_EQ(rom_ext.minor, 0);
   EXPECT_EQ(app.major, 2);
   EXPECT_EQ(app.minor, 5);
+}
+
+TEST_F(LibHothTest, extract_ot_bundle_88k_test) {
+  MappedFile image = {};
+  ASSERT_TRUE(image.Load(kTestData88k));
+
+  struct opentitan_image_version rom_ext = {};
+  struct opentitan_image_version app = {};
+  ASSERT_EQ(libhoth_extract_ot_bundle(image.data, image.size, &rom_ext, &app),
+            0);
+  EXPECT_EQ(rom_ext.major, 3);
+  EXPECT_EQ(rom_ext.minor, 1);
+  EXPECT_EQ(app.major, 4);
+  EXPECT_EQ(app.minor, 2);
 }
