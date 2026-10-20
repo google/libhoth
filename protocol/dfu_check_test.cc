@@ -113,3 +113,17 @@ TEST_F(LibHothTest, dfu_check_null_param_test) {
             LIBHOTH_ERR_CONSTRUCT(HOTH_CTX_CMD_EXEC, HOTH_HOST_SPACE_LIBHOTH,
                                   LIBHOTH_ERR_INVALID_PARAMETER));
 }
+
+TEST_F(LibHothTest, extract_ot_bundle_64k_test) {
+  MappedFile image = {};
+  ASSERT_TRUE(image.Load(kTestData));
+
+  struct opentitan_image_version rom_ext = {};
+  struct opentitan_image_version app = {};
+  ASSERT_EQ(libhoth_extract_ot_bundle(image.data, image.size, &rom_ext, &app),
+            0);
+  EXPECT_EQ(rom_ext.major, 1);
+  EXPECT_EQ(rom_ext.minor, 0);
+  EXPECT_EQ(app.major, 2);
+  EXPECT_EQ(app.minor, 5);
+}
