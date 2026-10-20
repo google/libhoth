@@ -20,7 +20,8 @@
 
 #include "protocol/opentitan_manifest.h"
 
-// libhoth_extract_ot_bundle()'s bounds checks are in terms of this.
+// libhoth_extract_ot_bundle()'s bounds checks are in terms of these.
+static_assert(OPENTITAN_OFFSET_APP_FW == OPENTITAN_MANIFEST_APP_OFFSET_64K, "");
 static_assert(sizeof(struct opentitan_manifest_prefix) ==
                   OPENTITAN_OFFSET_VERSION_SECURITY + 4,
               "");
@@ -46,6 +47,45 @@ static void copy_manifest_version(
   version->major = manifest->version_major;
   version->minor = manifest->version_minor;
   version->security_version = manifest->security_version;
+}
+
+// Returns true if `manifest` looks like a BL0 (app) manifest located at
+// `manifest_offset` within the flash image.
+static bool is_bl0_manifest(const struct opentitan_manifest_prefix* manifest,
+                            uint32_t manifest_offset) {
+  if (manifest->identifier != OPENTITAN_MANIFEST_IDENTIFIER_OWNER_FIRST_STAGE) {
+    return false;
+  }
+  // manifest_base_address is a memory-mapped flash address like 0xa0016000 or
+  // 0x20096000; filter out the flash base and slot bits to get an offset.
+  uint32_t expected_offset =
+      (manifest->manifest_base_address == OPENTITAN_MANIFEST_UNUSED_WORD)
+          ? OPENTITAN_MANIFEST_APP_OFFSET_64K
+          : (manifest->manifest_base_address &
+             ~OPENTITAN_MANIFEST_FLASH_BASE_AND_SLOT_BITS);
+  return expected_offset == manifest_offset;
+}
+
+// Returns the offset of the app (BL0) manifest within the raw flash slot image
+// `raw_image` (`raw_image_size` bytes long) whose ROM_EXT manifest is
+// `rom_ext`. The 88k offset is used if the ROM_EXT fits below it and a BL0
+// manifest for that offset is there; we look at 88k first in case the image
+// contains a vestigial manifest header at 64k. Otherwise falls back to the
+// legacy 64k offset.
+static uint32_t find_app_offset(
+    const uint8_t* raw_image, size_t raw_image_size,
+    const struct opentitan_manifest_prefix* rom_ext) {
+  const uint32_t offset_88k = OPENTITAN_MANIFEST_APP_OFFSET_88K;
+  if (rom_ext->identifier == OPENTITAN_MANIFEST_IDENTIFIER_ROM_EXT &&
+      rom_ext->length <= offset_88k &&
+      raw_image_size >= offset_88k + sizeof(struct opentitan_manifest_prefix)) {
+    struct opentitan_manifest_prefix manifest;
+    memcpy(&manifest, raw_image + offset_88k, sizeof(manifest));
+    if (is_bl0_manifest(&manifest, offset_88k)) {
+      return offset_88k;
+    }
+  }
+  return OPENTITAN_MANIFEST_APP_OFFSET_64K;
 }
 
 int libhoth_extract_ot_bundle(const uint8_t* image, size_t image_size,
@@ -115,14 +155,17 @@ int libhoth_extract_ot_bundle(const uint8_t* image, size_t image_size,
   // checks above guarantee that a manifest prefix at `offset` and at
   // `offset + OPENTITAN_OFFSET_APP_FW` are within `image`.
   const uint8_t* raw_image = image + offset;
+  const size_t raw_image_size = image_size - offset;
 
   struct opentitan_manifest_prefix rom_ext_manifest;
   memcpy(&rom_ext_manifest, raw_image, sizeof(rom_ext_manifest));
   copy_manifest_version(rom_ext, &rom_ext_manifest);
 
   struct opentitan_manifest_prefix app_manifest;
-  memcpy(&app_manifest, raw_image + OPENTITAN_OFFSET_APP_FW,
-         sizeof(app_manifest));
+  memcpy(
+      &app_manifest,
+      raw_image + find_app_offset(raw_image, raw_image_size, &rom_ext_manifest),
+      sizeof(app_manifest));
   copy_manifest_version(app, &app_manifest);
 
   return 0;
