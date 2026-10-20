@@ -18,7 +18,10 @@
 #include <gtest/gtest.h>
 
 #include <cstdint>
+#include <cstring>
+#include <vector>
 
+#include "protocol/opentitan_manifest.h"
 #include "test/libhoth_device_mock.h"
 
 using ::testing::_;
@@ -509,4 +512,52 @@ TEST_F(LibHothTest, ExtractOtBundleIntegerOverflow) {
   // Expect call to fail with -1
   EXPECT_EQ(libhoth_extract_ot_bundle(image.data(), image_size, &rom_ext, &app),
             -1);
+}
+
+// Returns an update bundle whose flash image starts at `flash_offset` and is
+// `flash_size` bytes of erased (0xff) flash.
+static std::vector<uint8_t> MakeOtBundle(uint32_t flash_offset,
+                                         size_t flash_size) {
+  std::vector<uint8_t> image(flash_offset + flash_size, 0xff);
+  const char* magic = "_OTFWUPDATE_";
+  memcpy(image.data(), magic, strlen(magic));
+  memcpy(image.data() + OPENTITAN_OFFSET_HEADER_DATA, &flash_offset,
+         sizeof(flash_offset));
+  return image;
+}
+
+static void PutManifest(std::vector<uint8_t>& image, size_t offset,
+                        const struct opentitan_manifest_prefix& manifest) {
+  ASSERT_LE(offset + sizeof(manifest), image.size());
+  memcpy(image.data() + offset, &manifest, sizeof(manifest));
+}
+
+TEST_F(LibHothTest, ExtractOtBundleVersions) {
+  const uint32_t flash_offset = 2048;
+  std::vector<uint8_t> image =
+      MakeOtBundle(flash_offset, OPENTITAN_OFFSET_APP_FW +
+                                     sizeof(struct opentitan_manifest_prefix));
+
+  struct opentitan_manifest_prefix rom_ext_manifest = {};
+  rom_ext_manifest.version_major = 1;
+  rom_ext_manifest.version_minor = 2;
+  rom_ext_manifest.security_version = 3;
+  PutManifest(image, flash_offset, rom_ext_manifest);
+
+  struct opentitan_manifest_prefix app_manifest = {};
+  app_manifest.version_major = 4;
+  app_manifest.version_minor = 5;
+  app_manifest.security_version = 6;
+  PutManifest(image, flash_offset + OPENTITAN_OFFSET_APP_FW, app_manifest);
+
+  struct opentitan_image_version rom_ext = {};
+  struct opentitan_image_version app = {};
+  ASSERT_EQ(
+      libhoth_extract_ot_bundle(image.data(), image.size(), &rom_ext, &app), 0);
+  EXPECT_EQ(rom_ext.major, 1);
+  EXPECT_EQ(rom_ext.minor, 2);
+  EXPECT_EQ(rom_ext.security_version, 3);
+  EXPECT_EQ(app.major, 4);
+  EXPECT_EQ(app.minor, 5);
+  EXPECT_EQ(app.security_version, 6);
 }

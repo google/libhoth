@@ -16,6 +16,14 @@
 
 #include <stdbool.h>
 #include <stddef.h>
+#include <string.h>
+
+#include "protocol/opentitan_manifest.h"
+
+// libhoth_extract_ot_bundle()'s bounds checks are in terms of this.
+static_assert(sizeof(struct opentitan_manifest_prefix) ==
+                  OPENTITAN_OFFSET_VERSION_SECURITY + 4,
+              "");
 
 libhoth_error libhoth_opentitan_version(
     struct libhoth_device* dev, struct opentitan_get_version_resp* output) {
@@ -30,6 +38,14 @@ libhoth_error libhoth_opentitan_version(
   }
 
   return rv;
+}
+
+static void copy_manifest_version(
+    struct opentitan_image_version* version,
+    const struct opentitan_manifest_prefix* manifest) {
+  version->major = manifest->version_major;
+  version->minor = manifest->version_minor;
+  version->security_version = manifest->security_version;
 }
 
 int libhoth_extract_ot_bundle(const uint8_t* image, size_t image_size,
@@ -94,37 +110,20 @@ int libhoth_extract_ot_bundle(const uint8_t* image, size_t image_size,
     return -1;
   }
 
-  rom_ext->major = image[offset + OPENTITAN_OFFSET_VERSION_MAJOR] |
-                   image[offset + OPENTITAN_OFFSET_VERSION_MAJOR + 1] << 8 |
-                   image[offset + OPENTITAN_OFFSET_VERSION_MAJOR + 2] << 16 |
-                   image[offset + OPENTITAN_OFFSET_VERSION_MAJOR + 3] << 24;
-  rom_ext->minor = image[offset + OPENTITAN_OFFSET_VERSION_MINOR] |
-                   image[offset + OPENTITAN_OFFSET_VERSION_MINOR + 1] << 8 |
-                   image[offset + OPENTITAN_OFFSET_VERSION_MINOR + 2] << 16 |
-                   image[offset + OPENTITAN_OFFSET_VERSION_MINOR + 3] << 24;
-  rom_ext->security_version =
-      image[offset + OPENTITAN_OFFSET_VERSION_SECURITY] |
-      image[offset + OPENTITAN_OFFSET_VERSION_SECURITY + 1] << 8 |
-      image[offset + OPENTITAN_OFFSET_VERSION_SECURITY + 2] << 16 |
-      image[offset + OPENTITAN_OFFSET_VERSION_SECURITY + 3] << 24;
+  // `offset` is the bundle header's data_offset: the start of the raw flash
+  // slot image, which begins with the ROM_EXT followed by the app (BL0). The
+  // checks above guarantee that a manifest prefix at `offset` and at
+  // `offset + OPENTITAN_OFFSET_APP_FW` are within `image`.
+  const uint8_t* raw_image = image + offset;
 
-  // Extract the offset that contains the APP version information
-  // We will have the desired APP version be stored on slot index 0 and keep
-  // slot index 1 empty
-  uint32_t offset_app = offset + OPENTITAN_OFFSET_APP_FW;
-  app->major = image[offset_app + OPENTITAN_OFFSET_VERSION_MAJOR] |
-               image[offset_app + OPENTITAN_OFFSET_VERSION_MAJOR + 1] << 8 |
-               image[offset_app + OPENTITAN_OFFSET_VERSION_MAJOR + 2] << 16 |
-               image[offset_app + OPENTITAN_OFFSET_VERSION_MAJOR + 3] << 24;
-  app->minor = image[offset_app + OPENTITAN_OFFSET_VERSION_MINOR] |
-               image[offset_app + OPENTITAN_OFFSET_VERSION_MINOR + 1] << 8 |
-               image[offset_app + OPENTITAN_OFFSET_VERSION_MINOR + 2] << 16 |
-               image[offset_app + OPENTITAN_OFFSET_VERSION_MINOR + 3] << 24;
-  app->security_version =
-      image[offset_app + OPENTITAN_OFFSET_VERSION_SECURITY] |
-      image[offset_app + OPENTITAN_OFFSET_VERSION_SECURITY + 1] << 8 |
-      image[offset_app + OPENTITAN_OFFSET_VERSION_SECURITY + 2] << 16 |
-      image[offset_app + OPENTITAN_OFFSET_VERSION_SECURITY + 3] << 24;
+  struct opentitan_manifest_prefix rom_ext_manifest;
+  memcpy(&rom_ext_manifest, raw_image, sizeof(rom_ext_manifest));
+  copy_manifest_version(rom_ext, &rom_ext_manifest);
+
+  struct opentitan_manifest_prefix app_manifest;
+  memcpy(&app_manifest, raw_image + OPENTITAN_OFFSET_APP_FW,
+         sizeof(app_manifest));
+  copy_manifest_version(app, &app_manifest);
 
   return 0;
 }
