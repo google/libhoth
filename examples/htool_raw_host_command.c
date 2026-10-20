@@ -126,14 +126,16 @@ int command_raw_host_command(const struct htool_invocation* inv) {
     uint8_t resp_payload[RESP_BUF_LEN] = {0};
 
     size_t actual_resp_size = 0;
-    rv = libhoth_hostcmd_exec(dev, req.command, req.command_version,
-                              req_payload, req.data_len, resp_payload,
-                              RESP_BUF_LEN, &actual_resp_size);
-    if (rv && rv < HTOOL_ERROR_HOST_COMMAND_START) {
-      return rv;
-    }
-    if (rv > HTOOL_ERROR_HOST_COMMAND_START) {
-      resp.result = rv - HTOOL_ERROR_HOST_COMMAND_START;
+    libhoth_error err = libhoth_hostcmd_exec_v2(
+        dev, req.command, req.command_version, req_payload, req.data_len,
+        resp_payload, RESP_BUF_LEN, &actual_resp_size);
+    if (err != HOTH_SUCCESS) {
+      if (LIBHOTH_ERR_GET_SPACE(err) == HOTH_HOST_SPACE_EC) {
+        resp.result = (uint16_t)LIBHOTH_ERR_GET_CODE(err);
+      } else {
+        htool_report_error("raw_host_command", err);
+        return -1;
+      }
     }
 
     resp.data_len = actual_resp_size;
