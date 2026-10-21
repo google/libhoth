@@ -57,6 +57,7 @@ cc_library(
     hdrs = ["htool_provisioning.h"],
     deps = [
         ":htool_header",
+        "//protocol:libhoth_status",
         "//protocol:provisioning",
         "//tools/common:htool_cmd",
         "//tools/common:macros",

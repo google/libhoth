@@ -54,20 +54,6 @@ static libhoth_error exec_provisioning_log_cmd(struct libhoth_device* dev,
                                  resp_buf, resp_buf_size, out_resp_size);
 }
 
-// Runs a provisioning log command, returning the legacy status code.
-static int exec_provisioning_log_cmd_legacy(struct libhoth_device* dev,
-                                            const void* req_payload,
-                                            size_t req_payload_size,
-                                            void* resp_buf,
-                                            size_t resp_buf_size,
-                                            size_t* out_resp_size) {
-  return libhoth_hostcmd_exec(dev,
-                              /*command=*/HOTH_CMD_BOARD_SPECIFIC_BASE +
-                                  HOTH_PRV_CMD_HOTH_PROVISIONING_LOG,
-                              /*version=*/0, req_payload, req_payload_size,
-                              resp_buf, resp_buf_size, out_resp_size);
-}
-
 // Executes a key provisioning host command (0x3E43)
 static libhoth_error exec_key_provisioning_cmd(struct libhoth_device* dev,
                                                const void* req_payload,
@@ -82,8 +68,9 @@ static libhoth_error exec_key_provisioning_cmd(struct libhoth_device* dev,
                                  resp_buf, resp_buf_size, out_resp_size);
 }
 
-int libhoth_provisioning_log_read(struct libhoth_device* dev, uint8_t* buf,
-                                  size_t buf_size, size_t* out_size) {
+libhoth_error libhoth_provisioning_log_read(struct libhoth_device* dev,
+                                            uint8_t* buf, size_t buf_size,
+                                            size_t* out_size) {
   struct hoth_provisioning_log_header prov_log_hdr_resp;
   memset(&prov_log_hdr_resp, 0, sizeof(prov_log_hdr_resp));
   struct hoth_provisioning_log_request request = {
@@ -97,11 +84,11 @@ int libhoth_provisioning_log_read(struct libhoth_device* dev, uint8_t* buf,
 
   // Get Provisioning Log Header
   size_t response_size = 0;
-  int exec_status = exec_provisioning_log_cmd_legacy(
+  libhoth_error err = exec_provisioning_log_cmd(
       dev, &request, sizeof(request), &prov_log_hdr_resp,
       sizeof(prov_log_hdr_resp), &response_size);
-  if (exec_status != 0) {
-    return exec_status;
+  if (err != HOTH_SUCCESS) {
+    return err;
   }
 
   // Get Provisioning Log
@@ -118,16 +105,14 @@ int libhoth_provisioning_log_read(struct libhoth_device* dev, uint8_t* buf,
     request.size = chunk_size;
     response_size = 0;
 
-    exec_status = exec_provisioning_log_cmd_legacy(
-        dev, &request, sizeof(request), &response, sizeof(response),
-        &response_size);
-    if (exec_status != 0) {
+    err = exec_provisioning_log_cmd(dev, &request, sizeof(request), &response,
+                                    sizeof(response), &response_size);
+    if (err != HOTH_SUCCESS) {
       fprintf(stderr,
-              "Unexpected Error: Returned status %d,  while trying to send "
-              "command to "
-              "read the provisioning_log\n",
-              exec_status);
-      return exec_status;
+              "Unexpected Error: Returned status 0x%016" PRIx64
+              ", while trying to send command to read the provisioning_log\n",
+              err);
+      return err;
     }
     // Check if read bytes matches chunk size
     if (response_size != chunk_size + sizeof(prov_log_hdr_resp)) {
@@ -135,7 +120,8 @@ int libhoth_provisioning_log_read(struct libhoth_device* dev, uint8_t* buf,
               "Unexpected host command response size. Expecting %lu; Got "
               "%lu\n",
               chunk_size + sizeof(prov_log_hdr_resp), response_size);
-      return 1;
+      return LIBHOTH_ERR_CONSTRUCT(HOTH_CTX_CMD_EXEC, HOTH_HOST_SPACE_LIBHOTH,
+                                   LIBHOTH_ERR_FAIL);
     }
 
     if (bytes_read + chunk_size > buf_size) {
@@ -143,7 +129,8 @@ int libhoth_provisioning_log_read(struct libhoth_device* dev, uint8_t* buf,
               "Unexpected Error: Bytes returned: %hu > "
               "PROVISIONING_LOG_MAX_SIZE: %zu\n",
               (uint16_t)(bytes_read + chunk_size), buf_size);
-      return -1;
+      return LIBHOTH_ERR_CONSTRUCT(HOTH_CTX_CMD_EXEC, HOTH_HOST_SPACE_LIBHOTH,
+                                   LIBHOTH_ERR_RESPONSE_BUFFER_OVERFLOW);
     }
 
     // Copy the read bytes into the caller's buffer
@@ -156,14 +143,12 @@ int libhoth_provisioning_log_read(struct libhoth_device* dev, uint8_t* buf,
   if (out_size != NULL) {
     *out_size = bytes_read;
   }
-  return 0;
+  return HOTH_SUCCESS;
 }
 
-int libhoth_provisioning_log_validate_and_sign(struct libhoth_device* dev,
-                                               const uint8_t* blob,
-                                               size_t blob_size, uint8_t* cert,
-                                               size_t cert_capacity,
-                                               size_t* out_cert_size) {
+libhoth_error libhoth_provisioning_log_validate_and_sign(
+    struct libhoth_device* dev, const uint8_t* blob, size_t blob_size,
+    uint8_t* cert, size_t cert_capacity, size_t* out_cert_size) {
   uint32_t checksum = libhoth_provisioning_crc32(0, blob, blob_size);
   struct hoth_provisioning_log_request request = {
       .version = 1,
@@ -175,15 +160,14 @@ int libhoth_provisioning_log_validate_and_sign(struct libhoth_device* dev,
   };
 
   size_t response_size = 0;
-  int exec_status = exec_provisioning_log_cmd_legacy(
+  libhoth_error err = exec_provisioning_log_cmd(
       dev, &request, sizeof(request), cert, cert_capacity, &response_size);
-  if (exec_status != 0) {
+  if (err != HOTH_SUCCESS) {
     fprintf(stderr,
-            "Unexpected Error: Returned status %d,  while trying to send "
-            "command to "
-            "read the provisioning_log\n",
-            exec_status);
-    return exec_status;
+            "Unexpected Error: Returned status 0x%016" PRIx64
+            ", while trying to send command to read the provisioning_log\n",
+            err);
+    return err;
   }
 
   if (response_size > cert_capacity) {
@@ -191,13 +175,14 @@ int libhoth_provisioning_log_validate_and_sign(struct libhoth_device* dev,
             "Unexpected Error: Bytes returned: %lu > "
             "PROVISIONING_CERT_MAX_SIZE: %zu\n",
             response_size, cert_capacity);
-    return -1;
+    return LIBHOTH_ERR_CONSTRUCT(HOTH_CTX_CMD_EXEC, HOTH_HOST_SPACE_LIBHOTH,
+                                 LIBHOTH_ERR_RESPONSE_BUFFER_OVERFLOW);
   }
 
   if (out_cert_size != NULL) {
     *out_cert_size = response_size;
   }
-  return 0;
+  return HOTH_SUCCESS;
 }
 
 libhoth_error libhoth_provisioning_log_write(struct libhoth_device* dev,
