@@ -27,6 +27,8 @@ executable(
         'htool_debug.h',
         'htool_dfu.c',
         'htool_firmware_update.c',
+        'htool_gpio.h',
+        'htool_gpio.c',
         'htool_i2c.c',
         'htool_jtag.c',
         'htool_mtd.c',
@@ -82,6 +84,37 @@ gtest_dep = dependency('gtest', main: true, disabler: true, required: get_option
 gmock_dep = dependency('gmock', main: false, disabler: true, required: get_option('tests'))
 
 if gtest_dep.found() and gmock_dep.found()
+    test(
+        'htool_gpio_test_asan',
+        executable(
+            'htool_gpio_test_asan_exe',
+            sources: [
+                'htool_gpio.c',
+                'htool_gpio_test.cc',
+                '../protocol/test/libhoth_device_mock.cc',
+            ],
+            include_directories: incdir,
+            link_with: [libhoth.get_static_lib()],
+            dependencies: [gtest_dep, gmock_dep],
+            c_args: ['-fsanitize=address'],
+            cpp_args: ['-fsanitize=address'],
+            link_args: ['-fsanitize=address'],
+        ),
+    )
+    test(
+        'htool_gpio_test',
+        executable(
+            'htool_gpio_test_exe',
+            sources: [
+                'htool_gpio.c',
+                'htool_gpio_test.cc',
+                '../protocol/test/libhoth_device_mock.cc',
+            ],
+            include_directories: incdir,
+            link_with: [libhoth.get_static_lib()],
+            dependencies: [gtest_dep, gmock_dep],
+        ),
+    )
     test(
         'htool_provisioning_test_asan',
         executable(
