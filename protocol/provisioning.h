@@ -127,25 +127,16 @@ uint32_t libhoth_provisioning_crc32(uint32_t initial_value, const uint8_t* buf,
 
 // Reads the full provisioning log into |buf|, which must be able to hold
 // |buf_size| bytes. On success |out_size| receives the number of bytes read.
-//
-// Returns 0 on success, 1 if the device reported an unexpected response size
-// or the log is larger than |buf_size|, and a legacy libhoth status code
-// (see libhoth_hostcmd_exec) on a transport or device failure.
-int libhoth_provisioning_log_read(struct libhoth_device* dev, uint8_t* buf,
-                                  size_t buf_size, size_t* out_size);
+libhoth_error libhoth_provisioning_log_read(struct libhoth_device* dev,
+                                            uint8_t* buf, size_t buf_size,
+                                            size_t* out_size);
 
 // Asks the device to validate and sign the personalization blob in |blob|,
 // returning the resulting certificate in |cert|. On success |out_cert_size|
 // receives the number of bytes written to |cert|.
-//
-// Returns 0 on success, and a legacy libhoth status code (see
-// libhoth_hostcmd_exec) on a transport or device failure. Returns -1 if the
-// device returned more than |cert_capacity| bytes.
-int libhoth_provisioning_log_validate_and_sign(struct libhoth_device* dev,
-                                               const uint8_t* blob,
-                                               size_t blob_size, uint8_t* cert,
-                                               size_t cert_capacity,
-                                               size_t* out_cert_size);
+libhoth_error libhoth_provisioning_log_validate_and_sign(
+    struct libhoth_device* dev, const uint8_t* blob, size_t blob_size,
+    uint8_t* cert, size_t cert_capacity, size_t* out_cert_size);
 
 // Writes |size| bytes of provisioning log from |data| to the device. The log
 // is not durable until libhoth_provisioning_log_commit() is called.

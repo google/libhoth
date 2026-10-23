@@ -243,7 +243,7 @@ TEST_F(HtoolProvisioningTest, GetProvisioningLogUnexpectedResponseSize) {
       .WillOnce(DoAll(CopyResp(&response, sizeof(header) + header.size - 1),
                       Return(LIBHOTH_OK)));
 
-  ASSERT_EQ(htool_get_provisioning_log(&inv), 1);
+  ASSERT_EQ(htool_get_provisioning_log(&inv), -1);
 
   // Verify output file is empty
   FILE* fp = fopen(tmp_output_file.c_str(), "rb");

@@ -11,6 +11,7 @@
 
 #include "htool.h"
 #include "protocol/provisioning.h"
+#include "protocol/status.h"
 #include "tools/common/htool_cmd.h"
 #include "transports/libhoth_device.h"
 
@@ -39,9 +40,12 @@ int htool_get_provisioning_log(const struct htool_invocation* inv) {
     goto cleanup;
   }
 
-  status = libhoth_provisioning_log_read(
+  libhoth_error err = libhoth_provisioning_log_read(
       dev, provisioning_log_data, sizeof(provisioning_log_data), &bytes_read);
-  if (status != 0) {
+  if (err != HOTH_SUCCESS) {
+    fprintf(stderr,
+            "Error: 'provisioning_log_read' failed (0x%016" PRIx64 "): ", err);
+    libhoth_log_err(stderr, err);
     goto cleanup;
   }
 
@@ -115,9 +119,14 @@ int htool_validate_and_sign(const struct htool_invocation* inv) {
   }
 
   memset(cert, 0, sizeof(cert));
-  status = libhoth_provisioning_log_validate_and_sign(
+  libhoth_error err = libhoth_provisioning_log_validate_and_sign(
       dev, perso_blob_data, perso_blob_size, cert, sizeof(cert), &cert_size);
-  if (status != 0) {
+  if (err != HOTH_SUCCESS) {
+    fprintf(stderr,
+            "Error: 'provisioning_log_validate_and_sign' failed (0x%016" PRIx64
+            "): ",
+            err);
+    libhoth_log_err(stderr, err);
     goto cleanup;
   }
 
