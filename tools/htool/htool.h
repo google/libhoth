@@ -28,6 +28,7 @@ extern "C" {
 
 void htool_report_error(const char* cmd_name, libhoth_error err);
 
+struct htool_invocation;
 struct libhoth_device;
 
 struct libhoth_device* htool_libhoth_dbus_device(void);
@@ -35,6 +36,8 @@ struct libhoth_device* htool_libhoth_mtd_device(void);
 struct libhoth_device* htool_libhoth_spi_device(void);
 struct libhoth_device* htool_libhoth_usb_device(void);
 struct libhoth_device* htool_libhoth_device(void);
+
+int htool_tpm_spi_probe(const struct htool_invocation* inv);
 
 #ifdef __cplusplus
 }
