@@ -474,6 +474,7 @@ cc_library(
     srcs = ["opentitan_version.c"],
     hdrs = [
         "console.h",
+        "opentitan_manifest.h",
         "opentitan_version.h",
     ],
     deps = [

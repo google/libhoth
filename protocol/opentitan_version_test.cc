@@ -18,7 +18,10 @@
 #include <gtest/gtest.h>
 
 #include <cstdint>
+#include <cstring>
+#include <vector>
 
+#include "protocol/opentitan_manifest.h"
 #include "test/libhoth_device_mock.h"
 
 using ::testing::_;
@@ -509,4 +512,155 @@ TEST_F(LibHothTest, ExtractOtBundleIntegerOverflow) {
   // Expect call to fail with -1
   EXPECT_EQ(libhoth_extract_ot_bundle(image.data(), image_size, &rom_ext, &app),
             -1);
+}
+
+// Returns an update bundle whose flash image starts at `flash_offset` and is
+// `flash_size` bytes of erased (0xff) flash.
+static std::vector<uint8_t> MakeOtBundle(uint32_t flash_offset,
+                                         size_t flash_size) {
+  std::vector<uint8_t> image(flash_offset + flash_size, 0xff);
+  const char* magic = "_OTFWUPDATE_";
+  memcpy(image.data(), magic, strlen(magic));
+  memcpy(image.data() + OPENTITAN_OFFSET_HEADER_DATA, &flash_offset,
+         sizeof(flash_offset));
+  return image;
+}
+
+static void PutManifest(std::vector<uint8_t>& image, size_t offset,
+                        const struct opentitan_manifest_prefix& manifest) {
+  ASSERT_LE(offset + sizeof(manifest), image.size());
+  memcpy(image.data() + offset, &manifest, sizeof(manifest));
+}
+
+TEST_F(LibHothTest, ExtractOtBundleVersions) {
+  const uint32_t flash_offset = 2048;
+  std::vector<uint8_t> image =
+      MakeOtBundle(flash_offset, OPENTITAN_OFFSET_APP_FW +
+                                     sizeof(struct opentitan_manifest_prefix));
+
+  struct opentitan_manifest_prefix rom_ext_manifest = {};
+  rom_ext_manifest.version_major = 1;
+  rom_ext_manifest.version_minor = 2;
+  rom_ext_manifest.security_version = 3;
+  PutManifest(image, flash_offset, rom_ext_manifest);
+
+  struct opentitan_manifest_prefix app_manifest = {};
+  app_manifest.version_major = 4;
+  app_manifest.version_minor = 5;
+  app_manifest.security_version = 6;
+  PutManifest(image, flash_offset + OPENTITAN_OFFSET_APP_FW, app_manifest);
+
+  struct opentitan_image_version rom_ext = {};
+  struct opentitan_image_version app = {};
+  ASSERT_EQ(
+      libhoth_extract_ot_bundle(image.data(), image.size(), &rom_ext, &app), 0);
+  EXPECT_EQ(rom_ext.major, 1);
+  EXPECT_EQ(rom_ext.minor, 2);
+  EXPECT_EQ(rom_ext.security_version, 3);
+  EXPECT_EQ(app.major, 4);
+  EXPECT_EQ(app.minor, 5);
+  EXPECT_EQ(app.security_version, 6);
+}
+
+// Offset of the flash image in MakeOtBundleWith88kCandidate() bundles.
+static constexpr uint32_t kCandidateFlashOffset = 2048;
+
+// Returns a bundle whose flash image has a ROM_EXT manifest with `length`, an
+// app manifest with version 64.0 at 64k, and a candidate app manifest with
+// version 88.0 and `manifest_base_address` at 88k. The app major version
+// extracted from it tells which of the two app manifests was chosen.
+static std::vector<uint8_t> MakeOtBundleWith88kCandidate(
+    uint32_t rom_ext_length, uint32_t manifest_base_address) {
+  const uint32_t flash_offset = kCandidateFlashOffset;
+  std::vector<uint8_t> image =
+      MakeOtBundle(flash_offset, OPENTITAN_MANIFEST_APP_OFFSET_88K +
+                                     sizeof(struct opentitan_manifest_prefix));
+
+  struct opentitan_manifest_prefix rom_ext_manifest = {};
+  rom_ext_manifest.identifier = OPENTITAN_MANIFEST_IDENTIFIER_ROM_EXT;
+  rom_ext_manifest.length = rom_ext_length;
+  PutManifest(image, flash_offset, rom_ext_manifest);
+
+  struct opentitan_manifest_prefix app_64k_manifest = {};
+  app_64k_manifest.identifier = OPENTITAN_MANIFEST_IDENTIFIER_OWNER_FIRST_STAGE;
+  app_64k_manifest.manifest_base_address = OPENTITAN_MANIFEST_UNUSED_WORD;
+  app_64k_manifest.version_major = 64;
+  PutManifest(image, flash_offset + OPENTITAN_MANIFEST_APP_OFFSET_64K,
+              app_64k_manifest);
+
+  struct opentitan_manifest_prefix app_88k_manifest = {};
+  app_88k_manifest.identifier = OPENTITAN_MANIFEST_IDENTIFIER_OWNER_FIRST_STAGE;
+  app_88k_manifest.manifest_base_address = manifest_base_address;
+  app_88k_manifest.version_major = 88;
+  PutManifest(image, flash_offset + OPENTITAN_MANIFEST_APP_OFFSET_88K,
+              app_88k_manifest);
+  return image;
+}
+
+static uint32_t ExtractAppMajor(const std::vector<uint8_t>& image) {
+  struct opentitan_image_version rom_ext = {};
+  struct opentitan_image_version app = {};
+  EXPECT_EQ(
+      libhoth_extract_ot_bundle(image.data(), image.size(), &rom_ext, &app), 0);
+  return app.major;
+}
+
+TEST_F(LibHothTest, ExtractOtBundleApp88k) {
+  EXPECT_EQ(
+      ExtractAppMajor(MakeOtBundleWith88kCandidate(80 * 1024, 0xa0016000)), 88);
+  // Physical slot A and slot B addresses.
+  EXPECT_EQ(
+      ExtractAppMajor(MakeOtBundleWith88kCandidate(80 * 1024, 0x20016000)), 88);
+  EXPECT_EQ(
+      ExtractAppMajor(MakeOtBundleWith88kCandidate(80 * 1024, 0x20096000)), 88);
+}
+
+TEST_F(LibHothTest, ExtractOtBundleApp88kRomExtLength) {
+  EXPECT_EQ(
+      ExtractAppMajor(MakeOtBundleWith88kCandidate(88 * 1024, 0xa0016000)), 88);
+  EXPECT_EQ(
+      ExtractAppMajor(MakeOtBundleWith88kCandidate(88 * 1024 + 1, 0xa0016000)),
+      64);
+}
+
+TEST_F(LibHothTest, ExtractOtBundleApp88kWrongBaseAddress) {
+  EXPECT_EQ(ExtractAppMajor(MakeOtBundleWith88kCandidate(
+                80 * 1024, OPENTITAN_MANIFEST_UNUSED_WORD)),
+            64);
+  EXPECT_EQ(ExtractAppMajor(MakeOtBundleWith88kCandidate(80 * 1024, 0)), 64);
+  EXPECT_EQ(
+      ExtractAppMajor(MakeOtBundleWith88kCandidate(80 * 1024, 0xa0010000)), 64);
+  EXPECT_EQ(
+      ExtractAppMajor(MakeOtBundleWith88kCandidate(80 * 1024, 0x20116000)), 64);
+}
+
+TEST_F(LibHothTest, ExtractOtBundleApp88kNotRomExt) {
+  std::vector<uint8_t> image =
+      MakeOtBundleWith88kCandidate(80 * 1024, 0xa0016000);
+  struct opentitan_manifest_prefix rom_ext_manifest;
+  memcpy(&rom_ext_manifest, image.data() + kCandidateFlashOffset,
+         sizeof(rom_ext_manifest));
+  rom_ext_manifest.identifier = OPENTITAN_MANIFEST_IDENTIFIER_OWNER_FIRST_STAGE;
+  PutManifest(image, kCandidateFlashOffset, rom_ext_manifest);
+  EXPECT_EQ(ExtractAppMajor(image), 64);
+}
+
+TEST_F(LibHothTest, ExtractOtBundleApp88kNotBl0) {
+  std::vector<uint8_t> image =
+      MakeOtBundleWith88kCandidate(80 * 1024, 0xa0016000);
+  const size_t offset_88k =
+      kCandidateFlashOffset + OPENTITAN_MANIFEST_APP_OFFSET_88K;
+  struct opentitan_manifest_prefix app_88k_manifest;
+  memcpy(&app_88k_manifest, image.data() + offset_88k,
+         sizeof(app_88k_manifest));
+  app_88k_manifest.identifier = OPENTITAN_MANIFEST_IDENTIFIER_ROM_EXT;
+  PutManifest(image, offset_88k, app_88k_manifest);
+  EXPECT_EQ(ExtractAppMajor(image), 64);
+}
+
+TEST_F(LibHothTest, ExtractOtBundleApp88kTruncated) {
+  std::vector<uint8_t> image =
+      MakeOtBundleWith88kCandidate(80 * 1024, 0xa0016000);
+  image.pop_back();
+  EXPECT_EQ(ExtractAppMajor(image), 64);
 }
