@@ -16,7 +16,7 @@ cc_library(
     "libusb/version.h",
     "libusb/version_nano.h",
   ] + select({
-    "@bazel_tools//src/conditions:darwin": [
+    "@platforms//os:macos": [
       "libusb/os/darwin_usb.h",
       "libusb/os/darwin_usb.c",
     ],
@@ -38,7 +38,7 @@ cc_library(
     "-isystem", "external/{}".format(repo_name()),
   ],
   linkopts = select({
-    "@bazel_tools//src/conditions:darwin": [
+    "@platforms//os:macos": [
       "-lobjc",
       "-framework", "IOKit",
       "-framework", "CoreFoundation",

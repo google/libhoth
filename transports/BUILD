@@ -24,18 +24,18 @@ config_setting(
     },
 )
 
+# The MTD and SPI transports use Linux kernel interfaces (<linux/...>, /proc/mtd),
+# so they are enabled on Linux and left out elsewhere (e.g. macOS). These are keyed
+# on the target platform rather than a --define so that they also apply when
+# libhoth is consumed as a Bazel module (a dependency's .bazelrc is not read).
 config_setting(
     name = "mtd_backend",
-    define_values = {
-        "mtd_backend": "true",
-    },
+    constraint_values = ["@platforms//os:linux"],
 )
 
 config_setting(
     name = "spi_backend",
-    define_values = {
-        "spi_backend": "true",
-    },
+    constraint_values = ["@platforms//os:linux"],
 )
 
 cc_library(
