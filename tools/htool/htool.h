@@ -20,8 +20,6 @@
 
 #include "protocol/status.h"
 
-#define HTOOL_ERROR_HOST_COMMAND_START 537200
-
 #ifdef __cplusplus
 extern "C" {
 #endif
