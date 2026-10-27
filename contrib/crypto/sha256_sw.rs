@@ -16,8 +16,6 @@
 
 #![no_std]
 
-use mutask_subtle::as_mut_bytes;
-
 static K: [u32; 64] = [
     0x428a2f98, 0x71374491, 0xb5c0fbcf, 0xe9b5dba5, 0x3956c25b, 0x59f111f1, 0x923f82a4, 0xab1c5ed5,
     0xd807aa98, 0x12835b01, 0x243185be, 0x550c7dc3, 0x72be5d74, 0x80deb1fe, 0x9bdc06a7, 0xc19bf174,
@@ -31,6 +29,13 @@ static K: [u32; 64] = [
 
 const BLOCK_SIZE_BYTES: usize = 64;
 const BLOCK_SIZE_WORDS: usize = BLOCK_SIZE_BYTES / 4;
+
+/// Sets byte `i` of `block`, viewed as native-endian bytes.
+const fn set_block_byte(block: &mut [u32; BLOCK_SIZE_WORDS], i: usize, byte: u8) {
+    let mut word = block[i / 4].to_ne_bytes();
+    word[i % 4] = byte;
+    block[i / 4] = u32::from_ne_bytes(word);
+}
 
 pub struct Sha256 {
     state: [u32; 8],
@@ -55,7 +60,7 @@ impl Sha256 {
 
         let mut src_index = 0;
         while src_index < data.len() {
-            as_mut_bytes(&mut self.block)[i] = data[src_index];
+            set_block_byte(&mut self.block, i, data[src_index]);
             i += 1;
             src_index += 1;
             if i == 64 {
@@ -112,9 +117,8 @@ impl Sha256 {
     const fn pad_remaining_bytes_in_block(&mut self) {
         let bytes_in_block = (self.count as usize) % BLOCK_SIZE_BYTES;
         let mut t = bytes_in_block;
-        let block_bytes = as_mut_bytes(&mut self.block);
         while t < BLOCK_SIZE_BYTES {
-            block_bytes[t] = 0;
+            set_block_byte(&mut self.block, t, 0);
             t += 1;
         }
         self.count += (BLOCK_SIZE_BYTES - bytes_in_block) as u64;

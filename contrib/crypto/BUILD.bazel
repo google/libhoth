@@ -24,7 +24,6 @@ rust_library(
     visibility = ["//visibility:public"],
     deps = [
         "//third_party:zerocopy",
-        "@mutask//subtle",
     ],
 )
 
