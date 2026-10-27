@@ -39,7 +39,7 @@ mod tests {
     use alloc::string::ToString;
     use alloc::vec;
     use key_rotation::*;
-    use mutask_tlv::TlvData;
+    use openprot_tlv::TlvData;
 
     #[test]
     fn test_key_rotation_proto_macro_conv() {
@@ -94,7 +94,7 @@ mod tests {
             }],
         });
 
-        let tlv_words = mutask_tlv_proto_conv::message_to_tlv(
+        let tlv_words = openprot_tlv_proto_conv::message_to_tlv(
             &key_rotation_rust_proto::__unstable::CONTRIB_OPENPROT_PROTO_KEY_ROTATION_DESCRIPTOR_INFO,
             &signed_desc,
         )
@@ -170,7 +170,7 @@ mod tests {
             },
         });
 
-        let tlv_words = mutask_tlv_proto_conv::message_to_tlv(
+        let tlv_words = openprot_tlv_proto_conv::message_to_tlv(
             &key_rotation_rust_proto::__unstable::CONTRIB_OPENPROT_PROTO_KEY_ROTATION_DESCRIPTOR_INFO,
             &sealed_desc,
         )

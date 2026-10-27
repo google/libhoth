@@ -25,8 +25,8 @@
 use bitfield_struct::bitfield;
 pub use crypto_tlv::*;
 pub use identity_tlv::*;
-use mutask_tlv::TlvFlags;
-use mutask_tlv::TlvHeader;
+use openprot_tlv::TlvFlags;
+use openprot_tlv::TlvHeader;
 use zerocopy::{FromBytes, Immutable, IntoBytes, KnownLayout};
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, FromBytes, IntoBytes, Immutable, KnownLayout)]
@@ -41,27 +41,27 @@ impl ::core::default::Default for SignedDescriptor {
         ::zerocopy::FromZeros::new_zeroed()
     }
 }
-impl ::mutask_tlv::TlvObject for SignedDescriptor {
-    type Extension = ::mutask_tlv::TlvData;
+impl ::openprot_tlv::TlvObject for SignedDescriptor {
+    type Extension = ::openprot_tlv::TlvData;
     const TAG: u32 = u32::from_le_bytes(*b"KRSD");
-    fn make_ext<'a>(_header: &::mutask_tlv::TlvHeader, extra: &'a [u32]) -> &'a Self::Extension {
-        ::mutask_tlv::TlvData::overlay(extra)
+    fn make_ext<'a>(_header: &::openprot_tlv::TlvHeader, extra: &'a [u32]) -> &'a Self::Extension {
+        ::openprot_tlv::TlvData::overlay(extra)
     }
 }
 pub trait SignedDescriptorExt<'a> {
-    fn descriptor(&self) -> Option<::mutask_tlv::TlvItem<'a, Descriptor>>;
-    fn signature(&self) -> ::mutask_tlv::TlvIterator<'a, SignatureContainer>;
+    fn descriptor(&self) -> Option<::openprot_tlv::TlvItem<'a, Descriptor>>;
+    fn signature(&self) -> ::openprot_tlv::TlvIterator<'a, SignatureContainer>;
 }
-impl<'a> SignedDescriptorExt<'a> for ::mutask_tlv::TlvItem<'a, SignedDescriptor> {
+impl<'a> SignedDescriptorExt<'a> for ::openprot_tlv::TlvItem<'a, SignedDescriptor> {
     #[inline(always)]
-    fn descriptor(&self) -> Option<::mutask_tlv::TlvItem<'a, Descriptor>> {
-        ::mutask_tlv::TlvQuery::ext(self)
+    fn descriptor(&self) -> Option<::openprot_tlv::TlvItem<'a, Descriptor>> {
+        ::openprot_tlv::TlvQuery::ext(self)
             .iter::<Descriptor>()
             .next()
     }
     #[inline(always)]
-    fn signature(&self) -> ::mutask_tlv::TlvIterator<'a, SignatureContainer> {
-        ::mutask_tlv::TlvQuery::ext(self).iter::<SignatureContainer>()
+    fn signature(&self) -> ::openprot_tlv::TlvIterator<'a, SignatureContainer> {
+        ::openprot_tlv::TlvQuery::ext(self).iter::<SignatureContainer>()
     }
 }
 
@@ -77,27 +77,27 @@ impl ::core::default::Default for SealedDescriptor {
         ::zerocopy::FromZeros::new_zeroed()
     }
 }
-impl ::mutask_tlv::TlvObject for SealedDescriptor {
-    type Extension = ::mutask_tlv::TlvData;
+impl ::openprot_tlv::TlvObject for SealedDescriptor {
+    type Extension = ::openprot_tlv::TlvData;
     const TAG: u32 = u32::from_le_bytes(*b"KRSL");
-    fn make_ext<'a>(_header: &::mutask_tlv::TlvHeader, extra: &'a [u32]) -> &'a Self::Extension {
-        ::mutask_tlv::TlvData::overlay(extra)
+    fn make_ext<'a>(_header: &::openprot_tlv::TlvHeader, extra: &'a [u32]) -> &'a Self::Extension {
+        ::openprot_tlv::TlvData::overlay(extra)
     }
 }
 pub trait SealedDescriptorExt<'a> {
-    fn descriptor(&self) -> Option<::mutask_tlv::TlvItem<'a, Descriptor>>;
-    fn seal(&self) -> Option<::mutask_tlv::TlvItem<'a, KRSeal>>;
+    fn descriptor(&self) -> Option<::openprot_tlv::TlvItem<'a, Descriptor>>;
+    fn seal(&self) -> Option<::openprot_tlv::TlvItem<'a, KRSeal>>;
 }
-impl<'a> SealedDescriptorExt<'a> for ::mutask_tlv::TlvItem<'a, SealedDescriptor> {
+impl<'a> SealedDescriptorExt<'a> for ::openprot_tlv::TlvItem<'a, SealedDescriptor> {
     #[inline(always)]
-    fn descriptor(&self) -> Option<::mutask_tlv::TlvItem<'a, Descriptor>> {
-        ::mutask_tlv::TlvQuery::ext(self)
+    fn descriptor(&self) -> Option<::openprot_tlv::TlvItem<'a, Descriptor>> {
+        ::openprot_tlv::TlvQuery::ext(self)
             .iter::<Descriptor>()
             .next()
     }
     #[inline(always)]
-    fn seal(&self) -> Option<::mutask_tlv::TlvItem<'a, KRSeal>> {
-        ::mutask_tlv::TlvQuery::ext(self).iter::<KRSeal>().next()
+    fn seal(&self) -> Option<::openprot_tlv::TlvItem<'a, KRSeal>> {
+        ::openprot_tlv::TlvQuery::ext(self).iter::<KRSeal>().next()
     }
 }
 
@@ -116,11 +116,11 @@ impl ::core::default::Default for LegacyImageFamily {
         ::zerocopy::FromZeros::new_zeroed()
     }
 }
-impl ::mutask_tlv::TlvObject for LegacyImageFamily {
+impl ::openprot_tlv::TlvObject for LegacyImageFamily {
     type Extension = [u8];
     const TAG: u32 = u32::from_le_bytes(*b"LGIF");
-    fn make_ext<'a>(header: &::mutask_tlv::TlvHeader, extra: &'a [u32]) -> &'a Self::Extension {
-        ::mutask_tlv::unpad(header, extra)
+    fn make_ext<'a>(header: &::openprot_tlv::TlvHeader, extra: &'a [u32]) -> &'a Self::Extension {
+        ::openprot_tlv::unpad(header, extra)
     }
 }
 
@@ -143,41 +143,41 @@ impl ::core::default::Default for Descriptor {
         ::zerocopy::FromZeros::new_zeroed()
     }
 }
-impl ::mutask_tlv::TlvObject for Descriptor {
-    type Extension = ::mutask_tlv::TlvData;
+impl ::openprot_tlv::TlvObject for Descriptor {
+    type Extension = ::openprot_tlv::TlvData;
     const TAG: u32 = u32::from_le_bytes(*b"KROT");
-    fn make_ext<'a>(_header: &::mutask_tlv::TlvHeader, extra: &'a [u32]) -> &'a Self::Extension {
-        ::mutask_tlv::TlvData::overlay(extra)
+    fn make_ext<'a>(_header: &::openprot_tlv::TlvHeader, extra: &'a [u32]) -> &'a Self::Extension {
+        ::openprot_tlv::TlvData::overlay(extra)
     }
 }
 pub enum DescriptorLegacyImageFamily<'a> {
-    LegacyImageFamily(::mutask_tlv::TlvItem<'a, LegacyImageFamily>),
+    LegacyImageFamily(::openprot_tlv::TlvItem<'a, LegacyImageFamily>),
 }
 pub trait DescriptorExt<'a> {
-    fn legacy_image_family(&self) -> Option<::mutask_tlv::TlvItem<'a, LegacyImageFamily>>;
-    fn fingerprint(&self) -> ::mutask_tlv::TlvIterator<'a, KeyFingerprint>;
-    fn img_descriptor_digest(&self) -> ::mutask_tlv::TlvIterator<'a, ImgDescriptorDigest>;
+    fn legacy_image_family(&self) -> Option<::openprot_tlv::TlvItem<'a, LegacyImageFamily>>;
+    fn fingerprint(&self) -> ::openprot_tlv::TlvIterator<'a, KeyFingerprint>;
+    fn img_descriptor_digest(&self) -> ::openprot_tlv::TlvIterator<'a, ImgDescriptorDigest>;
     fn _legacy_image_family(&self) -> Option<DescriptorLegacyImageFamily<'a>>;
 }
-impl<'a> DescriptorExt<'a> for ::mutask_tlv::TlvItem<'a, Descriptor> {
+impl<'a> DescriptorExt<'a> for ::openprot_tlv::TlvItem<'a, Descriptor> {
     #[inline(always)]
-    fn legacy_image_family(&self) -> Option<::mutask_tlv::TlvItem<'a, LegacyImageFamily>> {
-        ::mutask_tlv::TlvQuery::ext(self)
+    fn legacy_image_family(&self) -> Option<::openprot_tlv::TlvItem<'a, LegacyImageFamily>> {
+        ::openprot_tlv::TlvQuery::ext(self)
             .iter::<LegacyImageFamily>()
             .next()
     }
     #[inline(always)]
-    fn fingerprint(&self) -> ::mutask_tlv::TlvIterator<'a, KeyFingerprint> {
-        ::mutask_tlv::TlvQuery::ext(self).iter::<KeyFingerprint>()
+    fn fingerprint(&self) -> ::openprot_tlv::TlvIterator<'a, KeyFingerprint> {
+        ::openprot_tlv::TlvQuery::ext(self).iter::<KeyFingerprint>()
     }
     #[inline(always)]
-    fn img_descriptor_digest(&self) -> ::mutask_tlv::TlvIterator<'a, ImgDescriptorDigest> {
-        ::mutask_tlv::TlvQuery::ext(self).iter::<ImgDescriptorDigest>()
+    fn img_descriptor_digest(&self) -> ::openprot_tlv::TlvIterator<'a, ImgDescriptorDigest> {
+        ::openprot_tlv::TlvQuery::ext(self).iter::<ImgDescriptorDigest>()
     }
     #[inline(always)]
     fn _legacy_image_family(&self) -> Option<DescriptorLegacyImageFamily<'a>> {
-        use ::mutask_tlv::TlvQuery;
-        for item in ::mutask_tlv::TlvQuery::ext(self).iter::<::mutask_tlv::TlvAny>() {
+        use ::openprot_tlv::TlvQuery;
+        for item in ::openprot_tlv::TlvQuery::ext(self).iter::<::openprot_tlv::TlvAny>() {
             if let Some(val) = item.cast::<LegacyImageFamily>() {
                 return Some(DescriptorLegacyImageFamily::LegacyImageFamily(val));
             }
@@ -198,39 +198,39 @@ impl ::core::default::Default for ImgDescriptorDigest {
         ::zerocopy::FromZeros::new_zeroed()
     }
 }
-impl ::mutask_tlv::TlvObject for ImgDescriptorDigest {
-    type Extension = ::mutask_tlv::TlvData;
+impl ::openprot_tlv::TlvObject for ImgDescriptorDigest {
+    type Extension = ::openprot_tlv::TlvData;
     const TAG: u32 = u32::from_le_bytes(*b"IDDG");
-    fn make_ext<'a>(_header: &::mutask_tlv::TlvHeader, extra: &'a [u32]) -> &'a Self::Extension {
-        ::mutask_tlv::TlvData::overlay(extra)
+    fn make_ext<'a>(_header: &::openprot_tlv::TlvHeader, extra: &'a [u32]) -> &'a Self::Extension {
+        ::openprot_tlv::TlvData::overlay(extra)
     }
 }
 pub enum ImgDescriptorDigestDigest<'a> {
-    Sha2256(::mutask_tlv::TlvItem<'a, Sha2_256Digest>),
-    Sha2384(::mutask_tlv::TlvItem<'a, Sha2_384Digest>),
+    Sha2256(::openprot_tlv::TlvItem<'a, Sha2_256Digest>),
+    Sha2384(::openprot_tlv::TlvItem<'a, Sha2_384Digest>),
 }
 pub trait ImgDescriptorDigestExt<'a> {
-    fn sha2_256(&self) -> Option<::mutask_tlv::TlvItem<'a, Sha2_256Digest>>;
-    fn sha2_384(&self) -> Option<::mutask_tlv::TlvItem<'a, Sha2_384Digest>>;
+    fn sha2_256(&self) -> Option<::openprot_tlv::TlvItem<'a, Sha2_256Digest>>;
+    fn sha2_384(&self) -> Option<::openprot_tlv::TlvItem<'a, Sha2_384Digest>>;
     fn digest(&self) -> Option<ImgDescriptorDigestDigest<'a>>;
 }
-impl<'a> ImgDescriptorDigestExt<'a> for ::mutask_tlv::TlvItem<'a, ImgDescriptorDigest> {
+impl<'a> ImgDescriptorDigestExt<'a> for ::openprot_tlv::TlvItem<'a, ImgDescriptorDigest> {
     #[inline(always)]
-    fn sha2_256(&self) -> Option<::mutask_tlv::TlvItem<'a, Sha2_256Digest>> {
-        ::mutask_tlv::TlvQuery::ext(self)
+    fn sha2_256(&self) -> Option<::openprot_tlv::TlvItem<'a, Sha2_256Digest>> {
+        ::openprot_tlv::TlvQuery::ext(self)
             .iter::<Sha2_256Digest>()
             .next()
     }
     #[inline(always)]
-    fn sha2_384(&self) -> Option<::mutask_tlv::TlvItem<'a, Sha2_384Digest>> {
-        ::mutask_tlv::TlvQuery::ext(self)
+    fn sha2_384(&self) -> Option<::openprot_tlv::TlvItem<'a, Sha2_384Digest>> {
+        ::openprot_tlv::TlvQuery::ext(self)
             .iter::<Sha2_384Digest>()
             .next()
     }
     #[inline(always)]
     fn digest(&self) -> Option<ImgDescriptorDigestDigest<'a>> {
-        use ::mutask_tlv::TlvQuery;
-        for item in ::mutask_tlv::TlvQuery::ext(self).iter::<::mutask_tlv::TlvAny>() {
+        use ::openprot_tlv::TlvQuery;
+        for item in ::openprot_tlv::TlvQuery::ext(self).iter::<::openprot_tlv::TlvAny>() {
             if let Some(val) = item.cast::<Sha2_256Digest>() {
                 return Some(ImgDescriptorDigestDigest::Sha2256(val));
             }

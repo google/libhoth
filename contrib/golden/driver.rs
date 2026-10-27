@@ -69,7 +69,7 @@ fn main() {
 
         let expected = std::fs::read_to_string(golden_path).unwrap_or_default();
 
-        mutask_golden::assert_eq_golden_impl(&actual, &expected, Path::new(""), golden_path);
+        openprot_golden::assert_eq_golden_impl(&actual, &expected, Path::new(""), golden_path);
     }
 }
 

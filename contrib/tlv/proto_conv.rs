@@ -12,21 +12,21 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-use mutask_proto_reader::FieldType;
-use mutask_proto_reader::ProtoInputError;
-use mutask_proto_reader::ProtoReader;
-use mutask_proto_reader::Record;
-use mutask_proto_reflect::TypeExt;
-use mutask_tlv::TlvFlags;
-use mutask_tlv::TlvHeader;
-use mutask_tlv_proto_meta::DescriptorProtoExt;
-use mutask_tlv_proto_meta::DescriptorProtoTlvExt;
-use mutask_tlv_proto_meta::FieldLayout;
-use mutask_tlv_proto_meta::NameStrExt;
-use mutask_tlv_proto_meta::TlvLayout;
-use mutask_tlv_proto_meta::TlvLayoutError;
-use mutask_tlv_proto_meta::Type;
-use mutask_tlv_proto_meta::find_message_descriptor;
+use openprot_proto_reader::FieldType;
+use openprot_proto_reader::ProtoInputError;
+use openprot_proto_reader::ProtoReader;
+use openprot_proto_reader::Record;
+use openprot_proto_reflect::TypeExt;
+use openprot_tlv::TlvFlags;
+use openprot_tlv::TlvHeader;
+use openprot_tlv_proto_meta::DescriptorProtoExt;
+use openprot_tlv_proto_meta::DescriptorProtoTlvExt;
+use openprot_tlv_proto_meta::FieldLayout;
+use openprot_tlv_proto_meta::NameStrExt;
+use openprot_tlv_proto_meta::TlvLayout;
+use openprot_tlv_proto_meta::TlvLayoutError;
+use openprot_tlv_proto_meta::Type;
+use openprot_tlv_proto_meta::find_message_descriptor;
 use std::fmt;
 use zerocopy::IntoBytes;
 
@@ -197,7 +197,7 @@ pub fn proto_to_tlv_with_info(
     message_name: &str,
     proto_bytes: &[u8],
 ) -> Result<Vec<u32>, ProtoConvError> {
-    let desc_set = mutask_tlv_proto_meta::collect_descriptor_set(info)
+    let desc_set = openprot_tlv_proto_meta::collect_descriptor_set(info)
         .ok_or(ProtoConvError::VarintDecodeError)?;
 
     proto_to_tlv(&desc_set, message_name, proto_bytes)
@@ -532,7 +532,7 @@ fn validate_value_range(
 mod tests {
     use super::*;
 
-    use mutask_tlv::TlvData;
+    use openprot_tlv::TlvData;
     use protobuf::Serialize;
 
     use edge_cases_rust_proto::__unstable::CONTRIB_TLV_TEST_EDGE_CASES_DESCRIPTOR_INFO;
@@ -725,13 +725,13 @@ mod tests {
         assert_eq!(tlv_words.as_bytes(), expected);
 
         // 4. Verify the output by parsing it using the generated zero-copy Rust structures!
-        use mutask_tlv::TlvObject;
+        use openprot_tlv::TlvObject;
         use soc_tlv::*;
 
-        let tlv_data = mutask_tlv::TlvData::overlay(&tlv_words);
+        let tlv_data = openprot_tlv::TlvData::overlay(&tlv_words);
 
         // Verify there is exactly one top-level TLV and it is System
-        let mut top_any_iter = tlv_data.iter::<mutask_tlv::TlvAny>();
+        let mut top_any_iter = tlv_data.iter::<openprot_tlv::TlvAny>();
         let top_item = top_any_iter.next().unwrap();
         assert_eq!(top_item.container.header.tag, System::TAG);
         assert!(
@@ -927,7 +927,7 @@ mod tests {
         let tlv_words = message_to_tlv(&CONTRIB_TLV_TEST_SOC_DESCRIPTOR_INFO, &system)
             .expect("Should cleanly convert inline UTF-8 string without error!");
 
-        let tlv_data = mutask_tlv::TlvData::overlay(&tlv_words);
+        let tlv_data = openprot_tlv::TlvData::overlay(&tlv_words);
         let system_tlv = tlv_data.iter::<System>().next().unwrap();
 
         let mut expected_name = [0u8; 16];
@@ -948,7 +948,7 @@ mod tests {
         let tlv_words = message_to_tlv(&CONTRIB_TLV_TEST_EDGE_CASES_DESCRIPTOR_INFO, &msg)
             .expect("Failed to convert StringExtensionTest with UTF-8 to TLV!");
 
-        let tlv_data = mutask_tlv::TlvData::overlay(&tlv_words);
+        let tlv_data = openprot_tlv::TlvData::overlay(&tlv_words);
         let item = tlv_data
             .iter::<edge_cases_tlv::StringExtensionTest>()
             .next()
@@ -1079,7 +1079,7 @@ mod tests {
         assert_eq!(tlv_words.as_bytes(), expected);
 
         // Verify overlay & accessor round-trip decoding
-        let tlv_data = mutask_tlv::TlvData::overlay(&tlv_words);
+        let tlv_data = openprot_tlv::TlvData::overlay(&tlv_words);
         let item = tlv_data
             .iter::<edge_cases_tlv::RawBytesExtensionTest>()
             .next()
@@ -1114,7 +1114,7 @@ mod tests {
 
         assert_eq!(tlv_words.as_bytes(), expected);
 
-        let tlv_data = mutask_tlv::TlvData::overlay(&tlv_words);
+        let tlv_data = openprot_tlv::TlvData::overlay(&tlv_words);
         let item = tlv_data
             .iter::<soc_tlv::CryptoAccelerator>()
             .next()
@@ -1158,7 +1158,7 @@ mod tests {
                 .expect("Failed to convert ExtensionContainer to TLV!");
 
         // Overlay TlvData and parse top-level container
-        let tlv_data = mutask_tlv::TlvData::overlay(&tlv_words);
+        let tlv_data = openprot_tlv::TlvData::overlay(&tlv_words);
         let container_item = tlv_data
             .iter::<ExtensionContainer>()
             .next()
@@ -1196,8 +1196,8 @@ mod tests {
     fn test_proto_to_tlv_extra_data_duplicate_field() {
         use edge_cases_rust_proto::__unstable::CONTRIB_TLV_TEST_EDGE_CASES_DESCRIPTOR_INFO;
         use edge_cases_tlv::RawBytesExtensionTestExt;
-        use mutask_tlv_proto_meta::collect_descriptor_set;
-        use mutask_tlv_proto_meta::find_message_descriptor;
+        use openprot_tlv_proto_meta::collect_descriptor_set;
+        use openprot_tlv_proto_meta::find_message_descriptor;
 
         let desc_set =
             collect_descriptor_set(&CONTRIB_TLV_TEST_EDGE_CASES_DESCRIPTOR_INFO).unwrap();
@@ -1219,7 +1219,7 @@ mod tests {
             .expect("Failed to encode duplicate wire bytes!");
 
         // Overlay TlvData and parse
-        let tlv_data = mutask_tlv::TlvData::overlay(&tlv_words);
+        let tlv_data = openprot_tlv::TlvData::overlay(&tlv_words);
         let item = tlv_data
             .iter::<edge_cases_tlv::RawBytesExtensionTest>()
             .next()
@@ -1365,7 +1365,7 @@ mod tests {
             .expect("Failed to convert SiblingInlineParent to TLV!");
 
         // Verify we can parse it back successfully
-        let tlv_data = mutask_tlv::TlvData::overlay(&tlv_words);
+        let tlv_data = openprot_tlv::TlvData::overlay(&tlv_words);
         let mut iter = tlv_data.iter::<edge_cases_tlv::SiblingInlineParent>();
         let parent_item = iter.next().expect("Should have one SiblingInlineParent");
         assert!(iter.next().is_none());
@@ -1386,7 +1386,7 @@ mod tests {
         let tlv_words = message_to_tlv(&CONTRIB_TLV_TEST_EDGE_CASES_DESCRIPTOR_INFO, &msg)
             .expect("Failed to convert AllTypesTest to TLV!");
 
-        let tlv_data = mutask_tlv::TlvData::overlay(&tlv_words);
+        let tlv_data = openprot_tlv::TlvData::overlay(&tlv_words);
         let decoded = tlv_data
             .iter::<edge_cases_tlv::AllTypesTest>()
             .next()

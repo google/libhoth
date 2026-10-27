@@ -14,7 +14,7 @@
 
 syntax = "proto3";
 
-package mutask.crypto;
+package openprot.crypto;
 
 import "contrib/tlv/options.proto";
 

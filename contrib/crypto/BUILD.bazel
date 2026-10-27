@@ -19,7 +19,7 @@ rust_library(
     srcs = [
         "sha256_sw.rs",
     ],
-    crate_name = "mutask_sha256_sw",
+    crate_name = "openprot_sha256_sw",
     edition = "2024",
     visibility = ["//visibility:public"],
     deps = [

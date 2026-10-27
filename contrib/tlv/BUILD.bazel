@@ -28,7 +28,7 @@ rust_library(
         "builder.rs",
         "lib.rs",
     ],
-    crate_name = "mutask_tlv",
+    crate_name = "openprot_tlv",
     edition = "2024",
     proc_macro_deps = [
         "//third_party:bitfield_struct",
@@ -42,7 +42,7 @@ rust_library(
 rust_library(
     name = "proto_conv",
     srcs = ["proto_conv.rs"],
-    crate_name = "mutask_tlv_proto_conv",
+    crate_name = "openprot_tlv_proto_conv",
     edition = "2024",
     visibility = ["//visibility:public"],
     deps = [
@@ -60,7 +60,7 @@ rust_library(
     name = "proto_meta",
     srcs = ["proto_meta.rs"],
     compile_data = ["//contrib/tlv/test:bad_proto"],
-    crate_name = "mutask_tlv_proto_meta",
+    crate_name = "openprot_tlv_proto_meta",
     data = ["//contrib/tlv/test:bad_proto"],
     edition = "2024",
     rustc_env = {

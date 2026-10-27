@@ -47,7 +47,7 @@ use crypto_tlv::Sha2_256Digest;
 use crypto_tlv::SlhDsaFingerprintDigest;
 use crypto_tlv::SlhDsaFingerprintExt;
 use crypto_tlv::SlhDsaPublicMaterial;
-use mutask_sha256_sw::Sha256;
+use openprot_sha256_sw::Sha256;
 use zerocopy::IntoBytes;
 
 // =============================================================================
@@ -163,7 +163,7 @@ pub fn constant_time_eq_32(a: &[u8; 32], b: &[u8; 32]) -> bool {
 pub fn verify_key_matches_fingerprint(
     public_key: &PublicKeyKeyMaterial<'_>,
     key_domain: KeyDomain,
-    fingerprint: &mutask_tlv::TlvItem<'_, KeyFingerprint>,
+    fingerprint: &openprot_tlv::TlvItem<'_, KeyFingerprint>,
 ) -> bool {
     if key_domain != fingerprint.data.key_domain {
         return false;
@@ -207,8 +207,8 @@ pub fn verify_key_matches_fingerprint(
 
 /// Convenience helper to verify a parsed `PublicKey` TLV item against a `KeyFingerprint` TLV item.
 pub fn verify_public_key_matches_fingerprint(
-    public_key: &mutask_tlv::TlvItem<'_, PublicKey>,
-    fingerprint: &mutask_tlv::TlvItem<'_, KeyFingerprint>,
+    public_key: &openprot_tlv::TlvItem<'_, PublicKey>,
+    fingerprint: &openprot_tlv::TlvItem<'_, KeyFingerprint>,
 ) -> bool {
     let Some(km) = public_key.key_material() else {
         return false;
@@ -219,7 +219,7 @@ pub fn verify_public_key_matches_fingerprint(
 /// Constant-time helper to check if a 32-byte digest matches a `Sha2_256Digest` TLV item.
 pub fn verify_digest_matches_sha256(
     digest: &[u8; 32],
-    expected: &mutask_tlv::TlvItem<'_, Sha2_256Digest>,
+    expected: &openprot_tlv::TlvItem<'_, Sha2_256Digest>,
 ) -> bool {
     constant_time_eq_32(digest, &expected.data.data)
 }
@@ -237,8 +237,8 @@ mod tests {
     use crypto_tlv::P256Fingerprint;
     use crypto_tlv::Rsa3072Fingerprint;
     use crypto_tlv::SlhDsaFingerprint;
-    use mutask_tlv::TlvBuilder;
-    use mutask_tlv::TlvData;
+    use openprot_tlv::TlvBuilder;
+    use openprot_tlv::TlvData;
 
     #[test]
     fn test_fingerprintable_keys() {

@@ -14,9 +14,9 @@
 
 use descriptor_rust_proto::DescriptorProtoView;
 use descriptor_rust_proto::FieldDescriptorProtoView;
-use mutask_proto_reader::ProtoReader;
-use mutask_proto_reader::Record;
-use mutask_proto_reflect::TypeExt;
+use openprot_proto_reader::ProtoReader;
+use openprot_proto_reader::Record;
+use openprot_proto_reflect::TypeExt;
 use protobuf::Parse;
 use protobuf::Serialize;
 
