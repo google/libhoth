@@ -34,7 +34,7 @@ rust_binary(
     visibility = ["//visibility:public"],
     deps = [
         ":golden",
-        "@crates_mutask//:argh",
+        "//third_party:argh",
     ],
 )
 
