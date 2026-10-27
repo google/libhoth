@@ -26,16 +26,12 @@ message System {
   uint32 total_mem_mib = 3 [(openprot.tlv.offset) = 8];
 
   // Inline fixed-size string buffer (16 bytes)
-  string system_name = 6 [
-    (openprot.tlv.offset) = 12,
-    (openprot.tlv.type) = "[u8; 16]"
-  ];
+  string system_name = 6
+      [(openprot.tlv.offset) = 12, (openprot.tlv.type) = "[u8; 16]"];
 
   // Inline fixed-size byte array (16 bytes)
-  bytes system_uuid = 7 [
-    (openprot.tlv.offset) = 28,
-    (openprot.tlv.type) = "[u32; 4]"
-  ];
+  bytes system_uuid = 7
+      [(openprot.tlv.offset) = 28, (openprot.tlv.type) = "[u32; 4]"];
 
   repeated CpuCore cores = 4;
   SystemBus bus = 5;
@@ -100,27 +96,18 @@ message ExecutionUnit {
   option (openprot.tlv.tlv_fourcc) = "EXEU";
 
   // Pack as 1 byte at offset 0
-  uint32 unit_type = 1 [
-    (openprot.tlv.offset) = 0,
-    (openprot.tlv.type) = "u8"
-  ];
+  uint32 unit_type = 1 [(openprot.tlv.offset) = 0, (openprot.tlv.type) = "u8"];
 
   // Pack as 1 byte at offset 1
-  uint32 pipeline_stages = 2 [
-    (openprot.tlv.offset) = 1,
-    (openprot.tlv.type) = "u8"
-  ];
+  uint32 pipeline_stages = 2
+      [(openprot.tlv.offset) = 1, (openprot.tlv.type) = "u8"];
 
-  // Pack an enum at offset 2. Backing size is resolved automatically from raw_type!
-  ExecutionUnitState state = 3 [
-    (openprot.tlv.offset) = 2
-  ];
+  // Pack an enum at offset 2. Backing size is resolved automatically from
+  // raw_type!
+  ExecutionUnitState state = 3 [(openprot.tlv.offset) = 2];
 
   // Pack as 2 bytes at offset 4
-  uint32 power_mw = 4 [
-    (openprot.tlv.offset) = 4,
-    (openprot.tlv.type) = "u16"
-  ];
+  uint32 power_mw = 4 [(openprot.tlv.offset) = 4, (openprot.tlv.type) = "u16"];
 }
 
 message GpuAccelerator {
@@ -137,10 +124,8 @@ message NpuAccelerator {
 message CryptoAccelerator {
   option (openprot.tlv.tlv_fourcc) = "CRYP";
   uint32 key_size_bits = 1 [(openprot.tlv.offset) = 0];
-  bytes supported_ciphers = 2 [
-    (openprot.tlv.extra_data) = true,
-    (openprot.tlv.type) = "[u8]"
-  ];
+  bytes supported_ciphers = 2
+      [(openprot.tlv.extra_data) = true, (openprot.tlv.type) = "[u8]"];
 }
 
 message Accelerator {

@@ -62,31 +62,28 @@ message SfixedTest {
   option (openprot.tlv.tlv_fourcc) = "SFIX";
 
   sfixed32 sfix = 1 [(openprot.tlv.offset) = 0];
-  sfixed32 sfix_i16 = 2 [
-    (openprot.tlv.offset) = 4,
-    (openprot.tlv.type) = "i16"
-  ];
-  sfixed32 sfix_i8 = 3 [
-    (openprot.tlv.offset) = 6,
-    (openprot.tlv.type) = "i8"
-  ];
+  sfixed32 sfix_i16 = 2
+      [(openprot.tlv.offset) = 4, (openprot.tlv.type) = "i16"];
+  sfixed32 sfix_i8 = 3 [(openprot.tlv.offset) = 6, (openprot.tlv.type) = "i8"];
 }
 
 // Message for testing name resolution collision
 message MessageCollisionContainer {
   option (openprot.tlv.tlv_fourcc) = "COLL";
 
-  // Nested message with the same simple name as the top-level PackedRegister (or similar)
-  // Let's use NestedMsg here as well, since there is no top-level NestedMsg in edge_cases.proto,
-  // wait! If there is no top-level NestedMsg in edge_cases.proto, is there a collision?
-  // Let's check: edge_cases.proto has:
+  // Nested message with the same simple name as the top-level PackedRegister
+  // (or similar) Let's use NestedMsg here as well, since there is no top-level
+  // NestedMsg in edge_cases.proto, wait! If there is no top-level NestedMsg in
+  // edge_cases.proto, is there a collision? Let's check: edge_cases.proto has:
   // - PackedRegister (top-level)
   // - PackedSignedRegister (top-level)
   // - SfixedTest (top-level)
-  // If we name the nested message "PackedRegister" instead of "NestedMsg", then we will have:
+  // If we name the nested message "PackedRegister" instead of "NestedMsg", then
+  // we will have:
   // - top-level: openprot.tlv.test.edge_cases.PackedRegister
-  // - nested: openprot.tlv.test.edge_cases.MessageCollisionContainer.PackedRegister
-  // This is a perfect collision!
+  // - nested:
+  // openprot.tlv.test.edge_cases.MessageCollisionContainer.PackedRegister This
+  // is a perfect collision!
   message PackedRegister {
     option (openprot.tlv.tlv_fourcc) = "NPK_";
     uint32 val = 1 [(openprot.tlv.offset) = 0];
@@ -117,45 +114,68 @@ message AllTypesTest {
   uint32 uint32_u8 = 2 [(openprot.tlv.offset) = 1, (openprot.tlv.type) = "u8"];
   int32 int32_i8 = 3 [(openprot.tlv.offset) = 2, (openprot.tlv.type) = "i8"];
   int64 int64_i8 = 4 [(openprot.tlv.offset) = 3, (openprot.tlv.type) = "i8"];
-  sfixed32 sfixed32_i8 = 5 [(openprot.tlv.offset) = 4, (openprot.tlv.type) = "i8"];
-  fixed32 fixed32_u8 = 6 [(openprot.tlv.offset) = 5, (openprot.tlv.type) = "u8"];
+  sfixed32 sfixed32_i8 = 5
+      [(openprot.tlv.offset) = 4, (openprot.tlv.type) = "i8"];
+  fixed32 fixed32_u8 = 6
+      [(openprot.tlv.offset) = 5, (openprot.tlv.type) = "u8"];
   sint64 sint64_i8 = 7 [(openprot.tlv.offset) = 6, (openprot.tlv.type) = "i8"];
   uint64 uint64_u8 = 8 [(openprot.tlv.offset) = 7, (openprot.tlv.type) = "u8"];
   bool bool_val = 9 [(openprot.tlv.offset) = 8, (openprot.tlv.type) = "u8"];
 
   // --- 16-bit fields (offset 10..22) ---
-  sint32 sint32_i16 = 10 [(openprot.tlv.offset) = 10, (openprot.tlv.type) = "i16"];
-  uint32 uint32_u16 = 11 [(openprot.tlv.offset) = 12, (openprot.tlv.type) = "u16"];
-  int32 int32_i16 = 12 [(openprot.tlv.offset) = 14, (openprot.tlv.type) = "i16"];
-  int64 int64_i16 = 13 [(openprot.tlv.offset) = 16, (openprot.tlv.type) = "i16"];
-  sfixed32 sfixed32_i16 = 14 [(openprot.tlv.offset) = 18, (openprot.tlv.type) = "i16"];
-  fixed32 fixed32_u16 = 15 [(openprot.tlv.offset) = 20, (openprot.tlv.type) = "u16"];
+  sint32 sint32_i16 = 10
+      [(openprot.tlv.offset) = 10, (openprot.tlv.type) = "i16"];
+  uint32 uint32_u16 = 11
+      [(openprot.tlv.offset) = 12, (openprot.tlv.type) = "u16"];
+  int32 int32_i16 = 12
+      [(openprot.tlv.offset) = 14, (openprot.tlv.type) = "i16"];
+  int64 int64_i16 = 13
+      [(openprot.tlv.offset) = 16, (openprot.tlv.type) = "i16"];
+  sfixed32 sfixed32_i16 = 14
+      [(openprot.tlv.offset) = 18, (openprot.tlv.type) = "i16"];
+  fixed32 fixed32_u16 = 15
+      [(openprot.tlv.offset) = 20, (openprot.tlv.type) = "u16"];
 
   // --- 16-bit fields continued (offset 22..26) ---
-  sint64 sint64_i16 = 16 [(openprot.tlv.offset) = 22, (openprot.tlv.type) = "i16"];
-  uint64 uint64_u16 = 17 [(openprot.tlv.offset) = 24, (openprot.tlv.type) = "u16"];
+  sint64 sint64_i16 = 16
+      [(openprot.tlv.offset) = 22, (openprot.tlv.type) = "i16"];
+  uint64 uint64_u16 = 17
+      [(openprot.tlv.offset) = 24, (openprot.tlv.type) = "u16"];
 
   // --- 32-bit fields (offset 28..52) ---
-  sint32 sint32_i32 = 18 [(openprot.tlv.offset) = 28, (openprot.tlv.type) = "i32"];
-  uint32 uint32_u32 = 19 [(openprot.tlv.offset) = 32, (openprot.tlv.type) = "u32"];
-  int32 int32_i32 = 20 [(openprot.tlv.offset) = 36, (openprot.tlv.type) = "i32"];
-  sfixed32 sfixed32_i32 = 21 [(openprot.tlv.offset) = 40, (openprot.tlv.type) = "i32"];
-  fixed32 fixed32_u32 = 22 [(openprot.tlv.offset) = 44, (openprot.tlv.type) = "u32"];
+  sint32 sint32_i32 = 18
+      [(openprot.tlv.offset) = 28, (openprot.tlv.type) = "i32"];
+  uint32 uint32_u32 = 19
+      [(openprot.tlv.offset) = 32, (openprot.tlv.type) = "u32"];
+  int32 int32_i32 = 20
+      [(openprot.tlv.offset) = 36, (openprot.tlv.type) = "i32"];
+  sfixed32 sfixed32_i32 = 21
+      [(openprot.tlv.offset) = 40, (openprot.tlv.type) = "i32"];
+  fixed32 fixed32_u32 = 22
+      [(openprot.tlv.offset) = 44, (openprot.tlv.type) = "u32"];
   PackedSignedRegister packed_reg = 23 [(openprot.tlv.offset) = 48];
 
   // --- 32-bit fields continued / float (offset 52..68) ---
-  float float_val = 24 [(openprot.tlv.offset) = 52, (openprot.tlv.type) = "f32"];
-  sint64 sint64_i32 = 25 [(openprot.tlv.offset) = 56, (openprot.tlv.type) = "i32"];
-  uint64 uint64_u32 = 26 [(openprot.tlv.offset) = 60, (openprot.tlv.type) = "u32"];
-  int64 int64_i32 = 27 [(openprot.tlv.offset) = 64, (openprot.tlv.type) = "i32"];
+  float float_val = 24
+      [(openprot.tlv.offset) = 52, (openprot.tlv.type) = "f32"];
+  sint64 sint64_i32 = 25
+      [(openprot.tlv.offset) = 56, (openprot.tlv.type) = "i32"];
+  uint64 uint64_u32 = 26
+      [(openprot.tlv.offset) = 60, (openprot.tlv.type) = "u32"];
+  int64 int64_i32 = 27
+      [(openprot.tlv.offset) = 64, (openprot.tlv.type) = "i32"];
 
   // --- 64-bit fields (offset 68..92) ---
-  sint64 sint64_i64 = 28 [(openprot.tlv.offset) = 68, (openprot.tlv.type) = "i64"];
-  uint64 uint64_u64 = 29 [(openprot.tlv.offset) = 76, (openprot.tlv.type) = "u64"];
-  int64 int64_i64 = 30 [(openprot.tlv.offset) = 84, (openprot.tlv.type) = "i64"];
+  sint64 sint64_i64 = 28
+      [(openprot.tlv.offset) = 68, (openprot.tlv.type) = "i64"];
+  uint64 uint64_u64 = 29
+      [(openprot.tlv.offset) = 76, (openprot.tlv.type) = "u64"];
+  int64 int64_i64 = 30
+      [(openprot.tlv.offset) = 84, (openprot.tlv.type) = "i64"];
 
   // --- 64-bit double (offset 92..100) ---
-  double double_val = 31 [(openprot.tlv.offset) = 92, (openprot.tlv.type) = "f64"];
+  double double_val = 31
+      [(openprot.tlv.offset) = 92, (openprot.tlv.type) = "f64"];
 }
 
 // Recursive dynamic sub-TLV message structure (binary tree node)
@@ -181,7 +201,8 @@ message CollisionContainer {
   message CollisionTest {
     option (openprot.tlv.tlv_fourcc) = "COLN";
     uint32 val = 1 [(openprot.tlv.offset) = 0];
-    openprot.tlv.test.edge_cases.CollisionTest top_level = 2 [(openprot.tlv.offset) = 4];
+    openprot.tlv.test.edge_cases.CollisionTest top_level = 2
+        [(openprot.tlv.offset) = 4];
   }
 
   CollisionTest nested = 1 [(openprot.tlv.offset) = 0];
@@ -199,18 +220,14 @@ message SiblingInlineParent {
 
 message RawBytesExtensionTest {
   option (openprot.tlv.tlv_fourcc) = "RBXT";
-  bytes payload = 1 [
-    (openprot.tlv.extra_data) = true,
-    (openprot.tlv.type) = "[u8]"
-  ];
+  bytes payload = 1
+      [(openprot.tlv.extra_data) = true, (openprot.tlv.type) = "[u8]"];
 }
 
 message StringExtensionTest {
   option (openprot.tlv.tlv_fourcc) = "SEXT";
-  string text = 1 [
-    (openprot.tlv.extra_data) = true,
-    (openprot.tlv.type) = "[u8]"
-  ];
+  string text = 1
+      [(openprot.tlv.extra_data) = true, (openprot.tlv.type) = "[u8]"];
 }
 
 message ExtensionContainer {

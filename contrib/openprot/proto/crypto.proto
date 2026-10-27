@@ -36,50 +36,32 @@ enum KeyDomain {
 
 message Sha2_256Digest {
   option (openprot.tlv.tlv_fourcc) = "SH22";
-  bytes data = 1 [
-    (openprot.tlv.offset) = 0,
-    (openprot.tlv.type) = "[u8; 32]"
-  ];
+  bytes data = 1 [(openprot.tlv.offset) = 0, (openprot.tlv.type) = "[u8; 32]"];
 }
 
 message Sha2_384Digest {
   option (openprot.tlv.tlv_fourcc) = "SH23";
-  bytes data = 1 [
-    (openprot.tlv.offset) = 0,
-    (openprot.tlv.type) = "[u8; 48]"
-  ];
+  bytes data = 1 [(openprot.tlv.offset) = 0, (openprot.tlv.type) = "[u8; 48]"];
 }
 
 message Sha2_512Digest {
   option (openprot.tlv.tlv_fourcc) = "SH25";
-  bytes data = 1 [
-    (openprot.tlv.offset) = 0,
-    (openprot.tlv.type) = "[u8; 64]"
-  ];
+  bytes data = 1 [(openprot.tlv.offset) = 0, (openprot.tlv.type) = "[u8; 64]"];
 }
 
 message Sha3_256Digest {
   option (openprot.tlv.tlv_fourcc) = "SH32";
-  bytes data = 1 [
-    (openprot.tlv.offset) = 0,
-    (openprot.tlv.type) = "[u8; 32]"
-  ];
+  bytes data = 1 [(openprot.tlv.offset) = 0, (openprot.tlv.type) = "[u8; 32]"];
 }
 
 message Sha3_384Digest {
   option (openprot.tlv.tlv_fourcc) = "SH33";
-  bytes data = 1 [
-    (openprot.tlv.offset) = 0,
-    (openprot.tlv.type) = "[u8; 48]"
-  ];
+  bytes data = 1 [(openprot.tlv.offset) = 0, (openprot.tlv.type) = "[u8; 48]"];
 }
 
 message Sha3_512Digest {
   option (openprot.tlv.tlv_fourcc) = "SH35";
-  bytes data = 1 [
-    (openprot.tlv.offset) = 0,
-    (openprot.tlv.type) = "[u8; 64]"
-  ];
+  bytes data = 1 [(openprot.tlv.offset) = 0, (openprot.tlv.type) = "[u8; 64]"];
 }
 
 // -----------------------------------------------------------------------------
@@ -89,71 +71,45 @@ message Sha3_512Digest {
 message P256PublicMaterial {
   option (openprot.tlv.tlv_fourcc) = "P256";
   // P256 `x` coordinate in little-endian byte order.
-  bytes x = 1 [
-    (openprot.tlv.offset) = 0,
-    (openprot.tlv.type) = "[u32; 8]"
-  ];
+  bytes x = 1 [(openprot.tlv.offset) = 0, (openprot.tlv.type) = "[u32; 8]"];
   // P256 `y` coordinate in little-endian byte order.
-  bytes y = 2 [
-    (openprot.tlv.offset) = 32,
-    (openprot.tlv.type) = "[u32; 8]"
-  ];
+  bytes y = 2 [(openprot.tlv.offset) = 32, (openprot.tlv.type) = "[u32; 8]"];
 }
 
 message SlhDsaPublicMaterial {
   option (openprot.tlv.tlv_fourcc) = "SPX+";
   // SLH-DSA SHA2-128s key material.
-  bytes slhdsa = 1 [
-    (openprot.tlv.offset) = 0,
-    (openprot.tlv.type) = "[u32; 8]"
-  ];
+  bytes slhdsa = 1
+      [(openprot.tlv.offset) = 0, (openprot.tlv.type) = "[u32; 8]"];
 }
 
 message MlDsa44PublicMaterial {
   option (openprot.tlv.tlv_fourcc) = "ML44";
   // ML-DSA-44 key material.
-  bytes mldsa = 1 [
-    (openprot.tlv.offset) = 0,
-    (openprot.tlv.type) = "[u8; 1312]"
-  ];
+  bytes mldsa = 1
+      [(openprot.tlv.offset) = 0, (openprot.tlv.type) = "[u8; 1312]"];
 }
 
 message HybridP256SlhDsaPublicMaterial {
   option (openprot.tlv.tlv_fourcc) = "H+S2";
   // P256 `x` coordinate in little-endian byte order.
-  bytes x = 1 [
-    (openprot.tlv.offset) = 0,
-    (openprot.tlv.type) = "[u32; 8]"
-  ];
+  bytes x = 1 [(openprot.tlv.offset) = 0, (openprot.tlv.type) = "[u32; 8]"];
   // P256 `y` coordinate in little-endian byte order.
-  bytes y = 2 [
-    (openprot.tlv.offset) = 32,
-    (openprot.tlv.type) = "[u32; 8]"
-  ];
+  bytes y = 2 [(openprot.tlv.offset) = 32, (openprot.tlv.type) = "[u32; 8]"];
   // SLH-DSA SHA2-128s key material.
-  bytes slhdsa = 3 [
-    (openprot.tlv.offset) = 64,
-    (openprot.tlv.type) = "[u32; 8]"
-  ];
+  bytes slhdsa = 3
+      [(openprot.tlv.offset) = 64, (openprot.tlv.type) = "[u32; 8]"];
 }
 
 message HybridP256MlDsa44PublicMaterial {
   option (openprot.tlv.tlv_fourcc) = "M4P2";
   // P256 `x` coordinate in little-endian byte order.
-  bytes x = 1 [
-    (openprot.tlv.offset) = 0,
-    (openprot.tlv.type) = "[u32; 8]"
-  ];
+  bytes x = 1 [(openprot.tlv.offset) = 0, (openprot.tlv.type) = "[u32; 8]"];
   // P256 `y` coordinate in little-endian byte order.
-  bytes y = 2 [
-    (openprot.tlv.offset) = 32,
-    (openprot.tlv.type) = "[u32; 8]"
-  ];
+  bytes y = 2 [(openprot.tlv.offset) = 32, (openprot.tlv.type) = "[u32; 8]"];
   // ML-DSA-44 key material.
-  bytes mldsa = 3 [
-    (openprot.tlv.offset) = 64,
-    (openprot.tlv.type) = "[u8; 1312]"
-  ];
+  bytes mldsa = 3
+      [(openprot.tlv.offset) = 64, (openprot.tlv.type) = "[u8; 1312]"];
 }
 
 // The public exponent is not carried in this message: it is fixed at 65537
@@ -162,10 +118,8 @@ message HybridP256MlDsa44PublicMaterial {
 message Rsa2048PublicMaterial {
   option (openprot.tlv.tlv_fourcc) = "RSA2";
   // RSA-2048 public key modulus.
-  bytes modulus = 1 [
-    (openprot.tlv.offset) = 0,
-    (openprot.tlv.type) = "[u8; 256]"
-  ];
+  bytes modulus = 1
+      [(openprot.tlv.offset) = 0, (openprot.tlv.type) = "[u8; 256]"];
 }
 
 // The public exponent is fixed at 65537 (0x10001, F4); see
@@ -173,10 +127,8 @@ message Rsa2048PublicMaterial {
 message Rsa3072PublicMaterial {
   option (openprot.tlv.tlv_fourcc) = "RSA3";
   // RSA-3072 public key modulus.
-  bytes modulus = 1 [
-    (openprot.tlv.offset) = 0,
-    (openprot.tlv.type) = "[u8; 384]"
-  ];
+  bytes modulus = 1
+      [(openprot.tlv.offset) = 0, (openprot.tlv.type) = "[u8; 384]"];
 }
 
 // The public exponent is fixed at 65537 (0x10001, F4); see
@@ -184,10 +136,8 @@ message Rsa3072PublicMaterial {
 message Rsa4096PublicMaterial {
   option (openprot.tlv.tlv_fourcc) = "RSA4";
   // RSA-4096 public key modulus.
-  bytes modulus = 1 [
-    (openprot.tlv.offset) = 0,
-    (openprot.tlv.type) = "[u8; 512]"
-  ];
+  bytes modulus = 1
+      [(openprot.tlv.offset) = 0, (openprot.tlv.type) = "[u8; 512]"];
 }
 
 message PublicKey {
@@ -216,71 +166,45 @@ message PublicKey {
 message P256Signature {
   option (openprot.tlv.tlv_fourcc) = "P256";
   // P256 `r` in little-endian byte order.
-  bytes r = 1 [
-    (openprot.tlv.offset) = 0,
-    (openprot.tlv.type) = "[u32; 8]"
-  ];
+  bytes r = 1 [(openprot.tlv.offset) = 0, (openprot.tlv.type) = "[u32; 8]"];
   // P256 `s` in little-endian byte order.
-  bytes s = 2 [
-    (openprot.tlv.offset) = 32,
-    (openprot.tlv.type) = "[u32; 8]"
-  ];
+  bytes s = 2 [(openprot.tlv.offset) = 32, (openprot.tlv.type) = "[u32; 8]"];
 }
 
 message SlhDsaSignature {
   option (openprot.tlv.tlv_fourcc) = "SPX+";
   // SLH-DSA signature.
-  bytes slhdsa = 1 [
-    (openprot.tlv.offset) = 0,
-    (openprot.tlv.type) = "[u32; 1964]"
-  ];
+  bytes slhdsa = 1
+      [(openprot.tlv.offset) = 0, (openprot.tlv.type) = "[u32; 1964]"];
 }
 
 message MlDsa44Signature {
   option (openprot.tlv.tlv_fourcc) = "ML44";
   // ML-DSA-44 key signature.
-  bytes mldsa = 1 [
-    (openprot.tlv.offset) = 0,
-    (openprot.tlv.type) = "[u8; 2420]"
-  ];
+  bytes mldsa = 1
+      [(openprot.tlv.offset) = 0, (openprot.tlv.type) = "[u8; 2420]"];
 }
 
 message HybridP256SlhDsaSignature {
   option (openprot.tlv.tlv_fourcc) = "H+S2";
   // P256 `r` in little-endian byte order.
-  bytes r = 1 [
-    (openprot.tlv.offset) = 0,
-    (openprot.tlv.type) = "[u32; 8]"
-  ];
+  bytes r = 1 [(openprot.tlv.offset) = 0, (openprot.tlv.type) = "[u32; 8]"];
   // P256 `s` in little-endian byte order.
-  bytes s = 2 [
-    (openprot.tlv.offset) = 32,
-    (openprot.tlv.type) = "[u32; 8]"
-  ];
+  bytes s = 2 [(openprot.tlv.offset) = 32, (openprot.tlv.type) = "[u32; 8]"];
   // SLH-DSA signature.
-  bytes slhdsa = 3 [
-    (openprot.tlv.offset) = 64,
-    (openprot.tlv.type) = "[u32; 1964]"
-  ];
+  bytes slhdsa = 3
+      [(openprot.tlv.offset) = 64, (openprot.tlv.type) = "[u32; 1964]"];
 }
 
 message HybridP256MlDsa44Signature {
   option (openprot.tlv.tlv_fourcc) = "M4P2";
   // P256 `r` in little-endian byte order.
-  bytes r = 1 [
-    (openprot.tlv.offset) = 0,
-    (openprot.tlv.type) = "[u32; 8]"
-  ];
+  bytes r = 1 [(openprot.tlv.offset) = 0, (openprot.tlv.type) = "[u32; 8]"];
   // P256 `s` in little-endian byte order.
-  bytes s = 2 [
-    (openprot.tlv.offset) = 32,
-    (openprot.tlv.type) = "[u32; 8]"
-  ];
+  bytes s = 2 [(openprot.tlv.offset) = 32, (openprot.tlv.type) = "[u32; 8]"];
   // ML-DSA-44 signature.
-  bytes mldsa = 3 [
-    (openprot.tlv.offset) = 64,
-    (openprot.tlv.type) = "[u8; 2420]"
-  ];
+  bytes mldsa = 3
+      [(openprot.tlv.offset) = 64, (openprot.tlv.type) = "[u8; 2420]"];
 }
 
 message SignatureContainer {
@@ -398,10 +322,7 @@ message KeyFingerprint {
 // KMAC256 sealing ladder symmetric MAC.
 message Kmac256Seal {
   option (openprot.tlv.tlv_fourcc) = "KMSL";
-  bytes data = 1 [
-    (openprot.tlv.offset) = 0,
-    (openprot.tlv.type) = "[u32; 8]"
-  ];
+  bytes data = 1 [(openprot.tlv.offset) = 0, (openprot.tlv.type) = "[u32; 8]"];
 }
 
 // Symmetric MAC seal generated by the firmware and stored in internal flash.
