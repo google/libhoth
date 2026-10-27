@@ -18,7 +18,7 @@
 #include <stdint.h>
 #include <stdio.h>
 
-#include "status.h"
+#include "protocol/status.h"
 #include "transports/libhoth_device.h"
 
 #ifdef __cplusplus
