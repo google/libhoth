@@ -25,7 +25,7 @@
 
 #include "payload_info.h"
 
-constexpr char kTestData[] = "protocol/test/test_payload.bin";
+constexpr char kTestData[] = "host/protocol/test/test_payload.bin";
 constexpr char kTestHash[] =
     "50316da1d3b006ff87989aa8bcd48a33ecc4bfe2114ded138ee594f6097d58b3";
 
