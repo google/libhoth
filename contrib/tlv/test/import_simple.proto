@@ -23,7 +23,8 @@ message SimpleMessage {
   option (openprot.tlv.tlv_fourcc) = "SMPL";
 
   uint32 count = 1 [(openprot.tlv.offset) = 0];
-  openprot.tlv.test.imports.base.BaseStatus status = 2 [(openprot.tlv.offset) = 4];
+  openprot.tlv.test.imports.base.BaseStatus status = 2
+      [(openprot.tlv.offset) = 4];
 
   // Nested/extension item referencing BaseRecord from imported base crate
   openprot.tlv.test.imports.base.BaseRecord record = 3;
