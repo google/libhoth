@@ -18,7 +18,7 @@ load("@rules_rust//rust:defs.bzl", "rust_library", "rust_test")
 rust_library(
     name = "reader",
     srcs = ["reader.rs"],
-    crate_name = "mutask_proto_reader",
+    crate_name = "openprot_proto_reader",
     edition = "2024",
     visibility = ["//visibility:public"],
 )
@@ -32,7 +32,7 @@ rust_test(
 rust_library(
     name = "reflect",
     srcs = ["reflect.rs"],
-    crate_name = "mutask_proto_reflect",
+    crate_name = "openprot_proto_reflect",
     edition = "2024",
     visibility = ["//visibility:public"],
     deps = [

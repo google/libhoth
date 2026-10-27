@@ -23,8 +23,8 @@
 #![allow(dead_code)]
 
 use bitfield_struct::bitfield;
-use mutask_tlv::TlvFlags;
-use mutask_tlv::TlvHeader;
+use openprot_tlv::TlvFlags;
+use openprot_tlv::TlvHeader;
 use zerocopy::{FromBytes, Immutable, IntoBytes, KnownLayout};
 
 #[derive(
@@ -63,20 +63,20 @@ impl ::core::default::Default for ChipId {
         ::zerocopy::FromZeros::new_zeroed()
     }
 }
-impl ::mutask_tlv::TlvObject for ChipId {
+impl ::openprot_tlv::TlvObject for ChipId {
     type Extension = [u8];
     const TAG: u32 = u32::from_le_bytes(*b"C_ID");
-    fn make_ext<'a>(header: &::mutask_tlv::TlvHeader, extra: &'a [u32]) -> &'a Self::Extension {
-        ::mutask_tlv::unpad(header, extra)
+    fn make_ext<'a>(header: &::openprot_tlv::TlvHeader, extra: &'a [u32]) -> &'a Self::Extension {
+        ::openprot_tlv::unpad(header, extra)
     }
 }
 pub trait ChipIdExt<'a> {
     fn chip_id(&self) -> &'a [u8];
 }
-impl<'a> ChipIdExt<'a> for ::mutask_tlv::TlvItem<'a, ChipId> {
+impl<'a> ChipIdExt<'a> for ::openprot_tlv::TlvItem<'a, ChipId> {
     #[inline(always)]
     fn chip_id(&self) -> &'a [u8] {
-        use ::mutask_tlv::TlvQuery;
+        use ::openprot_tlv::TlvQuery;
         self.ext()
     }
 }

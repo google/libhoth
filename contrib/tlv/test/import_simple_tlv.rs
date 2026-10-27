@@ -24,8 +24,8 @@
 
 use bitfield_struct::bitfield;
 pub use import_base_tlv::*;
-use mutask_tlv::TlvFlags;
-use mutask_tlv::TlvHeader;
+use openprot_tlv::TlvFlags;
+use openprot_tlv::TlvHeader;
 use zerocopy::{FromBytes, Immutable, IntoBytes, KnownLayout};
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, FromBytes, IntoBytes, Immutable, KnownLayout)]
@@ -46,20 +46,20 @@ impl ::core::default::Default for SimpleMessage {
         ::zerocopy::FromZeros::new_zeroed()
     }
 }
-impl ::mutask_tlv::TlvObject for SimpleMessage {
-    type Extension = ::mutask_tlv::TlvData;
+impl ::openprot_tlv::TlvObject for SimpleMessage {
+    type Extension = ::openprot_tlv::TlvData;
     const TAG: u32 = u32::from_le_bytes(*b"SMPL");
-    fn make_ext<'a>(_header: &::mutask_tlv::TlvHeader, extra: &'a [u32]) -> &'a Self::Extension {
-        ::mutask_tlv::TlvData::overlay(extra)
+    fn make_ext<'a>(_header: &::openprot_tlv::TlvHeader, extra: &'a [u32]) -> &'a Self::Extension {
+        ::openprot_tlv::TlvData::overlay(extra)
     }
 }
 pub trait SimpleMessageExt<'a> {
-    fn record(&self) -> Option<::mutask_tlv::TlvItem<'a, BaseRecord>>;
+    fn record(&self) -> Option<::openprot_tlv::TlvItem<'a, BaseRecord>>;
 }
-impl<'a> SimpleMessageExt<'a> for ::mutask_tlv::TlvItem<'a, SimpleMessage> {
+impl<'a> SimpleMessageExt<'a> for ::openprot_tlv::TlvItem<'a, SimpleMessage> {
     #[inline(always)]
-    fn record(&self) -> Option<::mutask_tlv::TlvItem<'a, BaseRecord>> {
-        ::mutask_tlv::TlvQuery::ext(self)
+    fn record(&self) -> Option<::openprot_tlv::TlvItem<'a, BaseRecord>> {
+        ::openprot_tlv::TlvQuery::ext(self)
             .iter::<BaseRecord>()
             .next()
     }

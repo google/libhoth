@@ -14,7 +14,7 @@
 
 syntax = "proto3";
 
-package mutask.key_rotation;
+package openprot.key_rotation;
 
 import "contrib/tlv/options.proto";
 import "contrib/openprot/proto/crypto.proto";
@@ -25,7 +25,7 @@ message SignedDescriptor {
   option (openprot.tlv.tlv_fourcc) = "KRSD";
 
   Descriptor descriptor = 1;
-  repeated mutask.crypto.SignatureContainer signature = 2;
+  repeated openprot.crypto.SignatureContainer signature = 2;
 }
 
 // A sealed key rotation record descriptor container (embedded storage).
@@ -33,7 +33,7 @@ message SealedDescriptor {
   option (openprot.tlv.tlv_fourcc) = "KRSL";
 
   Descriptor descriptor = 1;
-  mutask.crypto.KRSeal seal = 2;
+  openprot.crypto.KRSeal seal = 2;
 }
 
 message LegacyImageFamily {
@@ -46,13 +46,13 @@ message Descriptor {
   option (openprot.tlv.tlv_fourcc) = "KROT";
 
   uint32 version = 1 [(openprot.tlv.offset) = 0];
-  mutask.identity.ImageVendor image_vendor = 2 [(openprot.tlv.offset) = 4];
-  mutask.identity.ImageFamily image_family = 3 [(openprot.tlv.offset) = 12];
+  openprot.identity.ImageVendor image_vendor = 2 [(openprot.tlv.offset) = 4];
+  openprot.identity.ImageFamily image_family = 3 [(openprot.tlv.offset) = 12];
 
   optional LegacyImageFamily legacy_image_family = 4;
 
   // TLV extensions.
-  repeated mutask.crypto.KeyFingerprint fingerprint = 5;
+  repeated openprot.crypto.KeyFingerprint fingerprint = 5;
   repeated ImgDescriptorDigest img_descriptor_digest = 6;
 }
 
@@ -63,7 +63,7 @@ message ImgDescriptorDigest {
 
   // Digest.
   oneof digest {
-    mutask.crypto.Sha2_256Digest sha2_256 = 1;
-    mutask.crypto.Sha2_384Digest sha2_384 = 2;
+    openprot.crypto.Sha2_256Digest sha2_256 = 1;
+    openprot.crypto.Sha2_384Digest sha2_384 = 2;
   }
 }

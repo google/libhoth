@@ -14,7 +14,7 @@
 
 syntax = "proto3";
 
-package mutask.chipid;
+package openprot.chipid;
 
 import "contrib/tlv/options.proto";
 
