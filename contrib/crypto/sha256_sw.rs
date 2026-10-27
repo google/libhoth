@@ -16,8 +16,6 @@
 
 #![no_std]
 
-use mutask_subtle::as_mut_bytes;
-
 static K: [u32; 64] = [
     0x428a2f98, 0x71374491, 0xb5c0fbcf, 0xe9b5dba5, 0x3956c25b, 0x59f111f1, 0x923f82a4, 0xab1c5ed5,
     0xd807aa98, 0x12835b01, 0x243185be, 0x550c7dc3, 0x72be5d74, 0x80deb1fe, 0x9bdc06a7, 0xc19bf174,
@@ -48,14 +46,16 @@ impl Sha256 {
             count: 0,
         }
     }
-    pub const fn update(&mut self, data: &[u8]) {
+    pub fn update(&mut self, data: &[u8]) {
         let mut i = (self.count as usize) % BLOCK_SIZE_BYTES;
 
         self.count += data.len() as u64;
 
         let mut src_index = 0;
         while src_index < data.len() {
-            as_mut_bytes(&mut self.block)[i] = data[src_index];
+            let block_bytes: &mut [u8; BLOCK_SIZE_BYTES] =
+                zerocopy::transmute_mut!(&mut self.block);
+            block_bytes[i] = data[src_index];
             i += 1;
             src_index += 1;
             if i == 64 {
@@ -68,7 +68,7 @@ impl Sha256 {
     /// Finalize the digest. Returns the little-endian form of the digest as a word array.
     /// For example, the digest `e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855`
     /// becomes `[0x7852b855, 0xa495991b, 0x649b934c, 0x27ae41e4, 0x996fb924, 0x9afbf4c8, 0x98fc1c14, 0xe3b0c442]`
-    pub const fn finalize_words_le(mut self) -> [u32; 8] {
+    pub fn finalize_words_le(mut self) -> [u32; 8] {
         self.finalize_block();
         let mut result = [0_u32; 8];
         let mut t = 0;
@@ -80,7 +80,7 @@ impl Sha256 {
     }
 
     /// Finalize the digest. Returns the result in the commonly-used big-endian order.
-    pub const fn finalize(mut self) -> [u8; 32] {
+    pub fn finalize(mut self) -> [u8; 32] {
         self.finalize_block();
         let mut result = [0_u32; 8];
         let mut t = 0;
@@ -91,7 +91,7 @@ impl Sha256 {
         zerocopy::transmute!(result)
     }
 
-    const fn finalize_block(&mut self) {
+    fn finalize_block(&mut self) {
         let bit_count: u64 = self.count * 8;
 
         // Write byte indicating end of message
@@ -109,10 +109,10 @@ impl Sha256 {
         self.block[15] = (bit_count as u32).to_be();
         self.transform();
     }
-    const fn pad_remaining_bytes_in_block(&mut self) {
+    fn pad_remaining_bytes_in_block(&mut self) {
         let bytes_in_block = (self.count as usize) % BLOCK_SIZE_BYTES;
         let mut t = bytes_in_block;
-        let block_bytes = as_mut_bytes(&mut self.block);
+        let block_bytes: &mut [u8; BLOCK_SIZE_BYTES] = zerocopy::transmute_mut!(&mut self.block);
         while t < BLOCK_SIZE_BYTES {
             block_bytes[t] = 0;
             t += 1;
@@ -120,7 +120,7 @@ impl Sha256 {
         self.count += (BLOCK_SIZE_BYTES - bytes_in_block) as u64;
     }
 
-    const fn transform(&mut self) {
+    fn transform(&mut self) {
         let ror = u32::rotate_right;
         const fn shr(a: u32, b: u32) -> u32 {
             a >> b
@@ -189,7 +189,7 @@ impl Default for Sha256 {
     }
 }
 
-pub const fn sha256(data: &[u8]) -> [u8; 32] {
+pub fn sha256(data: &[u8]) -> [u8; 32] {
     let mut sha = Sha256::new();
     sha.update(data);
     sha.finalize()
