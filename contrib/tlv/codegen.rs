@@ -12,19 +12,19 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-use mutask_proto_reflect::TypeExt;
-use mutask_tlv_proto_meta::BackingType;
-use mutask_tlv_proto_meta::DescriptorProtoTlvExt;
-use mutask_tlv_proto_meta::EnumDescriptorProtoTlvExt;
-use mutask_tlv_proto_meta::FieldDescriptorProtoTlvExt;
-use mutask_tlv_proto_meta::FieldLayout;
-use mutask_tlv_proto_meta::NameStrExt;
-use mutask_tlv_proto_meta::PackedPrimitiveType;
-use mutask_tlv_proto_meta::PackedType;
-use mutask_tlv_proto_meta::TlvLayout;
-use mutask_tlv_proto_meta::find_enum_descriptor;
-use mutask_tlv_proto_meta::find_message_descriptor;
-use mutask_tlv_proto_meta::get_rust_struct_name;
+use openprot_proto_reflect::TypeExt;
+use openprot_tlv_proto_meta::BackingType;
+use openprot_tlv_proto_meta::DescriptorProtoTlvExt;
+use openprot_tlv_proto_meta::EnumDescriptorProtoTlvExt;
+use openprot_tlv_proto_meta::FieldDescriptorProtoTlvExt;
+use openprot_tlv_proto_meta::FieldLayout;
+use openprot_tlv_proto_meta::NameStrExt;
+use openprot_tlv_proto_meta::PackedPrimitiveType;
+use openprot_tlv_proto_meta::PackedType;
+use openprot_tlv_proto_meta::TlvLayout;
+use openprot_tlv_proto_meta::find_enum_descriptor;
+use openprot_tlv_proto_meta::find_message_descriptor;
+use openprot_tlv_proto_meta::get_rust_struct_name;
 use proc_macro2::Ident;
 use proc_macro2::Literal;
 use proc_macro2::Span;
@@ -155,8 +155,8 @@ fn main() -> Result<()> {
     out.push_str("#![allow(unused_imports)]\n");
     out.push_str("#![allow(dead_code)]\n\n");
     out.push_str("use bitfield_struct::bitfield;\n");
-    out.push_str("use mutask_tlv::TlvFlags;\n");
-    out.push_str("use mutask_tlv::TlvHeader;\n");
+    out.push_str("use openprot_tlv::TlvFlags;\n");
+    out.push_str("use openprot_tlv::TlvHeader;\n");
     out.push_str("use zerocopy::{FromBytes, Immutable, IntoBytes, KnownLayout};\n");
     for crate_name in &crates_to_import {
         out.push_str(&format!("pub use {}::*;\n", crate_name));
@@ -569,15 +569,15 @@ fn generate_standard_tlv(
         .any(|f| matches!(f, FieldLayout::Tlv { .. }));
 
     let ext_type = if has_dynamic_tlvs {
-        quote::quote! { ::mutask_tlv::TlvData }
+        quote::quote! { ::openprot_tlv::TlvData }
     } else {
         quote::quote! { [u8] }
     };
 
     let make_ext_body = if has_dynamic_tlvs {
-        quote::quote! { ::mutask_tlv::TlvData::overlay(extra) }
+        quote::quote! { ::openprot_tlv::TlvData::overlay(extra) }
     } else {
-        quote::quote! { ::mutask_tlv::unpad(header, extra) }
+        quote::quote! { ::openprot_tlv::unpad(header, extra) }
     };
 
     let header_arg = if has_dynamic_tlvs {
@@ -603,7 +603,7 @@ fn generate_standard_tlv(
                 #(#signatures)*
             }
 
-            impl<'a> #trait_ident<'a> for ::mutask_tlv::TlvItem<'a, #msg_ident> {
+            impl<'a> #trait_ident<'a> for ::openprot_tlv::TlvItem<'a, #msg_ident> {
                 #(#accessors)*
             }
         }
@@ -635,10 +635,10 @@ fn generate_standard_tlv(
             }
         }
 
-        impl ::mutask_tlv::TlvObject for #msg_ident {
+        impl ::openprot_tlv::TlvObject for #msg_ident {
             type Extension = #ext_type;
             const TAG: u32 = u32::from_le_bytes(*#fourcc_lit);
-            fn make_ext<'a>(#header_arg: &::mutask_tlv::TlvHeader, extra: &'a [u32]) -> &'a Self::Extension {
+            fn make_ext<'a>(#header_arg: &::openprot_tlv::TlvHeader, extra: &'a [u32]) -> &'a Self::Extension {
                 #make_ext_body
             }
         }
@@ -674,22 +674,22 @@ fn generate_sub_tlv_accessors(
 
                     if is_repeated {
                         signatures.push(quote::quote! {
-                            fn #field_ident(&self) -> ::mutask_tlv::TlvIterator<'a, #child_ident>;
+                            fn #field_ident(&self) -> ::openprot_tlv::TlvIterator<'a, #child_ident>;
                         });
                         accessors.push(quote::quote! {
                             #[inline(always)]
-                            fn #field_ident(&self) -> ::mutask_tlv::TlvIterator<'a, #child_ident> {
-                                ::mutask_tlv::TlvQuery::ext(self).iter::<#child_ident>()
+                            fn #field_ident(&self) -> ::openprot_tlv::TlvIterator<'a, #child_ident> {
+                                ::openprot_tlv::TlvQuery::ext(self).iter::<#child_ident>()
                             }
                         });
                     } else {
                         signatures.push(quote::quote! {
-                            fn #field_ident(&self) -> Option<::mutask_tlv::TlvItem<'a, #child_ident>>;
+                            fn #field_ident(&self) -> Option<::openprot_tlv::TlvItem<'a, #child_ident>>;
                         });
                         accessors.push(quote::quote! {
                             #[inline(always)]
-                            fn #field_ident(&self) -> Option<::mutask_tlv::TlvItem<'a, #child_ident>> {
-                                ::mutask_tlv::TlvQuery::ext(self).iter::<#child_ident>().next()
+                            fn #field_ident(&self) -> Option<::openprot_tlv::TlvItem<'a, #child_ident>> {
+                                ::openprot_tlv::TlvQuery::ext(self).iter::<#child_ident>().next()
                             }
                         });
                     }
@@ -704,7 +704,7 @@ fn generate_sub_tlv_accessors(
                         accessors.push(quote::quote! {
                             #[inline(always)]
                             fn #field_ident(&self) -> &'a ::bstr::BStr {
-                                use ::mutask_tlv::TlvQuery;
+                                use ::openprot_tlv::TlvQuery;
                                 ::bstr::BStr::new(self.ext())
                             }
                         });
@@ -715,7 +715,7 @@ fn generate_sub_tlv_accessors(
                         accessors.push(quote::quote! {
                             #[inline(always)]
                             fn #field_ident(&self) -> &'a [u8] {
-                                use ::mutask_tlv::TlvQuery;
+                                use ::openprot_tlv::TlvQuery;
                                 self.ext()
                             }
                         });
@@ -776,14 +776,14 @@ fn generate_plain_struct(
 fn to_aligned_rust_type(pt: &PackedType) -> String {
     match pt {
         PackedType::Primitive(prim) => match prim {
-            PackedPrimitiveType::U64 => "::mutask_aligned::U64Align4".to_string(),
+            PackedPrimitiveType::U64 => "::openprot_aligned::U64Align4".to_string(),
             PackedPrimitiveType::I64 => "::zerocopy::byteorder::native_endian::I64".to_string(),
             PackedPrimitiveType::F64 => "::zerocopy::byteorder::native_endian::F64".to_string(),
             _ => prim.to_string(),
         },
         PackedType::Array { elem, len } => {
             let elem_str = match elem {
-                PackedPrimitiveType::U64 => "::mutask_aligned::U64Align4".to_string(),
+                PackedPrimitiveType::U64 => "::openprot_aligned::U64Align4".to_string(),
                 PackedPrimitiveType::I64 => "::zerocopy::byteorder::native_endian::I64".to_string(),
                 PackedPrimitiveType::F64 => "::zerocopy::byteorder::native_endian::F64".to_string(),
                 _ => elem.to_string(),
@@ -951,7 +951,7 @@ fn generate_oneofs(
             let child_ident = get_ident(&child_struct_name);
 
             variants.push(quote::quote! {
-                #variant_ident(::mutask_tlv::TlvItem<'a, #child_ident>),
+                #variant_ident(::openprot_tlv::TlvItem<'a, #child_ident>),
             });
 
             checks.push(quote::quote! {
@@ -975,8 +975,8 @@ fn generate_oneofs(
         accessors.push(quote::quote! {
             #[inline(always)]
             fn #accessor_ident(&self) -> Option<#enum_ident<'a>> {
-                use ::mutask_tlv::TlvQuery;
-                for item in ::mutask_tlv::TlvQuery::ext(self).iter::<::mutask_tlv::TlvAny>() {
+                use ::openprot_tlv::TlvQuery;
+                for item in ::openprot_tlv::TlvQuery::ext(self).iter::<::openprot_tlv::TlvAny>() {
                     #(#checks)*
                 }
                 None

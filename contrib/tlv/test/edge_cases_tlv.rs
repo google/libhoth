@@ -23,8 +23,8 @@
 #![allow(dead_code)]
 
 use bitfield_struct::bitfield;
-use mutask_tlv::TlvFlags;
-use mutask_tlv::TlvHeader;
+use openprot_tlv::TlvFlags;
+use openprot_tlv::TlvHeader;
 use zerocopy::{FromBytes, Immutable, IntoBytes, KnownLayout};
 
 #[bitfield(u32)]
@@ -80,11 +80,11 @@ impl ::core::default::Default for RegisterContainer {
         ::zerocopy::FromZeros::new_zeroed()
     }
 }
-impl ::mutask_tlv::TlvObject for RegisterContainer {
+impl ::openprot_tlv::TlvObject for RegisterContainer {
     type Extension = [u8];
     const TAG: u32 = u32::from_le_bytes(*b"CONT");
-    fn make_ext<'a>(header: &::mutask_tlv::TlvHeader, extra: &'a [u32]) -> &'a Self::Extension {
-        ::mutask_tlv::unpad(header, extra)
+    fn make_ext<'a>(header: &::openprot_tlv::TlvHeader, extra: &'a [u32]) -> &'a Self::Extension {
+        ::openprot_tlv::unpad(header, extra)
     }
 }
 
@@ -123,11 +123,11 @@ impl ::core::default::Default for SfixedTest {
         ::zerocopy::FromZeros::new_zeroed()
     }
 }
-impl ::mutask_tlv::TlvObject for SfixedTest {
+impl ::openprot_tlv::TlvObject for SfixedTest {
     type Extension = [u8];
     const TAG: u32 = u32::from_le_bytes(*b"SFIX");
-    fn make_ext<'a>(header: &::mutask_tlv::TlvHeader, extra: &'a [u32]) -> &'a Self::Extension {
-        ::mutask_tlv::unpad(header, extra)
+    fn make_ext<'a>(header: &::openprot_tlv::TlvHeader, extra: &'a [u32]) -> &'a Self::Extension {
+        ::openprot_tlv::unpad(header, extra)
     }
 }
 
@@ -146,11 +146,11 @@ impl ::core::default::Default for MessageCollisionContainer {
         ::zerocopy::FromZeros::new_zeroed()
     }
 }
-impl ::mutask_tlv::TlvObject for MessageCollisionContainer {
+impl ::openprot_tlv::TlvObject for MessageCollisionContainer {
     type Extension = [u8];
     const TAG: u32 = u32::from_le_bytes(*b"COLL");
-    fn make_ext<'a>(header: &::mutask_tlv::TlvHeader, extra: &'a [u32]) -> &'a Self::Extension {
-        ::mutask_tlv::unpad(header, extra)
+    fn make_ext<'a>(header: &::openprot_tlv::TlvHeader, extra: &'a [u32]) -> &'a Self::Extension {
+        ::openprot_tlv::unpad(header, extra)
     }
 }
 
@@ -169,11 +169,11 @@ impl ::core::default::Default for MessageCollisionContainer_PackedRegister {
         ::zerocopy::FromZeros::new_zeroed()
     }
 }
-impl ::mutask_tlv::TlvObject for MessageCollisionContainer_PackedRegister {
+impl ::openprot_tlv::TlvObject for MessageCollisionContainer_PackedRegister {
     type Extension = [u8];
     const TAG: u32 = u32::from_le_bytes(*b"NPK_");
-    fn make_ext<'a>(header: &::mutask_tlv::TlvHeader, extra: &'a [u32]) -> &'a Self::Extension {
-        ::mutask_tlv::unpad(header, extra)
+    fn make_ext<'a>(header: &::openprot_tlv::TlvHeader, extra: &'a [u32]) -> &'a Self::Extension {
+        ::openprot_tlv::unpad(header, extra)
     }
 }
 
@@ -195,11 +195,11 @@ impl ::core::default::Default for FloatTest {
         ::zerocopy::FromZeros::new_zeroed()
     }
 }
-impl ::mutask_tlv::TlvObject for FloatTest {
+impl ::openprot_tlv::TlvObject for FloatTest {
     type Extension = [u8];
     const TAG: u32 = u32::from_le_bytes(*b"FLOT");
-    fn make_ext<'a>(header: &::mutask_tlv::TlvHeader, extra: &'a [u32]) -> &'a Self::Extension {
-        ::mutask_tlv::unpad(header, extra)
+    fn make_ext<'a>(header: &::openprot_tlv::TlvHeader, extra: &'a [u32]) -> &'a Self::Extension {
+        ::openprot_tlv::unpad(header, extra)
     }
 }
 
@@ -207,7 +207,7 @@ impl ::mutask_tlv::TlvObject for FloatTest {
 #[repr(C)]
 pub struct U64AlignmentTest {
     pub val32: u32,
-    pub val64: ::mutask_aligned::U64Align4,
+    pub val64: ::openprot_aligned::U64Align4,
 }
 const _: () = {
     assert!(::core::mem::offset_of!(U64AlignmentTest, val32) == 0usize);
@@ -220,11 +220,11 @@ impl ::core::default::Default for U64AlignmentTest {
         ::zerocopy::FromZeros::new_zeroed()
     }
 }
-impl ::mutask_tlv::TlvObject for U64AlignmentTest {
+impl ::openprot_tlv::TlvObject for U64AlignmentTest {
     type Extension = [u8];
     const TAG: u32 = u32::from_le_bytes(*b"ALGN");
-    fn make_ext<'a>(header: &::mutask_tlv::TlvHeader, extra: &'a [u32]) -> &'a Self::Extension {
-        ::mutask_tlv::unpad(header, extra)
+    fn make_ext<'a>(header: &::openprot_tlv::TlvHeader, extra: &'a [u32]) -> &'a Self::Extension {
+        ::openprot_tlv::unpad(header, extra)
     }
 }
 
@@ -261,7 +261,7 @@ pub struct AllTypesTest {
     pub uint64_u32: u32,
     pub int64_i32: i32,
     pub sint64_i64: ::zerocopy::byteorder::native_endian::I64,
-    pub uint64_u64: ::mutask_aligned::U64Align4,
+    pub uint64_u64: ::openprot_aligned::U64Align4,
     pub int64_i64: ::zerocopy::byteorder::native_endian::I64,
     pub double_val: ::zerocopy::byteorder::native_endian::F64,
 }
@@ -305,11 +305,11 @@ impl ::core::default::Default for AllTypesTest {
         ::zerocopy::FromZeros::new_zeroed()
     }
 }
-impl ::mutask_tlv::TlvObject for AllTypesTest {
+impl ::openprot_tlv::TlvObject for AllTypesTest {
     type Extension = [u8];
     const TAG: u32 = u32::from_le_bytes(*b"ALTS");
-    fn make_ext<'a>(header: &::mutask_tlv::TlvHeader, extra: &'a [u32]) -> &'a Self::Extension {
-        ::mutask_tlv::unpad(header, extra)
+    fn make_ext<'a>(header: &::openprot_tlv::TlvHeader, extra: &'a [u32]) -> &'a Self::Extension {
+        ::openprot_tlv::unpad(header, extra)
     }
 }
 
@@ -328,20 +328,20 @@ impl ::core::default::Default for Node {
         ::zerocopy::FromZeros::new_zeroed()
     }
 }
-impl ::mutask_tlv::TlvObject for Node {
-    type Extension = ::mutask_tlv::TlvData;
+impl ::openprot_tlv::TlvObject for Node {
+    type Extension = ::openprot_tlv::TlvData;
     const TAG: u32 = u32::from_le_bytes(*b"NODE");
-    fn make_ext<'a>(_header: &::mutask_tlv::TlvHeader, extra: &'a [u32]) -> &'a Self::Extension {
-        ::mutask_tlv::TlvData::overlay(extra)
+    fn make_ext<'a>(_header: &::openprot_tlv::TlvHeader, extra: &'a [u32]) -> &'a Self::Extension {
+        ::openprot_tlv::TlvData::overlay(extra)
     }
 }
 pub trait NodeExt<'a> {
-    fn children(&self) -> ::mutask_tlv::TlvIterator<'a, Node>;
+    fn children(&self) -> ::openprot_tlv::TlvIterator<'a, Node>;
 }
-impl<'a> NodeExt<'a> for ::mutask_tlv::TlvItem<'a, Node> {
+impl<'a> NodeExt<'a> for ::openprot_tlv::TlvItem<'a, Node> {
     #[inline(always)]
-    fn children(&self) -> ::mutask_tlv::TlvIterator<'a, Node> {
-        ::mutask_tlv::TlvQuery::ext(self).iter::<Node>()
+    fn children(&self) -> ::openprot_tlv::TlvIterator<'a, Node> {
+        ::openprot_tlv::TlvQuery::ext(self).iter::<Node>()
     }
 }
 
@@ -360,11 +360,11 @@ impl ::core::default::Default for CollisionTest {
         ::zerocopy::FromZeros::new_zeroed()
     }
 }
-impl ::mutask_tlv::TlvObject for CollisionTest {
+impl ::openprot_tlv::TlvObject for CollisionTest {
     type Extension = [u8];
     const TAG: u32 = u32::from_le_bytes(*b"COLT");
-    fn make_ext<'a>(header: &::mutask_tlv::TlvHeader, extra: &'a [u32]) -> &'a Self::Extension {
-        ::mutask_tlv::unpad(header, extra)
+    fn make_ext<'a>(header: &::openprot_tlv::TlvHeader, extra: &'a [u32]) -> &'a Self::Extension {
+        ::openprot_tlv::unpad(header, extra)
     }
 }
 
@@ -383,11 +383,11 @@ impl ::core::default::Default for CollisionContainer {
         ::zerocopy::FromZeros::new_zeroed()
     }
 }
-impl ::mutask_tlv::TlvObject for CollisionContainer {
+impl ::openprot_tlv::TlvObject for CollisionContainer {
     type Extension = [u8];
     const TAG: u32 = u32::from_le_bytes(*b"COLC");
-    fn make_ext<'a>(header: &::mutask_tlv::TlvHeader, extra: &'a [u32]) -> &'a Self::Extension {
-        ::mutask_tlv::unpad(header, extra)
+    fn make_ext<'a>(header: &::openprot_tlv::TlvHeader, extra: &'a [u32]) -> &'a Self::Extension {
+        ::openprot_tlv::unpad(header, extra)
     }
 }
 
@@ -408,11 +408,11 @@ impl ::core::default::Default for CollisionContainer_CollisionTest {
         ::zerocopy::FromZeros::new_zeroed()
     }
 }
-impl ::mutask_tlv::TlvObject for CollisionContainer_CollisionTest {
+impl ::openprot_tlv::TlvObject for CollisionContainer_CollisionTest {
     type Extension = [u8];
     const TAG: u32 = u32::from_le_bytes(*b"COLN");
-    fn make_ext<'a>(header: &::mutask_tlv::TlvHeader, extra: &'a [u32]) -> &'a Self::Extension {
-        ::mutask_tlv::unpad(header, extra)
+    fn make_ext<'a>(header: &::openprot_tlv::TlvHeader, extra: &'a [u32]) -> &'a Self::Extension {
+        ::openprot_tlv::unpad(header, extra)
     }
 }
 
@@ -449,11 +449,11 @@ impl ::core::default::Default for SiblingInlineParent {
         ::zerocopy::FromZeros::new_zeroed()
     }
 }
-impl ::mutask_tlv::TlvObject for SiblingInlineParent {
+impl ::openprot_tlv::TlvObject for SiblingInlineParent {
     type Extension = [u8];
     const TAG: u32 = u32::from_le_bytes(*b"SIBR");
-    fn make_ext<'a>(header: &::mutask_tlv::TlvHeader, extra: &'a [u32]) -> &'a Self::Extension {
-        ::mutask_tlv::unpad(header, extra)
+    fn make_ext<'a>(header: &::openprot_tlv::TlvHeader, extra: &'a [u32]) -> &'a Self::Extension {
+        ::openprot_tlv::unpad(header, extra)
     }
 }
 
@@ -469,20 +469,20 @@ impl ::core::default::Default for RawBytesExtensionTest {
         ::zerocopy::FromZeros::new_zeroed()
     }
 }
-impl ::mutask_tlv::TlvObject for RawBytesExtensionTest {
+impl ::openprot_tlv::TlvObject for RawBytesExtensionTest {
     type Extension = [u8];
     const TAG: u32 = u32::from_le_bytes(*b"RBXT");
-    fn make_ext<'a>(header: &::mutask_tlv::TlvHeader, extra: &'a [u32]) -> &'a Self::Extension {
-        ::mutask_tlv::unpad(header, extra)
+    fn make_ext<'a>(header: &::openprot_tlv::TlvHeader, extra: &'a [u32]) -> &'a Self::Extension {
+        ::openprot_tlv::unpad(header, extra)
     }
 }
 pub trait RawBytesExtensionTestExt<'a> {
     fn payload(&self) -> &'a [u8];
 }
-impl<'a> RawBytesExtensionTestExt<'a> for ::mutask_tlv::TlvItem<'a, RawBytesExtensionTest> {
+impl<'a> RawBytesExtensionTestExt<'a> for ::openprot_tlv::TlvItem<'a, RawBytesExtensionTest> {
     #[inline(always)]
     fn payload(&self) -> &'a [u8] {
-        use ::mutask_tlv::TlvQuery;
+        use ::openprot_tlv::TlvQuery;
         self.ext()
     }
 }
@@ -499,20 +499,20 @@ impl ::core::default::Default for StringExtensionTest {
         ::zerocopy::FromZeros::new_zeroed()
     }
 }
-impl ::mutask_tlv::TlvObject for StringExtensionTest {
+impl ::openprot_tlv::TlvObject for StringExtensionTest {
     type Extension = [u8];
     const TAG: u32 = u32::from_le_bytes(*b"SEXT");
-    fn make_ext<'a>(header: &::mutask_tlv::TlvHeader, extra: &'a [u32]) -> &'a Self::Extension {
-        ::mutask_tlv::unpad(header, extra)
+    fn make_ext<'a>(header: &::openprot_tlv::TlvHeader, extra: &'a [u32]) -> &'a Self::Extension {
+        ::openprot_tlv::unpad(header, extra)
     }
 }
 pub trait StringExtensionTestExt<'a> {
     fn text(&self) -> &'a ::bstr::BStr;
 }
-impl<'a> StringExtensionTestExt<'a> for ::mutask_tlv::TlvItem<'a, StringExtensionTest> {
+impl<'a> StringExtensionTestExt<'a> for ::openprot_tlv::TlvItem<'a, StringExtensionTest> {
     #[inline(always)]
     fn text(&self) -> &'a ::bstr::BStr {
-        use ::mutask_tlv::TlvQuery;
+        use ::openprot_tlv::TlvQuery;
         ::bstr::BStr::new(self.ext())
     }
 }
@@ -532,27 +532,27 @@ impl ::core::default::Default for ExtensionContainer {
         ::zerocopy::FromZeros::new_zeroed()
     }
 }
-impl ::mutask_tlv::TlvObject for ExtensionContainer {
-    type Extension = ::mutask_tlv::TlvData;
+impl ::openprot_tlv::TlvObject for ExtensionContainer {
+    type Extension = ::openprot_tlv::TlvData;
     const TAG: u32 = u32::from_le_bytes(*b"EXCT");
-    fn make_ext<'a>(_header: &::mutask_tlv::TlvHeader, extra: &'a [u32]) -> &'a Self::Extension {
-        ::mutask_tlv::TlvData::overlay(extra)
+    fn make_ext<'a>(_header: &::openprot_tlv::TlvHeader, extra: &'a [u32]) -> &'a Self::Extension {
+        ::openprot_tlv::TlvData::overlay(extra)
     }
 }
 pub trait ExtensionContainerExt<'a> {
-    fn child_ext(&self) -> Option<::mutask_tlv::TlvItem<'a, RawBytesExtensionTest>>;
-    fn next_child(&self) -> Option<::mutask_tlv::TlvItem<'a, RegisterContainer>>;
+    fn child_ext(&self) -> Option<::openprot_tlv::TlvItem<'a, RawBytesExtensionTest>>;
+    fn next_child(&self) -> Option<::openprot_tlv::TlvItem<'a, RegisterContainer>>;
 }
-impl<'a> ExtensionContainerExt<'a> for ::mutask_tlv::TlvItem<'a, ExtensionContainer> {
+impl<'a> ExtensionContainerExt<'a> for ::openprot_tlv::TlvItem<'a, ExtensionContainer> {
     #[inline(always)]
-    fn child_ext(&self) -> Option<::mutask_tlv::TlvItem<'a, RawBytesExtensionTest>> {
-        ::mutask_tlv::TlvQuery::ext(self)
+    fn child_ext(&self) -> Option<::openprot_tlv::TlvItem<'a, RawBytesExtensionTest>> {
+        ::openprot_tlv::TlvQuery::ext(self)
             .iter::<RawBytesExtensionTest>()
             .next()
     }
     #[inline(always)]
-    fn next_child(&self) -> Option<::mutask_tlv::TlvItem<'a, RegisterContainer>> {
-        ::mutask_tlv::TlvQuery::ext(self)
+    fn next_child(&self) -> Option<::openprot_tlv::TlvItem<'a, RegisterContainer>> {
+        ::openprot_tlv::TlvQuery::ext(self)
             .iter::<RegisterContainer>()
             .next()
     }

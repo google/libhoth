@@ -23,8 +23,8 @@
 #![allow(dead_code)]
 
 use bitfield_struct::bitfield;
-use mutask_tlv::TlvFlags;
-use mutask_tlv::TlvHeader;
+use openprot_tlv::TlvFlags;
+use openprot_tlv::TlvHeader;
 use zerocopy::{FromBytes, Immutable, IntoBytes, KnownLayout};
 
 #[derive(
@@ -66,10 +66,10 @@ impl ::core::default::Default for BaseRecord {
         ::zerocopy::FromZeros::new_zeroed()
     }
 }
-impl ::mutask_tlv::TlvObject for BaseRecord {
+impl ::openprot_tlv::TlvObject for BaseRecord {
     type Extension = [u8];
     const TAG: u32 = u32::from_le_bytes(*b"BREC");
-    fn make_ext<'a>(header: &::mutask_tlv::TlvHeader, extra: &'a [u32]) -> &'a Self::Extension {
-        ::mutask_tlv::unpad(header, extra)
+    fn make_ext<'a>(header: &::openprot_tlv::TlvHeader, extra: &'a [u32]) -> &'a Self::Extension {
+        ::openprot_tlv::unpad(header, extra)
     }
 }

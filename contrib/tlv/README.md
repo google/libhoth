@@ -1,7 +1,7 @@
 # Zero-Copy Type-Length-Value (TLV) Wire Format
 
 This document defines the binary wire format of the Type-Length-Value (TLV)
-serialization framework used in `mutask`.
+serialization framework used in OpenPRoT.
 
 ---
 

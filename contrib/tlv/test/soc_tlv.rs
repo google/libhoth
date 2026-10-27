@@ -23,8 +23,8 @@
 #![allow(dead_code)]
 
 use bitfield_struct::bitfield;
-use mutask_tlv::TlvFlags;
-use mutask_tlv::TlvHeader;
+use openprot_tlv::TlvFlags;
+use openprot_tlv::TlvHeader;
 use zerocopy::{FromBytes, Immutable, IntoBytes, KnownLayout};
 
 #[derive(
@@ -74,30 +74,32 @@ impl ::core::default::Default for System {
         ::zerocopy::FromZeros::new_zeroed()
     }
 }
-impl ::mutask_tlv::TlvObject for System {
-    type Extension = ::mutask_tlv::TlvData;
+impl ::openprot_tlv::TlvObject for System {
+    type Extension = ::openprot_tlv::TlvData;
     const TAG: u32 = u32::from_le_bytes(*b"SYS_");
-    fn make_ext<'a>(_header: &::mutask_tlv::TlvHeader, extra: &'a [u32]) -> &'a Self::Extension {
-        ::mutask_tlv::TlvData::overlay(extra)
+    fn make_ext<'a>(_header: &::openprot_tlv::TlvHeader, extra: &'a [u32]) -> &'a Self::Extension {
+        ::openprot_tlv::TlvData::overlay(extra)
     }
 }
 pub trait SystemExt<'a> {
-    fn cores(&self) -> ::mutask_tlv::TlvIterator<'a, CpuCore>;
-    fn bus(&self) -> Option<::mutask_tlv::TlvItem<'a, SystemBus>>;
-    fn accelerators(&self) -> ::mutask_tlv::TlvIterator<'a, Accelerator>;
+    fn cores(&self) -> ::openprot_tlv::TlvIterator<'a, CpuCore>;
+    fn bus(&self) -> Option<::openprot_tlv::TlvItem<'a, SystemBus>>;
+    fn accelerators(&self) -> ::openprot_tlv::TlvIterator<'a, Accelerator>;
 }
-impl<'a> SystemExt<'a> for ::mutask_tlv::TlvItem<'a, System> {
+impl<'a> SystemExt<'a> for ::openprot_tlv::TlvItem<'a, System> {
     #[inline(always)]
-    fn cores(&self) -> ::mutask_tlv::TlvIterator<'a, CpuCore> {
-        ::mutask_tlv::TlvQuery::ext(self).iter::<CpuCore>()
+    fn cores(&self) -> ::openprot_tlv::TlvIterator<'a, CpuCore> {
+        ::openprot_tlv::TlvQuery::ext(self).iter::<CpuCore>()
     }
     #[inline(always)]
-    fn bus(&self) -> Option<::mutask_tlv::TlvItem<'a, SystemBus>> {
-        ::mutask_tlv::TlvQuery::ext(self).iter::<SystemBus>().next()
+    fn bus(&self) -> Option<::openprot_tlv::TlvItem<'a, SystemBus>> {
+        ::openprot_tlv::TlvQuery::ext(self)
+            .iter::<SystemBus>()
+            .next()
     }
     #[inline(always)]
-    fn accelerators(&self) -> ::mutask_tlv::TlvIterator<'a, Accelerator> {
-        ::mutask_tlv::TlvQuery::ext(self).iter::<Accelerator>()
+    fn accelerators(&self) -> ::openprot_tlv::TlvIterator<'a, Accelerator> {
+        ::openprot_tlv::TlvQuery::ext(self).iter::<Accelerator>()
     }
 }
 
@@ -136,25 +138,27 @@ impl ::core::default::Default for CpuCore {
         ::zerocopy::FromZeros::new_zeroed()
     }
 }
-impl ::mutask_tlv::TlvObject for CpuCore {
-    type Extension = ::mutask_tlv::TlvData;
+impl ::openprot_tlv::TlvObject for CpuCore {
+    type Extension = ::openprot_tlv::TlvData;
     const TAG: u32 = u32::from_le_bytes(*b"CORE");
-    fn make_ext<'a>(_header: &::mutask_tlv::TlvHeader, extra: &'a [u32]) -> &'a Self::Extension {
-        ::mutask_tlv::TlvData::overlay(extra)
+    fn make_ext<'a>(_header: &::openprot_tlv::TlvHeader, extra: &'a [u32]) -> &'a Self::Extension {
+        ::openprot_tlv::TlvData::overlay(extra)
     }
 }
 pub trait CpuCoreExt<'a> {
-    fn cache(&self) -> Option<::mutask_tlv::TlvItem<'a, CacheInfo>>;
-    fn execution_units(&self) -> ::mutask_tlv::TlvIterator<'a, ExecutionUnit>;
+    fn cache(&self) -> Option<::openprot_tlv::TlvItem<'a, CacheInfo>>;
+    fn execution_units(&self) -> ::openprot_tlv::TlvIterator<'a, ExecutionUnit>;
 }
-impl<'a> CpuCoreExt<'a> for ::mutask_tlv::TlvItem<'a, CpuCore> {
+impl<'a> CpuCoreExt<'a> for ::openprot_tlv::TlvItem<'a, CpuCore> {
     #[inline(always)]
-    fn cache(&self) -> Option<::mutask_tlv::TlvItem<'a, CacheInfo>> {
-        ::mutask_tlv::TlvQuery::ext(self).iter::<CacheInfo>().next()
+    fn cache(&self) -> Option<::openprot_tlv::TlvItem<'a, CacheInfo>> {
+        ::openprot_tlv::TlvQuery::ext(self)
+            .iter::<CacheInfo>()
+            .next()
     }
     #[inline(always)]
-    fn execution_units(&self) -> ::mutask_tlv::TlvIterator<'a, ExecutionUnit> {
-        ::mutask_tlv::TlvQuery::ext(self).iter::<ExecutionUnit>()
+    fn execution_units(&self) -> ::openprot_tlv::TlvIterator<'a, ExecutionUnit> {
+        ::openprot_tlv::TlvQuery::ext(self).iter::<ExecutionUnit>()
     }
 }
 
@@ -193,11 +197,11 @@ impl ::core::default::Default for SystemBus {
         ::zerocopy::FromZeros::new_zeroed()
     }
 }
-impl ::mutask_tlv::TlvObject for SystemBus {
+impl ::openprot_tlv::TlvObject for SystemBus {
     type Extension = [u8];
     const TAG: u32 = u32::from_le_bytes(*b"SBUS");
-    fn make_ext<'a>(header: &::mutask_tlv::TlvHeader, extra: &'a [u32]) -> &'a Self::Extension {
-        ::mutask_tlv::unpad(header, extra)
+    fn make_ext<'a>(header: &::openprot_tlv::TlvHeader, extra: &'a [u32]) -> &'a Self::Extension {
+        ::openprot_tlv::unpad(header, extra)
     }
 }
 
@@ -220,11 +224,11 @@ impl ::core::default::Default for CacheInfo {
         ::zerocopy::FromZeros::new_zeroed()
     }
 }
-impl ::mutask_tlv::TlvObject for CacheInfo {
+impl ::openprot_tlv::TlvObject for CacheInfo {
     type Extension = [u8];
     const TAG: u32 = u32::from_le_bytes(*b"CACH");
-    fn make_ext<'a>(header: &::mutask_tlv::TlvHeader, extra: &'a [u32]) -> &'a Self::Extension {
-        ::mutask_tlv::unpad(header, extra)
+    fn make_ext<'a>(header: &::openprot_tlv::TlvHeader, extra: &'a [u32]) -> &'a Self::Extension {
+        ::openprot_tlv::unpad(header, extra)
     }
 }
 
@@ -251,11 +255,11 @@ impl ::core::default::Default for ExecutionUnit {
         ::zerocopy::FromZeros::new_zeroed()
     }
 }
-impl ::mutask_tlv::TlvObject for ExecutionUnit {
+impl ::openprot_tlv::TlvObject for ExecutionUnit {
     type Extension = [u8];
     const TAG: u32 = u32::from_le_bytes(*b"EXEU");
-    fn make_ext<'a>(header: &::mutask_tlv::TlvHeader, extra: &'a [u32]) -> &'a Self::Extension {
-        ::mutask_tlv::unpad(header, extra)
+    fn make_ext<'a>(header: &::openprot_tlv::TlvHeader, extra: &'a [u32]) -> &'a Self::Extension {
+        ::openprot_tlv::unpad(header, extra)
     }
 }
 
@@ -276,11 +280,11 @@ impl ::core::default::Default for GpuAccelerator {
         ::zerocopy::FromZeros::new_zeroed()
     }
 }
-impl ::mutask_tlv::TlvObject for GpuAccelerator {
+impl ::openprot_tlv::TlvObject for GpuAccelerator {
     type Extension = [u8];
     const TAG: u32 = u32::from_le_bytes(*b"GPU_");
-    fn make_ext<'a>(header: &::mutask_tlv::TlvHeader, extra: &'a [u32]) -> &'a Self::Extension {
-        ::mutask_tlv::unpad(header, extra)
+    fn make_ext<'a>(header: &::openprot_tlv::TlvHeader, extra: &'a [u32]) -> &'a Self::Extension {
+        ::openprot_tlv::unpad(header, extra)
     }
 }
 
@@ -299,11 +303,11 @@ impl ::core::default::Default for NpuAccelerator {
         ::zerocopy::FromZeros::new_zeroed()
     }
 }
-impl ::mutask_tlv::TlvObject for NpuAccelerator {
+impl ::openprot_tlv::TlvObject for NpuAccelerator {
     type Extension = [u8];
     const TAG: u32 = u32::from_le_bytes(*b"NPU_");
-    fn make_ext<'a>(header: &::mutask_tlv::TlvHeader, extra: &'a [u32]) -> &'a Self::Extension {
-        ::mutask_tlv::unpad(header, extra)
+    fn make_ext<'a>(header: &::openprot_tlv::TlvHeader, extra: &'a [u32]) -> &'a Self::Extension {
+        ::openprot_tlv::unpad(header, extra)
     }
 }
 
@@ -322,20 +326,20 @@ impl ::core::default::Default for CryptoAccelerator {
         ::zerocopy::FromZeros::new_zeroed()
     }
 }
-impl ::mutask_tlv::TlvObject for CryptoAccelerator {
+impl ::openprot_tlv::TlvObject for CryptoAccelerator {
     type Extension = [u8];
     const TAG: u32 = u32::from_le_bytes(*b"CRYP");
-    fn make_ext<'a>(header: &::mutask_tlv::TlvHeader, extra: &'a [u32]) -> &'a Self::Extension {
-        ::mutask_tlv::unpad(header, extra)
+    fn make_ext<'a>(header: &::openprot_tlv::TlvHeader, extra: &'a [u32]) -> &'a Self::Extension {
+        ::openprot_tlv::unpad(header, extra)
     }
 }
 pub trait CryptoAcceleratorExt<'a> {
     fn supported_ciphers(&self) -> &'a [u8];
 }
-impl<'a> CryptoAcceleratorExt<'a> for ::mutask_tlv::TlvItem<'a, CryptoAccelerator> {
+impl<'a> CryptoAcceleratorExt<'a> for ::openprot_tlv::TlvItem<'a, CryptoAccelerator> {
     #[inline(always)]
     fn supported_ciphers(&self) -> &'a [u8] {
-        use ::mutask_tlv::TlvQuery;
+        use ::openprot_tlv::TlvQuery;
         self.ext()
     }
 }
@@ -352,47 +356,47 @@ impl ::core::default::Default for Accelerator {
         ::zerocopy::FromZeros::new_zeroed()
     }
 }
-impl ::mutask_tlv::TlvObject for Accelerator {
-    type Extension = ::mutask_tlv::TlvData;
+impl ::openprot_tlv::TlvObject for Accelerator {
+    type Extension = ::openprot_tlv::TlvData;
     const TAG: u32 = u32::from_le_bytes(*b"ACCL");
-    fn make_ext<'a>(_header: &::mutask_tlv::TlvHeader, extra: &'a [u32]) -> &'a Self::Extension {
-        ::mutask_tlv::TlvData::overlay(extra)
+    fn make_ext<'a>(_header: &::openprot_tlv::TlvHeader, extra: &'a [u32]) -> &'a Self::Extension {
+        ::openprot_tlv::TlvData::overlay(extra)
     }
 }
 pub enum AcceleratorConfig<'a> {
-    Gpu(::mutask_tlv::TlvItem<'a, GpuAccelerator>),
-    Npu(::mutask_tlv::TlvItem<'a, NpuAccelerator>),
-    Crypto(::mutask_tlv::TlvItem<'a, CryptoAccelerator>),
+    Gpu(::openprot_tlv::TlvItem<'a, GpuAccelerator>),
+    Npu(::openprot_tlv::TlvItem<'a, NpuAccelerator>),
+    Crypto(::openprot_tlv::TlvItem<'a, CryptoAccelerator>),
 }
 pub trait AcceleratorExt<'a> {
-    fn gpu(&self) -> Option<::mutask_tlv::TlvItem<'a, GpuAccelerator>>;
-    fn npu(&self) -> Option<::mutask_tlv::TlvItem<'a, NpuAccelerator>>;
-    fn crypto(&self) -> Option<::mutask_tlv::TlvItem<'a, CryptoAccelerator>>;
+    fn gpu(&self) -> Option<::openprot_tlv::TlvItem<'a, GpuAccelerator>>;
+    fn npu(&self) -> Option<::openprot_tlv::TlvItem<'a, NpuAccelerator>>;
+    fn crypto(&self) -> Option<::openprot_tlv::TlvItem<'a, CryptoAccelerator>>;
     fn config(&self) -> Option<AcceleratorConfig<'a>>;
 }
-impl<'a> AcceleratorExt<'a> for ::mutask_tlv::TlvItem<'a, Accelerator> {
+impl<'a> AcceleratorExt<'a> for ::openprot_tlv::TlvItem<'a, Accelerator> {
     #[inline(always)]
-    fn gpu(&self) -> Option<::mutask_tlv::TlvItem<'a, GpuAccelerator>> {
-        ::mutask_tlv::TlvQuery::ext(self)
+    fn gpu(&self) -> Option<::openprot_tlv::TlvItem<'a, GpuAccelerator>> {
+        ::openprot_tlv::TlvQuery::ext(self)
             .iter::<GpuAccelerator>()
             .next()
     }
     #[inline(always)]
-    fn npu(&self) -> Option<::mutask_tlv::TlvItem<'a, NpuAccelerator>> {
-        ::mutask_tlv::TlvQuery::ext(self)
+    fn npu(&self) -> Option<::openprot_tlv::TlvItem<'a, NpuAccelerator>> {
+        ::openprot_tlv::TlvQuery::ext(self)
             .iter::<NpuAccelerator>()
             .next()
     }
     #[inline(always)]
-    fn crypto(&self) -> Option<::mutask_tlv::TlvItem<'a, CryptoAccelerator>> {
-        ::mutask_tlv::TlvQuery::ext(self)
+    fn crypto(&self) -> Option<::openprot_tlv::TlvItem<'a, CryptoAccelerator>> {
+        ::openprot_tlv::TlvQuery::ext(self)
             .iter::<CryptoAccelerator>()
             .next()
     }
     #[inline(always)]
     fn config(&self) -> Option<AcceleratorConfig<'a>> {
-        use ::mutask_tlv::TlvQuery;
-        for item in ::mutask_tlv::TlvQuery::ext(self).iter::<::mutask_tlv::TlvAny>() {
+        use ::openprot_tlv::TlvQuery;
+        for item in ::openprot_tlv::TlvQuery::ext(self).iter::<::openprot_tlv::TlvAny>() {
             if let Some(val) = item.cast::<GpuAccelerator>() {
                 return Some(AcceleratorConfig::Gpu(val));
             }
