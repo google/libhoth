@@ -1,0 +1,70 @@
+// Copyright 2026 Google LLC
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+syntax = "proto3";
+
+package openprot.key_rotation;
+
+import "shared/tlv/options.proto";
+import "shared/openprot/proto/crypto.proto";
+import "shared/openprot/proto/identity.proto";
+
+// A signed key rotation record descriptor container (communication, host tools,
+// etc.).
+message SignedDescriptor {
+  option (openprot.tlv.tlv_fourcc) = "KRSD";
+
+  Descriptor descriptor = 1;
+  repeated openprot.crypto.SignatureContainer signature = 2;
+}
+
+// A sealed key rotation record descriptor container (embedded storage).
+message SealedDescriptor {
+  option (openprot.tlv.tlv_fourcc) = "KRSL";
+
+  Descriptor descriptor = 1;
+  openprot.crypto.KRSeal seal = 2;
+}
+
+message LegacyImageFamily {
+  option (openprot.tlv.tlv_fourcc) = "LGIF";
+  uint32 family = 1 [(openprot.tlv.offset) = 0];
+}
+
+// The key rotation record descriptor.
+message Descriptor {
+  option (openprot.tlv.tlv_fourcc) = "KROT";
+
+  uint32 version = 1 [(openprot.tlv.offset) = 0];
+  openprot.identity.ImageVendor image_vendor = 2 [(openprot.tlv.offset) = 4];
+  openprot.identity.ImageFamily image_family = 3 [(openprot.tlv.offset) = 12];
+
+  optional LegacyImageFamily legacy_image_family = 4;
+
+  // TLV extensions.
+  repeated openprot.crypto.KeyFingerprint fingerprint = 5;
+  repeated ImgDescriptorDigest img_descriptor_digest = 6;
+}
+
+// A digest of an allowed image descriptor.
+// A list of multiple digests is represented by repeating this tag.
+message ImgDescriptorDigest {
+  option (openprot.tlv.tlv_fourcc) = "IDDG";
+
+  // Digest.
+  oneof digest {
+    openprot.crypto.Sha2_256Digest sha2_256 = 1;
+    openprot.crypto.Sha2_384Digest sha2_384 = 2;
+  }
+}

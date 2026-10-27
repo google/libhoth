@@ -1,0 +1,146 @@
+# Copyright 2026 Google LLC
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+load("@protobuf//bazel:proto_library.bzl", "proto_library")
+load("@rules_rust//rust:defs.bzl", "rust_binary", "rust_library", "rust_test")
+
+proto_library(
+    name = "options_proto",
+    srcs = ["options.proto"],
+    visibility = ["//visibility:public"],
+    deps = ["@protobuf//:descriptor_proto"],
+)
+
+rust_library(
+    name = "tlv",
+    srcs = [
+        "builder.rs",
+        "lib.rs",
+    ],
+    crate_name = "openprot_tlv",
+    edition = "2024",
+    proc_macro_deps = [
+        "//third_party:bitfield_struct",
+    ],
+    visibility = ["//visibility:public"],
+    deps = [
+        "//third_party:zerocopy",
+    ],
+)
+
+rust_library(
+    name = "proto_conv",
+    srcs = ["proto_conv.rs"],
+    crate_name = "openprot_tlv_proto_conv",
+    edition = "2024",
+    visibility = ["//visibility:public"],
+    deps = [
+        ":proto_meta",
+        ":tlv",
+        "//shared/proto:descriptor_rust_proto",
+        "//shared/proto:reader",
+        "//shared/proto:reflect",
+        "//third_party:zerocopy",
+        "@protobuf//rust:protobuf",
+    ],
+)
+
+rust_library(
+    name = "proto_meta",
+    srcs = ["proto_meta.rs"],
+    compile_data = ["//shared/tlv/test:bad_proto"],
+    crate_name = "openprot_tlv_proto_meta",
+    data = ["//shared/tlv/test:bad_proto"],
+    edition = "2024",
+    rustc_env = {
+        "BAD_PROTO_DESCRIPTOR_SET": "$(execpath //shared/tlv/test:bad_proto)",
+    },
+    visibility = ["//visibility:public"],
+    deps = [
+        "//shared/proto:descriptor_rust_proto",
+        "//shared/proto:reader",
+        "//shared/proto:reflect",
+        "@protobuf//rust:protobuf",
+    ],
+)
+
+rust_test(
+    name = "proto_conv_test",
+    crate = ":proto_conv",
+    edition = "2024",
+    deps = [
+        "//shared/tlv/test:edge_cases_rust_proto",
+        "//shared/tlv/test:edge_cases_tlv",
+        "//shared/tlv/test:soc_rust_proto",
+        "//shared/tlv/test:soc_tlv",
+        "//third_party:bstr",
+    ],
+)
+
+rust_test(
+    name = "proto_meta_test",
+    crate = ":proto_meta",
+    edition = "2024",
+    deps = [
+        "//shared/tlv/test:bad_rust_proto",
+        "//shared/tlv/test:edge_cases_rust_proto",
+    ],
+)
+
+rust_test(
+    name = "tlv_test",
+    crate = ":tlv",
+    edition = "2024",
+)
+
+rust_binary(
+    name = "codegen",
+    srcs = ["codegen.rs"],
+    edition = "2024",
+    visibility = ["//visibility:public"],
+    deps = [
+        ":proto_meta",
+        "//shared/proto:descriptor_rust_proto",
+        "//shared/proto:reflect",
+        "//third_party:anyhow",
+        "//third_party:argh",
+        "//third_party:proc_macro2",
+        "//third_party:quote",
+        "@protobuf//rust:protobuf",
+    ],
+)
+
+rust_test(
+    name = "codegen_test",
+    srcs = [
+        "codegen_test.rs",
+    ],
+    edition = "2024",
+    deps = [
+        ":tlv",
+        "//shared/tlv/test:edge_cases_tlv",
+        "//shared/tlv/test:import_base_tlv",
+        "//shared/tlv/test:import_layered_tlv",
+        "//shared/tlv/test:import_pure_tlv",
+        "//shared/tlv/test:import_simple_tlv",
+        "//shared/tlv/test:soc_tlv",
+        "//third_party:bstr",
+    ],
+)
+
+rust_test(
+    name = "codegen_unit_test",
+    crate = ":codegen",
+    edition = "2024",
+)
