@@ -26,6 +26,6 @@ use bitfield_struct::bitfield;
 pub use import_base_tlv::*;
 pub use import_layered_tlv::*;
 pub use import_simple_tlv::*;
-use mutask_tlv::TlvFlags;
-use mutask_tlv::TlvHeader;
+use openprot_tlv::TlvFlags;
+use openprot_tlv::TlvHeader;
 use zerocopy::{FromBytes, Immutable, IntoBytes, KnownLayout};

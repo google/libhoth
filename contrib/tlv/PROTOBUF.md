@@ -307,11 +307,11 @@ const _: () = {
     assert!(::core::mem::align_of::<SubComponent>() <= 4);
     assert!(::core::mem::size_of::<SubComponent>() == 4usize);
 };
-impl ::mutask_tlv::TlvObject for SubComponent {
+impl ::openprot_tlv::TlvObject for SubComponent {
     type Extension = [u8];
     const TAG: u32 = u32::from_le_bytes(*b"SUB_");
-    fn make_ext<'a>(header: &::mutask_tlv::TlvHeader, extra: &'a [u32]) -> &'a Self::Extension {
-        ::mutask_tlv::unpad(header, extra)
+    fn make_ext<'a>(header: &::openprot_tlv::TlvHeader, extra: &'a [u32]) -> &'a Self::Extension {
+        ::openprot_tlv::unpad(header, extra)
     }
 }
 
@@ -330,19 +330,19 @@ const _: () = {
     assert!(::core::mem::align_of::<Device>() <= 4);
     assert!(::core::mem::size_of::<Device>() == 8usize);
 };
-impl ::mutask_tlv::TlvObject for Device {
-    type Extension = ::mutask_tlv::TlvData;
+impl ::openprot_tlv::TlvObject for Device {
+    type Extension = ::openprot_tlv::TlvData;
     const TAG: u32 = u32::from_le_bytes(*b"DEV_");
-    fn make_ext<'a>(_header: &::mutask_tlv::TlvHeader, extra: &'a [u32]) -> &'a Self::Extension {
-        ::mutask_tlv::TlvData::overlay(extra)
+    fn make_ext<'a>(_header: &::openprot_tlv::TlvHeader, extra: &'a [u32]) -> &'a Self::Extension {
+        ::openprot_tlv::TlvData::overlay(extra)
     }
 }
 pub trait DeviceExt<'a> {
-    fn components(&self) -> ::mutask_tlv::TlvIterator<'a, SubComponent>;
+    fn components(&self) -> ::openprot_tlv::TlvIterator<'a, SubComponent>;
 }
-impl<'a> DeviceExt<'a> for ::mutask_tlv::TlvItem<'a, Device> {
-    fn components(&self) -> ::mutask_tlv::TlvIterator<'a, SubComponent> {
-        ::mutask_tlv::TlvQuery::ext(self).iter::<SubComponent>()
+impl<'a> DeviceExt<'a> for ::openprot_tlv::TlvItem<'a, Device> {
+    fn components(&self) -> ::openprot_tlv::TlvIterator<'a, SubComponent> {
+        ::openprot_tlv::TlvQuery::ext(self).iter::<SubComponent>()
     }
 }
 ```

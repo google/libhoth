@@ -14,7 +14,7 @@
 
 syntax = "proto3";
 
-package mutask.identity;
+package openprot.identity;
 
 import "contrib/tlv/options.proto";
 

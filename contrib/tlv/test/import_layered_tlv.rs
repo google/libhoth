@@ -25,8 +25,8 @@
 use bitfield_struct::bitfield;
 pub use import_base_tlv::*;
 pub use import_simple_tlv::*;
-use mutask_tlv::TlvFlags;
-use mutask_tlv::TlvHeader;
+use openprot_tlv::TlvFlags;
+use openprot_tlv::TlvHeader;
 use zerocopy::{FromBytes, Immutable, IntoBytes, KnownLayout};
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, FromBytes, IntoBytes, Immutable, KnownLayout)]
@@ -44,27 +44,27 @@ impl ::core::default::Default for LayeredMessage {
         ::zerocopy::FromZeros::new_zeroed()
     }
 }
-impl ::mutask_tlv::TlvObject for LayeredMessage {
-    type Extension = ::mutask_tlv::TlvData;
+impl ::openprot_tlv::TlvObject for LayeredMessage {
+    type Extension = ::openprot_tlv::TlvData;
     const TAG: u32 = u32::from_le_bytes(*b"LAYR");
-    fn make_ext<'a>(_header: &::mutask_tlv::TlvHeader, extra: &'a [u32]) -> &'a Self::Extension {
-        ::mutask_tlv::TlvData::overlay(extra)
+    fn make_ext<'a>(_header: &::openprot_tlv::TlvHeader, extra: &'a [u32]) -> &'a Self::Extension {
+        ::openprot_tlv::TlvData::overlay(extra)
     }
 }
 pub trait LayeredMessageExt<'a> {
-    fn simple(&self) -> Option<::mutask_tlv::TlvItem<'a, SimpleMessage>>;
-    fn base(&self) -> Option<::mutask_tlv::TlvItem<'a, BaseRecord>>;
+    fn simple(&self) -> Option<::openprot_tlv::TlvItem<'a, SimpleMessage>>;
+    fn base(&self) -> Option<::openprot_tlv::TlvItem<'a, BaseRecord>>;
 }
-impl<'a> LayeredMessageExt<'a> for ::mutask_tlv::TlvItem<'a, LayeredMessage> {
+impl<'a> LayeredMessageExt<'a> for ::openprot_tlv::TlvItem<'a, LayeredMessage> {
     #[inline(always)]
-    fn simple(&self) -> Option<::mutask_tlv::TlvItem<'a, SimpleMessage>> {
-        ::mutask_tlv::TlvQuery::ext(self)
+    fn simple(&self) -> Option<::openprot_tlv::TlvItem<'a, SimpleMessage>> {
+        ::openprot_tlv::TlvQuery::ext(self)
             .iter::<SimpleMessage>()
             .next()
     }
     #[inline(always)]
-    fn base(&self) -> Option<::mutask_tlv::TlvItem<'a, BaseRecord>> {
-        ::mutask_tlv::TlvQuery::ext(self)
+    fn base(&self) -> Option<::openprot_tlv::TlvItem<'a, BaseRecord>> {
+        ::openprot_tlv::TlvQuery::ext(self)
             .iter::<BaseRecord>()
             .next()
     }

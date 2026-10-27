@@ -23,8 +23,8 @@
 #![allow(dead_code)]
 
 use bitfield_struct::bitfield;
-use mutask_tlv::TlvFlags;
-use mutask_tlv::TlvHeader;
+use openprot_tlv::TlvFlags;
+use openprot_tlv::TlvHeader;
 use zerocopy::{FromBytes, Immutable, IntoBytes, KnownLayout};
 
 #[derive(
@@ -71,11 +71,11 @@ impl ::core::default::Default for Sha2_256Digest {
         ::zerocopy::FromZeros::new_zeroed()
     }
 }
-impl ::mutask_tlv::TlvObject for Sha2_256Digest {
+impl ::openprot_tlv::TlvObject for Sha2_256Digest {
     type Extension = [u8];
     const TAG: u32 = u32::from_le_bytes(*b"SH22");
-    fn make_ext<'a>(header: &::mutask_tlv::TlvHeader, extra: &'a [u32]) -> &'a Self::Extension {
-        ::mutask_tlv::unpad(header, extra)
+    fn make_ext<'a>(header: &::openprot_tlv::TlvHeader, extra: &'a [u32]) -> &'a Self::Extension {
+        ::openprot_tlv::unpad(header, extra)
     }
 }
 
@@ -94,11 +94,11 @@ impl ::core::default::Default for Sha2_384Digest {
         ::zerocopy::FromZeros::new_zeroed()
     }
 }
-impl ::mutask_tlv::TlvObject for Sha2_384Digest {
+impl ::openprot_tlv::TlvObject for Sha2_384Digest {
     type Extension = [u8];
     const TAG: u32 = u32::from_le_bytes(*b"SH23");
-    fn make_ext<'a>(header: &::mutask_tlv::TlvHeader, extra: &'a [u32]) -> &'a Self::Extension {
-        ::mutask_tlv::unpad(header, extra)
+    fn make_ext<'a>(header: &::openprot_tlv::TlvHeader, extra: &'a [u32]) -> &'a Self::Extension {
+        ::openprot_tlv::unpad(header, extra)
     }
 }
 
@@ -117,11 +117,11 @@ impl ::core::default::Default for Sha2_512Digest {
         ::zerocopy::FromZeros::new_zeroed()
     }
 }
-impl ::mutask_tlv::TlvObject for Sha2_512Digest {
+impl ::openprot_tlv::TlvObject for Sha2_512Digest {
     type Extension = [u8];
     const TAG: u32 = u32::from_le_bytes(*b"SH25");
-    fn make_ext<'a>(header: &::mutask_tlv::TlvHeader, extra: &'a [u32]) -> &'a Self::Extension {
-        ::mutask_tlv::unpad(header, extra)
+    fn make_ext<'a>(header: &::openprot_tlv::TlvHeader, extra: &'a [u32]) -> &'a Self::Extension {
+        ::openprot_tlv::unpad(header, extra)
     }
 }
 
@@ -140,11 +140,11 @@ impl ::core::default::Default for Sha3_256Digest {
         ::zerocopy::FromZeros::new_zeroed()
     }
 }
-impl ::mutask_tlv::TlvObject for Sha3_256Digest {
+impl ::openprot_tlv::TlvObject for Sha3_256Digest {
     type Extension = [u8];
     const TAG: u32 = u32::from_le_bytes(*b"SH32");
-    fn make_ext<'a>(header: &::mutask_tlv::TlvHeader, extra: &'a [u32]) -> &'a Self::Extension {
-        ::mutask_tlv::unpad(header, extra)
+    fn make_ext<'a>(header: &::openprot_tlv::TlvHeader, extra: &'a [u32]) -> &'a Self::Extension {
+        ::openprot_tlv::unpad(header, extra)
     }
 }
 
@@ -163,11 +163,11 @@ impl ::core::default::Default for Sha3_384Digest {
         ::zerocopy::FromZeros::new_zeroed()
     }
 }
-impl ::mutask_tlv::TlvObject for Sha3_384Digest {
+impl ::openprot_tlv::TlvObject for Sha3_384Digest {
     type Extension = [u8];
     const TAG: u32 = u32::from_le_bytes(*b"SH33");
-    fn make_ext<'a>(header: &::mutask_tlv::TlvHeader, extra: &'a [u32]) -> &'a Self::Extension {
-        ::mutask_tlv::unpad(header, extra)
+    fn make_ext<'a>(header: &::openprot_tlv::TlvHeader, extra: &'a [u32]) -> &'a Self::Extension {
+        ::openprot_tlv::unpad(header, extra)
     }
 }
 
@@ -186,11 +186,11 @@ impl ::core::default::Default for Sha3_512Digest {
         ::zerocopy::FromZeros::new_zeroed()
     }
 }
-impl ::mutask_tlv::TlvObject for Sha3_512Digest {
+impl ::openprot_tlv::TlvObject for Sha3_512Digest {
     type Extension = [u8];
     const TAG: u32 = u32::from_le_bytes(*b"SH35");
-    fn make_ext<'a>(header: &::mutask_tlv::TlvHeader, extra: &'a [u32]) -> &'a Self::Extension {
-        ::mutask_tlv::unpad(header, extra)
+    fn make_ext<'a>(header: &::openprot_tlv::TlvHeader, extra: &'a [u32]) -> &'a Self::Extension {
+        ::openprot_tlv::unpad(header, extra)
     }
 }
 
@@ -211,11 +211,11 @@ impl ::core::default::Default for P256PublicMaterial {
         ::zerocopy::FromZeros::new_zeroed()
     }
 }
-impl ::mutask_tlv::TlvObject for P256PublicMaterial {
+impl ::openprot_tlv::TlvObject for P256PublicMaterial {
     type Extension = [u8];
     const TAG: u32 = u32::from_le_bytes(*b"P256");
-    fn make_ext<'a>(header: &::mutask_tlv::TlvHeader, extra: &'a [u32]) -> &'a Self::Extension {
-        ::mutask_tlv::unpad(header, extra)
+    fn make_ext<'a>(header: &::openprot_tlv::TlvHeader, extra: &'a [u32]) -> &'a Self::Extension {
+        ::openprot_tlv::unpad(header, extra)
     }
 }
 
@@ -234,11 +234,11 @@ impl ::core::default::Default for SlhDsaPublicMaterial {
         ::zerocopy::FromZeros::new_zeroed()
     }
 }
-impl ::mutask_tlv::TlvObject for SlhDsaPublicMaterial {
+impl ::openprot_tlv::TlvObject for SlhDsaPublicMaterial {
     type Extension = [u8];
     const TAG: u32 = u32::from_le_bytes(*b"SPX+");
-    fn make_ext<'a>(header: &::mutask_tlv::TlvHeader, extra: &'a [u32]) -> &'a Self::Extension {
-        ::mutask_tlv::unpad(header, extra)
+    fn make_ext<'a>(header: &::openprot_tlv::TlvHeader, extra: &'a [u32]) -> &'a Self::Extension {
+        ::openprot_tlv::unpad(header, extra)
     }
 }
 
@@ -257,11 +257,11 @@ impl ::core::default::Default for MlDsa44PublicMaterial {
         ::zerocopy::FromZeros::new_zeroed()
     }
 }
-impl ::mutask_tlv::TlvObject for MlDsa44PublicMaterial {
+impl ::openprot_tlv::TlvObject for MlDsa44PublicMaterial {
     type Extension = [u8];
     const TAG: u32 = u32::from_le_bytes(*b"ML44");
-    fn make_ext<'a>(header: &::mutask_tlv::TlvHeader, extra: &'a [u32]) -> &'a Self::Extension {
-        ::mutask_tlv::unpad(header, extra)
+    fn make_ext<'a>(header: &::openprot_tlv::TlvHeader, extra: &'a [u32]) -> &'a Self::Extension {
+        ::openprot_tlv::unpad(header, extra)
     }
 }
 
@@ -284,11 +284,11 @@ impl ::core::default::Default for HybridP256SlhDsaPublicMaterial {
         ::zerocopy::FromZeros::new_zeroed()
     }
 }
-impl ::mutask_tlv::TlvObject for HybridP256SlhDsaPublicMaterial {
+impl ::openprot_tlv::TlvObject for HybridP256SlhDsaPublicMaterial {
     type Extension = [u8];
     const TAG: u32 = u32::from_le_bytes(*b"H+S2");
-    fn make_ext<'a>(header: &::mutask_tlv::TlvHeader, extra: &'a [u32]) -> &'a Self::Extension {
-        ::mutask_tlv::unpad(header, extra)
+    fn make_ext<'a>(header: &::openprot_tlv::TlvHeader, extra: &'a [u32]) -> &'a Self::Extension {
+        ::openprot_tlv::unpad(header, extra)
     }
 }
 
@@ -311,11 +311,11 @@ impl ::core::default::Default for HybridP256MlDsa44PublicMaterial {
         ::zerocopy::FromZeros::new_zeroed()
     }
 }
-impl ::mutask_tlv::TlvObject for HybridP256MlDsa44PublicMaterial {
+impl ::openprot_tlv::TlvObject for HybridP256MlDsa44PublicMaterial {
     type Extension = [u8];
     const TAG: u32 = u32::from_le_bytes(*b"M4P2");
-    fn make_ext<'a>(header: &::mutask_tlv::TlvHeader, extra: &'a [u32]) -> &'a Self::Extension {
-        ::mutask_tlv::unpad(header, extra)
+    fn make_ext<'a>(header: &::openprot_tlv::TlvHeader, extra: &'a [u32]) -> &'a Self::Extension {
+        ::openprot_tlv::unpad(header, extra)
     }
 }
 
@@ -334,11 +334,11 @@ impl ::core::default::Default for Rsa2048PublicMaterial {
         ::zerocopy::FromZeros::new_zeroed()
     }
 }
-impl ::mutask_tlv::TlvObject for Rsa2048PublicMaterial {
+impl ::openprot_tlv::TlvObject for Rsa2048PublicMaterial {
     type Extension = [u8];
     const TAG: u32 = u32::from_le_bytes(*b"RSA2");
-    fn make_ext<'a>(header: &::mutask_tlv::TlvHeader, extra: &'a [u32]) -> &'a Self::Extension {
-        ::mutask_tlv::unpad(header, extra)
+    fn make_ext<'a>(header: &::openprot_tlv::TlvHeader, extra: &'a [u32]) -> &'a Self::Extension {
+        ::openprot_tlv::unpad(header, extra)
     }
 }
 
@@ -357,11 +357,11 @@ impl ::core::default::Default for Rsa3072PublicMaterial {
         ::zerocopy::FromZeros::new_zeroed()
     }
 }
-impl ::mutask_tlv::TlvObject for Rsa3072PublicMaterial {
+impl ::openprot_tlv::TlvObject for Rsa3072PublicMaterial {
     type Extension = [u8];
     const TAG: u32 = u32::from_le_bytes(*b"RSA3");
-    fn make_ext<'a>(header: &::mutask_tlv::TlvHeader, extra: &'a [u32]) -> &'a Self::Extension {
-        ::mutask_tlv::unpad(header, extra)
+    fn make_ext<'a>(header: &::openprot_tlv::TlvHeader, extra: &'a [u32]) -> &'a Self::Extension {
+        ::openprot_tlv::unpad(header, extra)
     }
 }
 
@@ -380,11 +380,11 @@ impl ::core::default::Default for Rsa4096PublicMaterial {
         ::zerocopy::FromZeros::new_zeroed()
     }
 }
-impl ::mutask_tlv::TlvObject for Rsa4096PublicMaterial {
+impl ::openprot_tlv::TlvObject for Rsa4096PublicMaterial {
     type Extension = [u8];
     const TAG: u32 = u32::from_le_bytes(*b"RSA4");
-    fn make_ext<'a>(header: &::mutask_tlv::TlvHeader, extra: &'a [u32]) -> &'a Self::Extension {
-        ::mutask_tlv::unpad(header, extra)
+    fn make_ext<'a>(header: &::openprot_tlv::TlvHeader, extra: &'a [u32]) -> &'a Self::Extension {
+        ::openprot_tlv::unpad(header, extra)
     }
 }
 
@@ -403,95 +403,95 @@ impl ::core::default::Default for PublicKey {
         ::zerocopy::FromZeros::new_zeroed()
     }
 }
-impl ::mutask_tlv::TlvObject for PublicKey {
-    type Extension = ::mutask_tlv::TlvData;
+impl ::openprot_tlv::TlvObject for PublicKey {
+    type Extension = ::openprot_tlv::TlvData;
     const TAG: u32 = u32::from_le_bytes(*b"PKEY");
-    fn make_ext<'a>(_header: &::mutask_tlv::TlvHeader, extra: &'a [u32]) -> &'a Self::Extension {
-        ::mutask_tlv::TlvData::overlay(extra)
+    fn make_ext<'a>(_header: &::openprot_tlv::TlvHeader, extra: &'a [u32]) -> &'a Self::Extension {
+        ::openprot_tlv::TlvData::overlay(extra)
     }
 }
 pub enum PublicKeyKeyMaterial<'a> {
-    P256(::mutask_tlv::TlvItem<'a, P256PublicMaterial>),
-    Slhdsa(::mutask_tlv::TlvItem<'a, SlhDsaPublicMaterial>),
-    Mldsa(::mutask_tlv::TlvItem<'a, MlDsa44PublicMaterial>),
-    HybridP256Slhdsa(::mutask_tlv::TlvItem<'a, HybridP256SlhDsaPublicMaterial>),
-    HybridP256Mldsa(::mutask_tlv::TlvItem<'a, HybridP256MlDsa44PublicMaterial>),
-    Rsa2048(::mutask_tlv::TlvItem<'a, Rsa2048PublicMaterial>),
-    Rsa3072(::mutask_tlv::TlvItem<'a, Rsa3072PublicMaterial>),
-    Rsa4096(::mutask_tlv::TlvItem<'a, Rsa4096PublicMaterial>),
+    P256(::openprot_tlv::TlvItem<'a, P256PublicMaterial>),
+    Slhdsa(::openprot_tlv::TlvItem<'a, SlhDsaPublicMaterial>),
+    Mldsa(::openprot_tlv::TlvItem<'a, MlDsa44PublicMaterial>),
+    HybridP256Slhdsa(::openprot_tlv::TlvItem<'a, HybridP256SlhDsaPublicMaterial>),
+    HybridP256Mldsa(::openprot_tlv::TlvItem<'a, HybridP256MlDsa44PublicMaterial>),
+    Rsa2048(::openprot_tlv::TlvItem<'a, Rsa2048PublicMaterial>),
+    Rsa3072(::openprot_tlv::TlvItem<'a, Rsa3072PublicMaterial>),
+    Rsa4096(::openprot_tlv::TlvItem<'a, Rsa4096PublicMaterial>),
 }
 pub trait PublicKeyExt<'a> {
-    fn p256(&self) -> Option<::mutask_tlv::TlvItem<'a, P256PublicMaterial>>;
-    fn slhdsa(&self) -> Option<::mutask_tlv::TlvItem<'a, SlhDsaPublicMaterial>>;
-    fn mldsa(&self) -> Option<::mutask_tlv::TlvItem<'a, MlDsa44PublicMaterial>>;
+    fn p256(&self) -> Option<::openprot_tlv::TlvItem<'a, P256PublicMaterial>>;
+    fn slhdsa(&self) -> Option<::openprot_tlv::TlvItem<'a, SlhDsaPublicMaterial>>;
+    fn mldsa(&self) -> Option<::openprot_tlv::TlvItem<'a, MlDsa44PublicMaterial>>;
     fn hybrid_p256_slhdsa(
         &self,
-    ) -> Option<::mutask_tlv::TlvItem<'a, HybridP256SlhDsaPublicMaterial>>;
+    ) -> Option<::openprot_tlv::TlvItem<'a, HybridP256SlhDsaPublicMaterial>>;
     fn hybrid_p256_mldsa(
         &self,
-    ) -> Option<::mutask_tlv::TlvItem<'a, HybridP256MlDsa44PublicMaterial>>;
-    fn rsa2048(&self) -> Option<::mutask_tlv::TlvItem<'a, Rsa2048PublicMaterial>>;
-    fn rsa3072(&self) -> Option<::mutask_tlv::TlvItem<'a, Rsa3072PublicMaterial>>;
-    fn rsa4096(&self) -> Option<::mutask_tlv::TlvItem<'a, Rsa4096PublicMaterial>>;
+    ) -> Option<::openprot_tlv::TlvItem<'a, HybridP256MlDsa44PublicMaterial>>;
+    fn rsa2048(&self) -> Option<::openprot_tlv::TlvItem<'a, Rsa2048PublicMaterial>>;
+    fn rsa3072(&self) -> Option<::openprot_tlv::TlvItem<'a, Rsa3072PublicMaterial>>;
+    fn rsa4096(&self) -> Option<::openprot_tlv::TlvItem<'a, Rsa4096PublicMaterial>>;
     fn key_material(&self) -> Option<PublicKeyKeyMaterial<'a>>;
 }
-impl<'a> PublicKeyExt<'a> for ::mutask_tlv::TlvItem<'a, PublicKey> {
+impl<'a> PublicKeyExt<'a> for ::openprot_tlv::TlvItem<'a, PublicKey> {
     #[inline(always)]
-    fn p256(&self) -> Option<::mutask_tlv::TlvItem<'a, P256PublicMaterial>> {
-        ::mutask_tlv::TlvQuery::ext(self)
+    fn p256(&self) -> Option<::openprot_tlv::TlvItem<'a, P256PublicMaterial>> {
+        ::openprot_tlv::TlvQuery::ext(self)
             .iter::<P256PublicMaterial>()
             .next()
     }
     #[inline(always)]
-    fn slhdsa(&self) -> Option<::mutask_tlv::TlvItem<'a, SlhDsaPublicMaterial>> {
-        ::mutask_tlv::TlvQuery::ext(self)
+    fn slhdsa(&self) -> Option<::openprot_tlv::TlvItem<'a, SlhDsaPublicMaterial>> {
+        ::openprot_tlv::TlvQuery::ext(self)
             .iter::<SlhDsaPublicMaterial>()
             .next()
     }
     #[inline(always)]
-    fn mldsa(&self) -> Option<::mutask_tlv::TlvItem<'a, MlDsa44PublicMaterial>> {
-        ::mutask_tlv::TlvQuery::ext(self)
+    fn mldsa(&self) -> Option<::openprot_tlv::TlvItem<'a, MlDsa44PublicMaterial>> {
+        ::openprot_tlv::TlvQuery::ext(self)
             .iter::<MlDsa44PublicMaterial>()
             .next()
     }
     #[inline(always)]
     fn hybrid_p256_slhdsa(
         &self,
-    ) -> Option<::mutask_tlv::TlvItem<'a, HybridP256SlhDsaPublicMaterial>> {
-        ::mutask_tlv::TlvQuery::ext(self)
+    ) -> Option<::openprot_tlv::TlvItem<'a, HybridP256SlhDsaPublicMaterial>> {
+        ::openprot_tlv::TlvQuery::ext(self)
             .iter::<HybridP256SlhDsaPublicMaterial>()
             .next()
     }
     #[inline(always)]
     fn hybrid_p256_mldsa(
         &self,
-    ) -> Option<::mutask_tlv::TlvItem<'a, HybridP256MlDsa44PublicMaterial>> {
-        ::mutask_tlv::TlvQuery::ext(self)
+    ) -> Option<::openprot_tlv::TlvItem<'a, HybridP256MlDsa44PublicMaterial>> {
+        ::openprot_tlv::TlvQuery::ext(self)
             .iter::<HybridP256MlDsa44PublicMaterial>()
             .next()
     }
     #[inline(always)]
-    fn rsa2048(&self) -> Option<::mutask_tlv::TlvItem<'a, Rsa2048PublicMaterial>> {
-        ::mutask_tlv::TlvQuery::ext(self)
+    fn rsa2048(&self) -> Option<::openprot_tlv::TlvItem<'a, Rsa2048PublicMaterial>> {
+        ::openprot_tlv::TlvQuery::ext(self)
             .iter::<Rsa2048PublicMaterial>()
             .next()
     }
     #[inline(always)]
-    fn rsa3072(&self) -> Option<::mutask_tlv::TlvItem<'a, Rsa3072PublicMaterial>> {
-        ::mutask_tlv::TlvQuery::ext(self)
+    fn rsa3072(&self) -> Option<::openprot_tlv::TlvItem<'a, Rsa3072PublicMaterial>> {
+        ::openprot_tlv::TlvQuery::ext(self)
             .iter::<Rsa3072PublicMaterial>()
             .next()
     }
     #[inline(always)]
-    fn rsa4096(&self) -> Option<::mutask_tlv::TlvItem<'a, Rsa4096PublicMaterial>> {
-        ::mutask_tlv::TlvQuery::ext(self)
+    fn rsa4096(&self) -> Option<::openprot_tlv::TlvItem<'a, Rsa4096PublicMaterial>> {
+        ::openprot_tlv::TlvQuery::ext(self)
             .iter::<Rsa4096PublicMaterial>()
             .next()
     }
     #[inline(always)]
     fn key_material(&self) -> Option<PublicKeyKeyMaterial<'a>> {
-        use ::mutask_tlv::TlvQuery;
-        for item in ::mutask_tlv::TlvQuery::ext(self).iter::<::mutask_tlv::TlvAny>() {
+        use ::openprot_tlv::TlvQuery;
+        for item in ::openprot_tlv::TlvQuery::ext(self).iter::<::openprot_tlv::TlvAny>() {
             if let Some(val) = item.cast::<P256PublicMaterial>() {
                 return Some(PublicKeyKeyMaterial::P256(val));
             }
@@ -538,11 +538,11 @@ impl ::core::default::Default for P256Signature {
         ::zerocopy::FromZeros::new_zeroed()
     }
 }
-impl ::mutask_tlv::TlvObject for P256Signature {
+impl ::openprot_tlv::TlvObject for P256Signature {
     type Extension = [u8];
     const TAG: u32 = u32::from_le_bytes(*b"P256");
-    fn make_ext<'a>(header: &::mutask_tlv::TlvHeader, extra: &'a [u32]) -> &'a Self::Extension {
-        ::mutask_tlv::unpad(header, extra)
+    fn make_ext<'a>(header: &::openprot_tlv::TlvHeader, extra: &'a [u32]) -> &'a Self::Extension {
+        ::openprot_tlv::unpad(header, extra)
     }
 }
 
@@ -561,11 +561,11 @@ impl ::core::default::Default for SlhDsaSignature {
         ::zerocopy::FromZeros::new_zeroed()
     }
 }
-impl ::mutask_tlv::TlvObject for SlhDsaSignature {
+impl ::openprot_tlv::TlvObject for SlhDsaSignature {
     type Extension = [u8];
     const TAG: u32 = u32::from_le_bytes(*b"SPX+");
-    fn make_ext<'a>(header: &::mutask_tlv::TlvHeader, extra: &'a [u32]) -> &'a Self::Extension {
-        ::mutask_tlv::unpad(header, extra)
+    fn make_ext<'a>(header: &::openprot_tlv::TlvHeader, extra: &'a [u32]) -> &'a Self::Extension {
+        ::openprot_tlv::unpad(header, extra)
     }
 }
 
@@ -584,11 +584,11 @@ impl ::core::default::Default for MlDsa44Signature {
         ::zerocopy::FromZeros::new_zeroed()
     }
 }
-impl ::mutask_tlv::TlvObject for MlDsa44Signature {
+impl ::openprot_tlv::TlvObject for MlDsa44Signature {
     type Extension = [u8];
     const TAG: u32 = u32::from_le_bytes(*b"ML44");
-    fn make_ext<'a>(header: &::mutask_tlv::TlvHeader, extra: &'a [u32]) -> &'a Self::Extension {
-        ::mutask_tlv::unpad(header, extra)
+    fn make_ext<'a>(header: &::openprot_tlv::TlvHeader, extra: &'a [u32]) -> &'a Self::Extension {
+        ::openprot_tlv::unpad(header, extra)
     }
 }
 
@@ -611,11 +611,11 @@ impl ::core::default::Default for HybridP256SlhDsaSignature {
         ::zerocopy::FromZeros::new_zeroed()
     }
 }
-impl ::mutask_tlv::TlvObject for HybridP256SlhDsaSignature {
+impl ::openprot_tlv::TlvObject for HybridP256SlhDsaSignature {
     type Extension = [u8];
     const TAG: u32 = u32::from_le_bytes(*b"H+S2");
-    fn make_ext<'a>(header: &::mutask_tlv::TlvHeader, extra: &'a [u32]) -> &'a Self::Extension {
-        ::mutask_tlv::unpad(header, extra)
+    fn make_ext<'a>(header: &::openprot_tlv::TlvHeader, extra: &'a [u32]) -> &'a Self::Extension {
+        ::openprot_tlv::unpad(header, extra)
     }
 }
 
@@ -638,11 +638,11 @@ impl ::core::default::Default for HybridP256MlDsa44Signature {
         ::zerocopy::FromZeros::new_zeroed()
     }
 }
-impl ::mutask_tlv::TlvObject for HybridP256MlDsa44Signature {
+impl ::openprot_tlv::TlvObject for HybridP256MlDsa44Signature {
     type Extension = [u8];
     const TAG: u32 = u32::from_le_bytes(*b"M4P2");
-    fn make_ext<'a>(header: &::mutask_tlv::TlvHeader, extra: &'a [u32]) -> &'a Self::Extension {
-        ::mutask_tlv::unpad(header, extra)
+    fn make_ext<'a>(header: &::openprot_tlv::TlvHeader, extra: &'a [u32]) -> &'a Self::Extension {
+        ::openprot_tlv::unpad(header, extra)
     }
 }
 
@@ -658,25 +658,29 @@ impl ::core::default::Default for SignatureContainer {
         ::zerocopy::FromZeros::new_zeroed()
     }
 }
-impl ::mutask_tlv::TlvObject for SignatureContainer {
-    type Extension = ::mutask_tlv::TlvData;
+impl ::openprot_tlv::TlvObject for SignatureContainer {
+    type Extension = ::openprot_tlv::TlvData;
     const TAG: u32 = u32::from_le_bytes(*b"SIGC");
-    fn make_ext<'a>(_header: &::mutask_tlv::TlvHeader, extra: &'a [u32]) -> &'a Self::Extension {
-        ::mutask_tlv::TlvData::overlay(extra)
+    fn make_ext<'a>(_header: &::openprot_tlv::TlvHeader, extra: &'a [u32]) -> &'a Self::Extension {
+        ::openprot_tlv::TlvData::overlay(extra)
     }
 }
 pub trait SignatureContainerExt<'a> {
-    fn public_key(&self) -> Option<::mutask_tlv::TlvItem<'a, PublicKey>>;
-    fn signature(&self) -> Option<::mutask_tlv::TlvItem<'a, Signature>>;
+    fn public_key(&self) -> Option<::openprot_tlv::TlvItem<'a, PublicKey>>;
+    fn signature(&self) -> Option<::openprot_tlv::TlvItem<'a, Signature>>;
 }
-impl<'a> SignatureContainerExt<'a> for ::mutask_tlv::TlvItem<'a, SignatureContainer> {
+impl<'a> SignatureContainerExt<'a> for ::openprot_tlv::TlvItem<'a, SignatureContainer> {
     #[inline(always)]
-    fn public_key(&self) -> Option<::mutask_tlv::TlvItem<'a, PublicKey>> {
-        ::mutask_tlv::TlvQuery::ext(self).iter::<PublicKey>().next()
+    fn public_key(&self) -> Option<::openprot_tlv::TlvItem<'a, PublicKey>> {
+        ::openprot_tlv::TlvQuery::ext(self)
+            .iter::<PublicKey>()
+            .next()
     }
     #[inline(always)]
-    fn signature(&self) -> Option<::mutask_tlv::TlvItem<'a, Signature>> {
-        ::mutask_tlv::TlvQuery::ext(self).iter::<Signature>().next()
+    fn signature(&self) -> Option<::openprot_tlv::TlvItem<'a, Signature>> {
+        ::openprot_tlv::TlvQuery::ext(self)
+            .iter::<Signature>()
+            .next()
     }
 }
 
@@ -692,63 +696,63 @@ impl ::core::default::Default for Signature {
         ::zerocopy::FromZeros::new_zeroed()
     }
 }
-impl ::mutask_tlv::TlvObject for Signature {
-    type Extension = ::mutask_tlv::TlvData;
+impl ::openprot_tlv::TlvObject for Signature {
+    type Extension = ::openprot_tlv::TlvData;
     const TAG: u32 = u32::from_le_bytes(*b"SIGN");
-    fn make_ext<'a>(_header: &::mutask_tlv::TlvHeader, extra: &'a [u32]) -> &'a Self::Extension {
-        ::mutask_tlv::TlvData::overlay(extra)
+    fn make_ext<'a>(_header: &::openprot_tlv::TlvHeader, extra: &'a [u32]) -> &'a Self::Extension {
+        ::openprot_tlv::TlvData::overlay(extra)
     }
 }
 pub enum SignatureSignature<'a> {
-    P256(::mutask_tlv::TlvItem<'a, P256Signature>),
-    Slhdsa(::mutask_tlv::TlvItem<'a, SlhDsaSignature>),
-    Mldsa(::mutask_tlv::TlvItem<'a, MlDsa44Signature>),
-    HybridP256Slhdsa(::mutask_tlv::TlvItem<'a, HybridP256SlhDsaSignature>),
-    HybridP256Mldsa(::mutask_tlv::TlvItem<'a, HybridP256MlDsa44Signature>),
+    P256(::openprot_tlv::TlvItem<'a, P256Signature>),
+    Slhdsa(::openprot_tlv::TlvItem<'a, SlhDsaSignature>),
+    Mldsa(::openprot_tlv::TlvItem<'a, MlDsa44Signature>),
+    HybridP256Slhdsa(::openprot_tlv::TlvItem<'a, HybridP256SlhDsaSignature>),
+    HybridP256Mldsa(::openprot_tlv::TlvItem<'a, HybridP256MlDsa44Signature>),
 }
 pub trait SignatureExt<'a> {
-    fn p256(&self) -> Option<::mutask_tlv::TlvItem<'a, P256Signature>>;
-    fn slhdsa(&self) -> Option<::mutask_tlv::TlvItem<'a, SlhDsaSignature>>;
-    fn mldsa(&self) -> Option<::mutask_tlv::TlvItem<'a, MlDsa44Signature>>;
-    fn hybrid_p256_slhdsa(&self) -> Option<::mutask_tlv::TlvItem<'a, HybridP256SlhDsaSignature>>;
-    fn hybrid_p256_mldsa(&self) -> Option<::mutask_tlv::TlvItem<'a, HybridP256MlDsa44Signature>>;
+    fn p256(&self) -> Option<::openprot_tlv::TlvItem<'a, P256Signature>>;
+    fn slhdsa(&self) -> Option<::openprot_tlv::TlvItem<'a, SlhDsaSignature>>;
+    fn mldsa(&self) -> Option<::openprot_tlv::TlvItem<'a, MlDsa44Signature>>;
+    fn hybrid_p256_slhdsa(&self) -> Option<::openprot_tlv::TlvItem<'a, HybridP256SlhDsaSignature>>;
+    fn hybrid_p256_mldsa(&self) -> Option<::openprot_tlv::TlvItem<'a, HybridP256MlDsa44Signature>>;
     fn signature(&self) -> Option<SignatureSignature<'a>>;
 }
-impl<'a> SignatureExt<'a> for ::mutask_tlv::TlvItem<'a, Signature> {
+impl<'a> SignatureExt<'a> for ::openprot_tlv::TlvItem<'a, Signature> {
     #[inline(always)]
-    fn p256(&self) -> Option<::mutask_tlv::TlvItem<'a, P256Signature>> {
-        ::mutask_tlv::TlvQuery::ext(self)
+    fn p256(&self) -> Option<::openprot_tlv::TlvItem<'a, P256Signature>> {
+        ::openprot_tlv::TlvQuery::ext(self)
             .iter::<P256Signature>()
             .next()
     }
     #[inline(always)]
-    fn slhdsa(&self) -> Option<::mutask_tlv::TlvItem<'a, SlhDsaSignature>> {
-        ::mutask_tlv::TlvQuery::ext(self)
+    fn slhdsa(&self) -> Option<::openprot_tlv::TlvItem<'a, SlhDsaSignature>> {
+        ::openprot_tlv::TlvQuery::ext(self)
             .iter::<SlhDsaSignature>()
             .next()
     }
     #[inline(always)]
-    fn mldsa(&self) -> Option<::mutask_tlv::TlvItem<'a, MlDsa44Signature>> {
-        ::mutask_tlv::TlvQuery::ext(self)
+    fn mldsa(&self) -> Option<::openprot_tlv::TlvItem<'a, MlDsa44Signature>> {
+        ::openprot_tlv::TlvQuery::ext(self)
             .iter::<MlDsa44Signature>()
             .next()
     }
     #[inline(always)]
-    fn hybrid_p256_slhdsa(&self) -> Option<::mutask_tlv::TlvItem<'a, HybridP256SlhDsaSignature>> {
-        ::mutask_tlv::TlvQuery::ext(self)
+    fn hybrid_p256_slhdsa(&self) -> Option<::openprot_tlv::TlvItem<'a, HybridP256SlhDsaSignature>> {
+        ::openprot_tlv::TlvQuery::ext(self)
             .iter::<HybridP256SlhDsaSignature>()
             .next()
     }
     #[inline(always)]
-    fn hybrid_p256_mldsa(&self) -> Option<::mutask_tlv::TlvItem<'a, HybridP256MlDsa44Signature>> {
-        ::mutask_tlv::TlvQuery::ext(self)
+    fn hybrid_p256_mldsa(&self) -> Option<::openprot_tlv::TlvItem<'a, HybridP256MlDsa44Signature>> {
+        ::openprot_tlv::TlvQuery::ext(self)
             .iter::<HybridP256MlDsa44Signature>()
             .next()
     }
     #[inline(always)]
     fn signature(&self) -> Option<SignatureSignature<'a>> {
-        use ::mutask_tlv::TlvQuery;
-        for item in ::mutask_tlv::TlvQuery::ext(self).iter::<::mutask_tlv::TlvAny>() {
+        use ::openprot_tlv::TlvQuery;
+        for item in ::openprot_tlv::TlvQuery::ext(self).iter::<::openprot_tlv::TlvAny>() {
             if let Some(val) = item.cast::<P256Signature>() {
                 return Some(SignatureSignature::P256(val));
             }
@@ -781,39 +785,39 @@ impl ::core::default::Default for P256Fingerprint {
         ::zerocopy::FromZeros::new_zeroed()
     }
 }
-impl ::mutask_tlv::TlvObject for P256Fingerprint {
-    type Extension = ::mutask_tlv::TlvData;
+impl ::openprot_tlv::TlvObject for P256Fingerprint {
+    type Extension = ::openprot_tlv::TlvData;
     const TAG: u32 = u32::from_le_bytes(*b"P256");
-    fn make_ext<'a>(_header: &::mutask_tlv::TlvHeader, extra: &'a [u32]) -> &'a Self::Extension {
-        ::mutask_tlv::TlvData::overlay(extra)
+    fn make_ext<'a>(_header: &::openprot_tlv::TlvHeader, extra: &'a [u32]) -> &'a Self::Extension {
+        ::openprot_tlv::TlvData::overlay(extra)
     }
 }
 pub enum P256FingerprintDigest<'a> {
-    Sha2256(::mutask_tlv::TlvItem<'a, Sha2_256Digest>),
-    Sha2384(::mutask_tlv::TlvItem<'a, Sha2_384Digest>),
+    Sha2256(::openprot_tlv::TlvItem<'a, Sha2_256Digest>),
+    Sha2384(::openprot_tlv::TlvItem<'a, Sha2_384Digest>),
 }
 pub trait P256FingerprintExt<'a> {
-    fn sha2_256(&self) -> Option<::mutask_tlv::TlvItem<'a, Sha2_256Digest>>;
-    fn sha2_384(&self) -> Option<::mutask_tlv::TlvItem<'a, Sha2_384Digest>>;
+    fn sha2_256(&self) -> Option<::openprot_tlv::TlvItem<'a, Sha2_256Digest>>;
+    fn sha2_384(&self) -> Option<::openprot_tlv::TlvItem<'a, Sha2_384Digest>>;
     fn digest(&self) -> Option<P256FingerprintDigest<'a>>;
 }
-impl<'a> P256FingerprintExt<'a> for ::mutask_tlv::TlvItem<'a, P256Fingerprint> {
+impl<'a> P256FingerprintExt<'a> for ::openprot_tlv::TlvItem<'a, P256Fingerprint> {
     #[inline(always)]
-    fn sha2_256(&self) -> Option<::mutask_tlv::TlvItem<'a, Sha2_256Digest>> {
-        ::mutask_tlv::TlvQuery::ext(self)
+    fn sha2_256(&self) -> Option<::openprot_tlv::TlvItem<'a, Sha2_256Digest>> {
+        ::openprot_tlv::TlvQuery::ext(self)
             .iter::<Sha2_256Digest>()
             .next()
     }
     #[inline(always)]
-    fn sha2_384(&self) -> Option<::mutask_tlv::TlvItem<'a, Sha2_384Digest>> {
-        ::mutask_tlv::TlvQuery::ext(self)
+    fn sha2_384(&self) -> Option<::openprot_tlv::TlvItem<'a, Sha2_384Digest>> {
+        ::openprot_tlv::TlvQuery::ext(self)
             .iter::<Sha2_384Digest>()
             .next()
     }
     #[inline(always)]
     fn digest(&self) -> Option<P256FingerprintDigest<'a>> {
-        use ::mutask_tlv::TlvQuery;
-        for item in ::mutask_tlv::TlvQuery::ext(self).iter::<::mutask_tlv::TlvAny>() {
+        use ::openprot_tlv::TlvQuery;
+        for item in ::openprot_tlv::TlvQuery::ext(self).iter::<::openprot_tlv::TlvAny>() {
             if let Some(val) = item.cast::<Sha2_256Digest>() {
                 return Some(P256FingerprintDigest::Sha2256(val));
             }
@@ -837,39 +841,39 @@ impl ::core::default::Default for SlhDsaFingerprint {
         ::zerocopy::FromZeros::new_zeroed()
     }
 }
-impl ::mutask_tlv::TlvObject for SlhDsaFingerprint {
-    type Extension = ::mutask_tlv::TlvData;
+impl ::openprot_tlv::TlvObject for SlhDsaFingerprint {
+    type Extension = ::openprot_tlv::TlvData;
     const TAG: u32 = u32::from_le_bytes(*b"SPX+");
-    fn make_ext<'a>(_header: &::mutask_tlv::TlvHeader, extra: &'a [u32]) -> &'a Self::Extension {
-        ::mutask_tlv::TlvData::overlay(extra)
+    fn make_ext<'a>(_header: &::openprot_tlv::TlvHeader, extra: &'a [u32]) -> &'a Self::Extension {
+        ::openprot_tlv::TlvData::overlay(extra)
     }
 }
 pub enum SlhDsaFingerprintDigest<'a> {
-    Sha2256(::mutask_tlv::TlvItem<'a, Sha2_256Digest>),
-    Sha2384(::mutask_tlv::TlvItem<'a, Sha2_384Digest>),
+    Sha2256(::openprot_tlv::TlvItem<'a, Sha2_256Digest>),
+    Sha2384(::openprot_tlv::TlvItem<'a, Sha2_384Digest>),
 }
 pub trait SlhDsaFingerprintExt<'a> {
-    fn sha2_256(&self) -> Option<::mutask_tlv::TlvItem<'a, Sha2_256Digest>>;
-    fn sha2_384(&self) -> Option<::mutask_tlv::TlvItem<'a, Sha2_384Digest>>;
+    fn sha2_256(&self) -> Option<::openprot_tlv::TlvItem<'a, Sha2_256Digest>>;
+    fn sha2_384(&self) -> Option<::openprot_tlv::TlvItem<'a, Sha2_384Digest>>;
     fn digest(&self) -> Option<SlhDsaFingerprintDigest<'a>>;
 }
-impl<'a> SlhDsaFingerprintExt<'a> for ::mutask_tlv::TlvItem<'a, SlhDsaFingerprint> {
+impl<'a> SlhDsaFingerprintExt<'a> for ::openprot_tlv::TlvItem<'a, SlhDsaFingerprint> {
     #[inline(always)]
-    fn sha2_256(&self) -> Option<::mutask_tlv::TlvItem<'a, Sha2_256Digest>> {
-        ::mutask_tlv::TlvQuery::ext(self)
+    fn sha2_256(&self) -> Option<::openprot_tlv::TlvItem<'a, Sha2_256Digest>> {
+        ::openprot_tlv::TlvQuery::ext(self)
             .iter::<Sha2_256Digest>()
             .next()
     }
     #[inline(always)]
-    fn sha2_384(&self) -> Option<::mutask_tlv::TlvItem<'a, Sha2_384Digest>> {
-        ::mutask_tlv::TlvQuery::ext(self)
+    fn sha2_384(&self) -> Option<::openprot_tlv::TlvItem<'a, Sha2_384Digest>> {
+        ::openprot_tlv::TlvQuery::ext(self)
             .iter::<Sha2_384Digest>()
             .next()
     }
     #[inline(always)]
     fn digest(&self) -> Option<SlhDsaFingerprintDigest<'a>> {
-        use ::mutask_tlv::TlvQuery;
-        for item in ::mutask_tlv::TlvQuery::ext(self).iter::<::mutask_tlv::TlvAny>() {
+        use ::openprot_tlv::TlvQuery;
+        for item in ::openprot_tlv::TlvQuery::ext(self).iter::<::openprot_tlv::TlvAny>() {
             if let Some(val) = item.cast::<Sha2_256Digest>() {
                 return Some(SlhDsaFingerprintDigest::Sha2256(val));
             }
@@ -893,39 +897,39 @@ impl ::core::default::Default for Rsa2048Fingerprint {
         ::zerocopy::FromZeros::new_zeroed()
     }
 }
-impl ::mutask_tlv::TlvObject for Rsa2048Fingerprint {
-    type Extension = ::mutask_tlv::TlvData;
+impl ::openprot_tlv::TlvObject for Rsa2048Fingerprint {
+    type Extension = ::openprot_tlv::TlvData;
     const TAG: u32 = u32::from_le_bytes(*b"RSA2");
-    fn make_ext<'a>(_header: &::mutask_tlv::TlvHeader, extra: &'a [u32]) -> &'a Self::Extension {
-        ::mutask_tlv::TlvData::overlay(extra)
+    fn make_ext<'a>(_header: &::openprot_tlv::TlvHeader, extra: &'a [u32]) -> &'a Self::Extension {
+        ::openprot_tlv::TlvData::overlay(extra)
     }
 }
 pub enum Rsa2048FingerprintDigest<'a> {
-    Sha2256(::mutask_tlv::TlvItem<'a, Sha2_256Digest>),
-    Sha2384(::mutask_tlv::TlvItem<'a, Sha2_384Digest>),
+    Sha2256(::openprot_tlv::TlvItem<'a, Sha2_256Digest>),
+    Sha2384(::openprot_tlv::TlvItem<'a, Sha2_384Digest>),
 }
 pub trait Rsa2048FingerprintExt<'a> {
-    fn sha2_256(&self) -> Option<::mutask_tlv::TlvItem<'a, Sha2_256Digest>>;
-    fn sha2_384(&self) -> Option<::mutask_tlv::TlvItem<'a, Sha2_384Digest>>;
+    fn sha2_256(&self) -> Option<::openprot_tlv::TlvItem<'a, Sha2_256Digest>>;
+    fn sha2_384(&self) -> Option<::openprot_tlv::TlvItem<'a, Sha2_384Digest>>;
     fn digest(&self) -> Option<Rsa2048FingerprintDigest<'a>>;
 }
-impl<'a> Rsa2048FingerprintExt<'a> for ::mutask_tlv::TlvItem<'a, Rsa2048Fingerprint> {
+impl<'a> Rsa2048FingerprintExt<'a> for ::openprot_tlv::TlvItem<'a, Rsa2048Fingerprint> {
     #[inline(always)]
-    fn sha2_256(&self) -> Option<::mutask_tlv::TlvItem<'a, Sha2_256Digest>> {
-        ::mutask_tlv::TlvQuery::ext(self)
+    fn sha2_256(&self) -> Option<::openprot_tlv::TlvItem<'a, Sha2_256Digest>> {
+        ::openprot_tlv::TlvQuery::ext(self)
             .iter::<Sha2_256Digest>()
             .next()
     }
     #[inline(always)]
-    fn sha2_384(&self) -> Option<::mutask_tlv::TlvItem<'a, Sha2_384Digest>> {
-        ::mutask_tlv::TlvQuery::ext(self)
+    fn sha2_384(&self) -> Option<::openprot_tlv::TlvItem<'a, Sha2_384Digest>> {
+        ::openprot_tlv::TlvQuery::ext(self)
             .iter::<Sha2_384Digest>()
             .next()
     }
     #[inline(always)]
     fn digest(&self) -> Option<Rsa2048FingerprintDigest<'a>> {
-        use ::mutask_tlv::TlvQuery;
-        for item in ::mutask_tlv::TlvQuery::ext(self).iter::<::mutask_tlv::TlvAny>() {
+        use ::openprot_tlv::TlvQuery;
+        for item in ::openprot_tlv::TlvQuery::ext(self).iter::<::openprot_tlv::TlvAny>() {
             if let Some(val) = item.cast::<Sha2_256Digest>() {
                 return Some(Rsa2048FingerprintDigest::Sha2256(val));
             }
@@ -949,39 +953,39 @@ impl ::core::default::Default for Rsa3072Fingerprint {
         ::zerocopy::FromZeros::new_zeroed()
     }
 }
-impl ::mutask_tlv::TlvObject for Rsa3072Fingerprint {
-    type Extension = ::mutask_tlv::TlvData;
+impl ::openprot_tlv::TlvObject for Rsa3072Fingerprint {
+    type Extension = ::openprot_tlv::TlvData;
     const TAG: u32 = u32::from_le_bytes(*b"RSA3");
-    fn make_ext<'a>(_header: &::mutask_tlv::TlvHeader, extra: &'a [u32]) -> &'a Self::Extension {
-        ::mutask_tlv::TlvData::overlay(extra)
+    fn make_ext<'a>(_header: &::openprot_tlv::TlvHeader, extra: &'a [u32]) -> &'a Self::Extension {
+        ::openprot_tlv::TlvData::overlay(extra)
     }
 }
 pub enum Rsa3072FingerprintDigest<'a> {
-    Sha2256(::mutask_tlv::TlvItem<'a, Sha2_256Digest>),
-    Sha2384(::mutask_tlv::TlvItem<'a, Sha2_384Digest>),
+    Sha2256(::openprot_tlv::TlvItem<'a, Sha2_256Digest>),
+    Sha2384(::openprot_tlv::TlvItem<'a, Sha2_384Digest>),
 }
 pub trait Rsa3072FingerprintExt<'a> {
-    fn sha2_256(&self) -> Option<::mutask_tlv::TlvItem<'a, Sha2_256Digest>>;
-    fn sha2_384(&self) -> Option<::mutask_tlv::TlvItem<'a, Sha2_384Digest>>;
+    fn sha2_256(&self) -> Option<::openprot_tlv::TlvItem<'a, Sha2_256Digest>>;
+    fn sha2_384(&self) -> Option<::openprot_tlv::TlvItem<'a, Sha2_384Digest>>;
     fn digest(&self) -> Option<Rsa3072FingerprintDigest<'a>>;
 }
-impl<'a> Rsa3072FingerprintExt<'a> for ::mutask_tlv::TlvItem<'a, Rsa3072Fingerprint> {
+impl<'a> Rsa3072FingerprintExt<'a> for ::openprot_tlv::TlvItem<'a, Rsa3072Fingerprint> {
     #[inline(always)]
-    fn sha2_256(&self) -> Option<::mutask_tlv::TlvItem<'a, Sha2_256Digest>> {
-        ::mutask_tlv::TlvQuery::ext(self)
+    fn sha2_256(&self) -> Option<::openprot_tlv::TlvItem<'a, Sha2_256Digest>> {
+        ::openprot_tlv::TlvQuery::ext(self)
             .iter::<Sha2_256Digest>()
             .next()
     }
     #[inline(always)]
-    fn sha2_384(&self) -> Option<::mutask_tlv::TlvItem<'a, Sha2_384Digest>> {
-        ::mutask_tlv::TlvQuery::ext(self)
+    fn sha2_384(&self) -> Option<::openprot_tlv::TlvItem<'a, Sha2_384Digest>> {
+        ::openprot_tlv::TlvQuery::ext(self)
             .iter::<Sha2_384Digest>()
             .next()
     }
     #[inline(always)]
     fn digest(&self) -> Option<Rsa3072FingerprintDigest<'a>> {
-        use ::mutask_tlv::TlvQuery;
-        for item in ::mutask_tlv::TlvQuery::ext(self).iter::<::mutask_tlv::TlvAny>() {
+        use ::openprot_tlv::TlvQuery;
+        for item in ::openprot_tlv::TlvQuery::ext(self).iter::<::openprot_tlv::TlvAny>() {
             if let Some(val) = item.cast::<Sha2_256Digest>() {
                 return Some(Rsa3072FingerprintDigest::Sha2256(val));
             }
@@ -1005,39 +1009,39 @@ impl ::core::default::Default for Rsa4096Fingerprint {
         ::zerocopy::FromZeros::new_zeroed()
     }
 }
-impl ::mutask_tlv::TlvObject for Rsa4096Fingerprint {
-    type Extension = ::mutask_tlv::TlvData;
+impl ::openprot_tlv::TlvObject for Rsa4096Fingerprint {
+    type Extension = ::openprot_tlv::TlvData;
     const TAG: u32 = u32::from_le_bytes(*b"RSA4");
-    fn make_ext<'a>(_header: &::mutask_tlv::TlvHeader, extra: &'a [u32]) -> &'a Self::Extension {
-        ::mutask_tlv::TlvData::overlay(extra)
+    fn make_ext<'a>(_header: &::openprot_tlv::TlvHeader, extra: &'a [u32]) -> &'a Self::Extension {
+        ::openprot_tlv::TlvData::overlay(extra)
     }
 }
 pub enum Rsa4096FingerprintDigest<'a> {
-    Sha2256(::mutask_tlv::TlvItem<'a, Sha2_256Digest>),
-    Sha2384(::mutask_tlv::TlvItem<'a, Sha2_384Digest>),
+    Sha2256(::openprot_tlv::TlvItem<'a, Sha2_256Digest>),
+    Sha2384(::openprot_tlv::TlvItem<'a, Sha2_384Digest>),
 }
 pub trait Rsa4096FingerprintExt<'a> {
-    fn sha2_256(&self) -> Option<::mutask_tlv::TlvItem<'a, Sha2_256Digest>>;
-    fn sha2_384(&self) -> Option<::mutask_tlv::TlvItem<'a, Sha2_384Digest>>;
+    fn sha2_256(&self) -> Option<::openprot_tlv::TlvItem<'a, Sha2_256Digest>>;
+    fn sha2_384(&self) -> Option<::openprot_tlv::TlvItem<'a, Sha2_384Digest>>;
     fn digest(&self) -> Option<Rsa4096FingerprintDigest<'a>>;
 }
-impl<'a> Rsa4096FingerprintExt<'a> for ::mutask_tlv::TlvItem<'a, Rsa4096Fingerprint> {
+impl<'a> Rsa4096FingerprintExt<'a> for ::openprot_tlv::TlvItem<'a, Rsa4096Fingerprint> {
     #[inline(always)]
-    fn sha2_256(&self) -> Option<::mutask_tlv::TlvItem<'a, Sha2_256Digest>> {
-        ::mutask_tlv::TlvQuery::ext(self)
+    fn sha2_256(&self) -> Option<::openprot_tlv::TlvItem<'a, Sha2_256Digest>> {
+        ::openprot_tlv::TlvQuery::ext(self)
             .iter::<Sha2_256Digest>()
             .next()
     }
     #[inline(always)]
-    fn sha2_384(&self) -> Option<::mutask_tlv::TlvItem<'a, Sha2_384Digest>> {
-        ::mutask_tlv::TlvQuery::ext(self)
+    fn sha2_384(&self) -> Option<::openprot_tlv::TlvItem<'a, Sha2_384Digest>> {
+        ::openprot_tlv::TlvQuery::ext(self)
             .iter::<Sha2_384Digest>()
             .next()
     }
     #[inline(always)]
     fn digest(&self) -> Option<Rsa4096FingerprintDigest<'a>> {
-        use ::mutask_tlv::TlvQuery;
-        for item in ::mutask_tlv::TlvQuery::ext(self).iter::<::mutask_tlv::TlvAny>() {
+        use ::openprot_tlv::TlvQuery;
+        for item in ::openprot_tlv::TlvQuery::ext(self).iter::<::openprot_tlv::TlvAny>() {
             if let Some(val) = item.cast::<Sha2_256Digest>() {
                 return Some(Rsa4096FingerprintDigest::Sha2256(val));
             }
@@ -1061,41 +1065,41 @@ impl ::core::default::Default for HybridP256SlhDsaFingerprint {
         ::zerocopy::FromZeros::new_zeroed()
     }
 }
-impl ::mutask_tlv::TlvObject for HybridP256SlhDsaFingerprint {
-    type Extension = ::mutask_tlv::TlvData;
+impl ::openprot_tlv::TlvObject for HybridP256SlhDsaFingerprint {
+    type Extension = ::openprot_tlv::TlvData;
     const TAG: u32 = u32::from_le_bytes(*b"H+S2");
-    fn make_ext<'a>(_header: &::mutask_tlv::TlvHeader, extra: &'a [u32]) -> &'a Self::Extension {
-        ::mutask_tlv::TlvData::overlay(extra)
+    fn make_ext<'a>(_header: &::openprot_tlv::TlvHeader, extra: &'a [u32]) -> &'a Self::Extension {
+        ::openprot_tlv::TlvData::overlay(extra)
     }
 }
 pub enum HybridP256SlhDsaFingerprintDigest<'a> {
-    Sha2256(::mutask_tlv::TlvItem<'a, Sha2_256Digest>),
-    Sha2384(::mutask_tlv::TlvItem<'a, Sha2_384Digest>),
+    Sha2256(::openprot_tlv::TlvItem<'a, Sha2_256Digest>),
+    Sha2384(::openprot_tlv::TlvItem<'a, Sha2_384Digest>),
 }
 pub trait HybridP256SlhDsaFingerprintExt<'a> {
-    fn sha2_256(&self) -> Option<::mutask_tlv::TlvItem<'a, Sha2_256Digest>>;
-    fn sha2_384(&self) -> Option<::mutask_tlv::TlvItem<'a, Sha2_384Digest>>;
+    fn sha2_256(&self) -> Option<::openprot_tlv::TlvItem<'a, Sha2_256Digest>>;
+    fn sha2_384(&self) -> Option<::openprot_tlv::TlvItem<'a, Sha2_384Digest>>;
     fn digest(&self) -> Option<HybridP256SlhDsaFingerprintDigest<'a>>;
 }
 impl<'a> HybridP256SlhDsaFingerprintExt<'a>
-    for ::mutask_tlv::TlvItem<'a, HybridP256SlhDsaFingerprint>
+    for ::openprot_tlv::TlvItem<'a, HybridP256SlhDsaFingerprint>
 {
     #[inline(always)]
-    fn sha2_256(&self) -> Option<::mutask_tlv::TlvItem<'a, Sha2_256Digest>> {
-        ::mutask_tlv::TlvQuery::ext(self)
+    fn sha2_256(&self) -> Option<::openprot_tlv::TlvItem<'a, Sha2_256Digest>> {
+        ::openprot_tlv::TlvQuery::ext(self)
             .iter::<Sha2_256Digest>()
             .next()
     }
     #[inline(always)]
-    fn sha2_384(&self) -> Option<::mutask_tlv::TlvItem<'a, Sha2_384Digest>> {
-        ::mutask_tlv::TlvQuery::ext(self)
+    fn sha2_384(&self) -> Option<::openprot_tlv::TlvItem<'a, Sha2_384Digest>> {
+        ::openprot_tlv::TlvQuery::ext(self)
             .iter::<Sha2_384Digest>()
             .next()
     }
     #[inline(always)]
     fn digest(&self) -> Option<HybridP256SlhDsaFingerprintDigest<'a>> {
-        use ::mutask_tlv::TlvQuery;
-        for item in ::mutask_tlv::TlvQuery::ext(self).iter::<::mutask_tlv::TlvAny>() {
+        use ::openprot_tlv::TlvQuery;
+        for item in ::openprot_tlv::TlvQuery::ext(self).iter::<::openprot_tlv::TlvAny>() {
             if let Some(val) = item.cast::<Sha2_256Digest>() {
                 return Some(HybridP256SlhDsaFingerprintDigest::Sha2256(val));
             }
@@ -1119,39 +1123,39 @@ impl ::core::default::Default for MlDsa44Fingerprint {
         ::zerocopy::FromZeros::new_zeroed()
     }
 }
-impl ::mutask_tlv::TlvObject for MlDsa44Fingerprint {
-    type Extension = ::mutask_tlv::TlvData;
+impl ::openprot_tlv::TlvObject for MlDsa44Fingerprint {
+    type Extension = ::openprot_tlv::TlvData;
     const TAG: u32 = u32::from_le_bytes(*b"ML44");
-    fn make_ext<'a>(_header: &::mutask_tlv::TlvHeader, extra: &'a [u32]) -> &'a Self::Extension {
-        ::mutask_tlv::TlvData::overlay(extra)
+    fn make_ext<'a>(_header: &::openprot_tlv::TlvHeader, extra: &'a [u32]) -> &'a Self::Extension {
+        ::openprot_tlv::TlvData::overlay(extra)
     }
 }
 pub enum MlDsa44FingerprintDigest<'a> {
-    Sha2256(::mutask_tlv::TlvItem<'a, Sha2_256Digest>),
-    Sha2384(::mutask_tlv::TlvItem<'a, Sha2_384Digest>),
+    Sha2256(::openprot_tlv::TlvItem<'a, Sha2_256Digest>),
+    Sha2384(::openprot_tlv::TlvItem<'a, Sha2_384Digest>),
 }
 pub trait MlDsa44FingerprintExt<'a> {
-    fn sha2_256(&self) -> Option<::mutask_tlv::TlvItem<'a, Sha2_256Digest>>;
-    fn sha2_384(&self) -> Option<::mutask_tlv::TlvItem<'a, Sha2_384Digest>>;
+    fn sha2_256(&self) -> Option<::openprot_tlv::TlvItem<'a, Sha2_256Digest>>;
+    fn sha2_384(&self) -> Option<::openprot_tlv::TlvItem<'a, Sha2_384Digest>>;
     fn digest(&self) -> Option<MlDsa44FingerprintDigest<'a>>;
 }
-impl<'a> MlDsa44FingerprintExt<'a> for ::mutask_tlv::TlvItem<'a, MlDsa44Fingerprint> {
+impl<'a> MlDsa44FingerprintExt<'a> for ::openprot_tlv::TlvItem<'a, MlDsa44Fingerprint> {
     #[inline(always)]
-    fn sha2_256(&self) -> Option<::mutask_tlv::TlvItem<'a, Sha2_256Digest>> {
-        ::mutask_tlv::TlvQuery::ext(self)
+    fn sha2_256(&self) -> Option<::openprot_tlv::TlvItem<'a, Sha2_256Digest>> {
+        ::openprot_tlv::TlvQuery::ext(self)
             .iter::<Sha2_256Digest>()
             .next()
     }
     #[inline(always)]
-    fn sha2_384(&self) -> Option<::mutask_tlv::TlvItem<'a, Sha2_384Digest>> {
-        ::mutask_tlv::TlvQuery::ext(self)
+    fn sha2_384(&self) -> Option<::openprot_tlv::TlvItem<'a, Sha2_384Digest>> {
+        ::openprot_tlv::TlvQuery::ext(self)
             .iter::<Sha2_384Digest>()
             .next()
     }
     #[inline(always)]
     fn digest(&self) -> Option<MlDsa44FingerprintDigest<'a>> {
-        use ::mutask_tlv::TlvQuery;
-        for item in ::mutask_tlv::TlvQuery::ext(self).iter::<::mutask_tlv::TlvAny>() {
+        use ::openprot_tlv::TlvQuery;
+        for item in ::openprot_tlv::TlvQuery::ext(self).iter::<::openprot_tlv::TlvAny>() {
             if let Some(val) = item.cast::<Sha2_256Digest>() {
                 return Some(MlDsa44FingerprintDigest::Sha2256(val));
             }
@@ -1175,41 +1179,41 @@ impl ::core::default::Default for HybridP256MlDsa44Fingerprint {
         ::zerocopy::FromZeros::new_zeroed()
     }
 }
-impl ::mutask_tlv::TlvObject for HybridP256MlDsa44Fingerprint {
-    type Extension = ::mutask_tlv::TlvData;
+impl ::openprot_tlv::TlvObject for HybridP256MlDsa44Fingerprint {
+    type Extension = ::openprot_tlv::TlvData;
     const TAG: u32 = u32::from_le_bytes(*b"M4P2");
-    fn make_ext<'a>(_header: &::mutask_tlv::TlvHeader, extra: &'a [u32]) -> &'a Self::Extension {
-        ::mutask_tlv::TlvData::overlay(extra)
+    fn make_ext<'a>(_header: &::openprot_tlv::TlvHeader, extra: &'a [u32]) -> &'a Self::Extension {
+        ::openprot_tlv::TlvData::overlay(extra)
     }
 }
 pub enum HybridP256MlDsa44FingerprintDigest<'a> {
-    Sha2256(::mutask_tlv::TlvItem<'a, Sha2_256Digest>),
-    Sha2384(::mutask_tlv::TlvItem<'a, Sha2_384Digest>),
+    Sha2256(::openprot_tlv::TlvItem<'a, Sha2_256Digest>),
+    Sha2384(::openprot_tlv::TlvItem<'a, Sha2_384Digest>),
 }
 pub trait HybridP256MlDsa44FingerprintExt<'a> {
-    fn sha2_256(&self) -> Option<::mutask_tlv::TlvItem<'a, Sha2_256Digest>>;
-    fn sha2_384(&self) -> Option<::mutask_tlv::TlvItem<'a, Sha2_384Digest>>;
+    fn sha2_256(&self) -> Option<::openprot_tlv::TlvItem<'a, Sha2_256Digest>>;
+    fn sha2_384(&self) -> Option<::openprot_tlv::TlvItem<'a, Sha2_384Digest>>;
     fn digest(&self) -> Option<HybridP256MlDsa44FingerprintDigest<'a>>;
 }
 impl<'a> HybridP256MlDsa44FingerprintExt<'a>
-    for ::mutask_tlv::TlvItem<'a, HybridP256MlDsa44Fingerprint>
+    for ::openprot_tlv::TlvItem<'a, HybridP256MlDsa44Fingerprint>
 {
     #[inline(always)]
-    fn sha2_256(&self) -> Option<::mutask_tlv::TlvItem<'a, Sha2_256Digest>> {
-        ::mutask_tlv::TlvQuery::ext(self)
+    fn sha2_256(&self) -> Option<::openprot_tlv::TlvItem<'a, Sha2_256Digest>> {
+        ::openprot_tlv::TlvQuery::ext(self)
             .iter::<Sha2_256Digest>()
             .next()
     }
     #[inline(always)]
-    fn sha2_384(&self) -> Option<::mutask_tlv::TlvItem<'a, Sha2_384Digest>> {
-        ::mutask_tlv::TlvQuery::ext(self)
+    fn sha2_384(&self) -> Option<::openprot_tlv::TlvItem<'a, Sha2_384Digest>> {
+        ::openprot_tlv::TlvQuery::ext(self)
             .iter::<Sha2_384Digest>()
             .next()
     }
     #[inline(always)]
     fn digest(&self) -> Option<HybridP256MlDsa44FingerprintDigest<'a>> {
-        use ::mutask_tlv::TlvQuery;
-        for item in ::mutask_tlv::TlvQuery::ext(self).iter::<::mutask_tlv::TlvAny>() {
+        use ::openprot_tlv::TlvQuery;
+        for item in ::openprot_tlv::TlvQuery::ext(self).iter::<::openprot_tlv::TlvAny>() {
             if let Some(val) = item.cast::<Sha2_256Digest>() {
                 return Some(HybridP256MlDsa44FingerprintDigest::Sha2256(val));
             }
@@ -1236,87 +1240,95 @@ impl ::core::default::Default for KeyFingerprint {
         ::zerocopy::FromZeros::new_zeroed()
     }
 }
-impl ::mutask_tlv::TlvObject for KeyFingerprint {
-    type Extension = ::mutask_tlv::TlvData;
+impl ::openprot_tlv::TlvObject for KeyFingerprint {
+    type Extension = ::openprot_tlv::TlvData;
     const TAG: u32 = u32::from_le_bytes(*b"KFIP");
-    fn make_ext<'a>(_header: &::mutask_tlv::TlvHeader, extra: &'a [u32]) -> &'a Self::Extension {
-        ::mutask_tlv::TlvData::overlay(extra)
+    fn make_ext<'a>(_header: &::openprot_tlv::TlvHeader, extra: &'a [u32]) -> &'a Self::Extension {
+        ::openprot_tlv::TlvData::overlay(extra)
     }
 }
 pub enum KeyFingerprintKeyType<'a> {
-    P256(::mutask_tlv::TlvItem<'a, P256Fingerprint>),
-    Slhdsa(::mutask_tlv::TlvItem<'a, SlhDsaFingerprint>),
-    Rsa2048(::mutask_tlv::TlvItem<'a, Rsa2048Fingerprint>),
-    Rsa3072(::mutask_tlv::TlvItem<'a, Rsa3072Fingerprint>),
-    Rsa4096(::mutask_tlv::TlvItem<'a, Rsa4096Fingerprint>),
-    HybridP256Slhdsa(::mutask_tlv::TlvItem<'a, HybridP256SlhDsaFingerprint>),
-    Mldsa(::mutask_tlv::TlvItem<'a, MlDsa44Fingerprint>),
-    HybridP256Mldsa(::mutask_tlv::TlvItem<'a, HybridP256MlDsa44Fingerprint>),
+    P256(::openprot_tlv::TlvItem<'a, P256Fingerprint>),
+    Slhdsa(::openprot_tlv::TlvItem<'a, SlhDsaFingerprint>),
+    Rsa2048(::openprot_tlv::TlvItem<'a, Rsa2048Fingerprint>),
+    Rsa3072(::openprot_tlv::TlvItem<'a, Rsa3072Fingerprint>),
+    Rsa4096(::openprot_tlv::TlvItem<'a, Rsa4096Fingerprint>),
+    HybridP256Slhdsa(::openprot_tlv::TlvItem<'a, HybridP256SlhDsaFingerprint>),
+    Mldsa(::openprot_tlv::TlvItem<'a, MlDsa44Fingerprint>),
+    HybridP256Mldsa(::openprot_tlv::TlvItem<'a, HybridP256MlDsa44Fingerprint>),
 }
 pub trait KeyFingerprintExt<'a> {
-    fn p256(&self) -> Option<::mutask_tlv::TlvItem<'a, P256Fingerprint>>;
-    fn slhdsa(&self) -> Option<::mutask_tlv::TlvItem<'a, SlhDsaFingerprint>>;
-    fn rsa2048(&self) -> Option<::mutask_tlv::TlvItem<'a, Rsa2048Fingerprint>>;
-    fn rsa3072(&self) -> Option<::mutask_tlv::TlvItem<'a, Rsa3072Fingerprint>>;
-    fn rsa4096(&self) -> Option<::mutask_tlv::TlvItem<'a, Rsa4096Fingerprint>>;
-    fn hybrid_p256_slhdsa(&self) -> Option<::mutask_tlv::TlvItem<'a, HybridP256SlhDsaFingerprint>>;
-    fn mldsa(&self) -> Option<::mutask_tlv::TlvItem<'a, MlDsa44Fingerprint>>;
-    fn hybrid_p256_mldsa(&self) -> Option<::mutask_tlv::TlvItem<'a, HybridP256MlDsa44Fingerprint>>;
+    fn p256(&self) -> Option<::openprot_tlv::TlvItem<'a, P256Fingerprint>>;
+    fn slhdsa(&self) -> Option<::openprot_tlv::TlvItem<'a, SlhDsaFingerprint>>;
+    fn rsa2048(&self) -> Option<::openprot_tlv::TlvItem<'a, Rsa2048Fingerprint>>;
+    fn rsa3072(&self) -> Option<::openprot_tlv::TlvItem<'a, Rsa3072Fingerprint>>;
+    fn rsa4096(&self) -> Option<::openprot_tlv::TlvItem<'a, Rsa4096Fingerprint>>;
+    fn hybrid_p256_slhdsa(
+        &self,
+    ) -> Option<::openprot_tlv::TlvItem<'a, HybridP256SlhDsaFingerprint>>;
+    fn mldsa(&self) -> Option<::openprot_tlv::TlvItem<'a, MlDsa44Fingerprint>>;
+    fn hybrid_p256_mldsa(
+        &self,
+    ) -> Option<::openprot_tlv::TlvItem<'a, HybridP256MlDsa44Fingerprint>>;
     fn key_type(&self) -> Option<KeyFingerprintKeyType<'a>>;
 }
-impl<'a> KeyFingerprintExt<'a> for ::mutask_tlv::TlvItem<'a, KeyFingerprint> {
+impl<'a> KeyFingerprintExt<'a> for ::openprot_tlv::TlvItem<'a, KeyFingerprint> {
     #[inline(always)]
-    fn p256(&self) -> Option<::mutask_tlv::TlvItem<'a, P256Fingerprint>> {
-        ::mutask_tlv::TlvQuery::ext(self)
+    fn p256(&self) -> Option<::openprot_tlv::TlvItem<'a, P256Fingerprint>> {
+        ::openprot_tlv::TlvQuery::ext(self)
             .iter::<P256Fingerprint>()
             .next()
     }
     #[inline(always)]
-    fn slhdsa(&self) -> Option<::mutask_tlv::TlvItem<'a, SlhDsaFingerprint>> {
-        ::mutask_tlv::TlvQuery::ext(self)
+    fn slhdsa(&self) -> Option<::openprot_tlv::TlvItem<'a, SlhDsaFingerprint>> {
+        ::openprot_tlv::TlvQuery::ext(self)
             .iter::<SlhDsaFingerprint>()
             .next()
     }
     #[inline(always)]
-    fn rsa2048(&self) -> Option<::mutask_tlv::TlvItem<'a, Rsa2048Fingerprint>> {
-        ::mutask_tlv::TlvQuery::ext(self)
+    fn rsa2048(&self) -> Option<::openprot_tlv::TlvItem<'a, Rsa2048Fingerprint>> {
+        ::openprot_tlv::TlvQuery::ext(self)
             .iter::<Rsa2048Fingerprint>()
             .next()
     }
     #[inline(always)]
-    fn rsa3072(&self) -> Option<::mutask_tlv::TlvItem<'a, Rsa3072Fingerprint>> {
-        ::mutask_tlv::TlvQuery::ext(self)
+    fn rsa3072(&self) -> Option<::openprot_tlv::TlvItem<'a, Rsa3072Fingerprint>> {
+        ::openprot_tlv::TlvQuery::ext(self)
             .iter::<Rsa3072Fingerprint>()
             .next()
     }
     #[inline(always)]
-    fn rsa4096(&self) -> Option<::mutask_tlv::TlvItem<'a, Rsa4096Fingerprint>> {
-        ::mutask_tlv::TlvQuery::ext(self)
+    fn rsa4096(&self) -> Option<::openprot_tlv::TlvItem<'a, Rsa4096Fingerprint>> {
+        ::openprot_tlv::TlvQuery::ext(self)
             .iter::<Rsa4096Fingerprint>()
             .next()
     }
     #[inline(always)]
-    fn hybrid_p256_slhdsa(&self) -> Option<::mutask_tlv::TlvItem<'a, HybridP256SlhDsaFingerprint>> {
-        ::mutask_tlv::TlvQuery::ext(self)
+    fn hybrid_p256_slhdsa(
+        &self,
+    ) -> Option<::openprot_tlv::TlvItem<'a, HybridP256SlhDsaFingerprint>> {
+        ::openprot_tlv::TlvQuery::ext(self)
             .iter::<HybridP256SlhDsaFingerprint>()
             .next()
     }
     #[inline(always)]
-    fn mldsa(&self) -> Option<::mutask_tlv::TlvItem<'a, MlDsa44Fingerprint>> {
-        ::mutask_tlv::TlvQuery::ext(self)
+    fn mldsa(&self) -> Option<::openprot_tlv::TlvItem<'a, MlDsa44Fingerprint>> {
+        ::openprot_tlv::TlvQuery::ext(self)
             .iter::<MlDsa44Fingerprint>()
             .next()
     }
     #[inline(always)]
-    fn hybrid_p256_mldsa(&self) -> Option<::mutask_tlv::TlvItem<'a, HybridP256MlDsa44Fingerprint>> {
-        ::mutask_tlv::TlvQuery::ext(self)
+    fn hybrid_p256_mldsa(
+        &self,
+    ) -> Option<::openprot_tlv::TlvItem<'a, HybridP256MlDsa44Fingerprint>> {
+        ::openprot_tlv::TlvQuery::ext(self)
             .iter::<HybridP256MlDsa44Fingerprint>()
             .next()
     }
     #[inline(always)]
     fn key_type(&self) -> Option<KeyFingerprintKeyType<'a>> {
-        use ::mutask_tlv::TlvQuery;
-        for item in ::mutask_tlv::TlvQuery::ext(self).iter::<::mutask_tlv::TlvAny>() {
+        use ::openprot_tlv::TlvQuery;
+        for item in ::openprot_tlv::TlvQuery::ext(self).iter::<::openprot_tlv::TlvAny>() {
             if let Some(val) = item.cast::<P256Fingerprint>() {
                 return Some(KeyFingerprintKeyType::P256(val));
             }
@@ -1361,11 +1373,11 @@ impl ::core::default::Default for Kmac256Seal {
         ::zerocopy::FromZeros::new_zeroed()
     }
 }
-impl ::mutask_tlv::TlvObject for Kmac256Seal {
+impl ::openprot_tlv::TlvObject for Kmac256Seal {
     type Extension = [u8];
     const TAG: u32 = u32::from_le_bytes(*b"KMSL");
-    fn make_ext<'a>(header: &::mutask_tlv::TlvHeader, extra: &'a [u32]) -> &'a Self::Extension {
-        ::mutask_tlv::unpad(header, extra)
+    fn make_ext<'a>(header: &::openprot_tlv::TlvHeader, extra: &'a [u32]) -> &'a Self::Extension {
+        ::openprot_tlv::unpad(header, extra)
     }
 }
 
@@ -1381,31 +1393,31 @@ impl ::core::default::Default for KRSeal {
         ::zerocopy::FromZeros::new_zeroed()
     }
 }
-impl ::mutask_tlv::TlvObject for KRSeal {
-    type Extension = ::mutask_tlv::TlvData;
+impl ::openprot_tlv::TlvObject for KRSeal {
+    type Extension = ::openprot_tlv::TlvData;
     const TAG: u32 = u32::from_le_bytes(*b"SEAL");
-    fn make_ext<'a>(_header: &::mutask_tlv::TlvHeader, extra: &'a [u32]) -> &'a Self::Extension {
-        ::mutask_tlv::TlvData::overlay(extra)
+    fn make_ext<'a>(_header: &::openprot_tlv::TlvHeader, extra: &'a [u32]) -> &'a Self::Extension {
+        ::openprot_tlv::TlvData::overlay(extra)
     }
 }
 pub enum KRSealSeal<'a> {
-    Kmsl(::mutask_tlv::TlvItem<'a, Kmac256Seal>),
+    Kmsl(::openprot_tlv::TlvItem<'a, Kmac256Seal>),
 }
 pub trait KRSealExt<'a> {
-    fn kmsl(&self) -> Option<::mutask_tlv::TlvItem<'a, Kmac256Seal>>;
+    fn kmsl(&self) -> Option<::openprot_tlv::TlvItem<'a, Kmac256Seal>>;
     fn seal(&self) -> Option<KRSealSeal<'a>>;
 }
-impl<'a> KRSealExt<'a> for ::mutask_tlv::TlvItem<'a, KRSeal> {
+impl<'a> KRSealExt<'a> for ::openprot_tlv::TlvItem<'a, KRSeal> {
     #[inline(always)]
-    fn kmsl(&self) -> Option<::mutask_tlv::TlvItem<'a, Kmac256Seal>> {
-        ::mutask_tlv::TlvQuery::ext(self)
+    fn kmsl(&self) -> Option<::openprot_tlv::TlvItem<'a, Kmac256Seal>> {
+        ::openprot_tlv::TlvQuery::ext(self)
             .iter::<Kmac256Seal>()
             .next()
     }
     #[inline(always)]
     fn seal(&self) -> Option<KRSealSeal<'a>> {
-        use ::mutask_tlv::TlvQuery;
-        for item in ::mutask_tlv::TlvQuery::ext(self).iter::<::mutask_tlv::TlvAny>() {
+        use ::openprot_tlv::TlvQuery;
+        for item in ::openprot_tlv::TlvQuery::ext(self).iter::<::openprot_tlv::TlvAny>() {
             if let Some(val) = item.cast::<Kmac256Seal>() {
                 return Some(KRSealSeal::Kmsl(val));
             }
