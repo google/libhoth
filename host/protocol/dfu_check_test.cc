@@ -32,10 +32,10 @@ using ::testing::DoAll;
 using ::testing::ElementsAreArray;
 using ::testing::Return;
 
-constexpr char kTestData[] = "protocol/test/test_fwupdate.bin";
+constexpr char kTestData[] = "host/protocol/test/test_fwupdate.bin";
 // Like kTestData, but with ROM_EXT 3.1, and app 4.2 at the 88k offset instead
 // of 64k.
-constexpr char kTestData88k[] = "protocol/test/test_fwupdate_88k.bin";
+constexpr char kTestData88k[] = "host/protocol/test/test_fwupdate_88k.bin";
 
 // Helper to manage test image lifetime
 struct MappedFile {

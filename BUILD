@@ -23,12 +23,12 @@ genrule(
 cc_library(
     name = "libhoth_transports_headers",
     hdrs = [
-        "//transports:headers",
+        "//host/transports:headers",
     ],
     include_prefix = "libhoth/transports",
-    strip_include_prefix = "transports",
+    strip_include_prefix = "host/transports",
     deps = [
-        "//protocol:libhoth_status",
+        "//host/protocol:libhoth_status",
         "@libusb",
     ],
 )
@@ -36,12 +36,12 @@ cc_library(
 cc_library(
     name = "libhoth_transports_headers_legacy",
     hdrs = [
-        "//transports:headers",
+        "//host/transports:headers",
     ],
     include_prefix = "transports",
-    strip_include_prefix = "transports",
+    strip_include_prefix = "host/transports",
     deps = [
-        "//protocol:libhoth_status",
+        "//host/protocol:libhoth_status",
         "@libusb",
     ],
 )
@@ -52,10 +52,10 @@ cc_library(
     deps = [
         ":libhoth_transports_headers",
         ":libhoth_transports_headers_legacy",
-        "//transports:libhoth_device",
-        "//transports:libhoth_mtd",
-        "//transports:libhoth_spi",
-        "//transports:libhoth_usb",
+        "//host/transports:libhoth_device",
+        "//host/transports:libhoth_mtd",
+        "//host/transports:libhoth_spi",
+        "//host/transports:libhoth_usb",
     ],
 )
 

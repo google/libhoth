@@ -19,8 +19,8 @@
 #include <stdbool.h>
 #include <stdint.h>
 
-#include "host_cmd.h"
 #include "protocol/console.h"
+#include "protocol/host_cmd.h"
 #include "protocol/status.h"
 #include "transports/libhoth_device.h"
 
