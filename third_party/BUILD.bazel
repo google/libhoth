@@ -53,3 +53,48 @@ alias(
     name = "thiserror",
     actual = "@crates_libhoth//:thiserror",
 )
+
+alias(
+    name = "argh",
+    actual = "@crates_libhoth//:argh",
+)
+
+alias(
+    name = "base64",
+    actual = "@crates_libhoth//:base64",
+)
+
+alias(
+    name = "bitfield_struct",
+    actual = "@crates_libhoth_nostd//:bitfield-struct",
+)
+
+alias(
+    name = "bstr",
+    actual = "@crates_libhoth_nostd//:bstr",
+)
+
+alias(
+    name = "difflib",
+    actual = "@crates_libhoth//:difflib",
+)
+
+alias(
+    name = "proc_macro2",
+    actual = "@crates_libhoth//:proc-macro2",
+)
+
+alias(
+    name = "quote",
+    actual = "@crates_libhoth//:quote",
+)
+
+alias(
+    name = "serde",
+    actual = "@crates_libhoth//:serde",
+)
+
+alias(
+    name = "serde_json",
+    actual = "@crates_libhoth//:serde_json",
+)

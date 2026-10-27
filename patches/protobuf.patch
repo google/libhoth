@@ -1,0 +1,36 @@
+diff --git a/MODULE.bazel b/MODULE.bazel
+--- a/MODULE.bazel
++++ b/MODULE.bazel
+@@ -213,7 +213,7 @@
+ )
+ crate.spec(
+     package = "syn",
+-    version = ">=2",
++    version = "2",
+ )
+ crate.from_specs()
+ use_repo(crate, crate_index = "crates")
+diff --git a/rust/BUILD b/rust/BUILD
+--- a/rust/BUILD
++++ b/rust/BUILD
+@@ -335,7 +335,7 @@
+     flag_values = {
+         ":rust_proto_library_kernel": "upb",
+     },
+-    visibility = ["//:__subpackages__"],
++    visibility = ["//visibility:public"],
+ )
+ 
+ pkg_files(
+diff --git a/rust/defs.bzl b/rust/defs.bzl
+--- a/rust/defs.bzl
++++ b/rust/defs.bzl
+@@ -36,7 +36,7 @@
+     native.alias(
+         name = name + "_rust_proto",
+         actual = select({
+-            "//rust:use_upb_kernel": name + "_upb_rust_proto",
++            Label("//rust:use_upb_kernel"): name + "_upb_rust_proto",
+             "//conditions:default": name + "_cpp_rust_proto",
+         }),
+         **alias_args
