@@ -32,8 +32,9 @@ extend google.protobuf.FieldOptions {
   // Can be a multi-bit range (e.g., "7:3") or a single bit (e.g., "0").
   string bit_range = 12347;
 
-  // Indicates that a string or bytes field is stored as the unpadded variable-length
-  // extra data following the fixed payload fields of the TLV record.
+  // Indicates that a string or bytes field is stored as the unpadded
+  // variable-length extra data following the fixed payload fields of the TLV
+  // record.
   bool extra_data = 12348;
 }
 
@@ -45,7 +46,8 @@ extend google.protobuf.MessageOptions {
 }
 
 extend google.protobuf.EnumOptions {
-  // The backing primitive integer type for this enum (e.g. "u8", "u16", "i32", "u32").
-  // If present, this enum is generated as a zero-copy open enum wrapping this type.
+  // The backing primitive integer type for this enum (e.g. "u8", "u16", "i32",
+  // "u32"). If present, this enum is generated as a zero-copy open enum
+  // wrapping this type.
   string raw_type = 12345;
 }

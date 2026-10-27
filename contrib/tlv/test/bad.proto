@@ -23,17 +23,20 @@ message NestedMsg {
   uint32 dummy = 1 [(openprot.tlv.offset) = 0];
 }
 
-// 1. Message with an unaligned offset for a 4-byte integer (offset 3 is not aligned to 4)
+// 1. Message with an unaligned offset for a 4-byte integer (offset 3 is not
+// aligned to 4)
 message MessageUnalignedOffset {
   option (openprot.tlv.tlv_fourcc) = "UNAL";
   uint32 val = 1 [(openprot.tlv.offset) = 3];
 }
 
-// 2. Message with overlapping fields in the fixed struct (both naturally aligned, but overlapping)
+// 2. Message with overlapping fields in the fixed struct (both naturally
+// aligned, but overlapping)
 message MessageOverlappingFields {
   option (openprot.tlv.tlv_fourcc) = "OVER";
   uint64 val1 = 1 [(openprot.tlv.offset) = 0];  // Bytes 0-7 (aligned at 0)
-  uint32 val2 = 2 [(openprot.tlv.offset) = 4];  // Bytes 4-7 (aligned at 4, overlaps!)
+  uint32 val2 = 2
+      [(openprot.tlv.offset) = 4];  // Bytes 4-7 (aligned at 4, overlaps!)
 }
 
 // 4. Message with a primitive field missing the offset option
@@ -51,10 +54,7 @@ message MessageMissingTypeOption {
 // 6. Message with an invalid type override (u24 is invalid in Rust)
 message MessageInvalidTypeOption {
   option (openprot.tlv.tlv_fourcc) = "ITYP";
-  uint32 val = 1 [
-    (openprot.tlv.offset) = 0,
-    (openprot.tlv.type) = "u24"
-  ];
+  uint32 val = 1 [(openprot.tlv.offset) = 0, (openprot.tlv.type) = "u24"];
 }
 
 // 7. Message with an unsupported field type (e.g. string without offset)
@@ -88,7 +88,8 @@ message MessageTypeInBitPacked {
   ];
 }
 
-// 10. Message with bit_range on a non-packable type (string) in a bit-packed message
+// 10. Message with bit_range on a non-packable type (string) in a bit-packed
+// message
 message MessageBitRangeOnNonPackableType {
   option (openprot.tlv.bit_packed) = "u32";
   string name = 1 [(openprot.tlv.bit_range) = "7:0"];  // Non-packable!
@@ -118,7 +119,8 @@ message NestedMsgWithTlv {
   NestedMsg sub = 1;  // Dynamic sub-TLV!
 }
 
-// 12. Message with a nested message that has an offset but is not packable (it has a dynamic sub-TLV)
+// 12. Message with a nested message that has an offset but is not packable (it
+// has a dynamic sub-TLV)
 message MessageNestedMessageNotPackable {
   option (openprot.tlv.tlv_fourcc) = "NNPK";
   NestedMsgWithTlv nested = 1 [(openprot.tlv.offset) = 0];
@@ -131,11 +133,12 @@ message LargeNestedMsg {
   uint32 val4 = 4 [(openprot.tlv.offset) = 12];
 }
 
-// 13. Message with a field overlapping an inline nested standard struct (fixed sub-message)
+// 13. Message with a field overlapping an inline nested standard struct (fixed
+// sub-message)
 message MessageOverlapFixedSubMessage {
   option (openprot.tlv.tlv_fourcc) = "OLFS";
   LargeNestedMsg sub = 1 [(openprot.tlv.offset) = 0];  // Range 0..16
-  uint32 val = 2 [(openprot.tlv.offset) = 12];         // Range 12..16, overlaps sub!
+  uint32 val = 2 [(openprot.tlv.offset) = 12];  // Range 12..16, overlaps sub!
 }
 
 message LargePackedRegister {
@@ -148,14 +151,16 @@ message LargePackedRegister {
 message MessageOverlapBitPacked {
   option (openprot.tlv.tlv_fourcc) = "OLBP";
   LargePackedRegister reg = 1 [(openprot.tlv.offset) = 0];  // Range 0..4
-  uint32 val = 2 [(openprot.tlv.offset) = 0];               // Range 0..4, overlaps reg!
+  uint32 val = 2 [(openprot.tlv.offset) = 0];  // Range 0..4, overlaps reg!
 }
 
-// 15. Message with bit_range high bit out of bounds for backing width (8 is out of bounds for u8/8-bit!)
+// 15. Message with bit_range high bit out of bounds for backing width (8 is out
+// of bounds for u8/8-bit!)
 message MessageBitPackedWidthExceeded {
   option (openprot.tlv.bit_packed) = "u8";
   uint32 val1 = 1 [(openprot.tlv.bit_range) = "4:0"];
-  uint32 val2 = 2 [(openprot.tlv.bit_range) = "8:5"];  // High bit 8 is out of bounds!
+  uint32 val2 = 2
+      [(openprot.tlv.bit_range) = "8:5"];  // High bit 8 is out of bounds!
 }
 
 // 16. Message with an invalid bit_packed backing type string
@@ -164,7 +169,8 @@ message MessageInvalidBitPackedType {
   uint32 val = 1 [(openprot.tlv.bit_range) = "7:0"];
 }
 
-// 17. Message with a bit-packed message nested without offset (invalid, cannot be tlv!)
+// 17. Message with a bit-packed message nested without offset (invalid, cannot
+// be tlv!)
 message MessageBitPackedAsTlv {
   option (openprot.tlv.tlv_fourcc) = "BPTL";
   LargePackedRegister reg = 1;  // Missing offset!
@@ -192,10 +198,7 @@ message MessageUnalignedNestedStruct {
 // 21. Message with an inline string of size 0
 message MessageZeroSizeInlineString {
   option (openprot.tlv.tlv_fourcc) = "ZSTR";
-  string name = 1 [
-    (openprot.tlv.offset) = 0,
-    (openprot.tlv.type) = "[u8; 0]"
-  ];
+  string name = 1 [(openprot.tlv.offset) = 0, (openprot.tlv.type) = "[u8; 0]"];
 }
 
 // 22. Message with a nested message inside a bit-packed message (invalid!)
@@ -210,76 +213,61 @@ message MessageFloatInBitPacked {
   float val = 1 [(openprot.tlv.bit_range) = "7:0"];
 }
 
-// 24. Message with an unaligned inline string (size 16, type [u32; 4], offset 3 is not aligned to 4)
+// 24. Message with an unaligned inline string (size 16, type [u32; 4], offset 3
+// is not aligned to 4)
 message MessageUnalignedInlineString {
   option (openprot.tlv.tlv_fourcc) = "UNST";
-  string name = 1 [
-    (openprot.tlv.offset) = 3,
-    (openprot.tlv.type) = "[u32; 4]"
-  ];
+  string name = 1 [(openprot.tlv.offset) = 3, (openprot.tlv.type) = "[u32; 4]"];
 }
 
-// 25. Message with an unaligned inline bytes (size 16, type [u32; 4], offset 3 is not aligned to 4)
+// 25. Message with an unaligned inline bytes (size 16, type [u32; 4], offset 3
+// is not aligned to 4)
 message MessageUnalignedInlineBytes {
   option (openprot.tlv.tlv_fourcc) = "UNBY";
-  bytes data = 1 [
-    (openprot.tlv.offset) = 3,
-    (openprot.tlv.type) = "[u32; 4]"
-  ];
+  bytes data = 1 [(openprot.tlv.offset) = 3, (openprot.tlv.type) = "[u32; 4]"];
 }
 
-// 26. Message with a standalone boolean field (not allowed, cannot derive FromBytes)
+// 26. Message with a standalone boolean field (not allowed, cannot derive
+// FromBytes)
 message MessageStandaloneBool {
   option (openprot.tlv.tlv_fourcc) = "BOOL";
   bool val = 1 [(openprot.tlv.offset) = 0];
 }
 
-// 27. Message with signedness mismatch: signed proto type mapped to unsigned TLV type
+// 27. Message with signedness mismatch: signed proto type mapped to unsigned
+// TLV type
 message MessageSignednessMismatchSignedToUnsigned {
   option (openprot.tlv.tlv_fourcc) = "MSM1";
-  sint32 val = 1 [
-    (openprot.tlv.offset) = 0,
-    (openprot.tlv.type) = "u8"
-  ];
+  sint32 val = 1 [(openprot.tlv.offset) = 0, (openprot.tlv.type) = "u8"];
 }
 
-// 28. Message with signedness mismatch: unsigned proto type mapped to signed TLV type
+// 28. Message with signedness mismatch: unsigned proto type mapped to signed
+// TLV type
 message MessageSignednessMismatchUnsignedToSigned {
   option (openprot.tlv.tlv_fourcc) = "MSM2";
-  uint32 val = 1 [
-    (openprot.tlv.offset) = 0,
-    (openprot.tlv.type) = "i8"
-  ];
+  uint32 val = 1 [(openprot.tlv.offset) = 0, (openprot.tlv.type) = "i8"];
 }
 
 // 29. Message with float-to-integer mismatch
 message MessageFloatToIntegerMismatch {
   option (openprot.tlv.tlv_fourcc) = "FIM1";
-  float val = 1 [
-    (openprot.tlv.offset) = 0,
-    (openprot.tlv.type) = "i32"
-  ];
+  float val = 1 [(openprot.tlv.offset) = 0, (openprot.tlv.type) = "i32"];
 }
 
 // 30. Message with integer-to-float mismatch
 message MessageIntegerToFloatMismatch {
   option (openprot.tlv.tlv_fourcc) = "FIM2";
-  int32 val = 1 [
-    (openprot.tlv.offset) = 0,
-    (openprot.tlv.type) = "f32"
-  ];
+  int32 val = 1 [(openprot.tlv.offset) = 0, (openprot.tlv.type) = "f32"];
 }
 
 // 31. Message with a boolean array (not allowed)
 message MessageBooleanArray {
   option (openprot.tlv.tlv_fourcc) = "BAR1";
-  bytes val = 1 [
-    (openprot.tlv.offset) = 0,
-    (openprot.tlv.type) = "[bool; 4]"
-  ];
+  bytes val = 1 [(openprot.tlv.offset) = 0, (openprot.tlv.type) = "[bool; 4]"];
 }
 
-// 32. Message with a repeated field that has a custom offset option (not allowed)
+// 32. Message with a repeated field that has a custom offset option (not
+// allowed)
 message MessageRepeatedFieldWithOffset {
   option (openprot.tlv.tlv_fourcc) = "REPO";
   repeated uint32 values = 1 [(openprot.tlv.offset) = 0];
@@ -292,7 +280,8 @@ message MessageOneofFieldWithOffset {
     uint32 val = 1 [(openprot.tlv.offset) = 0];
   }
 }
-// 34. Message with a nested message acting as a dynamic sub-TLV, but the nested message lacks a tlv_fourcc option
+// 34. Message with a nested message acting as a dynamic sub-TLV, but the nested
+// message lacks a tlv_fourcc option
 message MissingFourccSub {
   uint32 val = 1 [(openprot.tlv.offset) = 0];
 }
@@ -302,7 +291,8 @@ message MessageWithMissingFourccSub {
   MissingFourccSub sub = 1;
 }
 
-// 35. Message with duplicate sub-TLV tags (FakeGpu and FakeNpu share the same tag ACCL)
+// 35. Message with duplicate sub-TLV tags (FakeGpu and FakeNpu share the same
+// tag ACCL)
 message FakeGpu {
   option (openprot.tlv.tlv_fourcc) = "ACCL";
   uint32 cores = 1 [(openprot.tlv.offset) = 0];
@@ -319,7 +309,8 @@ message MessageWithDuplicateTlvTags {
   FakeNpu npu = 2;
 }
 
-// 36. Circular inline nested messages (CircularA contains CircularB inline, CircularB contains CircularA inline)
+// 36. Circular inline nested messages (CircularA contains CircularB inline,
+// CircularB contains CircularA inline)
 message CircularA {
   option (openprot.tlv.tlv_fourcc) = "CIRA";
   CircularB b = 1 [(openprot.tlv.offset) = 0];
@@ -333,33 +324,25 @@ message CircularB {
 // 37. Message with multiple extra_data fields
 message MessageMultipleExtraDataFields {
   option (openprot.tlv.tlv_fourcc) = "MEDF";
-  bytes ext1 = 1 [
-    (openprot.tlv.extra_data) = true,
-    (openprot.tlv.type) = "[u8]"
-  ];
-  bytes ext2 = 2 [
-    (openprot.tlv.extra_data) = true,
-    (openprot.tlv.type) = "[u8]"
-  ];
+  bytes ext1 = 1
+      [(openprot.tlv.extra_data) = true, (openprot.tlv.type) = "[u8]"];
+  bytes ext2 = 2
+      [(openprot.tlv.extra_data) = true, (openprot.tlv.type) = "[u8]"];
 }
 
 // 38. Message with extra_data field AND dynamic sub-TLVs
 message MessageExtraDataWithSubTlvs {
   option (openprot.tlv.tlv_fourcc) = "EDST";
-  bytes ext = 1 [
-    (openprot.tlv.extra_data) = true,
-    (openprot.tlv.type) = "[u8]"
-  ];
+  bytes ext = 1
+      [(openprot.tlv.extra_data) = true, (openprot.tlv.type) = "[u8]"];
   NestedMsg sub = 2;
 }
 
 // 39. Message with extra_data on a non-string/bytes type (uint32)
 message MessageExtraDataOnInvalidType {
   option (openprot.tlv.tlv_fourcc) = "EDIT";
-  uint32 val = 1 [
-    (openprot.tlv.extra_data) = true,
-    (openprot.tlv.type) = "[u8]"
-  ];
+  uint32 val = 1
+      [(openprot.tlv.extra_data) = true, (openprot.tlv.type) = "[u8]"];
 }
 
 // 40. Message with extra_data AND offset option
@@ -375,20 +358,16 @@ message MessageExtraDataWithOffset {
 // 41. Message with repeated field marked as extra_data
 message MessageRepeatedExtraData {
   option (openprot.tlv.tlv_fourcc) = "MRED";
-  repeated bytes chunks = 1 [
-    (openprot.tlv.extra_data) = true,
-    (openprot.tlv.type) = "[u8]"
-  ];
+  repeated bytes chunks = 1
+      [(openprot.tlv.extra_data) = true, (openprot.tlv.type) = "[u8]"];
 }
 
 // 42. Message with extra_data field inside a oneof
 message MessageOneofExtraData {
   option (openprot.tlv.tlv_fourcc) = "MOED";
   oneof payload {
-    bytes ext = 1 [
-      (openprot.tlv.extra_data) = true,
-      (openprot.tlv.type) = "[u8]"
-    ];
+    bytes ext = 1
+        [(openprot.tlv.extra_data) = true, (openprot.tlv.type) = "[u8]"];
   }
 }
 
@@ -401,8 +380,6 @@ message MessageExtraDataMissingType {
 // 44. Message with extra_data field having unsupported type option (not [u8])
 message MessageExtraDataUnsupportedType {
   option (openprot.tlv.tlv_fourcc) = "EDUT";
-  bytes ext = 1 [
-    (openprot.tlv.extra_data) = true,
-    (openprot.tlv.type) = "[u32]"
-  ];
+  bytes ext = 1
+      [(openprot.tlv.extra_data) = true, (openprot.tlv.type) = "[u32]"];
 }

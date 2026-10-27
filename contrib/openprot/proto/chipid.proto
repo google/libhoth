@@ -29,8 +29,6 @@ message ChipId {
   option (openprot.tlv.tlv_fourcc) = "C_ID";
 
   ChipFamily chip_family = 1 [(openprot.tlv.offset) = 0];
-  bytes chip_id = 2 [
-    (openprot.tlv.extra_data) = true,
-    (openprot.tlv.type) = "[u8]"
-  ];
+  bytes chip_id = 2
+      [(openprot.tlv.extra_data) = true, (openprot.tlv.type) = "[u8]"];
 }

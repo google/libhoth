@@ -20,7 +20,8 @@ import "contrib/tlv/options.proto";
 import "contrib/openprot/proto/crypto.proto";
 import "contrib/openprot/proto/identity.proto";
 
-// A signed key rotation record descriptor container (communication, host tools, etc.).
+// A signed key rotation record descriptor container (communication, host tools,
+// etc.).
 message SignedDescriptor {
   option (openprot.tlv.tlv_fourcc) = "KRSD";
 
