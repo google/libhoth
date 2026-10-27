@@ -59,7 +59,7 @@ libhoth_error libhoth_dfu_update(struct libhoth_device* dev,
     memcpy(request.data, &image[bytes_sent], chunk_len);
 
     size_t response_len;
-    libhoth_error err = libhoth_hostcmd_exec_v2(
+    libhoth_error err = libhoth_hostcmd_exec(
         dev, HOTH_CMD_DFU_WRITE, 0, &request, sizeof(request.hdr) + chunk_len,
         NULL, 0, &response_len);
     if (err != HOTH_SUCCESS) {
@@ -85,8 +85,8 @@ libhoth_error libhoth_dfu_update(struct libhoth_device* dev,
   };
   size_t response_len = 0;
   libhoth_error err =
-      libhoth_hostcmd_exec_v2(dev, HOTH_CMD_DFU_COMPLETE, 0, &complete_request,
-                              sizeof(complete_request), NULL, 0, &response_len);
+      libhoth_hostcmd_exec(dev, HOTH_CMD_DFU_COMPLETE, 0, &complete_request,
+                           sizeof(complete_request), NULL, 0, &response_len);
   if (err != HOTH_SUCCESS) {
     fprintf(stderr,
             "DFU complete failed with error code: 0x%016lx; ignoring as the "

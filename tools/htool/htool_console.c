@@ -152,8 +152,8 @@ libhoth_error htool_console_run(struct libhoth_device* dev,
 libhoth_error htool_console_snapshot_legacy(struct libhoth_device* dev) {
   size_t response_bytes_written;
   libhoth_error status =
-      libhoth_hostcmd_exec_v2(dev, HOTH_CMD_CONSOLE_REQUEST, 0, NULL, 0, NULL,
-                              0, &response_bytes_written);
+      libhoth_hostcmd_exec(dev, HOTH_CMD_CONSOLE_REQUEST, 0, NULL, 0, NULL, 0,
+                           &response_bytes_written);
   if (status != HOTH_SUCCESS) {
     fprintf(stderr, "HOTH_CMD_CONSOLE_REQUEST status: 0x%016llx\n",
             (unsigned long long)status);
@@ -166,9 +166,9 @@ libhoth_error htool_console_snapshot_legacy(struct libhoth_device* dev) {
       MAILBOX_SIZE - sizeof(struct hoth_host_response);
   while (true) {
     char buf[MAILBOX_SIZE];
-    status = libhoth_hostcmd_exec_v2(
-        dev, HOTH_CMD_CONSOLE_READ, 0, &read_request, sizeof(read_request), buf,
-        max_bytes_per_read, &response_bytes_written);
+    status = libhoth_hostcmd_exec(dev, HOTH_CMD_CONSOLE_READ, 0, &read_request,
+                                  sizeof(read_request), buf, max_bytes_per_read,
+                                  &response_bytes_written);
     if (status != HOTH_SUCCESS) {
       fprintf(stderr, "HOTH_CMD_CONSOLE_READ status: 0x%016llx\n",
               (unsigned long long)status);

@@ -164,47 +164,11 @@ static libhoth_status validate_ec_response_header(
   return LIBHOTH_OK;
 }
 
-// libhoth_hostcmd_exec is a compatibility wrapper that converts the new
-// 64-bit libhoth_error into the legacy 32-bit int return type. This allows
-// existing callers to remain unchanged while we incrementally migrate the
-// library to the more descriptive libhoth_error system.
-int libhoth_hostcmd_exec(struct libhoth_device* dev, uint16_t command,
-                         uint8_t version, const void* req_payload,
-                         size_t req_payload_size, void* resp_buf,
-                         size_t resp_buf_size, size_t* out_resp_size) {
-  // We use this temporary variable to capture the rich 64-bit error from the
-  // new implementation before downgrading it to the legacy format.
-  libhoth_error err = libhoth_hostcmd_exec_v2(
-      dev, command, version, req_payload, req_payload_size, resp_buf,
-      resp_buf_size, out_resp_size);
-
-  if (err == HOTH_SUCCESS) {
-    return 0;
-  }
-
-  uint32_t space = LIBHOTH_ERR_GET_SPACE(err);
-  uint32_t code = LIBHOTH_ERR_GET_CODE(err);
-
-  if (space == HOTH_HOST_SPACE_EC) {
-    return HTOOL_ERROR_HOST_COMMAND_START + code;
-  }
-
-  if (space == HOTH_HOST_SPACE_PIEROT_ERR) {
-    return (int)code;
-  }
-
-  return -1;
-}
-
-// libhoth_hostcmd_exec_v2 is the new core implementation that returns a
-// rich 64-bit libhoth_error. It should be used for all new commands and
-// when migrating existing commands to the centralized status reporting system.
-libhoth_error libhoth_hostcmd_exec_v2(struct libhoth_device* dev,
-                                      uint16_t command, uint8_t version,
-                                      const void* req_payload,
-                                      size_t req_payload_size, void* resp_buf,
-                                      size_t resp_buf_size,
-                                      size_t* out_resp_size) {
+libhoth_error libhoth_hostcmd_exec(struct libhoth_device* dev, uint16_t command,
+                                   uint8_t version, const void* req_payload,
+                                   size_t req_payload_size, void* resp_buf,
+                                   size_t resp_buf_size,
+                                   size_t* out_resp_size) {
   struct {
     struct hoth_host_request hdr;
     uint8_t

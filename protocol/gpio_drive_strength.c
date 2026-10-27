@@ -31,9 +31,9 @@ libhoth_error libhoth_set_gpio_drive_strength(struct libhoth_device* const dev,
       .pad = pad,
       .strength = strength,
   };
-  return libhoth_hostcmd_exec_v2(dev, HOTH_CMD_SET_GPIO_DRIVE_STRENGTH,
-                                 /*version=*/0, &request, sizeof(request),
-                                 /*response=*/NULL, /*response_size=*/0, NULL);
+  return libhoth_hostcmd_exec(dev, HOTH_CMD_SET_GPIO_DRIVE_STRENGTH,
+                              /*version=*/0, &request, sizeof(request),
+                              /*response=*/NULL, /*response_size=*/0, NULL);
 }
 
 libhoth_error libhoth_get_gpio_drive_strength(struct libhoth_device* const dev,
@@ -48,7 +48,7 @@ libhoth_error libhoth_get_gpio_drive_strength(struct libhoth_device* const dev,
       .pad = pad,
   };
   struct hoth_response_get_gpio_drive_strength response;
-  const libhoth_error err = libhoth_hostcmd_exec_v2(
+  const libhoth_error err = libhoth_hostcmd_exec(
       dev, HOTH_CMD_GET_GPIO_DRIVE_STRENGTH, /*version=*/0, &request,
       sizeof(request), &response, sizeof(response), /*out_resp_size=*/NULL);
   if (err != HOTH_SUCCESS) {

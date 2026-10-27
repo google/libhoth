@@ -41,7 +41,7 @@ static libhoth_error send_key_rotation_request(struct libhoth_device* dev,
       .reserved = 0,
   };
   size_t rlen = 0;
-  libhoth_error ret = libhoth_hostcmd_exec_v2(
+  libhoth_error ret = libhoth_hostcmd_exec(
       dev, HOTH_CMD_BOARD_SPECIFIC_BASE + HOTH_PRV_CMD_HAVEN_KEY_ROTATION_OP, 0,
       &request, sizeof(request), NULL, 0, &rlen);
   if (ret != HOTH_SUCCESS) {
@@ -75,7 +75,7 @@ libhoth_error libhoth_key_rotation_get_version(
   };
 
   size_t rlen = 0;
-  libhoth_error ret = libhoth_hostcmd_exec_v2(
+  libhoth_error ret = libhoth_hostcmd_exec(
       dev, HOTH_CMD_BOARD_SPECIFIC_BASE + HOTH_PRV_CMD_HAVEN_KEY_ROTATION_OP, 0,
       &request, sizeof(request), record_version, sizeof(*record_version),
       &rlen);
@@ -113,7 +113,7 @@ libhoth_error libhoth_key_rotation_get_status(
   };
 
   size_t rlen = 0;
-  libhoth_error ret = libhoth_hostcmd_exec_v2(
+  libhoth_error ret = libhoth_hostcmd_exec(
       dev, HOTH_CMD_BOARD_SPECIFIC_BASE + HOTH_PRV_CMD_HAVEN_KEY_ROTATION_OP, 0,
       &request, sizeof(request), record_status, sizeof(*record_status), &rlen);
 
@@ -150,7 +150,7 @@ libhoth_error libhoth_key_rotation_payload_status(
   };
 
   size_t rlen = 0;
-  libhoth_error ret = libhoth_hostcmd_exec_v2(
+  libhoth_error ret = libhoth_hostcmd_exec(
       dev, HOTH_CMD_BOARD_SPECIFIC_BASE + HOTH_PRV_CMD_HAVEN_KEY_ROTATION_OP, 0,
       &request, sizeof(request), payload_status, sizeof(*payload_status),
       &rlen);
@@ -205,7 +205,7 @@ libhoth_error libhoth_key_rotation_update(struct libhoth_device* dev,
     request.hdr.packet_size = size_to_send;
     memcpy(request.data, packet_data, size_to_send);
     size_t response_length = 0;
-    libhoth_error ret = libhoth_hostcmd_exec_v2(
+    libhoth_error ret = libhoth_hostcmd_exec(
         dev, HOTH_CMD_BOARD_SPECIFIC_BASE + HOTH_PRV_CMD_HAVEN_KEY_ROTATION_OP,
         0, &request, sizeof(request.hdr) + request.hdr.packet_size, NULL, 0,
         &response_length);
@@ -277,7 +277,7 @@ static libhoth_error send_key_rotation_read_helper(
   }
 
   *response_length = 0;
-  libhoth_error ret = libhoth_hostcmd_exec_v2(
+  libhoth_error ret = libhoth_hostcmd_exec(
       dev, HOTH_CMD_BOARD_SPECIFIC_BASE + HOTH_PRV_CMD_HAVEN_KEY_ROTATION_OP, 0,
       &request, sizeof(request.hdr) + request_payload_size, response_data,
       response_buffer_size, response_length);
@@ -439,7 +439,7 @@ libhoth_error libhoth_key_rotation_chunk_type_count(struct libhoth_device* dev,
   request_chunk_type_count->chunk_typecode = chunk_typecode;
   uint32_t response = 0;
   size_t rlen = 0;
-  libhoth_error ret = libhoth_hostcmd_exec_v2(
+  libhoth_error ret = libhoth_hostcmd_exec(
       dev, HOTH_CMD_BOARD_SPECIFIC_BASE + HOTH_PRV_CMD_HAVEN_KEY_ROTATION_OP, 0,
       &request, sizeof(request), &response, sizeof(response), &rlen);
   if (ret != HOTH_SUCCESS) {
@@ -478,7 +478,7 @@ libhoth_error libhoth_key_rotation_set_mauv(struct libhoth_device* dev,
       (struct hoth_request_key_rotation_record_set_mauv*)&(request.data);
   request_set_mauv->mauv = mauv;
   size_t rlen = 0;
-  libhoth_error ret = libhoth_hostcmd_exec_v2(
+  libhoth_error ret = libhoth_hostcmd_exec(
       dev, HOTH_CMD_BOARD_SPECIFIC_BASE + HOTH_PRV_CMD_HAVEN_KEY_ROTATION_OP, 0,
       &request,
       sizeof(request.hdr) +
@@ -514,7 +514,7 @@ libhoth_error libhoth_key_rotation_get_mauv(
   };
 
   size_t rlen = 0;
-  libhoth_error ret = libhoth_hostcmd_exec_v2(
+  libhoth_error ret = libhoth_hostcmd_exec(
       dev, HOTH_CMD_BOARD_SPECIFIC_BASE + HOTH_PRV_CMD_HAVEN_KEY_ROTATION_OP, 0,
       &request, sizeof(request), mauv, sizeof(*mauv), &rlen);
 

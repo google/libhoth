@@ -27,7 +27,7 @@ libhoth_error libhoth_get_command_versions(struct libhoth_device* dev,
     return LIBHOTH_ERR_CONSTRUCT(HOTH_CTX_CMD_EXEC, HOTH_HOST_SPACE_LIBHOTH,
                                  LIBHOTH_ERR_INVALID_PARAMETER);
   }
-  return libhoth_hostcmd_exec_v2(dev, HOTH_CMD_GET_CMD_VERSIONS,
-                                 /*version=*/1, &command, sizeof(command),
-                                 version_mask, sizeof(*version_mask), NULL);
+  return libhoth_hostcmd_exec(dev, HOTH_CMD_GET_CMD_VERSIONS,
+                              /*version=*/1, &command, sizeof(command),
+                              version_mask, sizeof(*version_mask), NULL);
 }

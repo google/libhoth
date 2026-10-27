@@ -29,7 +29,7 @@ libhoth_error libhoth_chipinfo(struct libhoth_device* dev,
   uint8_t resp_buf[OPENTITAN_DEVICE_ID_LEN];  // Max size for new format
   size_t resp_size = 0;
 
-  libhoth_error err = libhoth_hostcmd_exec_v2(
+  libhoth_error err = libhoth_hostcmd_exec(
       dev, HOTH_CMD_BOARD_SPECIFIC_BASE + HOTH_PRV_CMD_HOTH_CHIP_INFO,
       /*version=*/0, NULL, 0, resp_buf, sizeof(resp_buf), &resp_size);
   if (err != HOTH_SUCCESS) {

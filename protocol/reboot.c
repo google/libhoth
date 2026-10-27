@@ -23,6 +23,6 @@ libhoth_error libhoth_reboot(struct libhoth_device* dev,
   struct hoth_params_reboot_ec req = {
       .cmd = cmd,
   };
-  return libhoth_hostcmd_exec_v2(dev, HOTH_CMD_REBOOT_EC, 0, &req, sizeof(req),
-                                 NULL, 0, NULL);
+  return libhoth_hostcmd_exec(dev, HOTH_CMD_REBOOT_EC, 0, &req, sizeof(req),
+                              NULL, 0, NULL);
 }

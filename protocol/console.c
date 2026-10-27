@@ -62,7 +62,7 @@ libhoth_error libhoth_get_channel_status(
   };
   struct hoth_channel_status_response resp;
 
-  libhoth_error status = libhoth_hostcmd_exec_v2(
+  libhoth_error status = libhoth_hostcmd_exec(
       dev, HOTH_CMD_BOARD_SPECIFIC_BASE + HOTH_PRV_CMD_HOTH_CHANNEL_STATUS,
       /*version=*/0, &req, sizeof(req), &resp, sizeof(resp), NULL);
   if (status != HOTH_SUCCESS) {
@@ -107,7 +107,7 @@ libhoth_error libhoth_read_console(struct libhoth_device* dev, int fd,
                  "unexpected layout");
 
   size_t response_size = 0;
-  libhoth_error status = libhoth_hostcmd_exec_v2(
+  libhoth_error status = libhoth_hostcmd_exec(
       dev, HOTH_CMD_BOARD_SPECIFIC_BASE + HOTH_PRV_CMD_HOTH_CHANNEL_READ,
       /*version=*/0, &req, sizeof(req), &resp, sizeof(resp), &response_size);
   if (status != HOTH_SUCCESS) {
@@ -211,7 +211,7 @@ libhoth_error libhoth_write_console(struct libhoth_device* dev,
   req.req.flags |=
       flags.uart_break ? HOTH_CHANNEL_WRITE_REQUEST_FLAG_SEND_BREAK : 0;
 
-  libhoth_error status = libhoth_hostcmd_exec_v2(
+  libhoth_error status = libhoth_hostcmd_exec(
       dev, HOTH_CMD_BOARD_SPECIFIC_BASE + HOTH_PRV_CMD_HOTH_CHANNEL_WRITE,
       /*version=*/1, &req, sizeof(req.req) + numWrite, NULL, 0, NULL);
 
@@ -235,7 +235,7 @@ libhoth_error libhoth_get_uart_config(
   struct hoth_channel_uart_config_get_req req = {
       .channel_id = opts->channel_id,
   };
-  return libhoth_hostcmd_exec_v2(
+  return libhoth_hostcmd_exec(
       dev,
       HOTH_CMD_BOARD_SPECIFIC_BASE + HOTH_PRV_CMD_HOTH_CHANNEL_UART_CONFIG_GET,
       /*version=*/0, &req, sizeof(req), resp, sizeof(*resp), NULL);
@@ -248,7 +248,7 @@ libhoth_error libhoth_set_uart_config(
       .channel_id = opts->channel_id,
       .config = *config,
   };
-  return libhoth_hostcmd_exec_v2(
+  return libhoth_hostcmd_exec(
       dev,
       HOTH_CMD_BOARD_SPECIFIC_BASE + HOTH_PRV_CMD_HOTH_CHANNEL_UART_CONFIG_SET,
       /*version=*/0, &req, sizeof(req), NULL, 0, NULL);

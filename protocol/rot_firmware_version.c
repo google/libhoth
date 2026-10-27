@@ -22,7 +22,7 @@ libhoth_error libhoth_get_rot_fw_version(
     return LIBHOTH_ERR_CONSTRUCT(HOTH_CTX_CMD_EXEC, HOTH_HOST_SPACE_LIBHOTH,
                                  LIBHOTH_ERR_INVALID_PARAMETER);
   }
-  return libhoth_hostcmd_exec_v2(dev, HOTH_CMD_GET_VERSION, /*version=*/0,
-                                 /*req_payload=*/NULL, /*req_payload_size=*/0,
-                                 ver, sizeof(*ver), /*out_resp_size=*/NULL);
+  return libhoth_hostcmd_exec(dev, HOTH_CMD_GET_VERSION, /*version=*/0,
+                              /*req_payload=*/NULL, /*req_payload_size=*/0, ver,
+                              sizeof(*ver), /*out_resp_size=*/NULL);
 }

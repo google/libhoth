@@ -26,7 +26,7 @@ libhoth_error libhoth_authz_record_erase(struct libhoth_device* dev) {
       .index = 0,
       .erase = 1,
   };
-  return libhoth_hostcmd_exec_v2(
+  return libhoth_hostcmd_exec(
       dev, HOTH_CMD_BOARD_SPECIFIC_BASE + HOTH_PRV_CMD_HOTH_SET_AUTHZ_RECORD,
       /*version=*/0, &request, sizeof(request), NULL, 0, NULL);
 }
@@ -38,7 +38,7 @@ libhoth_error libhoth_authz_record_read(
                                  LIBHOTH_ERR_INVALID_PARAMETER);
   }
   struct hoth_authz_record_get_request request = {.index = 0};
-  return libhoth_hostcmd_exec_v2(
+  return libhoth_hostcmd_exec(
       dev, HOTH_CMD_BOARD_SPECIFIC_BASE + HOTH_PRV_CMD_HOTH_GET_AUTHZ_RECORD,
       /*version=*/0, &request, sizeof(request), resp, sizeof(*resp), NULL);
 }
@@ -75,7 +75,7 @@ libhoth_error libhoth_authz_record_build(struct libhoth_device* dev,
       (chipinfo_resp.data.hoth_device_id.hardware_identity >> 32);
 
   struct hoth_authz_record_get_nonce_response nonce_resp;
-  err = libhoth_hostcmd_exec_v2(
+  err = libhoth_hostcmd_exec(
       dev,
       HOTH_CMD_BOARD_SPECIFIC_BASE + HOTH_PRV_CMD_HOTH_GET_AUTHZ_RECORD_NONCE,
       /*version=*/0, NULL, 0, &nonce_resp, sizeof(nonce_resp), NULL);
@@ -124,7 +124,7 @@ libhoth_error libhoth_authz_record_set(
 
   memcpy(&request.record, record, sizeof(struct authorization_record));
 
-  return libhoth_hostcmd_exec_v2(
+  return libhoth_hostcmd_exec(
       dev, HOTH_CMD_BOARD_SPECIFIC_BASE + HOTH_PRV_CMD_HOTH_SET_AUTHZ_RECORD,
       /*version=*/0, &request, sizeof(request), NULL, 0, NULL);
 }

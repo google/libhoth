@@ -22,9 +22,9 @@ libhoth_error libhoth_hello(struct libhoth_device* const dev,
       .input = input,
   };
   struct hoth_response_hello response;
-  const libhoth_error rv = libhoth_hostcmd_exec_v2(
-      dev, HOTH_CMD_HELLO, /*version=*/0, &request, sizeof(request), &response,
-      sizeof(response), NULL);
+  const libhoth_error rv =
+      libhoth_hostcmd_exec(dev, HOTH_CMD_HELLO, /*version=*/0, &request,
+                           sizeof(request), &response, sizeof(response), NULL);
   if (rv == HOTH_SUCCESS) {
     *output = response.output;
   }

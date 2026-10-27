@@ -47,11 +47,11 @@ static libhoth_error exec_provisioning_log_cmd(struct libhoth_device* dev,
                                                void* resp_buf,
                                                size_t resp_buf_size,
                                                size_t* out_resp_size) {
-  return libhoth_hostcmd_exec_v2(dev,
-                                 /*command=*/HOTH_CMD_BOARD_SPECIFIC_BASE +
-                                     HOTH_PRV_CMD_HOTH_PROVISIONING_LOG,
-                                 /*version=*/0, req_payload, req_payload_size,
-                                 resp_buf, resp_buf_size, out_resp_size);
+  return libhoth_hostcmd_exec(dev,
+                              /*command=*/HOTH_CMD_BOARD_SPECIFIC_BASE +
+                                  HOTH_PRV_CMD_HOTH_PROVISIONING_LOG,
+                              /*version=*/0, req_payload, req_payload_size,
+                              resp_buf, resp_buf_size, out_resp_size);
 }
 
 // Executes a key provisioning host command (0x3E43)
@@ -61,11 +61,11 @@ static libhoth_error exec_key_provisioning_cmd(struct libhoth_device* dev,
                                                void* resp_buf,
                                                size_t resp_buf_size,
                                                size_t* out_resp_size) {
-  return libhoth_hostcmd_exec_v2(dev,
-                                 /*command=*/HOTH_CMD_BOARD_SPECIFIC_BASE +
-                                     HOTH_PRV_CMD_HOTH_KEY_PROVISIONING,
-                                 /*version=*/0, req_payload, req_payload_size,
-                                 resp_buf, resp_buf_size, out_resp_size);
+  return libhoth_hostcmd_exec(dev,
+                              /*command=*/HOTH_CMD_BOARD_SPECIFIC_BASE +
+                                  HOTH_PRV_CMD_HOTH_KEY_PROVISIONING,
+                              /*version=*/0, req_payload, req_payload_size,
+                              resp_buf, resp_buf_size, out_resp_size);
 }
 
 libhoth_error libhoth_provisioning_log_read(struct libhoth_device* dev,

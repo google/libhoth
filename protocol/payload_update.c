@@ -42,7 +42,7 @@ static libhoth_error send_payload_update_request_with_command(
   request.offset = 0;
   request.len = 0;
 
-  return libhoth_hostcmd_exec_v2(
+  return libhoth_hostcmd_exec(
       dev, HOTH_CMD_BOARD_SPECIFIC_BASE + HOTH_PRV_CMD_HOTH_PAYLOAD_UPDATE, 0,
       &request, sizeof(request), NULL, 0, NULL);
 }
@@ -90,7 +90,7 @@ static libhoth_error libhoth_payload_update_finalize(
       .type = PAYLOAD_UPDATE_FINALIZE,
   };
   struct payload_update_finalize_response_v1 response = {0};
-  status = libhoth_hostcmd_exec_v2(
+  status = libhoth_hostcmd_exec(
       dev, HOTH_CMD_BOARD_SPECIFIC_BASE + HOTH_PRV_CMD_HOTH_PAYLOAD_UPDATE,
       /*version=*/1, &request, sizeof(request), &response, sizeof(response),
       NULL);
@@ -110,7 +110,7 @@ static libhoth_error payload_update_erase_chunk(
   request.type = PAYLOAD_UPDATE_ERASE;
   request.offset = offset;
   request.len = len;
-  return libhoth_hostcmd_exec_v2(
+  return libhoth_hostcmd_exec(
       dev, HOTH_CMD_BOARD_SPECIFIC_BASE + HOTH_PRV_CMD_HOTH_PAYLOAD_UPDATE, 0,
       &request, sizeof(request), NULL, 0, NULL);
 }
@@ -234,7 +234,7 @@ libhoth_error libhoth_payload_update(struct libhoth_device* dev, uint8_t* image,
     memcpy(buffer, &request, sizeof(request));
     memcpy(buffer + sizeof(request), image + offset, chunk_size);
 
-    libhoth_error ret = libhoth_hostcmd_exec_v2(
+    libhoth_error ret = libhoth_hostcmd_exec(
         dev, HOTH_CMD_BOARD_SPECIFIC_BASE + HOTH_PRV_CMD_HOTH_PAYLOAD_UPDATE, 0,
         buffer, sizeof(request) + chunk_size, NULL, 0, NULL);
     if (ret != HOTH_SUCCESS) {
@@ -272,7 +272,7 @@ libhoth_error libhoth_payload_update_getstatus(
   request.len = 0;
 
   size_t rlen = 0;
-  libhoth_error ret = libhoth_hostcmd_exec_v2(
+  libhoth_error ret = libhoth_hostcmd_exec(
       dev, HOTH_CMD_BOARD_SPECIFIC_BASE + HOTH_PRV_CMD_HOTH_PAYLOAD_UPDATE, 0,
       &request, sizeof(request), update_status, sizeof(*update_status), &rlen);
 
@@ -309,7 +309,7 @@ libhoth_error libhoth_payload_update_read_chunk(struct libhoth_device* dev,
     pkt.offset = offset;
     pkt.len = chunk_size;
 
-    libhoth_error ret = libhoth_hostcmd_exec_v2(
+    libhoth_error ret = libhoth_hostcmd_exec(
         dev, HOTH_CMD_BOARD_SPECIFIC_BASE + HOTH_PRV_CMD_HOTH_PAYLOAD_UPDATE, 0,
         &pkt, sizeof(pkt), buffer, chunk_size, NULL);
 
@@ -337,7 +337,7 @@ libhoth_error libhoth_payload_update_read_chunk(struct libhoth_device* dev,
 static libhoth_error libhoth_payload_update_activate_v0(
     struct libhoth_device* dev,
     struct payload_update_activate_request* request) {
-  return libhoth_hostcmd_exec_v2(
+  return libhoth_hostcmd_exec(
       dev, HOTH_CMD_BOARD_SPECIFIC_BASE + HOTH_PRV_CMD_HOTH_PAYLOAD_UPDATE,
       /*version=*/0, request, sizeof(*request), NULL, 0, NULL);
 }
@@ -347,7 +347,7 @@ static libhoth_error libhoth_payload_update_activate_v1(
     struct libhoth_device* dev, struct payload_update_activate_request* request,
     uint8_t* pld_needs_reinitialization) {
   struct payload_update_activate_response_v1 response = {0};
-  libhoth_error status = libhoth_hostcmd_exec_v2(
+  libhoth_error status = libhoth_hostcmd_exec(
       dev, HOTH_CMD_BOARD_SPECIFIC_BASE + HOTH_PRV_CMD_HOTH_PAYLOAD_UPDATE,
       /*version=*/1, request, sizeof(*request), &response, sizeof(response),
       NULL);
@@ -416,7 +416,7 @@ libhoth_error libhoth_payload_update_confirm(struct libhoth_device* dev) {
   memcpy(&send_buf[sizeof(pkt_header)], &confirm_request,
          sizeof(confirm_request));
 
-  return libhoth_hostcmd_exec_v2(
+  return libhoth_hostcmd_exec(
       dev, HOTH_CMD_BOARD_SPECIFIC_BASE + HOTH_PRV_CMD_HOTH_PAYLOAD_UPDATE, 0,
       send_buf, sizeof(send_buf), &confirm_response, sizeof(confirm_response),
       NULL);
@@ -452,7 +452,7 @@ libhoth_error libhoth_payload_update_confirm_enable(struct libhoth_device* dev,
   memcpy(&send_buf[sizeof(pkt_header)], &confirm_request,
          sizeof(confirm_request));
 
-  return libhoth_hostcmd_exec_v2(
+  return libhoth_hostcmd_exec(
       dev, HOTH_CMD_BOARD_SPECIFIC_BASE + HOTH_PRV_CMD_HOTH_PAYLOAD_UPDATE, 0,
       send_buf, sizeof(send_buf), &confirm_response, sizeof(confirm_response),
       NULL);
@@ -474,7 +474,7 @@ libhoth_error libhoth_payload_update_confirm_get_staged_timeout(
   memcpy(&send_buf[sizeof(pkt_header)], &confirm_request,
          sizeof(confirm_request));
 
-  return libhoth_hostcmd_exec_v2(
+  return libhoth_hostcmd_exec(
       dev, HOTH_CMD_BOARD_SPECIFIC_BASE + HOTH_PRV_CMD_HOTH_PAYLOAD_UPDATE, 0,
       send_buf, sizeof(send_buf), response, sizeof(*response), NULL);
 }

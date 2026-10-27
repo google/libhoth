@@ -29,7 +29,7 @@ libhoth_error libhoth_fetch_mauv(struct libhoth_device* dev, uint8_t state,
   };
 
   size_t rlen = 0;
-  libhoth_error err = libhoth_hostcmd_exec_v2(
+  libhoth_error err = libhoth_hostcmd_exec(
       dev, HOTH_CMD_BOARD_SPECIFIC_BASE + EC_PRV_CMD_HAVEN_MAUV, 0, &request,
       sizeof(request), mauv, sizeof(*mauv), &rlen);
   if (err != HOTH_SUCCESS) {
@@ -70,7 +70,7 @@ libhoth_error libhoth_update_mauv(struct libhoth_device* dev,
   }
 
   size_t rlen = 0;
-  return libhoth_hostcmd_exec_v2(
+  return libhoth_hostcmd_exec(
       dev, HOTH_CMD_BOARD_SPECIFIC_BASE + EC_PRV_CMD_UPDATE_MAUV, 0, record,
       record_size, NULL, 0, &rlen);
 }

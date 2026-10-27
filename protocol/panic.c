@@ -205,8 +205,8 @@ libhoth_error libhoth_get_panic(
         .index = i,
     };
 
-    libhoth_error err = libhoth_hostcmd_exec_v2(dev, cmd, 0, &req, sizeof(req),
-                                                dest, chunk_size, &rlen);
+    libhoth_error err = libhoth_hostcmd_exec(dev, cmd, 0, &req, sizeof(req),
+                                             dest, chunk_size, &rlen);
 
     if (err != HOTH_SUCCESS) {
       return err;
@@ -231,7 +231,7 @@ libhoth_error libhoth_clear_persistent_panic_info(struct libhoth_device* dev) {
       HOTH_CMD_BOARD_SPECIFIC_BASE + HOTH_PRV_CMD_HOTH_PERSISTENT_PANIC_INFO;
 
   libhoth_error err =
-      libhoth_hostcmd_exec_v2(dev, cmd, 0, &req, sizeof(req), NULL, 0, &rlen);
+      libhoth_hostcmd_exec(dev, cmd, 0, &req, sizeof(req), NULL, 0, &rlen);
 
   if (err != HOTH_SUCCESS) {
     return err;

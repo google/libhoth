@@ -26,7 +26,7 @@ libhoth_error libhoth_payload_status(struct libhoth_device* dev,
   }
 
   size_t rlen = 0;
-  libhoth_error err = libhoth_hostcmd_exec_v2(
+  libhoth_error err = libhoth_hostcmd_exec(
       dev, HOTH_CMD_BOARD_SPECIFIC_BASE + HOTH_PRV_CMD_HOTH_PAYLOAD_STATUS, 0,
       NULL, 0, payload_status, sizeof(*payload_status), &rlen);
 
