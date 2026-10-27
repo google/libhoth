@@ -13,6 +13,18 @@ use_repo(libusb_ext, "libusb")
 bazel_dep(name = "googletest", version = "1.15.2")
 bazel_dep(name = "rules_cc", version = "0.2.18")
 bazel_dep(name = "rules_rust", version = "0.70.0")
+bazel_dep(name = "protobuf", version = "35.1")
+
+# Pin protobuf's syn dep to 2.x (its ">=2" resolves to the incompatible 3.x), and
+# make rust_proto_library usable from other repositories: its kernel select()
+# key becomes a Label(), and :use_upb_kernel becomes publicly visible.
+single_version_override(
+    module_name = "protobuf",
+    patch_strip = 1,
+    patches = ["//:patches/protobuf.patch"],
+    version = "35.1",
+)
+
 crate = use_extension("@rules_rust//crate_universe:extensions.bzl", "crate")
 crate.spec(
     features = ["derive"],
@@ -80,6 +92,53 @@ crate.spec(
     package = "thiserror",
     repositories = ["crates_libhoth"],
     version = "=2.0.17",
+)
+crate.spec(
+    package = "bitfield-struct",
+    repositories = ["crates_libhoth_nostd"],
+    version = "0.9.2",
+)
+crate.spec(
+    default_features = False,
+    package = "bstr",
+    repositories = ["crates_libhoth_nostd"],
+    version = "1.13.0",
+)
+crate.spec(
+    package = "argh",
+    repositories = ["crates_libhoth"],
+    version = "0.1.13",
+)
+crate.spec(
+    package = "base64",
+    repositories = ["crates_libhoth"],
+    version = "=0.22.1",
+)
+crate.spec(
+    package = "difflib",
+    repositories = ["crates_libhoth"],
+    version = "0.4.0",
+)
+crate.spec(
+    package = "proc-macro2",
+    repositories = ["crates_libhoth"],
+    version = "1.0.95",
+)
+crate.spec(
+    package = "quote",
+    repositories = ["crates_libhoth"],
+    version = "1.0.40",
+)
+crate.spec(
+    features = ["derive"],
+    package = "serde",
+    repositories = ["crates_libhoth"],
+    version = "1.0.210",
+)
+crate.spec(
+    package = "serde_json",
+    repositories = ["crates_libhoth"],
+    version = "1.0.129",
 )
 
 # This repository contains crates that are intended for no_std environments.
