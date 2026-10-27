@@ -20,16 +20,10 @@ import "contrib/tlv/options.proto";
 
 // An image vendor identifier assigned by OpenPRoT (8-byte fixed string).
 message ImageVendor {
-  string name = 1 [
-    (openprot.tlv.offset) = 0,
-    (openprot.tlv.type) = "[u8; 8]"
-  ];
+  string name = 1 [(openprot.tlv.offset) = 0, (openprot.tlv.type) = "[u8; 8]"];
 }
 
 // A vendor-specific product family identifier (8-byte fixed string).
 message ImageFamily {
-  string name = 1 [
-    (openprot.tlv.offset) = 0,
-    (openprot.tlv.type) = "[u8; 8]"
-  ];
+  string name = 1 [(openprot.tlv.offset) = 0, (openprot.tlv.type) = "[u8; 8]"];
 }
