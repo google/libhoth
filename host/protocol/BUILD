@@ -7,6 +7,7 @@ cc_library(
     name = "libhoth_status",
     srcs = ["status.c"],
     hdrs = ["status.h"],
+    strip_include_prefix = "/host",
     defines = ["LIBHOTH_SUPPORT_LIBUSB"],
     visibility = ["//visibility:public"],
     deps = [
@@ -28,9 +29,10 @@ cc_library(
     name = "host_cmd",
     srcs = ["host_cmd.c"],
     hdrs = ["host_cmd.h"],
+    strip_include_prefix = "/host",
     deps = [
         ":libhoth_status",
-        "//transports:libhoth_device",
+        "//host/transports:libhoth_device",
     ],
 )
 
@@ -39,8 +41,8 @@ cc_test(
     srcs = ["host_cmd_test.cc"],
     deps = [
         ":host_cmd",
-        "//protocol/test:libhoth_device_mock",
-        "//transports:libhoth_device",
+        "//host/protocol/test:libhoth_device_mock",
+        "//host/transports:libhoth_device",
         "@googletest//:gtest",
         "@googletest//:gtest_main",
     ],
@@ -50,10 +52,11 @@ cc_library(
     name = "rot_firmware_version",
     srcs = ["rot_firmware_version.c"],
     hdrs = ["rot_firmware_version.h"],
+    strip_include_prefix = "/host",
     deps = [
         ":host_cmd",
         ":libhoth_status",
-        "//transports:libhoth_device",
+        "//host/transports:libhoth_device",
     ],
 )
 
@@ -62,8 +65,8 @@ cc_test(
     srcs = ["rot_firmware_version_test.cc"],
     deps = [
         ":rot_firmware_version",
-        "//protocol/test:libhoth_device_mock",
-        "//transports:libhoth_device",
+        "//host/protocol/test:libhoth_device_mock",
+        "//host/transports:libhoth_device",
         "@googletest//:gtest",
         "@googletest//:gtest_main",
     ],
@@ -73,10 +76,11 @@ cc_library(
     name = "payload_status",
     srcs = ["payload_status.c"],
     hdrs = ["payload_status.h"],
+    strip_include_prefix = "/host",
     deps = [
         ":host_cmd",
         ":libhoth_status",
-        "//transports:libhoth_device",
+        "//host/transports:libhoth_device",
     ],
 )
 
@@ -85,8 +89,8 @@ cc_test(
     srcs = ["payload_status_test.cc"],
     deps = [
         ":payload_status",
-        "//protocol/test:libhoth_device_mock",
-        "//transports:libhoth_device",
+        "//host/protocol/test:libhoth_device_mock",
+        "//host/transports:libhoth_device",
         "@googletest//:gtest",
         "@googletest//:gtest_main",
     ],
@@ -96,10 +100,11 @@ cc_library(
     name = "panic",
     srcs = ["panic.c"],
     hdrs = ["panic.h"],
+    strip_include_prefix = "/host",
     deps = [
         ":host_cmd",
         ":libhoth_status",
-        "//transports:libhoth_device",
+        "//host/transports:libhoth_device",
     ],
 )
 
@@ -107,12 +112,12 @@ cc_test(
     name = "panic_test",
     srcs = ["panic_test.cc"],
     data = [
-        "//protocol/test:test_data",
+        "//host/protocol/test:test_data",
     ],
     deps = [
         ":panic",
-        "//protocol/test:libhoth_device_mock",
-        "//transports:libhoth_device",
+        "//host/protocol/test:libhoth_device_mock",
+        "//host/transports:libhoth_device",
         "@googletest//:gtest",
         "@googletest//:gtest_main",
     ],
@@ -122,6 +127,7 @@ cc_library(
     name = "payload_update",
     srcs = ["payload_update.c"],
     hdrs = ["payload_update.h"],
+    strip_include_prefix = "/host",
     deps = [
         ":command_version",
         ":host_cmd",
@@ -129,7 +135,7 @@ cc_library(
         ":payload_info",
         ":progress",
         ":util",
-        "//transports:libhoth_device",
+        "//host/transports:libhoth_device",
     ],
 )
 
@@ -137,15 +143,15 @@ cc_test(
     name = "payload_update_test",
     srcs = ["payload_update_test.cc"],
     data = [
-        "//protocol/test:test_data",
+        "//host/protocol/test:test_data",
     ],
     deps = [
         ":command_version",
         ":libhoth_status",
         ":payload_info",
         ":payload_update",
-        "//protocol/test:libhoth_device_mock",
-        "//transports:libhoth_device",
+        "//host/protocol/test:libhoth_device_mock",
+        "//host/transports:libhoth_device",
         "@googletest//:gtest",
         "@googletest//:gtest_main",
     ],
@@ -155,10 +161,11 @@ cc_library(
     name = "statistics",
     srcs = ["statistics.c"],
     hdrs = ["statistics.h"],
+    strip_include_prefix = "/host",
     deps = [
         ":host_cmd",
         ":libhoth_status",
-        "//transports:libhoth_device",
+        "//host/transports:libhoth_device",
     ],
 )
 
@@ -167,8 +174,8 @@ cc_test(
     srcs = ["statistics_test.cc"],
     deps = [
         ":statistics",
-        "//protocol/test:libhoth_device_mock",
-        "//transports:libhoth_device",
+        "//host/protocol/test:libhoth_device_mock",
+        "//host/transports:libhoth_device",
         "@googletest//:gtest",
         "@googletest//:gtest_main",
     ],
@@ -178,10 +185,11 @@ cc_library(
     name = "reboot",
     srcs = ["reboot.c"],
     hdrs = ["reboot.h"],
+    strip_include_prefix = "/host",
     deps = [
         ":host_cmd",
         ":libhoth_status",
-        "//transports:libhoth_device",
+        "//host/transports:libhoth_device",
     ],
 )
 
@@ -190,8 +198,8 @@ cc_test(
     srcs = ["reboot_test.cc"],
     deps = [
         ":reboot",
-        "//protocol/test:libhoth_device_mock",
-        "//transports:libhoth_device",
+        "//host/protocol/test:libhoth_device_mock",
+        "//host/transports:libhoth_device",
         "@googletest//:gtest",
         "@googletest//:gtest_main",
     ],
@@ -201,10 +209,11 @@ cc_library(
     name = "command_version",
     srcs = ["command_version.c"],
     hdrs = ["command_version.h"],
+    strip_include_prefix = "/host",
     deps = [
         ":host_cmd",
         ":libhoth_status",
-        "//transports:libhoth_device",
+        "//host/transports:libhoth_device",
     ],
 )
 
@@ -213,8 +222,8 @@ cc_test(
     srcs = ["command_version_test.cc"],
     deps = [
         ":command_version",
-        "//protocol/test:libhoth_device_mock",
-        "//transports:libhoth_device",
+        "//host/protocol/test:libhoth_device_mock",
+        "//host/transports:libhoth_device",
         "@googletest//:gtest",
         "@googletest//:gtest_main",
     ],
@@ -224,10 +233,11 @@ cc_library(
     name = "chipinfo",
     srcs = ["chipinfo.c"],
     hdrs = ["chipinfo.h"],
+    strip_include_prefix = "/host",
     deps = [
         ":host_cmd",
         ":libhoth_status",
-        "//transports:libhoth_device",
+        "//host/transports:libhoth_device",
     ],
 )
 
@@ -236,8 +246,8 @@ cc_test(
     srcs = ["chipinfo_test.cc"],
     deps = [
         ":chipinfo",
-        "//protocol/test:libhoth_device_mock",
-        "//transports:libhoth_device",
+        "//host/protocol/test:libhoth_device_mock",
+        "//host/transports:libhoth_device",
         "@googletest//:gtest",
         "@googletest//:gtest_main",
     ],
@@ -247,10 +257,11 @@ cc_library(
     name = "i2c",
     srcs = ["i2c.c"],
     hdrs = ["i2c.h"],
+    strip_include_prefix = "/host",
     deps = [
         ":host_cmd",
         ":libhoth_status",
-        "//transports:libhoth_device",
+        "//host/transports:libhoth_device",
     ],
 )
 
@@ -259,8 +270,8 @@ cc_test(
     srcs = ["i2c_test.cc"],
     deps = [
         ":i2c",
-        "//protocol/test:libhoth_device_mock",
-        "//transports:libhoth_device",
+        "//host/protocol/test:libhoth_device_mock",
+        "//host/transports:libhoth_device",
         "@googletest//:gtest",
         "@googletest//:gtest_main",
     ],
@@ -270,11 +281,12 @@ cc_library(
     name = "authz_record",
     srcs = ["authz_record.c"],
     hdrs = ["authz_record.h"],
+    strip_include_prefix = "/host",
     deps = [
         ":chipinfo",
         ":host_cmd",
         ":libhoth_status",
-        "//transports:libhoth_device",
+        "//host/transports:libhoth_device",
     ],
 )
 
@@ -284,8 +296,8 @@ cc_test(
     deps = [
         ":authz_record",
         ":chipinfo",
-        "//protocol/test:libhoth_device_mock",
-        "//transports:libhoth_device",
+        "//host/protocol/test:libhoth_device_mock",
+        "//host/transports:libhoth_device",
         "@googletest//:gtest",
         "@googletest//:gtest_main",
     ],
@@ -295,6 +307,7 @@ cc_library(
     name = "progress",
     srcs = ["progress.c"],
     hdrs = ["progress.h"],
+    strip_include_prefix = "/host",
 )
 
 cc_test(
@@ -311,11 +324,12 @@ cc_library(
     name = "spi_proxy",
     srcs = ["spi_proxy.c"],
     hdrs = ["spi_proxy.h"],
+    strip_include_prefix = "/host",
     deps = [
         ":host_cmd",
         ":libhoth_status",
         ":progress",
-        "//transports:libhoth_device",
+        "//host/transports:libhoth_device",
     ],
 )
 
@@ -325,8 +339,8 @@ cc_test(
     deps = [
         ":libhoth_status",
         ":spi_proxy",
-        "//protocol/test:libhoth_device_mock",
-        "//transports:libhoth_device",
+        "//host/protocol/test:libhoth_device_mock",
+        "//host/transports:libhoth_device",
         "@googletest//:gtest",
         "@googletest//:gtest_main",
     ],
@@ -336,13 +350,14 @@ cc_library(
     name = "payload_info",
     srcs = ["payload_info.c"],
     hdrs = ["payload_info.h"],
+    strip_include_prefix = "/host",
 )
 
 cc_test(
     name = "payload_info_test",
     srcs = ["payload_info_test.cc"],
     data = [
-        "//protocol/test:test_data",
+        "//host/protocol/test:test_data",
     ],
     deps = [
         ":payload_info",
@@ -355,11 +370,12 @@ cc_library(
     name = "controlled_storage",
     srcs = ["controlled_storage.c"],
     hdrs = ["controlled_storage.h"],
+    strip_include_prefix = "/host",
     deps = [
         ":host_cmd",
         ":libhoth_status",
         ":progress",
-        "//transports:libhoth_device",
+        "//host/transports:libhoth_device",
     ],
 )
 
@@ -369,8 +385,8 @@ cc_test(
     deps = [
         ":controlled_storage",
         ":libhoth_status",
-        "//protocol/test:libhoth_device_mock",
-        "//transports:libhoth_device",
+        "//host/protocol/test:libhoth_device_mock",
+        "//host/transports:libhoth_device",
         "@googletest//:gtest",
         "@googletest//:gtest_main",
     ],
@@ -380,10 +396,11 @@ cc_library(
     name = "firmware_update",
     srcs = ["firmware_update.c"],
     hdrs = ["firmware_update.h"],
+    strip_include_prefix = "/host",
     deps = [
         ":host_cmd",
         ":libhoth_status",
-        "//transports:libhoth_device",
+        "//host/transports:libhoth_device",
     ],
 )
 
@@ -393,8 +410,8 @@ cc_test(
     deps = [
         ":firmware_update",
         ":host_cmd",
-        "//protocol/test:libhoth_device_mock",
-        "//transports:libhoth_device",
+        "//host/protocol/test:libhoth_device_mock",
+        "//host/transports:libhoth_device",
         "@googletest//:gtest",
         "@googletest//:gtest_main",
     ],
@@ -404,10 +421,11 @@ cc_library(
     name = "jtag",
     srcs = ["jtag.c"],
     hdrs = ["jtag.h"],
+    strip_include_prefix = "/host",
     deps = [
         ":host_cmd",
         ":libhoth_status",
-        "//transports:libhoth_device",
+        "//host/transports:libhoth_device",
     ],
 )
 
@@ -417,8 +435,8 @@ cc_test(
     deps = [
         ":jtag",
         ":libhoth_status",
-        "//protocol/test:libhoth_device_mock",
-        "//transports:libhoth_device",
+        "//host/protocol/test:libhoth_device_mock",
+        "//host/transports:libhoth_device",
         "@googletest//:gtest",
         "@googletest//:gtest_main",
     ],
@@ -428,9 +446,10 @@ cc_library(
     name = "hello",
     srcs = ["hello.c"],
     hdrs = ["hello.h"],
+    strip_include_prefix = "/host",
     deps = [
         ":host_cmd",
-        "//transports:libhoth_device",
+        "//host/transports:libhoth_device",
     ],
 )
 
@@ -439,8 +458,8 @@ cc_test(
     srcs = ["hello_test.cc"],
     deps = [
         ":hello",
-        "//protocol/test:libhoth_device_mock",
-        "//transports:libhoth_device",
+        "//host/protocol/test:libhoth_device_mock",
+        "//host/transports:libhoth_device",
         "@googletest//:gtest",
         "@googletest//:gtest_main",
     ],
@@ -450,10 +469,11 @@ cc_library(
     name = "gpio_drive_strength",
     srcs = ["gpio_drive_strength.c"],
     hdrs = ["gpio_drive_strength.h"],
+    strip_include_prefix = "/host",
     deps = [
         ":host_cmd",
         ":libhoth_status",
-        "//transports:libhoth_device",
+        "//host/transports:libhoth_device",
     ],
 )
 
@@ -462,8 +482,8 @@ cc_test(
     srcs = ["gpio_drive_strength_test.cc"],
     deps = [
         ":gpio_drive_strength",
-        "//protocol/test:libhoth_device_mock",
-        "//transports:libhoth_device",
+        "//host/protocol/test:libhoth_device_mock",
+        "//host/transports:libhoth_device",
         "@googletest//:gtest",
         "@googletest//:gtest_main",
     ],
@@ -477,11 +497,12 @@ cc_library(
         "opentitan_manifest.h",
         "opentitan_version.h",
     ],
+    strip_include_prefix = "/host",
     deps = [
         ":console",
         ":host_cmd",
         ":libhoth_status",
-        "//transports:libhoth_device",
+        "//host/transports:libhoth_device",
     ],
 )
 
@@ -491,8 +512,8 @@ cc_test(
     deps = [
         ":libhoth_status",
         ":opentitan_version",
-        "//protocol/test:libhoth_device_mock",
-        "//transports:libhoth_device",
+        "//host/protocol/test:libhoth_device_mock",
+        "//host/transports:libhoth_device",
         "@googletest//:gtest",
         "@googletest//:gtest_main",
     ],
@@ -502,10 +523,11 @@ cc_library(
     name = "key_rotation",
     srcs = ["key_rotation.c"],
     hdrs = ["key_rotation.h"],
+    strip_include_prefix = "/host",
     deps = [
         ":host_cmd",
         ":libhoth_status",
-        "//transports:libhoth_device",
+        "//host/transports:libhoth_device",
     ],
 )
 
@@ -516,8 +538,8 @@ cc_test(
         ":host_cmd",
         ":key_rotation",
         ":libhoth_status",
-        "//protocol/test:libhoth_device_mock",
-        "//transports:libhoth_device",
+        "//host/protocol/test:libhoth_device_mock",
+        "//host/transports:libhoth_device",
         "@googletest//:gtest",
         "@googletest//:gtest_main",
     ],
@@ -527,10 +549,11 @@ cc_library(
     name = "secure_boot",
     srcs = ["secure_boot.c"],
     hdrs = ["secure_boot.h"],
+    strip_include_prefix = "/host",
     deps = [
         ":host_cmd",
         ":libhoth_status",
-        "//transports:libhoth_device",
+        "//host/transports:libhoth_device",
     ],
 )
 
@@ -540,8 +563,8 @@ cc_test(
     deps = [
         ":host_cmd",
         ":secure_boot",
-        "//protocol/test:libhoth_device_mock",
-        "//transports:libhoth_device",
+        "//host/protocol/test:libhoth_device_mock",
+        "//host/transports:libhoth_device",
         "@googletest//:gtest",
         "@googletest//:gtest_main",
     ],
@@ -551,11 +574,12 @@ cc_library(
     name = "console",
     srcs = ["console.c"],
     hdrs = ["console.h"],
+    strip_include_prefix = "/host",
     deps = [
         ":host_cmd",
         ":libhoth_status",
         ":util",
-        "//transports:libhoth_device",
+        "//host/transports:libhoth_device",
     ],
 )
 
@@ -564,8 +588,8 @@ cc_test(
     srcs = ["console_test.cc"],
     deps = [
         ":console",
-        "//protocol/test:libhoth_device_mock",
-        "//transports:libhoth_device",
+        "//host/protocol/test:libhoth_device_mock",
+        "//host/transports:libhoth_device",
         "@googletest//:gtest",
         "@googletest//:gtest_main",
     ],
@@ -576,12 +600,13 @@ cc_library(
     name = "dfu_hostcmd",
     srcs = ["dfu_hostcmd.c"],
     hdrs = ["dfu_hostcmd.h"],
+    strip_include_prefix = "/host",
     deps = [
         ":dfu_check",
         ":host_cmd",
         ":libhoth_status",
         ":opentitan_version",
-        "//transports:libhoth_device",
+        "//host/transports:libhoth_device",
     ],
 )
 
@@ -593,11 +618,12 @@ cc_library(
     hdrs = [
         "dfu_check.h",
     ],
+    strip_include_prefix = "/host",
     deps = [
         ":console",
         ":libhoth_status",
         ":opentitan_version",
-        "//transports:libhoth_device",
+        "//host/transports:libhoth_device",
     ],
 )
 
@@ -605,14 +631,14 @@ cc_test(
     name = "dfu_check_test",
     srcs = ["dfu_check_test.cc"],
     data = [
-        "//protocol/test:test_data",
+        "//host/protocol/test:test_data",
     ],
     deps = [
         ":dfu_check",
         ":host_cmd",
         ":opentitan_version",
-        "//protocol/test:libhoth_device_mock",
-        "//transports:libhoth_device",
+        "//host/protocol/test:libhoth_device_mock",
+        "//host/transports:libhoth_device",
         "@googletest//:gtest",
         "@googletest//:gtest_main",
     ],
@@ -622,15 +648,17 @@ cc_library(
     name = "util",
     srcs = ["util.c"],
     hdrs = ["util.h"],
+    strip_include_prefix = "/host",
 )
 
 cc_library(
     name = "mauv",
     srcs = ["mauv.c"],
     hdrs = ["mauv.h"],
+    strip_include_prefix = "/host",
     deps = [
         ":host_cmd",
-        "//transports:libhoth_device",
+        "//host/transports:libhoth_device",
     ],
 )
 
@@ -639,8 +667,8 @@ cc_test(
     srcs = ["mauv_test.cc"],
     deps = [
         ":mauv",
-        "//protocol/test:libhoth_device_mock",
-        "//transports:libhoth_device",
+        "//host/protocol/test:libhoth_device_mock",
+        "//host/transports:libhoth_device",
         "@googletest//:gtest",
         "@googletest//:gtest_main",
     ],
@@ -650,10 +678,11 @@ cc_library(
     name = "update_session",
     srcs = ["update_session.c"],
     hdrs = ["update_session.h"],
+    strip_include_prefix = "/host",
     deps = [
         ":host_cmd",
         ":libhoth_status",
-        "//transports:libhoth_device",
+        "//host/transports:libhoth_device",
     ],
 )
 
@@ -664,8 +693,8 @@ cc_test(
         ":host_cmd",
         ":libhoth_status",
         ":update_session",
-        "//protocol/test:libhoth_device_mock",
-        "//transports:libhoth_device",
+        "//host/protocol/test:libhoth_device_mock",
+        "//host/transports:libhoth_device",
         "@googletest//:gtest",
         "@googletest//:gtest_main",
     ],
@@ -675,10 +704,11 @@ cc_library(
     name = "target_watchdog",
     srcs = ["target_watchdog.c"],
     hdrs = ["target_watchdog.h"],
+    strip_include_prefix = "/host",
     deps = [
         ":host_cmd",
         ":libhoth_status",
-        "//transports:libhoth_device",
+        "//host/transports:libhoth_device",
     ],
 )
 
@@ -689,8 +719,8 @@ cc_test(
         ":host_cmd",
         ":libhoth_status",
         ":target_watchdog",
-        "//protocol/test:libhoth_device_mock",
-        "//transports:libhoth_device",
+        "//host/protocol/test:libhoth_device_mock",
+        "//host/transports:libhoth_device",
         "@googletest//:gtest",
         "@googletest//:gtest_main",
     ],
@@ -700,9 +730,10 @@ cc_library(
     name = "provisioning",
     srcs = ["provisioning.c"],
     hdrs = ["provisioning.h"],
+    strip_include_prefix = "/host",
     deps = [
         ":host_cmd",
         ":libhoth_status",
-        "//transports:libhoth_device",
+        "//host/transports:libhoth_device",
     ],
 )

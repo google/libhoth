@@ -27,7 +27,7 @@ using ::testing::DoAll;
 using ::testing::Return;
 using ::testing::StrEq;
 
-constexpr char kTestData[] = "protocol/test/panic_record.bin";
+constexpr char kTestData[] = "host/protocol/test/panic_record.bin";
 
 struct panic_data GetPanicData() {
   struct panic_data ret;
