@@ -173,11 +173,51 @@ libhoth_error libhoth_key_rotation_payload_status(
   return HOTH_SUCCESS;
 }
 
+static libhoth_error key_rotation_write_commit(struct libhoth_device* dev,
+                                               const uint8_t* record,
+                                               size_t size) {
+  if (size < STRUCT_CHUNK_SIZE || (size % 4) != 0 ||
+      size > KEY_ROTATION_RECORD_WRITE_COMMIT_MAX_SIZE) {
+    fprintf(stderr,
+            "Invalid key rotation record size: %zu (must be 4-byte aligned in "
+            "[%d, %zu]).\n",
+            size, STRUCT_CHUNK_SIZE,
+            (size_t)KEY_ROTATION_RECORD_WRITE_COMMIT_MAX_SIZE);
+    return LIBHOTH_ERR_CONSTRUCT(HOTH_CTX_CMD_EXEC, HOTH_HOST_SPACE_LIBHOTH,
+                                 LIBHOTH_ERR_INVALID_PARAMETER);
+  }
+
+  struct {
+    struct hoth_request_key_rotation_record hdr;
+    uint8_t data[KEY_ROTATION_RECORD_WRITE_COMMIT_MAX_SIZE];
+  } __hoth_align4 request;
+
+  request.hdr.operation = KEY_ROTATION_RECORD_WRITE_COMMIT;
+  request.hdr.packet_offset = 0;
+  request.hdr.packet_size = (uint16_t)size;
+  request.hdr.reserved = 0;
+  memcpy(request.data, record, size);
+
+  fprintf(stderr, "Writing and committing the key rotation record.\n");
+  libhoth_error ret = libhoth_hostcmd_exec(
+      dev, HOTH_CMD_BOARD_SPECIFIC_BASE + HOTH_PRV_CMD_HAVEN_KEY_ROTATION_OP, 0,
+      &request, sizeof(request.hdr) + size, NULL, 0, NULL);
+  if (ret != HOTH_SUCCESS) {
+    fprintf(stderr, "HOTH_KEY_ROTATION_WRITE_COMMIT error code: 0x%016llx\n",
+            (unsigned long long)ret);
+    return ret;
+  }
+  return HOTH_SUCCESS;
+}
+
 libhoth_error libhoth_key_rotation_update(struct libhoth_device* dev,
                                           const uint8_t* image, size_t size) {
   if (dev == NULL || image == NULL) {
     return LIBHOTH_ERR_CONSTRUCT(HOTH_CTX_CMD_EXEC, HOTH_HOST_SPACE_LIBHOTH,
                                  LIBHOTH_ERR_INVALID_PARAMETER);
+  }
+  if (size >= 4 && memcmp(image, KEY_ROTATION_SIGNED_RECORD_MAGIC, 4) == 0) {
+    return key_rotation_write_commit(dev, image, size);
   }
   if (size <= KEY_ROTATION_RECORD_SIGNATURE_SIZE ||
       size > KEY_ROTATION_FLASH_AREA_SIZE) {
