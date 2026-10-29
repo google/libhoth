@@ -94,13 +94,15 @@ static libhoth_status spi_nor_busy_wait(const int fd, uint32_t timeout_us,
     return LIBHOTH_ERR_FAIL;
   }
   while (true) {
-    struct spi_ioc_transfer xfer = {0};
+    struct spi_ioc_transfer xfer[1] = {0};
     tx_buf[0] = SPI_NOR_OPCODE_READ_STATUS;
-    xfer.tx_buf = (uint64_t)tx_buf;
-    xfer.rx_buf = (uint64_t)rx_buf;
-    xfer.len = sizeof(rx_buf);
-    xfer.tx_nbits = SPI_NBITS_SINGLE;
-    xfer.rx_nbits = SPI_NBITS_SINGLE;
+    xfer[0] = (struct spi_ioc_transfer){
+        .tx_buf = (unsigned long)tx_buf,
+        .rx_buf = (unsigned long)rx_buf,
+        .len = sizeof(rx_buf),
+        .tx_nbits = SPI_NBITS_SINGLE,
+        .rx_nbits = SPI_NBITS_SINGLE,
+    };
     const int status = ioctl(fd, SPI_IOC_MESSAGE(1), xfer);
     if (status < 0) {
       return LIBHOTH_ERR_FAIL;
