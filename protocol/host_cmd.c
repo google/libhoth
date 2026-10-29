@@ -169,58 +169,71 @@ libhoth_error libhoth_hostcmd_exec(struct libhoth_device* dev, uint16_t command,
                                    size_t req_payload_size, void* resp_buf,
                                    size_t resp_buf_size,
                                    size_t* out_resp_size) {
-  struct {
-    struct hoth_host_request hdr;
-    uint8_t
-        payload_buf[LIBHOTH_MAILBOX_SIZE - sizeof(struct hoth_host_request)];
-  } req;
-  if (req_payload_size > sizeof(req.payload_buf)) {
-    fprintf(stderr, "req_payload_size too large: %d > %d\n",
-            (int)req_payload_size, (int)sizeof(req.payload_buf));
+  union {
+    struct {
+      struct hoth_host_request hdr;
+      uint8_t payload_buf[LIBHOTH_MAX_MAILBOX_SIZE -
+                          sizeof(struct hoth_host_request)];
+    } req;
+    struct {
+      struct hoth_host_response hdr;
+      uint8_t payload_buf[LIBHOTH_MAX_MAILBOX_SIZE -
+                          sizeof(struct hoth_host_response)];
+    } resp;
+  } buf;
+  if (req_payload_size > sizeof(buf.req.payload_buf)) {
+    fprintf(stderr, "req_payload_size too large: %zu > %zu\n", req_payload_size,
+            sizeof(buf.req.payload_buf));
+    return LIBHOTH_ERR_CONSTRUCT(HOTH_CTX_CMD_EXEC, HOTH_HOST_SPACE_LIBHOTH,
+                                 LIBHOTH_ERR_OUT_UNDERFLOW);
+  }
+  if (resp_buf_size > sizeof(buf.resp.payload_buf)) {
+    fprintf(stderr, "resp_buf_size too large: %zu > %zu\n", resp_buf_size,
+            sizeof(buf.resp.payload_buf));
     return LIBHOTH_ERR_CONSTRUCT(HOTH_CTX_CMD_EXEC, HOTH_HOST_SPACE_LIBHOTH,
                                  LIBHOTH_ERR_OUT_UNDERFLOW);
   }
   if (req_payload) {
-    memcpy(req.payload_buf, req_payload, req_payload_size);
+    memcpy(buf.req.payload_buf, req_payload, req_payload_size);
   }
   libhoth_status status = populate_ec_request_header(
-      command, version, req.payload_buf, req_payload_size, &req.hdr);
+      command, version, buf.req.payload_buf, req_payload_size, &buf.req.hdr);
   if (status != LIBHOTH_OK) {
     fprintf(stderr, "populate_ec_request_header() failed: %d\n", status);
     return LIBHOTH_ERR_CONSTRUCT(HOTH_CTX_CMD_EXEC, HOTH_HOST_SPACE_LIBHOTH,
                                  status);
   }
-  libhoth_error err =
-      libhoth_send_request(dev, &req, sizeof(req.hdr) + req_payload_size);
+  libhoth_error err = libhoth_send_request(
+      dev, &buf.req, sizeof(buf.req.hdr) + req_payload_size);
   if (err != HOTH_SUCCESS) {
     fprintf(stderr, "libhoth_send_request() failed: 0x%016llx\n",
             (unsigned long long)err);
     return err;
   }
-  struct {
-    struct hoth_host_response hdr;
-    uint8_t
-        payload_buf[LIBHOTH_MAILBOX_SIZE - sizeof(struct hoth_host_response)];
-  } resp;
+  size_t max_resp_size = sizeof(struct hoth_host_response) + resp_buf_size;
+  if (max_resp_size < LIBHOTH_MAILBOX_SIZE) {
+    max_resp_size = LIBHOTH_MAILBOX_SIZE;
+  }
   size_t resp_size = 0;
-  err = libhoth_receive_response(dev, &resp, sizeof(resp), &resp_size,
+  err = libhoth_receive_response(dev, &buf.resp, max_resp_size, &resp_size,
                                  HOTH_CMD_TIMEOUT_MS_DEFAULT);
   if (err != HOTH_SUCCESS) {
     fprintf(stderr, "libhoth_receive_response() failed: 0x%016llx\n",
             (unsigned long long)err);
     return err;
   }
-  status = validate_ec_response_header(&resp.hdr, resp.payload_buf, resp_size);
+  status = validate_ec_response_header(&buf.resp.hdr, buf.resp.payload_buf,
+                                       resp_size);
   if (status != LIBHOTH_OK) {
     fprintf(stderr, "EC response header invalid: %d\n", status);
     return LIBHOTH_ERR_CONSTRUCT(HOTH_CTX_CMD_EXEC, HOTH_HOST_SPACE_LIBHOTH,
                                  status);
   }
-  if (resp.hdr.result != HOTH_RES_SUCCESS) {
-    fprintf(stderr, "EC response contained error: %d", resp.hdr.result);
-    if (resp.hdr.data_len >= 4) {
+  if (buf.resp.hdr.result != HOTH_RES_SUCCESS) {
+    fprintf(stderr, "EC response contained error: %d", buf.resp.hdr.result);
+    if (buf.resp.hdr.data_len >= 4) {
       uint32_t error_code;
-      memcpy(&error_code, resp.payload_buf, sizeof(error_code));
+      memcpy(&error_code, buf.resp.payload_buf, sizeof(error_code));
       fprintf(stderr, " (extended: 0x%08x)\n", error_code);
       return LIBHOTH_ERR_CONSTRUCT(HOTH_CTX_CMD_EXEC,
                                    HOTH_HOST_SPACE_PIEROT_ERR, error_code);
@@ -228,7 +241,7 @@ libhoth_error libhoth_hostcmd_exec(struct libhoth_device* dev, uint16_t command,
       fprintf(stderr, "\n");
     }
     return LIBHOTH_ERR_CONSTRUCT(HOTH_CTX_CMD_EXEC, HOTH_HOST_SPACE_EC,
-                                 resp.hdr.result);
+                                 buf.resp.hdr.result);
   }
 
   size_t resp_payload_size = resp_size - sizeof(struct hoth_host_response);
@@ -251,7 +264,7 @@ libhoth_error libhoth_hostcmd_exec(struct libhoth_device* dev, uint16_t command,
     }
   }
   if (resp_buf) {
-    memcpy(resp_buf, resp.payload_buf, resp_payload_size);
+    memcpy(resp_buf, buf.resp.payload_buf, resp_payload_size);
   }
   if (out_resp_size) {
     *out_resp_size = resp_payload_size;
