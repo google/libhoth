@@ -101,7 +101,7 @@ static libhoth_status spi_nor_busy_wait(const int fd, uint32_t timeout_us,
     xfer.len = sizeof(rx_buf);
     xfer.tx_nbits = SPI_NBITS_SINGLE;
     xfer.rx_nbits = SPI_NBITS_SINGLE;
-    const int status = ioctl(fd, SPI_IOC_MESSAGE(1), xfer);
+    const int status = ioctl(fd, SPI_IOC_MESSAGE(1), &xfer);
     if (status < 0) {
       return LIBHOTH_ERR_FAIL;
     }
