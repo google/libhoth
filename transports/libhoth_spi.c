@@ -371,7 +371,8 @@ err_out:
 libhoth_error libhoth_spi_send_request(struct libhoth_device* dev,
                                        const void* request,
                                        size_t request_size) {
-  if (dev == NULL) {
+  if (dev == NULL || dev->user_ctx == NULL || request == NULL ||
+      request_size == 0 || request_size > LIBHOTH_MAX_MAILBOX_SIZE) {
     return spi_err_libhoth(LIBHOTH_ERR_INVALID_PARAMETER);
   }
 
@@ -389,7 +390,8 @@ libhoth_error libhoth_spi_receive_response(struct libhoth_device* dev,
                                            size_t max_response_size,
                                            size_t* actual_size,
                                            int timeout_ms) {
-  if (dev == NULL) {
+  (void)timeout_ms;
+  if (dev == NULL || dev->user_ctx == NULL || response == NULL) {
     return spi_err_libhoth(LIBHOTH_ERR_INVALID_PARAMETER);
   }
 
@@ -417,7 +419,8 @@ libhoth_error libhoth_spi_receive_response(struct libhoth_device* dev,
     *actual_size = total_bytes;
   }
 
-  if (max_response_size < (total_bytes + host_response.data_len)) {
+  if (max_response_size < (total_bytes + host_response.data_len) ||
+      LIBHOTH_MAILBOX_SIZE < (total_bytes + host_response.data_len)) {
     return spi_err_libhoth(LIBHOTH_ERR_RESPONSE_BUFFER_OVERFLOW);
   }
 
@@ -442,7 +445,8 @@ libhoth_error libhoth_spi_receive_response(struct libhoth_device* dev,
 libhoth_error libhoth_spi_buffer_request(struct libhoth_device* dev,
                                          const void* request,
                                          size_t request_size) {
-  if (dev == NULL) {
+  if (dev == NULL || dev->user_ctx == NULL || request == NULL ||
+      request_size == 0 || request_size > SPI_NOR_FLASH_PAGE_SIZE) {
     return spi_err_libhoth(LIBHOTH_ERR_INVALID_PARAMETER);
   }
 
@@ -468,11 +472,8 @@ libhoth_error libhoth_spi_send_and_receive_response(struct libhoth_device* dev,
                                                     size_t max_response_size,
                                                     size_t* actual_size,
                                                     int timeout_ms) {
-  if (dev == NULL) {
-    return spi_err_libhoth(LIBHOTH_ERR_INVALID_PARAMETER);
-  }
-
-  if (max_response_size < sizeof(struct hoth_host_response)) {
+  (void)timeout_ms;
+  if (dev == NULL || dev->user_ctx == NULL) {
     return spi_err_libhoth(LIBHOTH_ERR_INVALID_PARAMETER);
   }
 
@@ -481,6 +482,16 @@ libhoth_error libhoth_spi_send_and_receive_response(struct libhoth_device* dev,
 
   if (spi_dev->buffered_request == NULL) {
     return spi_err_libhoth(LIBHOTH_ERR_INTERFACE_BUSY);
+  }
+
+  if (response == NULL ||
+      max_response_size < sizeof(struct hoth_host_response) ||
+      spi_dev->buffered_request_size == 0 ||
+      spi_dev->buffered_request_size > SPI_NOR_FLASH_PAGE_SIZE) {
+    free(spi_dev->buffered_request);
+    spi_dev->buffered_request = NULL;
+    spi_dev->buffered_request_size = 0;
+    return spi_err_libhoth(LIBHOTH_ERR_INVALID_PARAMETER);
   }
 
   uint32_t address = spi_dev->mailbox_address;
@@ -528,10 +539,11 @@ libhoth_error libhoth_spi_send_and_receive_response(struct libhoth_device* dev,
       .tx_nbits = SPI_NBITS_SINGLE,
   };
 
-  // Read entire expected response buffer
+  // Read expected response buffer, bounded by the 1 KiB hardware SPI mailbox.
+  const size_t rx_len = MIN(max_response_size, (size_t)LIBHOTH_MAILBOX_SIZE);
   xfer[4] = (struct spi_ioc_transfer){
       .rx_buf = (unsigned long)response,
-      .len = max_response_size,
+      .len = rx_len,
       .rx_nbits = SPI_NBITS_SINGLE,
   };
 
@@ -543,7 +555,7 @@ libhoth_error libhoth_spi_send_and_receive_response(struct libhoth_device* dev,
     struct hoth_host_response* host_response =
         (struct hoth_host_response*)response;
     if (host_response->data_len >
-        (max_response_size - sizeof(struct hoth_host_response))) {
+        (rx_len - sizeof(struct hoth_host_response))) {
       rc = spi_err_libhoth(LIBHOTH_ERR_RESPONSE_BUFFER_OVERFLOW);
     } else if (actual_size) {
       *actual_size =
@@ -606,7 +618,11 @@ libhoth_error libhoth_spi_close(struct libhoth_device* dev) {
 
   struct libhoth_spi_device* spi_dev =
       (struct libhoth_spi_device*)dev->user_ctx;
-  close(spi_dev->fd);
-  free(dev->user_ctx);
+  if (spi_dev != NULL) {
+    free(spi_dev->buffered_request);
+    close(spi_dev->fd);
+    free(spi_dev);
+    dev->user_ctx = NULL;
+  }
   return HOTH_SUCCESS;
 }
