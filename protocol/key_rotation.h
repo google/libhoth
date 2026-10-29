@@ -35,6 +35,14 @@ extern "C" {
 #define KEY_ROTATION_RECORD_WRITE_MAX_SIZE                   \
   (LIBHOTH_MAILBOX_SIZE - sizeof(struct hoth_host_request) - \
    sizeof(struct hoth_request_key_rotation_record))
+// Maximum signed key rotation record container ("KRSD") size accepted over the
+// 6 KiB OpenTitan mailbox. Note that after stripping the hybrid signature
+// container, the inner sealed descriptor stored in OpenTitan flash must fit in
+// KEY_ROTATION_FLASH_AREA_SIZE - 56 = 1,992 bytes.
+#define KEY_ROTATION_RECORD_WRITE_COMMIT_MAX_SIZE                \
+  (LIBHOTH_MAX_MAILBOX_SIZE - sizeof(struct hoth_host_request) - \
+   sizeof(struct hoth_request_key_rotation_record))
+#define KEY_ROTATION_SIGNED_RECORD_MAGIC "KRSD"
 #define KEY_ROTATION_RECORD_READ_MAX_SIZE                     \
   (LIBHOTH_MAILBOX_SIZE - sizeof(struct hoth_host_response) - \
    sizeof(struct hoth_request_key_rotation_record) -          \
@@ -78,6 +86,8 @@ enum key_rotation_record_op {
                                          // allows
   KEY_ROTATION_RECORD_SET_MAUV = 10,     // Set Key Rotation Record MAUV
   KEY_ROTATION_RECORD_GET_MAUV = 11,     // Get Key Rotation Record MAUV
+  KEY_ROTATION_RECORD_WRITE_COMMIT = 12,  // Write, validate and commit a whole
+                                          // record. OpenTitan only.
 };
 
 #define KEY_ROTATION_CHUNK_TYPE_CODE_PKEY (0x59454B50)
