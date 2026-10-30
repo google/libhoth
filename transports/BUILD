@@ -1,4 +1,5 @@
 load("@rules_cc//cc:cc_library.bzl", "cc_library")
+load("@rules_cc//cc:cc_test.bzl", "cc_test")
 
 package(default_visibility = ["//visibility:public"])
 
@@ -74,6 +75,35 @@ cc_library(
         ":libhoth_device",
         ":libhoth_ec",
         "@libusb",
+    ],
+)
+
+cc_test(
+    name = "libhoth_usb_fifo_test",
+    srcs = ["libhoth_usb_fifo_test.cc"],
+    deps = [
+        ":libhoth_device",
+        ":libhoth_usb",
+        ":libhoth_usb_device",
+        "//protocol:libhoth_status",
+        "@googletest//:gtest",
+        "@googletest//:gtest_main",
+        "@libusb",
+    ],
+)
+
+cc_test(
+    name = "libhoth_spi_test",
+    srcs = ["libhoth_spi_test.cc"],
+    linkopts = ["-Wl,--wrap=ioctl"],
+    linkstatic = True,
+    deps = [
+        ":libhoth_device",
+        ":libhoth_ec",
+        ":libhoth_spi",
+        "//protocol:libhoth_status",
+        "@googletest//:gtest",
+        "@googletest//:gtest_main",
     ],
 )
 

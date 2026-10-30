@@ -94,7 +94,7 @@ int command_raw_host_command(const struct htool_invocation* inv) {
       return 0;
     }
 
-    uint8_t req_payload[LIBHOTH_MAILBOX_SIZE -
+    uint8_t req_payload[LIBHOTH_MAX_MAILBOX_SIZE -
                         sizeof(struct hoth_host_request)] = {0};
 
     if (req.data_len > sizeof(req_payload)) {

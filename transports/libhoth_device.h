@@ -24,7 +24,10 @@
 extern "C" {
 #endif
 
+// Legacy host command buffer size, used for chunked protocols.
 #define LIBHOTH_MAILBOX_SIZE 1024
+// Maximum host command buffer size supported by any target (e.g. OpenTitan).
+#define LIBHOTH_MAX_MAILBOX_SIZE 6144
 #define LIBHOTH_REBOOT_DELAY_MS 1000
 
 struct libhoth_device {

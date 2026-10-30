@@ -72,8 +72,8 @@ ACTION_P(CopyResp, response, resp_size) {
 
   struct {
     struct hoth_host_response hdr;
-    uint8_t
-        payload_buf[LIBHOTH_MAILBOX_SIZE - sizeof(struct hoth_host_response)];
+    uint8_t payload_buf[LIBHOTH_MAX_MAILBOX_SIZE -
+                        sizeof(struct hoth_host_response)];
   } resp;
 
   ASSERT_LE(full_resp_size, sizeof(resp));
