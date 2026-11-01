@@ -168,6 +168,31 @@ libhoth_error libhoth_payload_update_erase(struct libhoth_device* const dev,
   return HOTH_SUCCESS;
 }
 
+struct payload_chunk {
+  size_t offset;
+  size_t len;
+};
+
+static struct payload_chunk payload_update_next_chunk(const uint8_t* image,
+                                                      size_t size, size_t start,
+                                                      size_t max_chunk_size) {
+  size_t offset = start;
+  while (offset < size && image[offset] == 0xFF) {
+    ++offset;
+  }
+
+  size_t len = max_chunk_size;
+  if (size - offset < len) {
+    len = size - offset;
+  }
+
+  while (len > 0 && image[offset + len - 1] == 0xFF) {
+    --len;
+  }
+
+  return (struct payload_chunk){.offset = offset, .len = len};
+}
+
 libhoth_error libhoth_payload_update(struct libhoth_device* dev, uint8_t* image,
                                      size_t size, bool skip_erase,
                                      bool binary_file) {
@@ -202,49 +227,49 @@ libhoth_error libhoth_payload_update(struct libhoth_device* dev, uint8_t* image,
                                 sizeof(struct hoth_host_request) -
                                 sizeof(struct payload_update_packet);
 
+  // Count only the bytes that get sent, so the ETA ignores skipped 0xFF
+  // regions.
+  size_t total_bytes_to_send = 0;
+  for (struct payload_chunk chunk =
+           payload_update_next_chunk(image, size, /*start=*/0, max_chunk_size);
+       chunk.len > 0;
+       chunk = payload_update_next_chunk(image, size, chunk.offset + chunk.len,
+                                         max_chunk_size)) {
+    total_bytes_to_send += chunk.len;
+  }
+
+  size_t bytes_sent = 0;
   struct libhoth_progress_stderr program_progress;
   libhoth_progress_stderr_init(&program_progress, "Sending payload");
-  for (size_t offset = 0; offset < size; ++offset) {
-    program_progress.progress.func(program_progress.progress.param, offset,
-                                   size);
+  for (struct payload_chunk chunk =
+           payload_update_next_chunk(image, size, /*start=*/0, max_chunk_size);
+       chunk.len > 0;
+       chunk = payload_update_next_chunk(image, size, chunk.offset + chunk.len,
+                                         max_chunk_size)) {
+    program_progress.progress.func(program_progress.progress.param, bytes_sent,
+                                   total_bytes_to_send);
 
-    if (image[offset] == 0xFF) {
-      continue;
-    }
     struct payload_update_packet request;
-
-    size_t chunk_size = max_chunk_size;
-    if (size - offset < chunk_size) {
-      chunk_size = size - offset;
-    }
-
-    while (chunk_size > 0 && image[offset + chunk_size - 1] == 0xFF) {
-      --chunk_size;
-    }
-
-    if (chunk_size == 0) {
-      continue;
-    }
-
-    request.offset = offset;
-    request.len = chunk_size;
+    request.offset = chunk.offset;
+    request.len = chunk.len;
     request.type = PAYLOAD_UPDATE_CONTINUE;
 
     uint8_t buffer[sizeof(struct payload_update_packet) + LIBHOTH_MAILBOX_SIZE];
     memcpy(buffer, &request, sizeof(request));
-    memcpy(buffer + sizeof(request), image + offset, chunk_size);
+    memcpy(buffer + sizeof(request), image + chunk.offset, chunk.len);
 
     libhoth_error ret = libhoth_hostcmd_exec(
         dev, HOTH_CMD_BOARD_SPECIFIC_BASE + HOTH_PRV_CMD_HOTH_PAYLOAD_UPDATE, 0,
-        buffer, sizeof(request) + chunk_size, NULL, 0, NULL);
+        buffer, sizeof(request) + chunk.len, NULL, 0, NULL);
     if (ret != HOTH_SUCCESS) {
       return ret;
     }
 
-    offset += chunk_size - 1;
+    bytes_sent += chunk.len;
   }
 
-  program_progress.progress.func(program_progress.progress.param, size, size);
+  program_progress.progress.func(program_progress.progress.param,
+                                 total_bytes_to_send, total_bytes_to_send);
 
   // Don't attempt to verify and activate binary file since most likely it will
   // fail (unlike actual payload images which have an image descriptor)

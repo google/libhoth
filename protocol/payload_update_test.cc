@@ -23,6 +23,7 @@
 #include <cstring>
 #include <memory>
 #include <string>
+#include <vector>
 
 #include "protocol/command_version.h"
 #include "protocol/payload_info.h"
@@ -72,6 +73,27 @@ MATCHER_P2(IsReadRequest, offset, len, "") {
   return p->type == PAYLOAD_UPDATE_READ &&
          p->offset == static_cast<uint32_t>(offset) &&
          p->len == static_cast<uint32_t>(len);
+}
+
+MATCHER_P3(IsContinueRequest, offset, len, expected_data, "") {
+  const struct hoth_host_request* req =
+      static_cast<const struct hoth_host_request*>(arg);
+  if (req->struct_version != HOTH_HOST_REQUEST_VERSION ||
+      req->command != kCmd) {
+    return false;
+  }
+  const struct payload_update_packet* p =
+      reinterpret_cast<const struct payload_update_packet*>(
+          static_cast<const uint8_t*>(arg) + sizeof(struct hoth_host_request));
+  if (p->type != PAYLOAD_UPDATE_CONTINUE ||
+      p->offset != static_cast<uint32_t>(offset) ||
+      p->len != static_cast<uint32_t>(len)) {
+    return false;
+  }
+  const uint8_t* payload = static_cast<const uint8_t*>(arg) +
+                           sizeof(struct hoth_host_request) +
+                           sizeof(struct payload_update_packet);
+  return std::memcmp(payload, expected_data, len) == 0;
 }
 
 TEST_F(LibHothTest, payload_update_bad_image_test) {
@@ -625,4 +647,74 @@ TEST_F(LibHothTest, payload_update_read_chunk_test) {
   uint8_t actual_data[sizeof(expected_data)] = {0};
   ASSERT_EQ(read(fd, actual_data, len), static_cast<ssize_t>(len));
   EXPECT_THAT(actual_data, ::testing::ElementsAreArray(expected_data));
+}
+
+TEST_F(LibHothTest, payload_update_chunking_with_gaps_and_trailing_erased) {
+  constexpr uint8_t kErasedByte = 0xFF;
+  constexpr size_t kMaxChunkSize = LIBHOTH_MAILBOX_SIZE -
+                                   sizeof(struct hoth_host_request) -
+                                   sizeof(struct payload_update_packet);
+  constexpr size_t kFirstRegionOffset = 0;
+  constexpr size_t kFirstRegionLen = 16;
+  constexpr size_t kGapLen = 3 * kMaxChunkSize;
+  constexpr size_t kSecondRegionOffset =
+      kFirstRegionOffset + kFirstRegionLen + kGapLen;
+  constexpr size_t kSecondRegionTailLen = 20;
+  constexpr size_t kSecondRegionDataLen = kMaxChunkSize + kSecondRegionTailLen;
+  constexpr size_t kInteriorErasedOffset = kMaxChunkSize / 2;
+  constexpr size_t kInteriorErasedLen = 8;
+  constexpr size_t kTrailingErasedLen = 12;
+  constexpr size_t kImageSize =
+      kSecondRegionOffset + kSecondRegionDataLen + kTrailingErasedLen;
+
+  std::vector<uint8_t> image(kImageSize, kErasedByte);
+  for (size_t i = 0; i < kFirstRegionLen; ++i) {
+    const size_t j = kFirstRegionOffset + i;
+    image[j] = static_cast<uint8_t>(j % kErasedByte);
+  }
+  for (size_t i = 0; i < kSecondRegionDataLen; ++i) {
+    const size_t j = kSecondRegionOffset + i;
+    image[j] = static_cast<uint8_t>(j % kErasedByte);
+  }
+  for (size_t i = 0; i < kInteriorErasedLen; ++i) {
+    image[kSecondRegionOffset + kInteriorErasedOffset + i] = kErasedByte;
+  }
+
+  {
+    InSequence s;
+
+    EXPECT_CALL(mock_,
+                send(_,
+                     IsContinueRequest(kFirstRegionOffset, kFirstRegionLen,
+                                       image.data() + kFirstRegionOffset),
+                     _))
+        .WillOnce(Return(LIBHOTH_OK));
+    EXPECT_CALL(mock_, receive)
+        .WillOnce(DoAll(CopyResp(&kDummy, 0), Return(LIBHOTH_OK)));
+
+    EXPECT_CALL(mock_,
+                send(_,
+                     IsContinueRequest(kSecondRegionOffset, kMaxChunkSize,
+                                       image.data() + kSecondRegionOffset),
+                     _))
+        .WillOnce(Return(LIBHOTH_OK));
+    EXPECT_CALL(mock_, receive)
+        .WillOnce(DoAll(CopyResp(&kDummy, 0), Return(LIBHOTH_OK)));
+
+    EXPECT_CALL(
+        mock_,
+        send(_,
+             IsContinueRequest(
+                 kSecondRegionOffset + kMaxChunkSize, kSecondRegionTailLen,
+                 image.data() + kSecondRegionOffset + kMaxChunkSize),
+             _))
+        .WillOnce(Return(LIBHOTH_OK));
+    EXPECT_CALL(mock_, receive)
+        .WillOnce(DoAll(CopyResp(&kDummy, 0), Return(LIBHOTH_OK)));
+  }
+
+  EXPECT_EQ(libhoth_payload_update(&hoth_dev_, image.data(), image.size(),
+                                   /*skip_erase=*/true,
+                                   /*binary_file=*/true),
+            HOTH_SUCCESS);
 }
