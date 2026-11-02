@@ -1,3 +1,7 @@
+build --enable_platform_specific_config
+build:linux --define=mtd_backend=true
+build:linux --define=spi_backend=true
+build:macos --macos_minimum_os=11.0
 build --stamp --workspace_status_command '$(pwd)/print_git_commit.sh'
 build:asan --copt=-fsanitize=address --linkopt=-fsanitize=address
 build:msan --copt=-fsanitize=memory --linkopt=-fsanitize=memory
