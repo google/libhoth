@@ -22,10 +22,10 @@
 //! To update the golden files after an intended change:
 //!
 //! ```text
-//! UPDATE_GOLDEN=1 bazel run //tlvtool/tests:inspect_test
+//! UPDATE_GOLDEN=1 bazel run //tools/tlvtool/tests:inspect_test
 //! ```
 
-use mutask_golden::assert_eq_golden;
+use openprot_golden::assert_eq_golden;
 use tlvtool::Algorithm;
 use tlvtool::HybridMaterial;
 use tlvtool::RecordBuilder;

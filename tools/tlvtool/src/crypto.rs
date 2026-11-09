@@ -45,16 +45,16 @@ use crypto_tlv::Rsa2048PublicMaterial;
 use crypto_tlv::Rsa3072PublicMaterial;
 use crypto_tlv::Rsa4096PublicMaterial;
 use crypto_tlv::SlhDsaPublicMaterial;
-use mutask_fingerprints::FingerprintableKey;
+use openprot_fingerprints::FingerprintableKey;
 use serde::Deserialize;
 use serde::Serialize;
 
 // -----------------------------------------------------------------------------
-// FIPS 180-4 SHA2-256 (via mutask)
+// FIPS 180-4 SHA2-256 (via openprot_sha256_sw)
 // -----------------------------------------------------------------------------
 
-pub use mutask_sha256_sw::Sha256;
-pub use mutask_sha256_sw::sha256;
+pub use openprot_sha256_sw::Sha256;
+pub use openprot_sha256_sw::sha256;
 
 /// Length of an ML-DSA-44 public key, in bytes.
 pub const MLDSA44_PUBLIC_KEY_LEN: usize = 1312;

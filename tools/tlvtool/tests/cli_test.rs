@@ -22,7 +22,7 @@ use std::process::Command;
 fn tlvtool() -> Command {
     let r = runfiles::Runfiles::create().expect("failed to locate runfiles");
     Command::new(
-        runfiles::rlocation!(r, "mutask/tlvtool/tlvtool").expect("tlvtool is not in the runfiles"),
+        runfiles::rlocation!(r, "_main/tools/tlvtool/tlvtool").expect("tlvtool is not in the runfiles"),
     )
 }
 
