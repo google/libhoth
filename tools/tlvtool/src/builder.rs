@@ -453,8 +453,8 @@ impl RecordBuilder {
             ));
         }
 
-        let tlv_words = mutask_tlv_proto_conv::message_to_tlv(
-            &key_rotation_rust_proto::__unstable::CONTRIB_OPENPROT_PROTO_KEY_ROTATION_DESCRIPTOR_INFO,
+        let tlv_words = openprot_tlv_proto_conv::message_to_tlv(
+            &key_rotation_rust_proto::__unstable::SHARED_OPENPROT_PROTO_KEY_ROTATION_DESCRIPTOR_INFO,
             &desc,
         )
         .context("Failed to convert protobuf record to TLV wire format")?;
@@ -473,7 +473,7 @@ pub struct UnsignedRecord(Vec<u8>);
 impl UnsignedRecord {
     pub fn from_bytes(bytes: &[u8]) -> Result<Self> {
         check_unsigned_size(bytes.len())?;
-        let tlv_data = mutask_tlv::TlvData::overlay_bytes(bytes)
+        let tlv_data = openprot_tlv::TlvData::overlay_bytes(bytes)
             .map_err(|_| anyhow!("Unsigned record length must be 4-byte aligned"))?;
         let has_desc = tlv_data
             .iter::<proto::key_rotation::Descriptor>()
@@ -505,7 +505,7 @@ mod tests {
 
     /// Parses `bytes` as TLV and returns the contained `KROT` descriptor version.
     fn descriptor_version(bytes: &[u8]) -> u32 {
-        mutask_tlv::TlvData::overlay_bytes(bytes)
+        openprot_tlv::TlvData::overlay_bytes(bytes)
             .expect("Invalid alignment")
             .iter::<proto::key_rotation::Descriptor>()
             .next()
@@ -627,7 +627,7 @@ mod tests {
         use proto::crypto::KeyFingerprintExt;
         use proto::crypto::KeyFingerprintKeyType as K;
         use proto::key_rotation::DescriptorExt;
-        let desc = mutask_tlv::TlvData::overlay_bytes(bytes)
+        let desc = openprot_tlv::TlvData::overlay_bytes(bytes)
             .unwrap()
             .iter::<proto::key_rotation::Descriptor>()
             .next()

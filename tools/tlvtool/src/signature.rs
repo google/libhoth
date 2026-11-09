@@ -31,12 +31,12 @@ use anyhow::Result;
 use anyhow::anyhow;
 use anyhow::ensure;
 use crypto_tlv::HybridP256MlDsa44PublicMaterial;
-use mutask_fingerprints::FingerprintableKey;
-use mutask_tlv::TlvBuilder;
-use mutask_tlv::TlvData;
-use mutask_tlv::TlvHeader;
-use mutask_tlv::TlvItem;
-use mutask_tlv::TlvObject;
+use openprot_fingerprints::FingerprintableKey;
+use openprot_tlv::TlvBuilder;
+use openprot_tlv::TlvData;
+use openprot_tlv::TlvHeader;
+use openprot_tlv::TlvItem;
+use openprot_tlv::TlvObject;
 use std::path::Path;
 
 /// The four offline artefacts that make up one hybrid P-256 + ML-DSA-44 signature.
@@ -205,8 +205,8 @@ impl SignedRecordBuilder {
             .signatures
             .iter()
             .map(|sigc| {
-                mutask_tlv_proto_conv::message_to_tlv(
-                    &crypto_rust_proto::__unstable::CONTRIB_OPENPROT_PROTO_CRYPTO_DESCRIPTOR_INFO,
+                openprot_tlv_proto_conv::message_to_tlv(
+                    &crypto_rust_proto::__unstable::SHARED_OPENPROT_PROTO_CRYPTO_DESCRIPTOR_INFO,
                     sigc,
                 )
                 .context("Failed to convert signature container to TLV wire format")
@@ -366,8 +366,8 @@ mod tests {
         };
 
         let (sigc, _) = build_hybrid_sigc(crypto_rust_proto::KeyDomain::Rotr, &material).unwrap();
-        let wire = mutask_tlv_proto_conv::message_to_tlv(
-            &crypto_rust_proto::__unstable::CONTRIB_OPENPROT_PROTO_CRYPTO_DESCRIPTOR_INFO,
+        let wire = openprot_tlv_proto_conv::message_to_tlv(
+            &crypto_rust_proto::__unstable::SHARED_OPENPROT_PROTO_CRYPTO_DESCRIPTOR_INFO,
             &sigc,
         )
         .unwrap();

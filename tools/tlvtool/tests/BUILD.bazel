@@ -17,13 +17,13 @@ load("@rules_rust//rust:defs.bzl", "rust_test")
 rust_test(
     name = "cli_test",
     srcs = ["cli_test.rs"],
-    data = ["//tlvtool"],
+    data = ["//tools/tlvtool"],
     edition = "2024",
     deps = ["@rules_rust//tools/runfiles"],
 )
 
 # Golden tests for the `inspect` report. Update them with:
-#   UPDATE_GOLDEN=1 bazel run //tlvtool/tests:inspect_test
+#   UPDATE_GOLDEN=1 bazel run //tools/tlvtool/tests:inspect_test
 rust_test(
     name = "inspect_test",
     srcs = ["inspect_test.rs"],
@@ -34,8 +34,8 @@ rust_test(
         "link-arg=-lgcc",
     ],
     deps = [
-        "//contrib/golden",
-        "//contrib/openprot/proto:crypto_rust_proto",
-        "//tlvtool:tlvtool_lib",
+        "//shared/golden",
+        "//shared/openprot/proto:crypto_rust_proto",
+        "//tools/tlvtool:tlvtool_lib",
     ],
 )
