@@ -190,7 +190,7 @@ static libhoth_error key_rotation_write_commit(struct libhoth_device* dev,
   struct {
     struct hoth_request_key_rotation_record hdr;
     uint8_t data[KEY_ROTATION_RECORD_WRITE_COMMIT_MAX_SIZE];
-  } __hoth_align4 request;
+  } __hoth_align4 request = {0};
 
   request.hdr.operation = KEY_ROTATION_RECORD_WRITE_COMMIT;
   request.hdr.packet_offset = 0;
@@ -233,7 +233,7 @@ libhoth_error libhoth_key_rotation_update(struct libhoth_device* dev,
     return HTOOL_CMD_INITIATE_FAIL;
   }
   fprintf(stderr, "Writing the image to hoth.\n");
-  struct hoth_request_variable_length request;
+  struct hoth_request_variable_length request = {0};
   uint16_t offset = 0;
   const uint8_t* packet_data = image;
   while (size > 0) {
@@ -283,7 +283,7 @@ static libhoth_error send_key_rotation_read_helper(
     return LIBHOTH_ERR_CONSTRUCT(HOTH_CTX_CMD_EXEC, HOTH_HOST_SPACE_LIBHOTH,
                                  LIBHOTH_ERR_INVALID_PARAMETER);
   }
-  struct hoth_request_variable_length request;
+  struct hoth_request_variable_length request = {0};
   request.hdr.operation = operation;
   request.hdr.packet_offset = offset;
   request.hdr.packet_size = size;
@@ -468,7 +468,7 @@ libhoth_error libhoth_key_rotation_chunk_type_count(struct libhoth_device* dev,
     return LIBHOTH_ERR_CONSTRUCT(HOTH_CTX_CMD_EXEC, HOTH_HOST_SPACE_LIBHOTH,
                                  LIBHOTH_ERR_INVALID_PARAMETER);
   }
-  struct hoth_request_variable_length request;
+  struct hoth_request_variable_length request = {0};
   request.hdr.operation = KEY_ROTATION_RECORD_CHUNK_TYPE_COUNT;
   request.hdr.packet_offset = 0;
   request.hdr.packet_size = 0;
@@ -510,7 +510,7 @@ libhoth_error libhoth_key_rotation_set_mauv(struct libhoth_device* dev,
     return LIBHOTH_ERR_CONSTRUCT(HOTH_CTX_CMD_EXEC, HOTH_HOST_SPACE_LIBHOTH,
                                  LIBHOTH_ERR_INVALID_PARAMETER);
   }
-  struct hoth_request_variable_length request;
+  struct hoth_request_variable_length request = {0};
   request.hdr.operation = KEY_ROTATION_RECORD_SET_MAUV;
   request.hdr.packet_offset = 0;
   request.hdr.packet_size = 0;

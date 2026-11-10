@@ -49,7 +49,7 @@ TEST_F(LibHothTest, jtag_read_idcode_success) {
       .WillOnce(DoAll(CopyResp(&good_response, sizeof(good_response)),
                       Return(LIBHOTH_OK)));
 
-  uint32_t received_idcode;
+  uint32_t received_idcode = 0;
   uint8_t interface_id = 0;
   uint16_t clk_idiv = 0;
   EXPECT_EQ(libhoth_jtag_read_idcode(&hoth_dev_, interface_id, clk_idiv,
@@ -80,7 +80,7 @@ TEST_F(LibHothTest, jtag_read_idcode_receive_error) {
 
   EXPECT_CALL(mock_, receive).WillOnce(Return(LIBHOTH_ERR_TIMEOUT));
 
-  uint32_t received_idcode;
+  uint32_t received_idcode = 0;
   uint8_t interface_id = 0;
   uint16_t clk_idiv = 0;
   EXPECT_NE(libhoth_jtag_read_idcode(&hoth_dev_, interface_id, clk_idiv,
@@ -103,7 +103,7 @@ TEST_F(LibHothTest, jtag_read_idcode_receive_unexpected_length) {
       .WillOnce(DoAll(CopyResp(&good_response, sizeof(good_response) - 1),
                       Return(LIBHOTH_OK)));
 
-  uint32_t received_idcode;
+  uint32_t received_idcode = 0;
   uint8_t interface_id = 0;
   uint16_t clk_idiv = 0;
   EXPECT_NE(libhoth_jtag_read_idcode(&hoth_dev_, interface_id, clk_idiv,
@@ -112,8 +112,8 @@ TEST_F(LibHothTest, jtag_read_idcode_receive_unexpected_length) {
 }
 
 TEST_F(LibHothTest, jtag_test_bypass_success_with_tdi_tdo_data_match) {
-  uint8_t tdi_bytes[HOTH_JTAG_TEST_BYPASS_PATTERN_LEN];
-  struct hoth_response_jtag_test_bypass_operation good_matching_response;
+  uint8_t tdi_bytes[HOTH_JTAG_TEST_BYPASS_PATTERN_LEN] = {};
+  struct hoth_response_jtag_test_bypass_operation good_matching_response = {};
   for (uint8_t i = 0; i < HOTH_JTAG_TEST_BYPASS_PATTERN_LEN; i++) {
     tdi_bytes[i] = i;
     good_matching_response.tdo_pattern[i] = i;
@@ -130,7 +130,7 @@ TEST_F(LibHothTest, jtag_test_bypass_success_with_tdi_tdo_data_match) {
           CopyResp(&good_matching_response, sizeof(good_matching_response)),
           Return(LIBHOTH_OK)));
 
-  uint8_t tdo_bytes[HOTH_JTAG_TEST_BYPASS_PATTERN_LEN];
+  uint8_t tdo_bytes[HOTH_JTAG_TEST_BYPASS_PATTERN_LEN] = {};
   uint8_t interface_id = 0;
   uint16_t clk_idiv = 0;
   EXPECT_EQ(libhoth_jtag_test_bypass(&hoth_dev_, interface_id, clk_idiv,
@@ -160,8 +160,9 @@ TEST_F(LibHothTest, jtag_test_bypass_null_params) {
 }
 
 TEST_F(LibHothTest, jtag_test_bypass_success_with_tdi_tdo_data_mismatch) {
-  uint8_t tdi_bytes[HOTH_JTAG_TEST_BYPASS_PATTERN_LEN];
-  struct hoth_response_jtag_test_bypass_operation good_non_matching_response;
+  uint8_t tdi_bytes[HOTH_JTAG_TEST_BYPASS_PATTERN_LEN] = {};
+  struct hoth_response_jtag_test_bypass_operation good_non_matching_response =
+      {};
   for (uint8_t i = 0; i < HOTH_JTAG_TEST_BYPASS_PATTERN_LEN; i++) {
     tdi_bytes[i] = i;
     good_non_matching_response.tdo_pattern[i] = i + 1;
@@ -178,7 +179,7 @@ TEST_F(LibHothTest, jtag_test_bypass_success_with_tdi_tdo_data_mismatch) {
                                sizeof(good_non_matching_response)),
                       Return(LIBHOTH_OK)));
 
-  uint8_t tdo_bytes[HOTH_JTAG_TEST_BYPASS_PATTERN_LEN];
+  uint8_t tdo_bytes[HOTH_JTAG_TEST_BYPASS_PATTERN_LEN] = {};
   uint8_t interface_id = 0;
   uint16_t clk_idiv = 0;
   EXPECT_EQ(libhoth_jtag_test_bypass(&hoth_dev_, interface_id, clk_idiv,
@@ -196,8 +197,8 @@ TEST_F(LibHothTest, jtag_test_bypass_receive_error) {
 
   EXPECT_CALL(mock_, receive).WillOnce(Return(LIBHOTH_ERR_TIMEOUT));
 
-  uint8_t tdi_bytes[HOTH_JTAG_TEST_BYPASS_PATTERN_LEN];
-  uint8_t tdo_bytes[HOTH_JTAG_TEST_BYPASS_PATTERN_LEN];
+  uint8_t tdi_bytes[HOTH_JTAG_TEST_BYPASS_PATTERN_LEN] = {};
+  uint8_t tdo_bytes[HOTH_JTAG_TEST_BYPASS_PATTERN_LEN] = {};
   uint8_t interface_id = 0;
   uint16_t clk_idiv = 0;
   EXPECT_NE(libhoth_jtag_test_bypass(&hoth_dev_, interface_id, clk_idiv,
@@ -206,8 +207,8 @@ TEST_F(LibHothTest, jtag_test_bypass_receive_error) {
 }
 
 TEST_F(LibHothTest, jtag_test_bypass_receive_unexpected_length) {
-  uint8_t tdi_bytes[HOTH_JTAG_TEST_BYPASS_PATTERN_LEN];
-  struct hoth_response_jtag_test_bypass_operation good_matching_response;
+  uint8_t tdi_bytes[HOTH_JTAG_TEST_BYPASS_PATTERN_LEN] = {};
+  struct hoth_response_jtag_test_bypass_operation good_matching_response = {};
   for (uint8_t i = 0; i < HOTH_JTAG_TEST_BYPASS_PATTERN_LEN; i++) {
     tdi_bytes[i] = i;
     good_matching_response.tdo_pattern[i] = i;
@@ -224,7 +225,7 @@ TEST_F(LibHothTest, jtag_test_bypass_receive_unexpected_length) {
           CopyResp(&good_matching_response, sizeof(good_matching_response) - 1),
           Return(LIBHOTH_OK)));
 
-  uint8_t tdo_bytes[HOTH_JTAG_TEST_BYPASS_PATTERN_LEN];
+  uint8_t tdo_bytes[HOTH_JTAG_TEST_BYPASS_PATTERN_LEN] = {};
   uint8_t interface_id = 0;
   uint16_t clk_idiv = 0;
   EXPECT_NE(libhoth_jtag_test_bypass(&hoth_dev_, interface_id, clk_idiv,
