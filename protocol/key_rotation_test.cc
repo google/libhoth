@@ -75,7 +75,7 @@ TEST_F(LibHothTest, key_rotation_get_version_success) {
       .WillOnce(DoAll(CopyResp(&kDefaultVersion, sizeof(kDefaultVersion)),
                       Return(LIBHOTH_OK)));
 
-  struct hoth_response_key_rotation_record_version actual_response;
+  struct hoth_response_key_rotation_record_version actual_response = {};
   EXPECT_EQ(libhoth_key_rotation_get_version(&hoth_dev_, &actual_response),
             HOTH_SUCCESS);
   EXPECT_EQ(actual_response.version, kDefaultVersion.version);
@@ -87,7 +87,7 @@ TEST_F(LibHothTest, key_rotation_get_version_failure_io) {
 
   EXPECT_CALL(mock_, receive).WillOnce(Return(LIBHOTH_ERR_FAIL));
 
-  struct hoth_response_key_rotation_record_version actual_response;
+  struct hoth_response_key_rotation_record_version actual_response = {};
   EXPECT_NE(libhoth_key_rotation_get_version(&hoth_dev_, &actual_response),
             HOTH_SUCCESS);
 }
@@ -100,7 +100,7 @@ TEST_F(LibHothTest, key_rotation_get_version_failure_wrong_size) {
       .WillOnce(DoAll(CopyResp(&kDefaultVersion, sizeof(kDefaultVersion) - 1),
                       Return(LIBHOTH_OK)));
 
-  struct hoth_response_key_rotation_record_version actual_response;
+  struct hoth_response_key_rotation_record_version actual_response = {};
   EXPECT_EQ(libhoth_key_rotation_get_version(&hoth_dev_, &actual_response),
             LIBHOTH_ERR_CONSTRUCT(HOTH_CTX_CMD_EXEC, HOTH_HOST_SPACE_EC,
                                   HOTH_RES_INVALID_RESPONSE_SIZE));
@@ -114,7 +114,7 @@ TEST_F(LibHothTest, key_rotation_get_status_success) {
       .WillOnce(DoAll(CopyResp(&kDefaultStatus, sizeof(kDefaultStatus)),
                       Return(LIBHOTH_OK)));
 
-  struct hoth_response_key_rotation_status actual_status;
+  struct hoth_response_key_rotation_status actual_status = {};
   EXPECT_EQ(libhoth_key_rotation_get_status(&hoth_dev_, &actual_status),
             HOTH_SUCCESS);
   EXPECT_EQ(actual_status.version, kDefaultStatus.version);
@@ -134,7 +134,7 @@ TEST_F(LibHothTest, key_rotation_get_status_failure_io) {
 
   EXPECT_CALL(mock_, receive).WillOnce(Return(LIBHOTH_ERR_FAIL));
 
-  struct hoth_response_key_rotation_status actual_status;
+  struct hoth_response_key_rotation_status actual_status = {};
   EXPECT_NE(libhoth_key_rotation_get_status(&hoth_dev_, &actual_status),
             HOTH_SUCCESS);
 }
@@ -147,7 +147,7 @@ TEST_F(LibHothTest, key_rotation_get_status_failure_wrong_size) {
       .WillOnce(DoAll(CopyResp(&kDefaultStatus, sizeof(kDefaultStatus) - 1),
                       Return(LIBHOTH_OK)));
 
-  struct hoth_response_key_rotation_status actual_status;
+  struct hoth_response_key_rotation_status actual_status = {};
   EXPECT_EQ(libhoth_key_rotation_get_status(&hoth_dev_, &actual_status),
             LIBHOTH_ERR_CONSTRUCT(HOTH_CTX_CMD_EXEC, HOTH_HOST_SPACE_EC,
                                   HOTH_RES_INVALID_RESPONSE_SIZE));
@@ -162,7 +162,7 @@ TEST_F(LibHothTest, key_rotation_payload_status_success) {
           DoAll(CopyResp(&kDefaultPayloadStatus, sizeof(kDefaultPayloadStatus)),
                 Return(LIBHOTH_OK)));
 
-  struct hoth_response_key_rotation_payload_status actual_payload_status;
+  struct hoth_response_key_rotation_payload_status actual_payload_status = {};
   EXPECT_EQ(
       libhoth_key_rotation_payload_status(&hoth_dev_, &actual_payload_status),
       HOTH_SUCCESS);
@@ -180,7 +180,7 @@ TEST_F(LibHothTest, key_rotation_payload_status_failure_io) {
 
   EXPECT_CALL(mock_, receive).WillOnce(Return(LIBHOTH_ERR_FAIL));
 
-  struct hoth_response_key_rotation_payload_status actual_payload_status;
+  struct hoth_response_key_rotation_payload_status actual_payload_status = {};
   EXPECT_NE(
       libhoth_key_rotation_payload_status(&hoth_dev_, &actual_payload_status),
       HOTH_SUCCESS);
@@ -195,7 +195,7 @@ TEST_F(LibHothTest, key_rotation_payload_status_failure_wrong_size) {
           CopyResp(&kDefaultPayloadStatus, sizeof(kDefaultPayloadStatus) - 1),
           Return(LIBHOTH_OK)));
 
-  struct hoth_response_key_rotation_payload_status actual_payload_status;
+  struct hoth_response_key_rotation_payload_status actual_payload_status = {};
   EXPECT_EQ(
       libhoth_key_rotation_payload_status(&hoth_dev_, &actual_payload_status),
       LIBHOTH_ERR_CONSTRUCT(HOTH_CTX_CMD_EXEC, HOTH_HOST_SPACE_EC,
@@ -209,7 +209,7 @@ TEST_F(LibHothTest, key_rotation_read_success_single_packet) {
   EXPECT_CALL(mock_, receive)
       .WillOnce(DoAll(CopyResp(&kDefaultReadResponse, 8), Return(LIBHOTH_OK)));
 
-  struct hoth_response_key_rotation_record_read actual_read_response;
+  struct hoth_response_key_rotation_record_read actual_read_response = {};
   EXPECT_EQ(libhoth_key_rotation_read(&hoth_dev_, 0, 8,
                                       KEY_ROTATION_RECORD_READ_HALF_ACTIVE,
                                       &actual_read_response),
@@ -227,7 +227,7 @@ TEST_F(LibHothTest, key_rotation_read_success_max_packet) {
       .WillOnce(DoAll(CopyResp(&data, KEY_ROTATION_RECORD_READ_MAX_SIZE),
                       Return(LIBHOTH_OK)));
 
-  struct hoth_response_key_rotation_record_read actual_read_response;
+  struct hoth_response_key_rotation_record_read actual_read_response = {};
   EXPECT_EQ(libhoth_key_rotation_read(
                 &hoth_dev_, 0, KEY_ROTATION_RECORD_READ_MAX_SIZE,
                 KEY_ROTATION_RECORD_READ_HALF_ACTIVE, &actual_read_response),
@@ -252,7 +252,7 @@ TEST_F(LibHothTest, key_rotation_read_success_multiple_packets) {
       .WillOnce(DoAll(CopyResp(&data[2 * KEY_ROTATION_RECORD_READ_MAX_SIZE], 8),
                       Return(LIBHOTH_OK)));
 
-  struct hoth_response_key_rotation_record_read actual_read_response;
+  struct hoth_response_key_rotation_record_read actual_read_response = {};
   EXPECT_EQ(libhoth_key_rotation_read(
                 &hoth_dev_, 0, KEY_ROTATION_MAX_RECORD_SIZE,
                 KEY_ROTATION_RECORD_READ_HALF_ACTIVE, &actual_read_response),
@@ -277,7 +277,7 @@ TEST_F(LibHothTest, key_rotation_read_success_max_size) {
           DoAll(CopyResp(&data[2 * KEY_ROTATION_RECORD_READ_MAX_SIZE], 40),
                 Return(LIBHOTH_OK)));
 
-  struct hoth_response_key_rotation_record_read actual_read_response;
+  struct hoth_response_key_rotation_record_read actual_read_response = {};
   EXPECT_EQ(libhoth_key_rotation_read(
                 &hoth_dev_, 0, KEY_ROTATION_FLASH_AREA_SIZE,
                 KEY_ROTATION_RECORD_READ_HALF_ACTIVE, &actual_read_response),
@@ -292,7 +292,7 @@ TEST_F(LibHothTest, key_rotation_read_failure_io) {
 
   EXPECT_CALL(mock_, receive).WillOnce(Return(LIBHOTH_ERR_FAIL));
 
-  struct hoth_response_key_rotation_record_read actual_read_response;
+  struct hoth_response_key_rotation_record_read actual_read_response = {};
   EXPECT_NE(libhoth_key_rotation_read(&hoth_dev_, 0, 8,
                                       KEY_ROTATION_RECORD_READ_HALF_ACTIVE,
                                       &actual_read_response),
@@ -306,7 +306,7 @@ TEST_F(LibHothTest, key_rotation_read_failure_wrong_size) {
   EXPECT_CALL(mock_, receive)
       .WillOnce(DoAll(CopyResp(&kDefaultReadResponse, 7), Return(LIBHOTH_OK)));
 
-  struct hoth_response_key_rotation_record_read actual_read_response;
+  struct hoth_response_key_rotation_record_read actual_read_response = {};
   EXPECT_EQ(libhoth_key_rotation_read(&hoth_dev_, 0, 8,
                                       KEY_ROTATION_RECORD_READ_HALF_ACTIVE,
                                       &actual_read_response),
@@ -315,7 +315,7 @@ TEST_F(LibHothTest, key_rotation_read_failure_wrong_size) {
 }
 
 TEST_F(LibHothTest, key_rotation_read_failure_invalid_size) {
-  struct hoth_response_key_rotation_record_read actual_read_response;
+  struct hoth_response_key_rotation_record_read actual_read_response = {};
   EXPECT_NE(libhoth_key_rotation_read(&hoth_dev_, 0, 0,
                                       KEY_ROTATION_RECORD_READ_HALF_ACTIVE,
                                       &actual_read_response),
@@ -323,7 +323,7 @@ TEST_F(LibHothTest, key_rotation_read_failure_invalid_size) {
 }
 
 TEST_F(LibHothTest, key_rotation_read_failure_invalid_size_too_large) {
-  struct hoth_response_key_rotation_record_read actual_read_response;
+  struct hoth_response_key_rotation_record_read actual_read_response = {};
   EXPECT_NE(libhoth_key_rotation_read(
                 &hoth_dev_, 0, KEY_ROTATION_FLASH_AREA_SIZE + 1,
                 KEY_ROTATION_RECORD_READ_HALF_ACTIVE, &actual_read_response),
@@ -409,7 +409,7 @@ TEST_F(LibHothTest, key_rotation_read_chunk_type_success) {
       .WillOnce(
           DoAll(CopyResp(&data, KEY_ROTATION_RECORD_READ_CHUNK_TYPE_MAX_SIZE),
                 Return(LIBHOTH_OK)));
-  struct hoth_response_key_rotation_record_read actual_read_response;
+  struct hoth_response_key_rotation_record_read actual_read_response = {};
   uint16_t response_size = 0;
   EXPECT_EQ(libhoth_key_rotation_read_chunk_type(
                 &hoth_dev_, kCmdRotPublicKey, 0, 0,
@@ -426,7 +426,7 @@ TEST_F(LibHothTest, key_rotation_read_chunk_type_failure_io) {
   EXPECT_CALL(mock_, send(_, UsesCommand(kCmd), _))
       .WillOnce(Return(LIBHOTH_OK));
   EXPECT_CALL(mock_, receive).WillOnce(Return(LIBHOTH_ERR_FAIL));
-  struct hoth_response_key_rotation_record_read actual_read_response;
+  struct hoth_response_key_rotation_record_read actual_read_response = {};
   uint16_t response_size = 0;
   EXPECT_NE(libhoth_key_rotation_read_chunk_type(
                 &hoth_dev_, kCmdRotPublicKey, 0, 0,
@@ -436,7 +436,7 @@ TEST_F(LibHothTest, key_rotation_read_chunk_type_failure_io) {
 }
 
 TEST_F(LibHothTest, key_rotation_read_chunk_type_failure_invalid_size) {
-  struct hoth_response_key_rotation_record_read actual_read_response;
+  struct hoth_response_key_rotation_record_read actual_read_response = {};
   uint16_t response_size = 0;
   EXPECT_NE(
       libhoth_key_rotation_read_chunk_type(
@@ -451,7 +451,7 @@ TEST_F(LibHothTest,
       .WillOnce(Return(LIBHOTH_OK));
   EXPECT_CALL(mock_, receive)
       .WillOnce(DoAll(CopyResp(&kDummy, 0), Return(LIBHOTH_OK)));
-  struct hoth_response_key_rotation_record_read actual_read_response;
+  struct hoth_response_key_rotation_record_read actual_read_response = {};
   uint16_t response_size = 0;
   EXPECT_EQ(libhoth_key_rotation_read_chunk_type(
                 &hoth_dev_, kCmdRotPublicKey, 0, 0,
@@ -466,7 +466,7 @@ TEST_F(LibHothTest, key_rotation_read_chunk_type_failure_invalid_chunk_offset) {
       .WillOnce(Return(LIBHOTH_OK));
   EXPECT_CALL(mock_, receive)
       .WillOnce(DoAll(CopyResp(&kDummy, 0), Return(LIBHOTH_OK)));
-  struct hoth_response_key_rotation_record_read actual_read_response;
+  struct hoth_response_key_rotation_record_read actual_read_response = {};
   uint16_t response_size = 0;
   EXPECT_EQ(libhoth_key_rotation_read_chunk_type(
                 &hoth_dev_, kCmdRotPublicKey,
@@ -572,7 +572,7 @@ TEST_F(LibHothTest, key_rotation_get_mauv_success) {
   EXPECT_CALL(mock_, receive)
       .WillOnce(DoAll(CopyResp(&kDefaultMauv, sizeof(kDefaultMauv)),
                       Return(LIBHOTH_OK)));
-  struct hoth_response_key_rotation_mauv actual_response;
+  struct hoth_response_key_rotation_mauv actual_response = {};
   EXPECT_EQ(libhoth_key_rotation_get_mauv(&hoth_dev_, &actual_response),
             HOTH_SUCCESS);
   EXPECT_EQ(actual_response.mauv, kDefaultMauv.mauv);
@@ -582,7 +582,7 @@ TEST_F(LibHothTest, key_rotation_get_mauv_failure_io) {
   EXPECT_CALL(mock_, send(_, UsesCommand(kCmd), _))
       .WillOnce(Return(LIBHOTH_OK));
   EXPECT_CALL(mock_, receive).WillOnce(Return(LIBHOTH_ERR_FAIL));
-  struct hoth_response_key_rotation_mauv actual_response;
+  struct hoth_response_key_rotation_mauv actual_response = {};
   EXPECT_NE(libhoth_key_rotation_get_mauv(&hoth_dev_, &actual_response),
             HOTH_SUCCESS);
 }
@@ -596,7 +596,7 @@ TEST_F(LibHothTest, key_rotation_get_mauv_failure_invalid_response_size) {
   EXPECT_CALL(mock_, receive)
       .WillOnce(DoAll(CopyResp(&kDefaultMauv, sizeof(kDefaultMauv) - 1),
                       Return(LIBHOTH_OK)));
-  struct hoth_response_key_rotation_mauv actual_response;
+  struct hoth_response_key_rotation_mauv actual_response = {};
   EXPECT_EQ(libhoth_key_rotation_get_mauv(&hoth_dev_, &actual_response),
             LIBHOTH_ERR_CONSTRUCT(HOTH_CTX_CMD_EXEC, HOTH_HOST_SPACE_EC,
                                   HOTH_RES_INVALID_RESPONSE_SIZE));
