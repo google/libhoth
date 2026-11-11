@@ -17,10 +17,33 @@ cc_library(
     hdrs = ["libhoth_ec.h"],
 )
 
+config_setting(
+    name = "dbus_backend",
+    define_values = {
+        "dbus_backend": "true",
+    },
+)
+
+# The MTD and SPI transports use Linux kernel interfaces (<linux/...>, /proc/mtd),
+# so they are enabled on Linux and left out elsewhere (e.g. macOS). These are keyed
+# on the target platform rather than a --define so that they also apply when
+# libhoth is consumed as a Bazel module (a dependency's .bazelrc is not read).
+config_setting(
+    name = "mtd_backend",
+    constraint_values = ["@platforms//os:linux"],
+)
+
+config_setting(
+    name = "spi_backend",
+    constraint_values = ["@platforms//os:linux"],
+)
+
 cc_library(
     name = "libhoth_mtd",
     srcs = ["libhoth_mtd.c"],
     hdrs = ["libhoth_mtd.h"],
+    defines = ["MTD_BACKEND"],
+    target_compatible_with = ["@platforms//os:linux"],
     deps = [
         ":libhoth_device",
         ":libhoth_ec",
@@ -32,6 +55,8 @@ cc_library(
     name = "libhoth_spi",
     srcs = ["libhoth_spi.c"],
     hdrs = ["libhoth_spi.h"],
+    defines = ["SPI_BACKEND"],
+    target_compatible_with = ["@platforms//os:linux"],
     deps = [
         ":libhoth_device",
         ":libhoth_ec",
@@ -58,6 +83,7 @@ cc_library(
     hdrs = ["libhoth_dbus.h"],
     defines = ["DBUS_BACKEND"],
     linkopts = ["-lsystemd"],
+    target_compatible_with = ["@platforms//os:linux"],
     deps = [
         ":libhoth_device",
         "//protocol:libhoth_status",

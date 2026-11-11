@@ -14,7 +14,12 @@
 
 #include "protocol/target_watchdog.h"
 
+#if defined(__APPLE__)
+#include <libkern/OSByteOrder.h>
+#define le64toh(x) OSSwapLittleToHostInt64(x)
+#else
 #include <endian.h>
+#endif
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
 
