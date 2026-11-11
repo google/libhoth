@@ -30,6 +30,9 @@ cc_library(
     "-isystem", "external/{}/libusb".format(repo_name()), 
     "-isystem", "external/{}".format(repo_name()),
   ],
+  # libusb's private headers are C-only and not self-contained, so they cannot
+  # be parsed standalone as C++.
+  features = ["-parse_headers"],
   linkopts = ["-lpthread"],
   visibility = ["//visibility:public"],
 )

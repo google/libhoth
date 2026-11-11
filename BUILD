@@ -27,6 +27,10 @@ cc_library(
     ],
     include_prefix = "libhoth/transports",
     strip_include_prefix = "transports",
+    deps = [
+        "//protocol:libhoth_status",
+        "@libusb",
+    ],
 )
 
 cc_library(
@@ -36,6 +40,10 @@ cc_library(
     ],
     include_prefix = "transports",
     strip_include_prefix = "transports",
+    deps = [
+        "//protocol:libhoth_status",
+        "@libusb",
+    ],
 )
 
 cc_library(
