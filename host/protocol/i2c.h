@@ -19,6 +19,7 @@
 extern "C" {
 #endif
 
+#include <stddef.h>
 #include <stdint.h>
 
 #include "protocol/status.h"
@@ -110,6 +111,54 @@ struct hoth_response_i2c_transfer {
 libhoth_error libhoth_i2c_transfer(struct libhoth_device* dev,
                                    struct hoth_request_i2c_transfer* req,
                                    struct hoth_response_i2c_transfer* resp);
+
+// Select I2C endpoints in the virtual I2C hierarchy that will be enabled when
+// RoT firmware activates filtering rules for the protected I2C endpoints.
+// For all remaining unselected endpoints, all write and write-then-read
+// operations will be dropped but read operations will be allowed.
+
+// Takes `struct hoth_request_enable_i2c_endpoints_for_filtering` as input and
+// returns `struct hoth_response_i2c_endpoints_enabled_for_filtering` as output.
+#define HOTH_PRV_CMD_ENABLE_I2C_ENDPOINTS_FOR_FILTERING 0x0061
+
+// No input. Returns `struct hoth_response_i2c_endpoints_enabled_for_filtering`
+// as output.
+#define HOTH_PRV_CMD_GET_ENABLED_I2C_ENDPOINTS_FOR_FILTERING 0x0062
+
+struct hoth_request_enable_i2c_endpoints_for_filtering {
+  uint8_t
+      ids_count;  // Number of endpoint identifiers in this request.
+                  // `ids_count=0` is allowed and will disable all I2C endpoints
+  uint8_t reserved[3];  // Padding for alignment for rest of the data; must be 0
+  // Variable length sequence:
+  // - Repeat `ids_count` times (i.e. for each identifier):
+  //   - First byte represents I2C port (Port0 is encoded as 0)
+  //   - The next byte (N) represents number of I2C switches in the path to the
+  //     endpoint
+  //   - The next `2*N` bytes represent the path along I2C switches
+  //     - Each byte pair is (I2C switch address, Channel number)
+  //   - Next 1 byte represents I2C endpoint address
+  //   - Next byte (I) represents 1-byte identifier for the endpoint
+} __attribute__((packed, aligned(4)));
+
+struct hoth_response_i2c_endpoints_enabled_for_filtering {
+  uint8_t ids_count;    // Number of endpoints that have been enabled
+  uint8_t reserved[3];  // Padding for alignment for rest of the data; must be 0
+  // Variable length sequence similar to request representing enabled I2C
+  // endpoints
+} __attribute__((packed, aligned(4)));
+
+libhoth_error libhoth_i2c_filtering_enable_endpoints(
+    struct libhoth_device* dev,
+    const struct hoth_request_enable_i2c_endpoints_for_filtering* req,
+    size_t req_len,
+    struct hoth_response_i2c_endpoints_enabled_for_filtering* resp,
+    size_t max_resp_len, size_t* resp_len);
+
+libhoth_error libhoth_i2c_filtering_get_enabled_endpoints(
+    struct libhoth_device* dev,
+    struct hoth_response_i2c_endpoints_enabled_for_filtering* resp,
+    size_t max_resp_len, size_t* resp_len);
 
 #ifdef __cplusplus
 }
