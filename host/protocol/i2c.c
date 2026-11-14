@@ -85,3 +85,61 @@ libhoth_error libhoth_i2c_transfer(struct libhoth_device* dev,
 
   return HOTH_SUCCESS;
 }
+
+libhoth_error libhoth_i2c_filtering_enable_endpoints(
+    struct libhoth_device* dev,
+    const struct hoth_request_enable_i2c_endpoints_for_filtering* req,
+    size_t req_len,
+    struct hoth_response_i2c_endpoints_enabled_for_filtering* resp,
+    size_t max_resp_len, size_t* resp_len) {
+  if (dev == NULL || req == NULL || resp == NULL || req_len < sizeof(*req) ||
+      max_resp_len < sizeof(*resp)) {
+    return LIBHOTH_ERR_CONSTRUCT(HOTH_CTX_CMD_EXEC, HOTH_HOST_SPACE_LIBHOTH,
+                                 LIBHOTH_ERR_INVALID_PARAMETER);
+  }
+  size_t rLen = 0;
+  libhoth_error err = libhoth_hostcmd_exec(
+      dev,
+      HOTH_CMD_BOARD_SPECIFIC_BASE +
+          HOTH_PRV_CMD_ENABLE_I2C_ENDPOINTS_FOR_FILTERING,
+      /*version=*/0, req, req_len, resp, max_resp_len, &rLen);
+  if (err != HOTH_SUCCESS) {
+    return err;
+  }
+  if (rLen < sizeof(*resp) || rLen > max_resp_len) {
+    return LIBHOTH_ERR_CONSTRUCT(HOTH_CTX_CMD_EXEC, HOTH_HOST_SPACE_LIBHOTH,
+                                 LIBHOTH_ERR_FAIL);
+  }
+  if (resp_len != NULL) {
+    *resp_len = rLen;
+  }
+  return HOTH_SUCCESS;
+}
+
+libhoth_error libhoth_i2c_filtering_get_enabled_endpoints(
+    struct libhoth_device* dev,
+    struct hoth_response_i2c_endpoints_enabled_for_filtering* resp,
+    size_t max_resp_len, size_t* resp_len) {
+  if (dev == NULL || resp == NULL || max_resp_len < sizeof(*resp)) {
+    return LIBHOTH_ERR_CONSTRUCT(HOTH_CTX_CMD_EXEC, HOTH_HOST_SPACE_LIBHOTH,
+                                 LIBHOTH_ERR_INVALID_PARAMETER);
+  }
+  size_t rLen = 0;
+  libhoth_error err = libhoth_hostcmd_exec(
+      dev,
+      HOTH_CMD_BOARD_SPECIFIC_BASE +
+          HOTH_PRV_CMD_GET_ENABLED_I2C_ENDPOINTS_FOR_FILTERING,
+      /*version=*/0, /*req_payload=*/NULL, /*req_payload_size=*/0, resp,
+      max_resp_len, &rLen);
+  if (err != HOTH_SUCCESS) {
+    return err;
+  }
+  if (rLen < sizeof(*resp) || rLen > max_resp_len) {
+    return LIBHOTH_ERR_CONSTRUCT(HOTH_CTX_CMD_EXEC, HOTH_HOST_SPACE_LIBHOTH,
+                                 LIBHOTH_ERR_FAIL);
+  }
+  if (resp_len != NULL) {
+    *resp_len = rLen;
+  }
+  return HOTH_SUCCESS;
+}

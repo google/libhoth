@@ -23,8 +23,11 @@
 #include "host_commands.h"
 #include "htool.h"
 #include "htool_target_control.h"
+#include "protocol/host_cmd.h"
 #include "protocol/i2c.h"
+#include "protocol/status.h"
 #include "tools/common/htool_cmd.h"
+#include "transports/libhoth_device.h"
 
 static int i2c_detect(struct libhoth_device* dev,
                       const struct htool_invocation* inv) {
@@ -275,4 +278,122 @@ int htool_i2c_muxctrl_select_rot(const struct htool_invocation* inv) {
 
 int htool_i2c_muxctrl_select_host(const struct htool_invocation* inv) {
   return i2c_mux_control_change_select(I2C_MUXCTRL_ACTION_SELECT_HOST);
+}
+
+static void print_enabled_i2c_endpoints(
+    const struct hoth_response_i2c_endpoints_enabled_for_filtering* resp,
+    size_t resp_len) {
+  printf("Count of endpoints enabled: %u\n", resp->ids_count);
+  printf("Enabled endpoints data:");
+  const uint8_t* data = (const uint8_t*)resp + sizeof(*resp);
+  const size_t data_len = resp_len - sizeof(*resp);
+  for (size_t i = 0; i < data_len; ++i) {
+    printf(" 0x%02X", data[i]);
+  }
+  printf("\n");
+}
+
+int htool_i2c_filtering_enable_endpoints(const struct htool_invocation* inv) {
+  struct libhoth_device* dev = htool_libhoth_device();
+  if (!dev) {
+    return -1;
+  }
+
+  uint32_t ids_count = 0;
+  char* byte_stream = NULL;
+  if (htool_get_param_u32(inv, "ids_count", &ids_count) ||
+      htool_get_param_string(inv, "byte_stream", (const char**)&byte_stream)) {
+    return -1;
+  }
+
+  if (ids_count > UINT8_MAX) {
+    fprintf(stderr, "Invalid ids_count: %u (max %u)\n", ids_count, UINT8_MAX);
+    return -1;
+  }
+
+  // `ids_count` = 0 is a supported value to disable all endpoints when
+  // filtering is active.
+  if (byte_stream == NULL) {
+    return -1;
+  }
+
+  uint8_t __attribute__((aligned(4)))
+  request_payload[LIBHOTH_MAILBOX_SIZE - sizeof(struct hoth_host_request)];
+
+  struct hoth_request_enable_i2c_endpoints_for_filtering* req =
+      (struct hoth_request_enable_i2c_endpoints_for_filtering*)request_payload;
+  req->ids_count = (uint8_t)ids_count;
+  memset(req->reserved, 0, sizeof(req->reserved));
+  size_t idx = sizeof(*req);
+
+  char* tk = strtok(byte_stream, " ");
+  while (tk && (idx < sizeof(request_payload))) {
+    char* endptr;
+    unsigned long int parsed = strtoul(tk, &endptr, 0);
+    if (tk == endptr || parsed > UINT8_MAX || *endptr != '\0') {
+      fprintf(stderr, "Invalid input data.\n");
+      return -1;
+    }
+    request_payload[idx++] = (uint8_t)parsed;
+    tk = strtok(NULL, " ");
+  }
+  if (tk != NULL) {
+    fprintf(stderr, "Request overflow!\n");
+    return -1;
+  }
+  if ((ids_count == 0) != (idx == sizeof(*req))) {
+    fprintf(stderr, "Invalid input data.\n");
+    return -1;
+  }
+
+  uint8_t __attribute__((aligned(4)))
+  response_payload[LIBHOTH_MAILBOX_SIZE - sizeof(struct hoth_host_response)];
+  size_t resp_len = 0;
+
+  libhoth_error err = libhoth_i2c_filtering_enable_endpoints(
+      dev,
+      (const struct hoth_request_enable_i2c_endpoints_for_filtering*)
+          request_payload,
+      idx,
+      (struct hoth_response_i2c_endpoints_enabled_for_filtering*)
+          response_payload,
+      sizeof(response_payload), &resp_len);
+  if (err != HOTH_SUCCESS) {
+    htool_report_error("i2c_filtering", err);
+    return -1;
+  }
+
+  print_enabled_i2c_endpoints(
+      (const struct hoth_response_i2c_endpoints_enabled_for_filtering*)
+          response_payload,
+      resp_len);
+  return 0;
+}
+
+int htool_i2c_filtering_get_enabled_endpoints(
+    const struct htool_invocation* inv) {
+  struct libhoth_device* dev = htool_libhoth_device();
+  if (!dev) {
+    return -1;
+  }
+
+  uint8_t __attribute__((aligned(4)))
+  response_payload[LIBHOTH_MAILBOX_SIZE - sizeof(struct hoth_host_response)];
+  size_t resp_len = 0;
+
+  libhoth_error err = libhoth_i2c_filtering_get_enabled_endpoints(
+      dev,
+      (struct hoth_response_i2c_endpoints_enabled_for_filtering*)
+          response_payload,
+      sizeof(response_payload), &resp_len);
+  if (err != HOTH_SUCCESS) {
+    htool_report_error("i2c_filtering", err);
+    return -1;
+  }
+
+  print_enabled_i2c_endpoints(
+      (const struct hoth_response_i2c_endpoints_enabled_for_filtering*)
+          response_payload,
+      resp_len);
+  return 0;
 }
