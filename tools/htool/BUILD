@@ -243,6 +243,7 @@ cc_library(
         "//host/protocol:dfu_check",
         "//host/protocol:dfu_hostcmd",
         "//host/protocol:firmware_update",
+        "//host/protocol:flash_uid",
         "//host/protocol:gpio_drive_strength",
         "//host/protocol:hello",
         "//host/protocol:host_cmd",
