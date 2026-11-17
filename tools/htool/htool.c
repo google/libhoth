@@ -1636,6 +1636,30 @@ static const struct htool_cmd CMDS[] = {
         .func = htool_i2c_muxctrl_select_host,
     },
     {
+        .verbs = (const char*[]){"i2c", "filter", "enable_endpoints", NULL},
+        .desc = "Select I2C endpoints to enable when filtering is active. "
+                "Write and write-then-read operations to unselected I2C "
+                "endpoints will be blocked",
+        .params =
+            (const struct htool_param[]){
+                // TODO: Find better interface for sending data
+                {HTOOL_FLAG_VALUE, 'c', "ids_count", "0",
+                 .desc = "Count of IDs in `byte_stream`"},
+                {HTOOL_POSITIONAL, .name = "byte_stream", .default_value = "",
+                 .desc = "Byte stream containing select data"},
+                {}},
+        .func = htool_i2c_filtering_enable_endpoints,
+    },
+    {
+        .verbs =
+            (const char*[]){"i2c", "filter", "get_enabled_endpoints", NULL},
+        .desc = "Get I2C endpoints which are enabled when I2C filtering is "
+                "active. Write and write-then-read operations to unselected "
+                "I2C endpoints will be blocked",
+        .params = (const struct htool_param[]){{}},
+        .func = htool_i2c_filtering_get_enabled_endpoints,
+    },
+    {
         .verbs = (const char*[]){"target_usb", ROT_USB_MUXCTRL_CMD_STR,
                                  ROT_USB_MUXCTRL_GET_SUBCMD_STR, NULL},
         .desc = "(Deprecated) Get status of USB mux select (if present)",

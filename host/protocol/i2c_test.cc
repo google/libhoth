@@ -17,9 +17,12 @@
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
 
+#include <cstddef>
 #include <cstdint>
 
-#include "test/libhoth_device_mock.h"
+#include "protocol/host_cmd.h"
+#include "protocol/status.h"
+#include "protocol/test/libhoth_device_mock.h"
 
 using ::testing::_;
 using ::testing::DoAll;
@@ -113,4 +116,163 @@ TEST_F(LibHothTest, i2c_transfer_null_param_test) {
   EXPECT_EQ(LIBHOTH_ERR_GET_CTX(err), HOTH_CTX_CMD_EXEC);
   EXPECT_EQ(LIBHOTH_ERR_GET_SPACE(err), HOTH_HOST_SPACE_LIBHOTH);
   EXPECT_EQ(LIBHOTH_ERR_GET_CODE(err), LIBHOTH_ERR_INVALID_PARAMETER);
+}
+
+TEST_F(LibHothTest, i2c_filtering_enable_endpoints_test) {
+  alignas(4) uint8_t req_buf[8] = {
+      1,    0,    0,    0,  // ids_count = 1, reserved = {0, 0, 0}
+      0x00, 0x00, 0x34, 0x01,
+  };
+  alignas(4) uint8_t ex_resp_buf[8] = {
+      1,    0,    0,    0,  // ids_count = 1, reserved = {0, 0, 0}
+      0x00, 0x00, 0x34, 0x01,
+  };
+
+  EXPECT_CALL(mock_,
+              send(_,
+                   UsesCommand(HOTH_CMD_BOARD_SPECIFIC_BASE +
+                               HOTH_PRV_CMD_ENABLE_I2C_ENDPOINTS_FOR_FILTERING),
+                   _))
+      .WillOnce(Return(LIBHOTH_OK));
+
+  EXPECT_CALL(mock_, receive)
+      .WillOnce(DoAll(CopyResp(ex_resp_buf, sizeof(ex_resp_buf)),
+                      Return(LIBHOTH_OK)));
+
+  alignas(4) uint8_t resp_buf[16] = {0};
+  size_t resp_len = 0;
+  EXPECT_EQ(
+      libhoth_i2c_filtering_enable_endpoints(
+          &hoth_dev_,
+          reinterpret_cast<
+              const struct hoth_request_enable_i2c_endpoints_for_filtering*>(
+              req_buf),
+          sizeof(req_buf),
+          reinterpret_cast<
+              struct hoth_response_i2c_endpoints_enabled_for_filtering*>(
+              resp_buf),
+          sizeof(resp_buf), &resp_len),
+      HOTH_SUCCESS);
+  EXPECT_EQ(resp_len, sizeof(ex_resp_buf));
+  EXPECT_EQ(resp_buf[0], 1);
+  EXPECT_EQ(resp_buf[6], 0x34);
+  EXPECT_EQ(resp_buf[7], 0x01);
+}
+
+TEST_F(LibHothTest, i2c_filtering_get_enabled_endpoints_test) {
+  alignas(4) uint8_t ex_resp_buf[8] = {
+      1,    0,    0,    0,  // ids_count = 1, reserved = {0, 0, 0}
+      0x00, 0x00, 0x34, 0x01,
+  };
+
+  EXPECT_CALL(
+      mock_,
+      send(_,
+           UsesCommand(HOTH_CMD_BOARD_SPECIFIC_BASE +
+                       HOTH_PRV_CMD_GET_ENABLED_I2C_ENDPOINTS_FOR_FILTERING),
+           _))
+      .WillOnce(Return(LIBHOTH_OK));
+
+  EXPECT_CALL(mock_, receive)
+      .WillOnce(DoAll(CopyResp(ex_resp_buf, sizeof(ex_resp_buf)),
+                      Return(LIBHOTH_OK)));
+
+  alignas(4) uint8_t resp_buf[16] = {0};
+  size_t resp_len = 0;
+  EXPECT_EQ(libhoth_i2c_filtering_get_enabled_endpoints(
+                &hoth_dev_,
+                reinterpret_cast<
+                    struct hoth_response_i2c_endpoints_enabled_for_filtering*>(
+                    resp_buf),
+                sizeof(resp_buf), &resp_len),
+            HOTH_SUCCESS);
+  EXPECT_EQ(resp_len, sizeof(ex_resp_buf));
+  EXPECT_EQ(resp_buf[0], 1);
+  EXPECT_EQ(resp_buf[6], 0x34);
+  EXPECT_EQ(resp_buf[7], 0x01);
+}
+
+TEST_F(LibHothTest, i2c_filtering_enable_endpoints_invalid_param_test) {
+  struct hoth_request_enable_i2c_endpoints_for_filtering req = {};
+  struct hoth_response_i2c_endpoints_enabled_for_filtering resp = {};
+  size_t resp_len = 0;
+
+  libhoth_error err = libhoth_i2c_filtering_enable_endpoints(
+      nullptr, &req, sizeof(req), &resp, sizeof(resp), &resp_len);
+  EXPECT_EQ(LIBHOTH_ERR_GET_CODE(err), LIBHOTH_ERR_INVALID_PARAMETER);
+
+  err = libhoth_i2c_filtering_enable_endpoints(&hoth_dev_, nullptr, sizeof(req),
+                                               &resp, sizeof(resp), &resp_len);
+  EXPECT_EQ(LIBHOTH_ERR_GET_CODE(err), LIBHOTH_ERR_INVALID_PARAMETER);
+
+  err = libhoth_i2c_filtering_enable_endpoints(
+      &hoth_dev_, &req, sizeof(req), nullptr, sizeof(resp), &resp_len);
+  EXPECT_EQ(LIBHOTH_ERR_GET_CODE(err), LIBHOTH_ERR_INVALID_PARAMETER);
+
+  err = libhoth_i2c_filtering_enable_endpoints(
+      &hoth_dev_, &req, sizeof(req) - 1, &resp, sizeof(resp), &resp_len);
+  EXPECT_EQ(LIBHOTH_ERR_GET_CODE(err), LIBHOTH_ERR_INVALID_PARAMETER);
+
+  err = libhoth_i2c_filtering_enable_endpoints(
+      &hoth_dev_, &req, sizeof(req), &resp, sizeof(resp) - 1, &resp_len);
+  EXPECT_EQ(LIBHOTH_ERR_GET_CODE(err), LIBHOTH_ERR_INVALID_PARAMETER);
+}
+
+TEST_F(LibHothTest, i2c_filtering_enable_endpoints_truncated_resp_test) {
+  struct hoth_request_enable_i2c_endpoints_for_filtering req = {};
+  uint8_t short_resp[2] = {0, 0};
+
+  EXPECT_CALL(mock_,
+              send(_,
+                   UsesCommand(HOTH_CMD_BOARD_SPECIFIC_BASE +
+                               HOTH_PRV_CMD_ENABLE_I2C_ENDPOINTS_FOR_FILTERING),
+                   _))
+      .WillOnce(Return(LIBHOTH_OK));
+  EXPECT_CALL(mock_, receive)
+      .WillOnce(
+          DoAll(CopyResp(short_resp, sizeof(short_resp)), Return(LIBHOTH_OK)));
+
+  struct hoth_response_i2c_endpoints_enabled_for_filtering resp = {};
+  size_t resp_len = 0;
+  libhoth_error err = libhoth_i2c_filtering_enable_endpoints(
+      &hoth_dev_, &req, sizeof(req), &resp, sizeof(resp), &resp_len);
+  EXPECT_EQ(LIBHOTH_ERR_GET_CODE(err), LIBHOTH_ERR_FAIL);
+}
+
+TEST_F(LibHothTest, i2c_filtering_get_enabled_endpoints_invalid_param_test) {
+  struct hoth_response_i2c_endpoints_enabled_for_filtering resp = {};
+  size_t resp_len = 0;
+
+  libhoth_error err = libhoth_i2c_filtering_get_enabled_endpoints(
+      nullptr, &resp, sizeof(resp), &resp_len);
+  EXPECT_EQ(LIBHOTH_ERR_GET_CODE(err), LIBHOTH_ERR_INVALID_PARAMETER);
+
+  err = libhoth_i2c_filtering_get_enabled_endpoints(&hoth_dev_, nullptr,
+                                                    sizeof(resp), &resp_len);
+  EXPECT_EQ(LIBHOTH_ERR_GET_CODE(err), LIBHOTH_ERR_INVALID_PARAMETER);
+
+  err = libhoth_i2c_filtering_get_enabled_endpoints(
+      &hoth_dev_, &resp, sizeof(resp) - 1, &resp_len);
+  EXPECT_EQ(LIBHOTH_ERR_GET_CODE(err), LIBHOTH_ERR_INVALID_PARAMETER);
+}
+
+TEST_F(LibHothTest, i2c_filtering_get_enabled_endpoints_truncated_resp_test) {
+  uint8_t short_resp[2] = {0, 0};
+
+  EXPECT_CALL(
+      mock_,
+      send(_,
+           UsesCommand(HOTH_CMD_BOARD_SPECIFIC_BASE +
+                       HOTH_PRV_CMD_GET_ENABLED_I2C_ENDPOINTS_FOR_FILTERING),
+           _))
+      .WillOnce(Return(LIBHOTH_OK));
+  EXPECT_CALL(mock_, receive)
+      .WillOnce(
+          DoAll(CopyResp(short_resp, sizeof(short_resp)), Return(LIBHOTH_OK)));
+
+  struct hoth_response_i2c_endpoints_enabled_for_filtering resp = {};
+  size_t resp_len = 0;
+  libhoth_error err = libhoth_i2c_filtering_get_enabled_endpoints(
+      &hoth_dev_, &resp, sizeof(resp), &resp_len);
+  EXPECT_EQ(LIBHOTH_ERR_GET_CODE(err), LIBHOTH_ERR_FAIL);
 }

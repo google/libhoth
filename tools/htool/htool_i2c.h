@@ -39,6 +39,11 @@ int htool_i2c_muxctrl_select_rot(const struct htool_invocation* inv);
 
 int htool_i2c_muxctrl_select_host(const struct htool_invocation* inv);
 
+int htool_i2c_filtering_enable_endpoints(const struct htool_invocation* inv);
+
+int htool_i2c_filtering_get_enabled_endpoints(
+    const struct htool_invocation* inv);
+
 #ifdef __cplusplus
 }
 #endif

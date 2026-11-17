@@ -269,7 +269,9 @@ cc_test(
     name = "i2c_test",
     srcs = ["i2c_test.cc"],
     deps = [
+        ":host_cmd",
         ":i2c",
+        ":libhoth_status",
         "//host/protocol/test:libhoth_device_mock",
         "//host/transports:libhoth_device",
         "@googletest//:gtest",
