@@ -739,3 +739,27 @@ cc_library(
         "//host/transports:libhoth_device",
     ],
 )
+
+cc_library(
+    name = "flash_uid",
+    srcs = ["flash_uid.c"],
+    hdrs = ["flash_uid.h"],
+    strip_include_prefix = "/host",
+    deps = [
+        ":host_cmd",
+        ":libhoth_status",
+        "//host/transports:libhoth_device",
+    ],
+)
+
+cc_test(
+    name = "flash_uid_test",
+    srcs = ["flash_uid_test.cc"],
+    deps = [
+        ":flash_uid",
+        "//host/protocol/test:libhoth_device_mock",
+        "//host/transports:libhoth_device",
+        "@googletest//:gtest",
+        "@googletest//:gtest_main",
+    ],
+)

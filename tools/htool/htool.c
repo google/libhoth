@@ -62,6 +62,7 @@
 #include "protocol/chipinfo.h"
 #include "protocol/console.h"
 #include "protocol/controlled_storage.h"
+#include "protocol/flash_uid.h"
 #include "protocol/gpio_drive_strength.h"
 #include "protocol/hello.h"
 #include "protocol/opentitan_version.h"
@@ -628,6 +629,41 @@ static int command_flash_spi_info(const struct htool_invocation* inv) {
   printf("Device ID: 0x%x\n", device_id);
   printf("Status Reg1: 0x%x\n", response.sr1);
   printf("Status Reg2: 0x%x\n", response.sr2);
+  return 0;
+}
+
+static int command_get_flash_uid(const struct htool_invocation* inv) {
+  (void)inv;
+  struct libhoth_device* dev = htool_libhoth_device();
+  if (!dev) {
+    return -1;
+  }
+  struct hoth_response_get_flash_uid response = {0};
+  libhoth_error err = libhoth_get_flash_uid(dev, &response);
+  if (err != HOTH_SUCCESS) {
+    htool_report_error("get_flash_uid", err);
+    return -1;
+  }
+  printf("Device Count: %u\n", response.device_count);
+  for (uint8_t i = 0; i < response.device_count; ++i) {
+    const struct hoth_flash_device_uid* flash_dev = &response.devices[i];
+    printf("Device %u JEDEC ID:   0x", i);
+    for (size_t j = 0; j < sizeof(flash_dev->jedec_id); ++j) {
+      printf("%02x", flash_dev->jedec_id[j]);
+    }
+    printf("\n");
+    printf("Device %u UID Length: %u\n", i, flash_dev->uid_len);
+    printf("Device %u UID:        ", i);
+    if (flash_dev->uid_len > 0) {
+      printf("0x");
+      for (uint8_t j = 0; j < flash_dev->uid_len; ++j) {
+        printf("%02x", flash_dev->uid[j]);
+      }
+      printf("\n");
+    } else {
+      printf("(none)\n");
+    }
+  }
   return 0;
 }
 
@@ -1419,6 +1455,12 @@ static const struct htool_cmd CMDS[] = {
      .desc = "Get SPI NOR flash info.",
      .params = (const struct htool_param[]){{}},
      .func = command_flash_spi_info},
+    {
+        .verbs = (const char*[]){"get_flash_uid", NULL},
+        .desc = "Read cached SPI NOR flash JEDEC ID and Unique ID.",
+        .params = (const struct htool_param[]){{}},
+        .func = command_get_flash_uid,
+    },
     {
         .verbs = (const char*[]){"statistics", NULL},
         .desc = "Show statistics",
