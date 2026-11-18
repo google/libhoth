@@ -205,7 +205,7 @@
   "moduleExtensions": {
     "//:libusb_extension.bzl%libusb_extension": {
       "general": {
-        "bzlTransitiveDigest": "Kg4A6Hezv8NY8wC8/H3B1bwXUMcllIk6q4jqElAn4fw=",
+        "bzlTransitiveDigest": "DCVepF8hpoPFHM7UsTEIyHgaIE0ev2Fh5azk5zRFLds=",
         "usagesDigest": "rjiRLJhi7h3+DxDtluNQgLUery/JZquhHrulJCfFD6I=",
         "recordedFileInputs": {},
         "recordedDirentsInputs": {},
@@ -214,11 +214,11 @@
           "libusb": {
             "repoRuleId": "@@bazel_tools//tools/build_defs/repo:git.bzl%git_repository",
             "attributes": {
-              "build_file": "@@//:external/libusb.BUILD",
+              "build_file": "@@//third_party:libusb.BUILD",
               "commit": "4239bc3a50014b8e6a5a2a59df1fff3b7469543b",
               "remote": "https://github.com/libusb/libusb",
               "patches": [
-                "@@//:external/libusb.patch"
+                "@@//third_party:libusb.patch"
               ],
               "shallow_since": "1649581036 +0200"
             }

@@ -2,11 +2,6 @@ load("@rules_cc//cc:cc_library.bzl", "cc_library")
 
 package(default_visibility = ["//visibility:public"])
 
-exports_files([
-    "external/libusb.BUILD",
-    "external/libusb.patch",
-])
-
 cc_library(
     name = "git_version",
     hdrs = [":gen_version_header"],
