@@ -36,13 +36,6 @@ extern "C" {
 #define __hoth_align2 __packed __aligned(2)
 #define __hoth_align4 __packed __aligned(4)
 
-#define HTOOL_CMD_INITIATE_FAIL                                     \
-  LIBHOTH_ERR_CONSTRUCT(HOTH_CTX_CMD_EXEC, HOTH_HOST_SPACE_LIBHOTH, \
-                        LIBHOTH_ERR_INITIATE_FAIL)
-#define HTOOL_CMD_COMMIT_FAIL                                       \
-  LIBHOTH_ERR_CONSTRUCT(HOTH_CTX_CMD_EXEC, HOTH_HOST_SPACE_LIBHOTH, \
-                        LIBHOTH_ERR_COMMIT_FAIL)
-
 // NOTE: All PRV commands in this file are offset by
 // HOTH_CMD_BOARD_SPECIFIC_BASE.
 #define HOTH_CMD_BOARD_SPECIFIC_BASE 0x3E00

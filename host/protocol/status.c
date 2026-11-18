@@ -138,10 +138,6 @@ const char* libhoth_error_libhoth_str(uint32_t code) {
       return "DFU_APP_MISMATCH";
     case LIBHOTH_ERR_DFU_ROMEXT_MISMATCH:
       return "DFU_ROMEXT_MISMATCH";
-    case LIBHOTH_ERR_INITIATE_FAIL:
-      return "INITIATE_FAIL";
-    case LIBHOTH_ERR_COMMIT_FAIL:
-      return "COMMIT_FAIL";
     case LIBHOTH_ERR_BAD_IMAGE:
       return "BAD_IMAGE";
     case LIBHOTH_ERR_IMAGE_NOT_SECTOR_ALIGNED:

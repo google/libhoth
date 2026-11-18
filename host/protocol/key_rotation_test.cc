@@ -17,6 +17,7 @@
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
 
+#include <cerrno>
 #include <cstddef>
 #include <cstdint>
 #include <cstdlib>
@@ -60,11 +61,34 @@ const struct hoth_response_key_rotation_record_read kDefaultReadResponse = {
 };
 constexpr int64_t kDummy = 0;
 constexpr int kChunkSize = 2;
+constexpr libhoth_error kTransportError =
+    LIBHOTH_ERR_CONSTRUCT(HOTH_CTX_CMD_EXEC, HOTH_HOST_SPACE_POSIX, EIO);
 unsigned int seed = 0;
 void fill_with_data(uint8_t* data, size_t size) {
   for (size_t i = 0; i < size; ++i) {
     data[i] = rand_r(&seed) % 256;
   }
+}
+
+// A raw host command response reporting a firmware error. When `data_len` is
+// sizeof(uint32_t), `extended_code` carries a PIE-RoT extended error code.
+struct ErrorResponse {
+  struct hoth_host_response hdr;
+  uint32_t extended_code;
+
+  size_t size() const { return sizeof(hdr) + hdr.data_len; }
+};
+
+ErrorResponse make_error_response(uint16_t result, uint16_t data_len,
+                                  uint32_t extended_code) {
+  ErrorResponse resp = {};
+  resp.hdr.struct_version = HOTH_HOST_RESPONSE_VERSION;
+  resp.hdr.result = result;
+  resp.hdr.data_len = data_len;
+  resp.extended_code = extended_code;
+  resp.hdr.checksum = libhoth_calculate_checksum(&resp.hdr, sizeof(resp.hdr),
+                                                 &resp.extended_code, data_len);
+  return resp;
 }
 
 TEST_F(LibHothTest, key_rotation_get_version_success) {
@@ -358,10 +382,10 @@ TEST_F(LibHothTest, key_rotation_update_initiate_failure) {
 
   EXPECT_CALL(mock_, send(_, UsesCommand(kCmd), _))
       .WillRepeatedly(Return(LIBHOTH_OK));
-  EXPECT_CALL(mock_, receive).WillOnce(Return(-1));
+  EXPECT_CALL(mock_, receive).WillOnce(Return(kTransportError));
 
   EXPECT_EQ(libhoth_key_rotation_update(&hoth_dev_, &data[0], sizeof(data)),
-            HTOOL_CMD_INITIATE_FAIL);
+            kTransportError);
 }
 
 TEST_F(LibHothTest, key_rotation_update_commit_failure) {
@@ -371,9 +395,55 @@ TEST_F(LibHothTest, key_rotation_update_commit_failure) {
   EXPECT_CALL(mock_, receive)
       .WillOnce(DoAll(CopyResp(&kDummy, 0), Return(LIBHOTH_OK)))
       .WillOnce(DoAll(CopyResp(&kDummy, 0), Return(LIBHOTH_OK)))
-      .WillOnce(DoAll(CopyResp(&kDummy, 0), Return(-1)));
+      .WillOnce(DoAll(CopyResp(&kDummy, 0), Return(kTransportError)));
   EXPECT_EQ(libhoth_key_rotation_update(&hoth_dev_, &data[0], sizeof(data)),
-            HTOOL_CMD_COMMIT_FAIL);
+            kTransportError);
+}
+
+TEST_F(LibHothTest, key_rotation_update_initiate_ec_error) {
+  uint8_t data[KEY_ROTATION_RECORD_WRITE_MAX_SIZE] = {0};
+  const ErrorResponse resp = make_error_response(HOTH_RES_ACCESS_DENIED, 0, 0);
+  EXPECT_CALL(mock_, send(_, UsesCommand(kCmd), _))
+      .WillOnce(Return(LIBHOTH_OK));
+  EXPECT_CALL(mock_, receive)
+      .WillOnce(DoAll(CopyRespRaw(&resp, resp.size()), Return(LIBHOTH_OK)));
+
+  EXPECT_EQ(libhoth_key_rotation_update(&hoth_dev_, &data[0], sizeof(data)),
+            LIBHOTH_ERR_CONSTRUCT(HOTH_CTX_CMD_EXEC, HOTH_HOST_SPACE_EC,
+                                  HOTH_RES_ACCESS_DENIED));
+}
+
+TEST_F(LibHothTest, key_rotation_update_commit_ec_error) {
+  uint8_t data[KEY_ROTATION_RECORD_WRITE_MAX_SIZE] = {0};
+  const ErrorResponse resp = make_error_response(HOTH_RES_INVALID_PARAM, 0, 0);
+  EXPECT_CALL(mock_, send(_, UsesCommand(kCmd), _))
+      .Times(3)
+      .WillRepeatedly(Return(LIBHOTH_OK));
+  EXPECT_CALL(mock_, receive)
+      .WillOnce(DoAll(CopyResp(&kDummy, 0), Return(LIBHOTH_OK)))
+      .WillOnce(DoAll(CopyResp(&kDummy, 0), Return(LIBHOTH_OK)))
+      .WillOnce(DoAll(CopyRespRaw(&resp, resp.size()), Return(LIBHOTH_OK)));
+
+  EXPECT_EQ(libhoth_key_rotation_update(&hoth_dev_, &data[0], sizeof(data)),
+            LIBHOTH_ERR_CONSTRUCT(HOTH_CTX_CMD_EXEC, HOTH_HOST_SPACE_EC,
+                                  HOTH_RES_INVALID_PARAM));
+}
+
+TEST_F(LibHothTest, key_rotation_update_commit_extended_error) {
+  uint8_t data[KEY_ROTATION_RECORD_WRITE_MAX_SIZE] = {0};
+  const ErrorResponse resp =
+      make_error_response(HOTH_RES_ERROR, sizeof(uint32_t), 0x89c70005);
+  EXPECT_CALL(mock_, send(_, UsesCommand(kCmd), _))
+      .Times(3)
+      .WillRepeatedly(Return(LIBHOTH_OK));
+  EXPECT_CALL(mock_, receive)
+      .WillOnce(DoAll(CopyResp(&kDummy, 0), Return(LIBHOTH_OK)))
+      .WillOnce(DoAll(CopyResp(&kDummy, 0), Return(LIBHOTH_OK)))
+      .WillOnce(DoAll(CopyRespRaw(&resp, resp.size()), Return(LIBHOTH_OK)));
+
+  EXPECT_EQ(libhoth_key_rotation_update(&hoth_dev_, &data[0], sizeof(data)),
+            LIBHOTH_ERR_CONSTRUCT(HOTH_CTX_CMD_EXEC, HOTH_HOST_SPACE_PIEROT_ERR,
+                                  0x89c70005));
 }
 
 TEST_F(LibHothTest, key_rotation_update_failure_invalid_size_too_large) {
