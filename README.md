@@ -56,6 +56,17 @@ To enable the D-Bus backend:
 bazel build --define dbus_backend=true //tools/htool:htool
 ```
 
+### Editor Support (clangd, rust-analyzer)
+
+To generate `compile_commands.json` (clangd) and `rust-project.json`
+(rust-analyzer) at the repository root, run:
+
+```bash
+./update-analyzers.sh
+```
+
+Rerun it after adding files or changing BUILD dependencies.
+
 ## tools/htool
 
 htool is a command line tool for performing basic actions against a hoth RoT.
