@@ -107,8 +107,9 @@ static libhoth_error receive(struct libhoth_device* dev, void* response,
     goto cleanup;
   }
 
-  // Send the pending host command request.
-  uint64_t timeout_usec = timeout_ms * 1000;
+  // Send the pending host command request. Widen before scaling:
+  // `timeout_ms * 1000` in int arithmetic overflows above 2,147,483 ms.
+  uint64_t timeout_usec = (uint64_t)timeout_ms * 1000;
   int rv = sd_bus_call(ctx->bus, ctx->request, timeout_usec, &error, &reply);
   if (rv < 0) {
     fprintf(stderr, "D-Bus call failed: %s\n", error.message);
