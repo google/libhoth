@@ -14,6 +14,11 @@
 
 package(default_visibility = ["//visibility:public"])
 
+exports_files([
+    "libusb.BUILD",
+    "libusb.patch",
+])
+
 alias(
     name = "ufmt",
     actual = "@crates_libhoth_nostd//:ufmt",

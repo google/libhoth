@@ -169,3 +169,12 @@ crate.from_specs(
     ],
 )
 use_repo(crate, "crates_libhoth")
+
+# Hedron's Compile Commands Extractor, for clangd (see update-analyzers.sh).
+# https://github.com/hedronvision/bazel-compile-commands-extractor
+bazel_dep(name = "hedron_compile_commands", dev_dependency = True)
+git_override(
+    module_name = "hedron_compile_commands",
+    commit = "abb61a688167623088f8768cc9264798df6a9d10",
+    remote = "https://github.com/hedronvision/bazel-compile-commands-extractor.git",
+)
