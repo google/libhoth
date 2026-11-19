@@ -11,14 +11,21 @@ cc_library(
     "libusb/sync.c",
     "libusb/os/events_posix.h",
     "libusb/os/events_posix.c",
-    "libusb/os/linux_usbfs.h",
-    "libusb/os/linux_usbfs.c",
-    "libusb/os/linux_netlink.c",
     "libusb/os/threads_posix.h",
     "libusb/os/threads_posix.c",
     "libusb/version.h",
     "libusb/version_nano.h",
-  ],
+  ] + select({
+    "@platforms//os:macos": [
+      "libusb/os/darwin_usb.h",
+      "libusb/os/darwin_usb.c",
+    ],
+    "//conditions:default": [
+      "libusb/os/linux_usbfs.h",
+      "libusb/os/linux_usbfs.c",
+      "libusb/os/linux_netlink.c",
+    ],
+  }),
   includes = [
     "libusb",
   ],
@@ -33,6 +40,16 @@ cc_library(
   # libusb's private headers are C-only and not self-contained, so they cannot
   # be parsed standalone as C++.
   features = ["-parse_headers"],
-  linkopts = ["-lpthread"],
+  linkopts = select({
+    "@platforms//os:macos": [
+      "-lobjc",
+      "-framework", "IOKit",
+      "-framework", "CoreFoundation",
+      "-framework", "Security",
+    ],
+    "//conditions:default": [
+      "-lpthread",
+    ],
+  }),
   visibility = ["//visibility:public"],
 )
