@@ -19,11 +19,28 @@ cc_library(
     strip_include_prefix = "/host",
 )
 
+config_setting(
+    name = "dbus_backend",
+    define_values = {
+        "dbus_backend": "true",
+    },
+)
+
+# MTD, SPI, and D-Bus transports use Linux-specific interfaces (<linux/...>,
+# /proc/mtd, libsystemd). Opt macOS out rather than opting Linux in so default
+# builds keep them enabled even when a Linux platform constraint isn't set.
+_LINUX_ONLY = select({
+    "@platforms//os:macos": ["@platforms//:incompatible"],
+    "//conditions:default": [],
+})
+
 cc_library(
     name = "libhoth_mtd",
     srcs = ["libhoth_mtd.c"],
     hdrs = ["libhoth_mtd.h"],
+    defines = ["MTD_BACKEND"],
     strip_include_prefix = "/host",
+    target_compatible_with = _LINUX_ONLY,
     deps = [
         ":libhoth_device",
         ":libhoth_ec",
@@ -35,7 +52,9 @@ cc_library(
     name = "libhoth_spi",
     srcs = ["libhoth_spi.c"],
     hdrs = ["libhoth_spi.h"],
+    defines = ["SPI_BACKEND"],
     strip_include_prefix = "/host",
+    target_compatible_with = _LINUX_ONLY,
     deps = [
         ":libhoth_device",
         ":libhoth_ec",
@@ -61,9 +80,10 @@ cc_library(
     name = "libhoth_dbus",
     srcs = ["libhoth_dbus.c"],
     hdrs = ["libhoth_dbus.h"],
-    strip_include_prefix = "/host",
     defines = ["DBUS_BACKEND"],
     linkopts = ["-lsystemd"],
+    strip_include_prefix = "/host",
+    target_compatible_with = _LINUX_ONLY,
     deps = [
         ":libhoth_device",
         "//host/protocol:libhoth_status",

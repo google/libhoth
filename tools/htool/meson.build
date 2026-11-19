@@ -8,7 +8,7 @@ git_version_h = vcs_tag(
 
 incdir = libhoth_include_dirs
 link_with = [libhoth.get_static_lib()]
-c_args = []
+c_args = ['-DMTD_BACKEND', '-DSPI_BACKEND']
 
 if get_option('dbus_backend')
     link_with += libhoth_dbus

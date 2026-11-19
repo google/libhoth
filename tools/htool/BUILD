@@ -24,13 +24,6 @@ cc_library(
     ],
 )
 
-config_setting(
-    name = "dbus_backend",
-    define_values = {
-        "dbus_backend": "true",
-    },
-)
-
 cc_library(
     name = "htool_header",
     hdrs = ["htool.h"],
@@ -270,13 +263,17 @@ cc_library(
         "//tools/common:htool_cmd",
         "//tools/common:macros",
         "//host/transports:libhoth_device",
-        "//host/transports:libhoth_mtd",
-        "//host/transports:libhoth_spi",
         "//host/transports:libhoth_usb",
         "//host/transports:libhoth_usb_device",
         "@libusb",
     ] + select({
-        ":dbus_backend": ["//host/transports:libhoth_dbus"],
+        "@platforms//os:macos": [],
+        "//conditions:default": [
+            "//host/transports:libhoth_mtd",
+            "//host/transports:libhoth_spi",
+        ],
+    }) + select({
+        "//host/transports:dbus_backend": ["//host/transports:libhoth_dbus"],
         "//conditions:default": [],
     }),
 )
