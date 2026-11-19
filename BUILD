@@ -53,10 +53,17 @@ cc_library(
         ":libhoth_transports_headers",
         ":libhoth_transports_headers_legacy",
         "//host/transports:libhoth_device",
-        "//host/transports:libhoth_mtd",
-        "//host/transports:libhoth_spi",
         "//host/transports:libhoth_usb",
-    ],
+    ] + select({
+        "@platforms//os:macos": [],
+        "//conditions:default": [
+            "//host/transports:libhoth_mtd",
+            "//host/transports:libhoth_spi",
+        ],
+    }) + select({
+        "//host/transports:dbus_backend": ["//host/transports:libhoth_dbus"],
+        "//conditions:default": [],
+    }),
 )
 
 alias(

@@ -12,15 +12,19 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include <stdbool.h>
 #include <stddef.h>
-#include <stdint.h>
 #include <stdio.h>
+
+#include "htool.h"
+
+#ifdef MTD_BACKEND
+
+#include <stdbool.h>
+#include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
 
 #include "host_commands.h"
-#include "htool.h"
 #include "tools/common/htool_cmd.h"
 #include "transports/libhoth_mtd.h"
 
@@ -60,3 +64,12 @@ struct libhoth_device* htool_libhoth_mtd_device(void) {
   }
   return result;
 }
+
+#else
+
+struct libhoth_device* htool_libhoth_mtd_device(void) {
+  fprintf(stderr, "This build doesn't have the MTD backend.\n");
+  return NULL;
+}
+
+#endif  // MTD_BACKEND

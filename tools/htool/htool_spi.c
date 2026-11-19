@@ -12,15 +12,19 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include <stdbool.h>
 #include <stddef.h>
-#include <stdint.h>
 #include <stdio.h>
+
+#include "htool.h"
+
+#ifdef SPI_BACKEND
+
+#include <stdbool.h>
+#include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
 
 #include "host_commands.h"
-#include "htool.h"
 #include "tools/common/htool_cmd.h"
 #include "transports/libhoth_spi.h"
 
@@ -90,3 +94,28 @@ struct libhoth_device* htool_libhoth_spi_device(void) {
   }
   return result;
 }
+
+int htool_tpm_spi_probe(const struct htool_invocation* inv) {
+  (void)inv;
+  struct libhoth_device* dev = htool_libhoth_spi_device();
+  if (!dev) {
+    return -1;
+  }
+
+  return libhoth_tpm_spi_probe(dev);
+}
+
+#else
+
+struct libhoth_device* htool_libhoth_spi_device(void) {
+  fprintf(stderr, "This build doesn't have the SPI backend.\n");
+  return NULL;
+}
+
+int htool_tpm_spi_probe(const struct htool_invocation* inv) {
+  (void)inv;
+  fprintf(stderr, "This build doesn't have the SPI backend.\n");
+  return -1;
+}
+
+#endif  // SPI_BACKEND
