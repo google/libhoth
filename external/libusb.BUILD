@@ -36,6 +36,9 @@ cc_library(
   copts = [
     "-isystem", "external/{}/libusb".format(repo_name()), 
     "-isystem", "external/{}".format(repo_name()),
+    # Suppress warnings in third-party libusb (e.g. -Wunused-but-set-variable
+    # under -c opt / -DNDEBUG when building with --copt=-Werror).
+    "-w",
   ],
   # libusb's private headers are C-only and not self-contained, so they cannot
   # be parsed standalone as C++.
