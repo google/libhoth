@@ -19,11 +19,12 @@ package(default_visibility = ["//visibility:public"])
 rust_library(
     name = "tlvtool_lib",
     srcs = [
-        "src/builder.rs",
         "src/cli.rs",
         "src/crypto.rs",
         "src/inspect.rs",
+        "src/krr.rs",
         "src/lib.rs",
+        "src/record.rs",
         "src/signature.rs",
     ],
     crate_name = "tlvtool",

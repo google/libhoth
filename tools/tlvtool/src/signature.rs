@@ -12,10 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-//! Offline signature attachment and byte-identical container integration for `krr sign`.
+//! Offline signature attachment and byte-identical container integration for `sign`.
 
-use crate::builder::MAX_MAILBOX_RECORD_SIZE_BYTES;
-use crate::builder::UnsignedRecord;
 use crate::crypto::le_bytes;
 use crate::crypto::le_words;
 use crate::crypto::parse_mldsa44_public_key;
@@ -23,6 +21,10 @@ use crate::crypto::parse_mldsa44_signature;
 use crate::crypto::parse_p256_public_key;
 use crate::crypto::parse_p256_signature;
 use crate::crypto::to_hex;
+use crate::krr::Krr;
+use crate::record::RecordKind;
+use crate::record::Unsigned;
+use crate::record::fourcc;
 use alloc::format;
 use alloc::string::String;
 use alloc::vec::Vec;
@@ -121,22 +123,26 @@ fn root_container<T: TlvObject>(data: &TlvData) -> Result<TlvItem<'_, T>> {
     data.iter::<T>().next().with_context(|| {
         format!(
             "TLV image is missing its '{}' root container",
-            String::from_utf8_lossy(&T::TAG.to_le_bytes())
+            fourcc(T::TAG)
         )
     })
 }
 
-/// Fluent builder for integrating offline signatures into `SignedDescriptor` (`KRSD`).
+/// Fluent builder for integrating offline signatures into a record's
+/// signed descriptor (`K::SignedDescriptor`, e.g. `KRSD`).
 #[derive(Debug, Clone)]
-pub struct SignedRecordBuilder {
-    unsigned: UnsignedRecord,
+pub struct SignedBuilder<K> {
+    unsigned: Unsigned<K>,
     signatures: Vec<crypto_rust_proto::SignatureContainer>,
     otp_fingerprint: Option<String>,
     expected_otp_fingerprint: Option<String>,
 }
 
-impl SignedRecordBuilder {
-    pub fn new(unsigned: UnsignedRecord) -> Self {
+/// Integrates offline signatures into a key rotation `SignedDescriptor` (`KRSD`).
+pub type SignedRecordBuilder = SignedBuilder<Krr>;
+
+impl<K: RecordKind> SignedBuilder<K> {
+    pub fn new(unsigned: Unsigned<K>) -> Self {
         Self {
             unsigned,
             signatures: Vec::new(),
@@ -146,11 +152,11 @@ impl SignedRecordBuilder {
     }
 
     pub fn from_unsigned_bytes(bytes: &[u8]) -> Result<Self> {
-        Ok(Self::new(UnsignedRecord::from_bytes(bytes)?))
+        Ok(Self::new(Unsigned::from_bytes(bytes)?))
     }
 
     pub fn from_unsigned_file(path: impl AsRef<Path>) -> Result<Self> {
-        Ok(Self::new(UnsignedRecord::from_file(path)?))
+        Ok(Self::new(Unsigned::from_file(path)?))
     }
 
     pub fn expect_otp_fingerprint(mut self, fingerprint: [u8; 32]) -> Self {
@@ -189,7 +195,8 @@ impl SignedRecordBuilder {
         self.add_hybrid_signature(key_domain, &material)
     }
 
-    /// Wraps the frozen `KROT` record and every encoded `SIGC` in a `KRSD` container.
+    /// Wraps the frozen descriptor (e.g. `KROT`) and every encoded `SIGC` in
+    /// the record's signed descriptor (e.g. `KRSD`).
     ///
     /// Children are copied verbatim by [`TlvBuilder::add_copy`], so unknown sub-TLVs
     /// in the unsigned record survive signing byte-for-byte.
@@ -217,7 +224,7 @@ impl SignedRecordBuilder {
         let unsigned_size = unsigned_bytes.len();
         let unsigned_data = TlvData::overlay_bytes(unsigned_bytes)
             .map_err(|_| anyhow!("Unsigned record has invalid alignment or length"))?;
-        let krot_item = root_container::<proto::key_rotation::Descriptor>(unsigned_data)?;
+        let descriptor_item = root_container::<K::Descriptor>(unsigned_data)?;
 
         // `add_copy` only reports *that* the destination ran out of room, so work
         // out the size the operator needs to see before handing the buffer over.
@@ -226,23 +233,26 @@ impl SignedRecordBuilder {
         let too_large = || {
             anyhow!(
                 "Signed record size ({total_size} bytes) exceeds mailbox capacity \
-                 ({MAX_MAILBOX_RECORD_SIZE_BYTES} bytes)"
+                 ({} bytes)",
+                K::MAX_SIGNED_BYTES
             )
         };
 
-        let mut buf = vec![0u32; MAX_MAILBOX_RECORD_SIZE_BYTES / 4];
-        let (_, mut krsd) = TlvBuilder::new::<proto::key_rotation::SignedDescriptor>(&mut buf)
-            .map_err(|_| too_large())?;
+        let mut buf = vec![0u32; K::MAX_SIGNED_BYTES / 4];
+        let (_, mut signed_desc) =
+            TlvBuilder::new::<K::SignedDescriptor>(&mut buf).map_err(|_| too_large())?;
 
-        krsd.add_copy(&krot_item).map_err(|_| too_large())?;
+        signed_desc
+            .add_copy(&descriptor_item)
+            .map_err(|_| too_large())?;
 
         for words in &sigc_words {
             let sigc =
                 root_container::<proto::crypto::SignatureContainer>(TlvData::overlay(words))?;
-            krsd.add_copy(&sigc).map_err(|_| too_large())?;
+            signed_desc.add_copy(&sigc).map_err(|_| too_large())?;
         }
 
-        let tlv_bytes = krsd
+        let tlv_bytes = signed_desc
             .finish()
             .into_bytes(&buf)
             .map_err(|_| too_large())?
@@ -265,7 +275,7 @@ impl SignedRecordBuilder {
     }
 }
 
-/// A validated signed key rotation record wire image (`KRSD`).
+/// A validated signed record wire image (a signed descriptor such as `KRSD`).
 #[derive(Debug, Clone)]
 pub struct SignedRecord {
     tlv_bytes: Vec<u8>,
@@ -282,12 +292,12 @@ impl SignedRecord {
         self.tlv_bytes
     }
 
-    /// Size of the embedded unsigned `KROT` record, in bytes.
+    /// Size of the embedded unsigned descriptor (e.g. `KROT`), in bytes.
     pub fn unsigned_size(&self) -> usize {
         self.unsigned_size
     }
 
-    /// Size of the complete `KRSD` wire image, in bytes.
+    /// Size of the complete signed descriptor (e.g. `KRSD`) wire image, in bytes.
     pub fn signed_size(&self) -> usize {
         self.tlv_bytes.len()
     }
@@ -301,11 +311,12 @@ impl SignedRecord {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::builder::RecordBuilder;
     use crate::crypto::Algorithm;
     use crate::crypto::MLDSA44_PUBLIC_KEY_LEN;
     use crate::crypto::MLDSA44_SIGNATURE_LEN;
     use crate::crypto::P256_SIGNATURE_LEN;
+    use crate::krr::RecordBuilder;
+    use crate::krr::UnsignedRecord;
     use zerocopy::IntoBytes;
 
     /// Filler P-256 public key: `x = [1u8; 32]`, `y = [2u8; 32]`.

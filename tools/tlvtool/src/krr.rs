@@ -12,11 +12,13 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-//! Record compilation, partition size limit verification, and binary emission.
+//! Key rotation record (KRR) compilation, partition size limit verification, and binary emission.
 
 use crate::crypto::Algorithm;
 use crate::crypto::KeyBytes;
 use crate::crypto::KeyMaterial;
+use crate::record::RecordKind;
+use crate::record::Unsigned;
 use alloc::format;
 use alloc::string::String;
 use alloc::string::ToString;
@@ -35,15 +37,19 @@ pub const MAX_IDENTITY_STRING_LEN: usize = 8;
 pub const MAX_UNSIGNED_RECORD_SIZE_BYTES: usize = 2016;
 pub const MAX_MAILBOX_RECORD_SIZE_BYTES: usize = 8192;
 
-/// Rejects an unsigned record image that would not fit its flash slot.
-fn check_unsigned_size(size: usize) -> Result<()> {
-    ensure!(
-        size <= MAX_UNSIGNED_RECORD_SIZE_BYTES,
-        "Unsigned key rotation record size ({size} bytes) exceeds flash slot payload limit \
-         ({MAX_UNSIGNED_RECORD_SIZE_BYTES} bytes)"
-    );
-    Ok(())
+/// The key rotation record: a `KROT` descriptor, signed as a `KRSD`.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub struct Krr;
+
+impl RecordKind for Krr {
+    type Descriptor = proto::key_rotation::Descriptor;
+    type SignedDescriptor = proto::key_rotation::SignedDescriptor;
+    const MAX_UNSIGNED_BYTES: usize = MAX_UNSIGNED_RECORD_SIZE_BYTES;
+    const MAX_SIGNED_BYTES: usize = MAX_MAILBOX_RECORD_SIZE_BYTES;
 }
+
+/// A validated unsigned key rotation record wire image (`KROT`).
+pub type UnsignedRecord = Unsigned<Krr>;
 
 const KEY_DOMAINS: [(&str, crypto_rust_proto::KeyDomain); 6] = [
     ("prod", crypto_rust_proto::KeyDomain::PayloadProd),
@@ -459,42 +465,7 @@ impl RecordBuilder {
         )
         .context("Failed to convert protobuf record to TLV wire format")?;
 
-        let tlv_bytes = tlv_words.as_bytes().to_vec();
-        check_unsigned_size(tlv_bytes.len())?;
-
-        Ok(UnsignedRecord(tlv_bytes))
-    }
-}
-
-/// A validated unsigned key rotation record wire image (`KROT`).
-#[derive(Debug, Clone)]
-pub struct UnsignedRecord(Vec<u8>);
-
-impl UnsignedRecord {
-    pub fn from_bytes(bytes: &[u8]) -> Result<Self> {
-        check_unsigned_size(bytes.len())?;
-        let tlv_data = openprot_tlv::TlvData::overlay_bytes(bytes)
-            .map_err(|_| anyhow!("Unsigned record length must be 4-byte aligned"))?;
-        let has_desc = tlv_data
-            .iter::<proto::key_rotation::Descriptor>()
-            .next()
-            .is_some();
-        ensure!(has_desc, "No 'KROT' descriptor found in binary record");
-        Ok(Self(bytes.to_vec()))
-    }
-
-    pub fn from_file(path: impl AsRef<Path>) -> Result<Self> {
-        let p = path.as_ref();
-        let bytes = std::fs::read(p).with_context(|| format!("Failed to read {}", p.display()))?;
-        Self::from_bytes(&bytes)
-    }
-
-    pub fn as_bytes(&self) -> &[u8] {
-        &self.0
-    }
-
-    pub fn to_bytes(self) -> Vec<u8> {
-        self.0
+        UnsignedRecord::from_bytes(tlv_words.as_bytes())
     }
 }
 
@@ -548,7 +519,7 @@ mod tests {
             builder = builder.add_image_digest(d);
         }
         let err = builder.build_unsigned().unwrap_err().to_string();
-        assert!(err.contains("exceeds flash slot payload limit"));
+        assert!(err.contains("exceeds limit (2016 bytes)"), "{err}");
     }
 
     #[test]
