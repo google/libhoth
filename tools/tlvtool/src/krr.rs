@@ -17,15 +17,18 @@
 use crate::crypto::Algorithm;
 use crate::crypto::KeyBytes;
 use crate::crypto::KeyMaterial;
+use crate::record::DEFAULT_IMAGE_FAMILY;
+use crate::record::DEFAULT_IMAGE_VENDOR;
 use crate::record::RecordKind;
 use crate::record::Unsigned;
+use crate::record::identity_name;
+use crate::record::parse_digest32;
 use alloc::format;
 use alloc::string::String;
 use alloc::string::ToString;
 use alloc::vec::Vec;
 use anyhow::Context;
 use anyhow::Result;
-use anyhow::anyhow;
 use anyhow::bail;
 use anyhow::ensure;
 use serde::Deserialize;
@@ -33,7 +36,6 @@ use serde::Serialize;
 use std::path::Path;
 use zerocopy::IntoBytes;
 
-pub const MAX_IDENTITY_STRING_LEN: usize = 8;
 pub const MAX_UNSIGNED_RECORD_SIZE_BYTES: usize = 2016;
 pub const MAX_MAILBOX_RECORD_SIZE_BYTES: usize = 8192;
 
@@ -90,13 +92,6 @@ fn key_domain_name(domain: crypto_rust_proto::KeyDomain) -> &'static str {
         .map_or("unknown", |(name, _)| name)
 }
 
-/// Decodes a hex string that must denote exactly one SHA2-256 digest.
-pub(crate) fn parse_digest32(label: &str, hex_str: &str) -> Result<[u8; 32]> {
-    let raw = crate::crypto::from_hex(hex_str).with_context(|| format!("Invalid {label} hex"))?;
-    raw.try_into()
-        .map_err(|_| anyhow!("{label} '{hex_str}' must be 32 bytes (64 hex chars)"))
-}
-
 /// Fingerprints an in-memory public key the way the firmware would.
 fn key_digest(algorithm: Algorithm, key: KeyBytes<'_>) -> Result<[u8; 32]> {
     KeyMaterial::parse(algorithm, key).map(|material| material.fingerprint_sha256())
@@ -151,21 +146,6 @@ fn first_duplicate<T: PartialEq>(items: &[T]) -> Option<&T> {
         .map(|i| &items[i])
 }
 
-/// Validates an identity string and NUL-pads it to [`MAX_IDENTITY_STRING_LEN`].
-fn identity_name(field: &str, s: &str) -> Result<String> {
-    ensure!(s.is_ascii(), "{field} string must be ASCII (got '{s}')");
-    ensure!(
-        s.len() <= MAX_IDENTITY_STRING_LEN,
-        "{} string exceeds maximum limit of {} bytes (got {} bytes)",
-        field,
-        MAX_IDENTITY_STRING_LEN,
-        s.len()
-    );
-    let mut padded = String::from(s);
-    padded.push_str(&"\0".repeat(MAX_IDENTITY_STRING_LEN - s.len()));
-    Ok(padded)
-}
-
 fn default_key_domain() -> String {
     "prod".to_string()
 }
@@ -185,8 +165,8 @@ impl Default for KrrBuildConfig {
     fn default() -> Self {
         Self {
             version: 1,
-            image_vendor: "GOOGLE".to_string(),
-            image_family: "EARLGREY".to_string(),
+            image_vendor: DEFAULT_IMAGE_VENDOR.to_string(),
+            image_family: DEFAULT_IMAGE_FAMILY.to_string(),
             legacy_image_family: None,
             fingerprints: Vec::new(),
             digests: Vec::new(),

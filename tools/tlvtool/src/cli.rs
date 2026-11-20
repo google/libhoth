@@ -16,7 +16,7 @@
 
 use crate::inspect::inspect_file;
 use crate::krr::RecordBuilder;
-use crate::krr::parse_digest32;
+use crate::record::parse_digest32;
 use crate::signature::HybridSignatureFiles;
 use crate::signature::SignedRecordBuilder;
 use anyhow::Context;

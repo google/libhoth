@@ -20,6 +20,7 @@ pub mod cli;
 pub mod crypto;
 pub mod inspect;
 pub mod krr;
+pub mod mauv;
 pub mod record;
 pub mod signature;
 
@@ -30,6 +31,10 @@ pub use inspect::inspect_words;
 pub use krr::Krr;
 pub use krr::RecordBuilder;
 pub use krr::UnsignedRecord;
+pub use mauv::Mauv;
+pub use mauv::MauvBuildConfig;
+pub use mauv::MauvRecordBuilder;
+pub use mauv::UnsignedMauvRecord;
 pub use record::RecordKind;
 pub use record::Unsigned;
 pub use signature::HybridMaterial;

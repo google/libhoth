@@ -26,6 +26,13 @@ use openprot_tlv::TlvData;
 use openprot_tlv::TlvObject;
 use std::path::Path;
 
+/// Longest image vendor or family name, in bytes, as stored on the wire.
+pub const MAX_IDENTITY_STRING_LEN: usize = 8;
+/// Image vendor a record names when its config does not say.
+pub const DEFAULT_IMAGE_VENDOR: &str = "GOOGLE";
+/// Image family a record names when its config does not say.
+pub const DEFAULT_IMAGE_FAMILY: &str = "EARLGREY";
+
 /// Describes one kind of signed record that `tlvtool` can build and sign.
 pub trait RecordKind: core::fmt::Debug + Clone {
     /// Root TLV of the unsigned record
@@ -41,6 +48,28 @@ pub trait RecordKind: core::fmt::Debug + Clone {
 /// Renders a TLV tag as its four ASCII characters.
 pub(crate) fn fourcc(tag: u32) -> String {
     String::from_utf8_lossy(&tag.to_le_bytes()).into_owned()
+}
+
+/// Decodes a hex string that must denote exactly one SHA2-256 digest.
+pub(crate) fn parse_digest32(label: &str, hex_str: &str) -> Result<[u8; 32]> {
+    let raw = crate::crypto::from_hex(hex_str).with_context(|| format!("Invalid {label} hex"))?;
+    raw.try_into()
+        .map_err(|_| anyhow!("{label} '{hex_str}' must be 32 bytes (64 hex chars)"))
+}
+
+/// Validates an identity string and NUL-pads it to [`MAX_IDENTITY_STRING_LEN`].
+pub(crate) fn identity_name(field: &str, s: &str) -> Result<String> {
+    ensure!(s.is_ascii(), "{field} string must be ASCII (got '{s}')");
+    ensure!(
+        s.len() <= MAX_IDENTITY_STRING_LEN,
+        "{} string exceeds maximum limit of {} bytes (got {} bytes)",
+        field,
+        MAX_IDENTITY_STRING_LEN,
+        s.len()
+    );
+    let mut padded = String::from(s);
+    padded.push_str(&"\0".repeat(MAX_IDENTITY_STRING_LEN - s.len()));
+    Ok(padded)
 }
 
 /// Rejects an unsigned record image that would not fit its limit.
