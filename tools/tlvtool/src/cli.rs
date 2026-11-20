@@ -15,10 +15,10 @@
 //! Command line interface definitions and handlers.
 
 use crate::inspect::inspect_file;
-use crate::krr::RecordBuilder;
+use crate::krr::KrrRecordBuilder;
 use crate::record::parse_digest32;
 use crate::signature::HybridSignatureFiles;
-use crate::signature::SignedRecordBuilder;
+use crate::signature::SignedKrrRecordBuilder;
 use anyhow::Context;
 use anyhow::Result;
 use argh::FromArgs;
@@ -106,7 +106,7 @@ pub fn handle_krr(args: KrrArgs) -> Result<String> {
 }
 
 pub fn handle_build(args: BuildArgs) -> Result<String> {
-    let unsigned = RecordBuilder::from_json_file(&args.config)
+    let unsigned = KrrRecordBuilder::from_json_file(&args.config)
         .context("Failed to load build config")?
         .allow_test_keys(args.allow_test_keys)
         .build_unsigned()
@@ -131,7 +131,7 @@ pub fn handle_inspect(args: InspectArgs) -> Result<String> {
 }
 
 pub fn handle_sign(args: SignArgs) -> Result<String> {
-    let mut builder = SignedRecordBuilder::from_unsigned_file(&args.record)
+    let mut builder = SignedKrrRecordBuilder::from_unsigned_file(&args.record)
         .context("Failed to load unsigned record")?;
 
     if let Some(hex) = &args.expected_otp_fingerprint {

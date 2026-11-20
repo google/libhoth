@@ -139,7 +139,7 @@ pub struct SignedBuilder<K> {
 }
 
 /// Integrates offline signatures into a key rotation `SignedDescriptor` (`KRSD`).
-pub type SignedRecordBuilder = SignedBuilder<Krr>;
+pub type SignedKrrRecordBuilder = SignedBuilder<Krr>;
 
 impl<K: RecordKind> SignedBuilder<K> {
     pub fn new(unsigned: Unsigned<K>) -> Self {
@@ -315,8 +315,8 @@ mod tests {
     use crate::crypto::MLDSA44_PUBLIC_KEY_LEN;
     use crate::crypto::MLDSA44_SIGNATURE_LEN;
     use crate::crypto::P256_SIGNATURE_LEN;
-    use crate::krr::RecordBuilder;
-    use crate::krr::UnsignedRecord;
+    use crate::krr::KrrRecordBuilder;
+    use crate::krr::UnsignedKrrRecord;
     use zerocopy::IntoBytes;
 
     /// Filler P-256 public key: `x = [1u8; 32]`, `y = [2u8; 32]`.
@@ -413,7 +413,7 @@ mod tests {
 
     #[test]
     fn test_hybrid_signature_integration() {
-        let unsigned = RecordBuilder::new()
+        let unsigned = KrrRecordBuilder::new()
             .version(3)
             .image_vendor("VNDR")
             .image_family("FAM")
@@ -425,7 +425,7 @@ mod tests {
             .build_unsigned()
             .unwrap();
 
-        let signed = SignedRecordBuilder::new(unsigned)
+        let signed = SignedKrrRecordBuilder::new(unsigned)
             .add_hybrid_signature(crypto_rust_proto::KeyDomain::Rotr, &MATERIAL)
             .unwrap()
             .build()
@@ -439,7 +439,7 @@ mod tests {
 
     #[test]
     fn test_expected_otp_fingerprint_gates_the_signing_key() {
-        let unsigned = RecordBuilder::new()
+        let unsigned = KrrRecordBuilder::new()
             .add_fingerprint(
                 crypto_rust_proto::KeyDomain::PayloadProd,
                 Algorithm::P256,
@@ -455,14 +455,14 @@ mod tests {
 
         // The authority the operator named is the one holding the key.
         assert!(
-            SignedRecordBuilder::new(unsigned.clone())
+            SignedKrrRecordBuilder::new(unsigned.clone())
                 .expect_otp_fingerprint(expected)
                 .add_hybrid_signature(crypto_rust_proto::KeyDomain::Rotr, &MATERIAL)
                 .is_ok()
         );
 
         // Any other key would produce a record the target RoT rejects.
-        let err = SignedRecordBuilder::new(unsigned)
+        let err = SignedKrrRecordBuilder::new(unsigned)
             .expect_otp_fingerprint([0x42u8; 32])
             .add_hybrid_signature(crypto_rust_proto::KeyDomain::Rotr, &MATERIAL)
             .expect_err("signing with an unexpected authority must fail")
@@ -474,7 +474,7 @@ mod tests {
 
     #[test]
     fn test_empty_signatures_rejected() {
-        let unsigned = RecordBuilder::new()
+        let unsigned = KrrRecordBuilder::new()
             .version(1)
             .image_vendor("VNDR")
             .image_family("FAM")
@@ -486,14 +486,14 @@ mod tests {
             .build_unsigned()
             .unwrap();
 
-        assert!(SignedRecordBuilder::new(unsigned).build().is_err());
+        assert!(SignedKrrRecordBuilder::new(unsigned).build().is_err());
     }
 
     #[test]
     fn test_prebuilt_signature_containers_are_all_embedded() {
         let domain = crypto_rust_proto::KeyDomain::Rotr;
 
-        let unsigned = RecordBuilder::new()
+        let unsigned = KrrRecordBuilder::new()
             .image_vendor("VNDR")
             .image_family("FAM")
             .add_fingerprint(
@@ -504,7 +504,7 @@ mod tests {
             .build_unsigned()
             .unwrap();
 
-        let signed = SignedRecordBuilder::new(unsigned)
+        let signed = SignedKrrRecordBuilder::new(unsigned)
             .add_signature_container(build_hybrid_sigc(domain, &MATERIAL).unwrap().0)
             .add_signature_container(build_hybrid_sigc(domain, &MATERIAL).unwrap().0)
             .build()
@@ -520,7 +520,7 @@ mod tests {
 
     #[test]
     fn test_sign_preserves_unknown_sub_tlvs_byte_for_byte() {
-        let unsigned = RecordBuilder::new()
+        let unsigned = KrrRecordBuilder::new()
             .version(2)
             .image_vendor("GOOGLE")
             .image_family("FAMLY")
@@ -546,10 +546,10 @@ mod tests {
         let new_word_len = old_word_len + 3;
         modified_krot_bytes[4..6].copy_from_slice(&new_word_len.to_le_bytes());
 
-        let frozen_unsigned = UnsignedRecord::from_bytes(&modified_krot_bytes)
+        let frozen_unsigned = UnsignedKrrRecord::from_bytes(&modified_krot_bytes)
             .expect("Frozen unsigned record with custom sub-TLV should be valid");
 
-        let signed = SignedRecordBuilder::new(frozen_unsigned)
+        let signed = SignedKrrRecordBuilder::new(frozen_unsigned)
             .add_hybrid_signature(crypto_rust_proto::KeyDomain::Rotr, &MATERIAL)
             .unwrap()
             .build()

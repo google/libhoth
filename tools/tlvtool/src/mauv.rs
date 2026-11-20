@@ -162,7 +162,7 @@ mod tests {
     use super::*;
     use crate::crypto::Algorithm;
     use crate::inspect::inspect_file;
-    use crate::krr::RecordBuilder;
+    use crate::krr::KrrRecordBuilder;
     use openprot_tlv::TlvData;
 
     /// The complete 28-byte wire image for N = 7, GOOGLE / EARLGREY.
@@ -213,7 +213,7 @@ mod tests {
         assert_eq!(desc.min_security_version_bl0, 0x1234_5678);
         assert_eq!(&desc.image_vendor.name, b"VNDR\0\0\0\0");
         assert_eq!(&desc.image_family.name, b"FAM\0\0\0\0\0");
-        
+
         let report = inspect_file(unsigned.as_bytes()).unwrap();
         assert!(report.contains("Tag: 'MAUV'"), "{report}");
     }
@@ -331,7 +331,7 @@ mod tests {
         );
 
         // A key rotation record is not a MAUV record.
-        let krot = RecordBuilder::new()
+        let krot = KrrRecordBuilder::new()
             .add_fingerprint(
                 crypto_rust_proto::KeyDomain::PayloadProd,
                 Algorithm::P256,

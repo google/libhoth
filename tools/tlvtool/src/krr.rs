@@ -51,7 +51,7 @@ impl RecordKind for Krr {
 }
 
 /// A validated unsigned key rotation record wire image (`KROT`).
-pub type UnsignedRecord = Unsigned<Krr>;
+pub type UnsignedKrrRecord = Unsigned<Krr>;
 
 const KEY_DOMAINS: [(&str, crypto_rust_proto::KeyDomain); 6] = [
     ("prod", crypto_rust_proto::KeyDomain::PayloadProd),
@@ -237,7 +237,7 @@ impl Fingerprint {
 }
 
 #[derive(Debug)]
-pub struct RecordBuilder {
+pub struct KrrRecordBuilder {
     version: u32,
     image_vendor: String,
     image_family: String,
@@ -247,7 +247,7 @@ pub struct RecordBuilder {
     allow_test_keys: bool,
 }
 
-impl Default for RecordBuilder {
+impl Default for KrrRecordBuilder {
     fn default() -> Self {
         let config = KrrBuildConfig::default();
         Self {
@@ -262,7 +262,7 @@ impl Default for RecordBuilder {
     }
 }
 
-impl RecordBuilder {
+impl KrrRecordBuilder {
     pub fn new() -> Self {
         Self::default()
     }
@@ -379,7 +379,7 @@ impl RecordBuilder {
         self
     }
 
-    pub fn build_unsigned(self) -> Result<UnsignedRecord> {
+    pub fn build_unsigned(self) -> Result<UnsignedKrrRecord> {
         ensure!(
             self.version != 0,
             "Record version must be > 0 (v0 rollback records are not supported)"
@@ -445,7 +445,7 @@ impl RecordBuilder {
         )
         .context("Failed to convert protobuf record to TLV wire format")?;
 
-        UnsignedRecord::from_bytes(tlv_words.as_bytes())
+        UnsignedKrrRecord::from_bytes(tlv_words.as_bytes())
     }
 }
 
@@ -467,7 +467,7 @@ mod tests {
 
     #[test]
     fn test_record_builder_fluent_unsigned() {
-        let unsigned = RecordBuilder::new()
+        let unsigned = KrrRecordBuilder::new()
             .version(2)
             .image_vendor("VNDR")
             .image_family("FAM")
@@ -478,7 +478,7 @@ mod tests {
             )
             .add_image_digest([0x99u8; 32])
             .build_unsigned()
-            .expect("Failed to build unsigned record with RecordBuilder");
+            .expect("Failed to build unsigned record with KrrRecordBuilder");
 
         assert!(unsigned.as_bytes().len() <= MAX_UNSIGNED_RECORD_SIZE_BYTES);
         assert_eq!(descriptor_version(unsigned.as_bytes()), 2);
@@ -490,7 +490,7 @@ mod tests {
 
     #[test]
     fn test_record_too_large_rejected() {
-        let mut builder = RecordBuilder::new()
+        let mut builder = KrrRecordBuilder::new()
             .image_vendor("VNDR")
             .image_family("FAM");
         for i in 0..70u8 {
@@ -505,7 +505,7 @@ mod tests {
     #[test]
     fn test_build_unsigned_validation() {
         let base = || {
-            RecordBuilder::new().add_fingerprint(
+            KrrRecordBuilder::new().add_fingerprint(
                 crypto_rust_proto::KeyDomain::PayloadProd,
                 Algorithm::P256,
                 [0x42u8; 32],
@@ -516,7 +516,7 @@ mod tests {
         assert!(base().version(0).build_unsigned().is_err());
 
         // A record with no fingerprints and no digests carries no information.
-        assert!(RecordBuilder::new().build_unsigned().is_err());
+        assert!(KrrRecordBuilder::new().build_unsigned().is_err());
 
         // Identity strings are bounded and must be ASCII, so that the padded
         // proto string is exactly MAX_IDENTITY_STRING_LEN bytes on the wire.
@@ -532,13 +532,13 @@ mod tests {
     #[test]
     fn test_from_bytes_rejects_bad_length_and_missing_descriptor() {
         // Not 4-byte aligned.
-        assert!(UnsignedRecord::from_bytes(&[0u8; 15]).is_err());
+        assert!(UnsignedKrrRecord::from_bytes(&[0u8; 15]).is_err());
 
         // Well-formed length, but contains no 'KROT' descriptor.
-        assert!(UnsignedRecord::from_bytes(&[0u8; 16]).is_err());
+        assert!(UnsignedKrrRecord::from_bytes(&[0u8; 16]).is_err());
 
         // Round-trips a real record.
-        let unsigned = RecordBuilder::new()
+        let unsigned = KrrRecordBuilder::new()
             .add_fingerprint(
                 crypto_rust_proto::KeyDomain::PayloadProd,
                 Algorithm::P256,
@@ -546,7 +546,7 @@ mod tests {
             )
             .build_unsigned()
             .unwrap();
-        let reparsed = UnsignedRecord::from_bytes(unsigned.as_bytes()).unwrap();
+        let reparsed = UnsignedKrrRecord::from_bytes(unsigned.as_bytes()).unwrap();
         assert_eq!(reparsed.as_bytes(), unsigned.as_bytes());
     }
 
@@ -604,7 +604,7 @@ mod tests {
             } else {
                 KeyBytes::Hybrid { ec: &key, pq: &pq }
             };
-            let unsigned = RecordBuilder::new()
+            let unsigned = KrrRecordBuilder::new()
                 .add_key_bytes(crypto_rust_proto::KeyDomain::PayloadProd, algorithm, bytes)
                 .unwrap_or_else(|e| panic!("{algorithm:?}: {e}"))
                 .build_unsigned()
@@ -615,7 +615,7 @@ mod tests {
 
     #[test]
     fn test_add_key_bytes_rejects_a_bad_key() {
-        let err = RecordBuilder::new()
+        let err = KrrRecordBuilder::new()
             .add_key_bytes(
                 crypto_rust_proto::KeyDomain::PayloadProd,
                 Algorithm::P256,
@@ -648,7 +648,7 @@ mod tests {
                 "6162636465666768696a6b6c6d6e6f707172737475767778797a7b7c7d7e7f80"
             ]
         }"#;
-        let unsigned = RecordBuilder::from_json(json)
+        let unsigned = KrrRecordBuilder::from_json(json)
             .expect("Failed to parse JSON")
             // The config names the `dev` domain, so it needs the opt-in.
             .allow_test_keys(true)
@@ -671,7 +671,7 @@ mod tests {
                 { "algorithm": "p256", "fingerprint": "0000000000000000000000000000000000000000000000000000000000000001" }
             ]
         }"#;
-        let unsigned = RecordBuilder::from_json(json)
+        let unsigned = KrrRecordBuilder::from_json(json)
             .unwrap()
             .build_unsigned()
             .unwrap();
@@ -707,7 +707,7 @@ mod tests {
         ];
         for json in cases {
             assert!(
-                RecordBuilder::from_json(json).is_err(),
+                KrrRecordBuilder::from_json(json).is_err(),
                 "expected rejection of: {json}"
             );
         }
@@ -717,7 +717,7 @@ mod tests {
     fn test_test_key_domains_need_the_flag() {
         use crypto_rust_proto::KeyDomain;
         let record =
-            |domain| RecordBuilder::new().add_fingerprint(domain, Algorithm::P256, [0x42u8; 32]);
+            |domain| KrrRecordBuilder::new().add_fingerprint(domain, Algorithm::P256, [0x42u8; 32]);
 
         for domain in [
             KeyDomain::PayloadTest,
@@ -747,7 +747,7 @@ mod tests {
         use crypto_rust_proto::KeyDomain;
         let digest = [0x42u8; 32];
         let base = || {
-            RecordBuilder::new().add_fingerprint(KeyDomain::PayloadProd, Algorithm::P256, digest)
+            KrrRecordBuilder::new().add_fingerprint(KeyDomain::PayloadProd, Algorithm::P256, digest)
         };
 
         let err = base()

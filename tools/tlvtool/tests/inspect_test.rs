@@ -28,8 +28,8 @@
 use openprot_golden::assert_eq_golden;
 use tlvtool::Algorithm;
 use tlvtool::HybridMaterial;
-use tlvtool::RecordBuilder;
-use tlvtool::SignedRecordBuilder;
+use tlvtool::KrrRecordBuilder;
+use tlvtool::SignedKrrRecordBuilder;
 use tlvtool::inspect_file;
 
 /// Filler P-256 public key: `x = [0x30..0x4f]`, `y = [0x50..0x6f]`.
@@ -46,7 +46,7 @@ fn v1_unsigned() -> Vec<u8> {
         mldsa_fp[i] = i as u8 + 0x21;
     }
 
-    RecordBuilder::new()
+    KrrRecordBuilder::new()
         .version(1)
         .image_vendor("GOOGLE")
         .image_family("FAMILYV1")
@@ -68,8 +68,8 @@ fn v1_unsigned() -> Vec<u8> {
 }
 
 /// An unsigned v2 record carrying a single fingerprint and an image digest.
-fn v2_unsigned() -> tlvtool::UnsignedRecord {
-    RecordBuilder::new()
+fn v2_unsigned() -> tlvtool::UnsignedKrrRecord {
+    KrrRecordBuilder::new()
         .version(2)
         .image_vendor("GOOGLE")
         .image_family("FAMILYV1")
@@ -98,7 +98,7 @@ fn test_inspect_krr_v2_unsigned() {
 #[test]
 fn test_inspect_krr_v2_signed_hybrid() {
     let ec = ec_public_key();
-    let signed = SignedRecordBuilder::new(v2_unsigned())
+    let signed = SignedKrrRecordBuilder::new(v2_unsigned())
         .add_hybrid_signature(
             crypto_rust_proto::KeyDomain::Rotr,
             &HybridMaterial {
