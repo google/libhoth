@@ -300,6 +300,50 @@ cc_test(
     ],
 )
 
+cc_test(
+    name = "htool_i2c_test",
+    srcs = [
+        "htool_i2c.c",
+        "htool_i2c.h",
+        "htool_i2c_test.cc",
+        "htool_target_control.c",
+        "htool_target_control.h",
+    ],
+    deps = [
+        ":host_commands",
+        ":htool_header",
+        "//host/protocol:host_cmd",
+        "//host/protocol:i2c",
+        "//host/protocol:libhoth_status",
+        "//host/protocol/test:libhoth_device_mock",
+        "//host/transports:libhoth_device",
+        "//tools/common:htool_cmd",
+        "@googletest//:gtest",
+        "@googletest//:gtest_main",
+    ],
+)
+
+cc_test(
+    name = "htool_jtag_test",
+    srcs = [
+        "htool_jtag.c",
+        "htool_jtag.h",
+        "htool_jtag_test.cc",
+    ],
+    deps = [
+        ":host_commands",
+        ":htool_header",
+        "//host/protocol:host_cmd",
+        "//host/protocol:jtag",
+        "//host/protocol:libhoth_status",
+        "//host/protocol/test:libhoth_device_mock",
+        "//host/transports:libhoth_device",
+        "//tools/common:htool_cmd",
+        "@googletest//:gtest",
+        "@googletest//:gtest_main",
+    ],
+)
+
 cc_library(
     name = "htool_target_watchdog",
     srcs = ["htool_target_watchdog.c"],
