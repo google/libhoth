@@ -30,6 +30,10 @@ pub mod key_rotation {
     pub use key_rotation_tlv::*;
 }
 
+pub mod mauv {
+    pub use mauv_tlv::*;
+}
+
 #[cfg(test)]
 extern crate alloc;
 
@@ -189,6 +193,65 @@ mod tests {
             KRSealSeal::Kmsl(kmsl_item) => {
                 assert_eq!(kmsl_item.data.data[0], 0x04030201);
             }
+        }
+    }
+
+    #[test]
+    fn test_mauv_proto_macro_conv() {
+        use mauv::SignedDescriptorExt as _;
+
+        let signed_desc = protobuf::proto!(mauv_rust_proto::SignedDescriptor {
+            descriptor: mauv_rust_proto::Descriptor {
+                min_security_version_bl0: 3,
+                image_vendor: identity_rust_proto::ImageVendor {
+                    name: "GOOGLE".to_string(),
+                },
+                image_family: identity_rust_proto::ImageFamily {
+                    name: "EARLGREY".to_string(),
+                },
+            },
+            signature: [crypto_rust_proto::SignatureContainer {
+                public_key: crypto_rust_proto::PublicKey {
+                    key_domain: crypto_rust_proto::KeyDomain::Mauv,
+                },
+                signature: crypto_rust_proto::Signature {
+                    p256: crypto_rust_proto::P256Signature {
+                        r: vec![
+                            9, 8, 7, 6, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+                            0, 0, 0, 0, 0, 0, 0, 0,
+                        ],
+                        s: vec![
+                            5, 4, 3, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+                            0, 0, 0, 0, 0, 0, 0, 0,
+                        ],
+                    }
+                }
+            }],
+        });
+
+        let tlv_words = openprot_tlv_proto_conv::message_to_tlv(
+            &mauv_rust_proto::__unstable::SHARED_OPENPROT_PROTO_MAUV_DESCRIPTOR_INFO,
+            &signed_desc,
+        )
+        .expect("Failed to convert MAUV SignedDescriptor to TLV");
+
+        let tlv_data = TlvData::overlay(&tlv_words);
+        let signed_item = tlv_data.iter::<mauv::SignedDescriptor>().next().unwrap();
+        let desc_item = signed_item.descriptor().unwrap();
+        assert_eq!(desc_item.data.min_security_version_bl0, 3);
+        assert_eq!(desc_item.data.image_vendor.name, *b"GOOGLE\0\0");
+        assert_eq!(desc_item.data.image_family.name, *b"EARLGREY");
+
+        let sigc_item = signed_item.signature().next().unwrap();
+        let pk_item = sigc_item.public_key().unwrap();
+        assert_eq!(pk_item.data.key_domain, KeyDomain::MAUV);
+        let sig_item = sigc_item.signature().unwrap();
+        match sig_item.signature().unwrap() {
+            SignatureSignature::P256(item) => {
+                assert_eq!(item.data.r[0..4], [0x06070809, 0, 0, 0]);
+                assert_eq!(item.data.s[0..4], [0x02030405, 0, 0, 0]);
+            }
+            _ => panic!("Expected P256"),
         }
     }
 }

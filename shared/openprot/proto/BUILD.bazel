@@ -121,6 +121,36 @@ tlv_codegen(
     ],
 )
 
+proto_library(
+    name = "mauv_proto",
+    srcs = ["mauv.proto"],
+    visibility = ["//visibility:public"],
+    deps = [
+        ":crypto_proto",
+        ":identity_proto",
+        "//shared/tlv:options_proto",
+    ],
+)
+
+rust_proto_library(
+    name = "mauv_rust_proto",
+    tags = ["manual"],
+    visibility = ["//visibility:public"],
+    deps = [":mauv_proto"],
+)
+
+tlv_codegen(
+    name = "mauv_tlv",
+    src = "mauv_tlv.rs",
+    file_prefix = "//shared/tlv:apache2_header.txt",
+    proto = ":mauv_proto",
+    visibility = ["//visibility:public"],
+    deps = [
+        ":crypto_tlv",
+        ":identity_tlv",
+    ],
+)
+
 rust_library(
     name = "proto",
     srcs = [
@@ -133,6 +163,7 @@ rust_library(
         ":crypto_tlv",
         ":identity_tlv",
         ":key_rotation_tlv",
+        ":mauv_tlv",
         "//shared/tlv",
         "//third_party:zerocopy",
     ],
@@ -146,6 +177,7 @@ rust_test(
         ":crypto_rust_proto",
         ":identity_rust_proto",
         ":key_rotation_rust_proto",
+        ":mauv_rust_proto",
         "//shared/tlv:proto_conv",
         "@protobuf//rust:protobuf",
     ],
