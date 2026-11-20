@@ -1,0 +1,78 @@
+# Copyright 2026 Google LLC
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+load("@rules_rust//rust:defs.bzl", "rust_binary", "rust_library", "rust_test")
+
+package(default_visibility = ["//visibility:public"])
+
+rust_library(
+    name = "tlvtool_lib",
+    srcs = [
+        "src/builder.rs",
+        "src/cli.rs",
+        "src/crypto.rs",
+        "src/inspect.rs",
+        "src/lib.rs",
+        "src/signature.rs",
+    ],
+    crate_name = "tlvtool",
+    edition = "2024",
+    visibility = ["//visibility:public"],
+    deps = [
+        "//shared/crypto:sha256_sw",
+        "//shared/fingerprints",
+        "//shared/openprot/proto",
+        "//shared/openprot/proto:crypto_rust_proto",
+        "//shared/openprot/proto:crypto_tlv",
+        "//shared/openprot/proto:identity_rust_proto",
+        "//shared/openprot/proto:key_rotation_rust_proto",
+        "//shared/tlv",
+        "//shared/tlv:proto_conv",
+        "//shared/tlv:proto_meta",
+        "//third_party:anyhow",
+        "//third_party:argh",
+        "//third_party:base64",
+        "//third_party:hex",
+        "//third_party:serde",
+        "//third_party:serde_json",
+        "//third_party:zerocopy",
+        "@protobuf//rust:protobuf",
+    ],
+)
+
+rust_binary(
+    name = "tlvtool",
+    srcs = ["src/main.rs"],
+    edition = "2024",
+    rustc_flags = [
+        "-C",
+        "link-arg=-lgcc",
+    ],
+    visibility = ["//visibility:public"],
+    deps = [
+        ":tlvtool_lib",
+        "//third_party:anyhow",
+        "//third_party:argh",
+    ],
+)
+
+rust_test(
+    name = "tlvtool_test",
+    crate = ":tlvtool_lib",
+    edition = "2024",
+    rustc_flags = [
+        "-C",
+        "link-arg=-lgcc",
+    ],
+)
