@@ -17,6 +17,8 @@
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
 
+#include <climits>
+#include <cstdint>
 #include <vector>
 
 #include "test/libhoth_device_mock.h"
@@ -114,4 +116,43 @@ TEST_F(LibHothTest, oversized_request_rejected_above_max_mailbox) {
 
   EXPECT_NE(err, HOTH_SUCCESS);
   EXPECT_EQ(LIBHOTH_ERR_GET_CODE(err), LIBHOTH_ERR_OUT_UNDERFLOW);
+}
+
+TEST_F(LibHothTest, receive_uses_command_timeout) {
+  hoth_dev_.command_timeout_ms = 1234;
+  const uint32_t dummy = 0;
+  EXPECT_CALL(mock_, send(_, UsesCommand(kCmd), _))
+      .WillOnce(Return(LIBHOTH_OK));
+  EXPECT_CALL(mock_, receive(_, _, _, _, 1234))
+      .WillOnce(DoAll(CopyResp(&dummy, 0), Return(LIBHOTH_OK)));
+
+  EXPECT_EQ(libhoth_hostcmd_exec(&hoth_dev_, kCmd, 0, nullptr, 0, nullptr, 0,
+                                 nullptr),
+            HOTH_SUCCESS);
+}
+
+TEST_F(LibHothTest, receive_uses_default_timeout_when_unset) {
+  hoth_dev_.command_timeout_ms = 0;
+  const uint32_t dummy = 0;
+  EXPECT_CALL(mock_, send(_, UsesCommand(kCmd), _))
+      .WillOnce(Return(LIBHOTH_OK));
+  EXPECT_CALL(mock_, receive(_, _, _, _, HOTH_CMD_TIMEOUT_MS_DEFAULT))
+      .WillOnce(DoAll(CopyResp(&dummy, 0), Return(LIBHOTH_OK)));
+
+  EXPECT_EQ(libhoth_hostcmd_exec(&hoth_dev_, kCmd, 0, nullptr, 0, nullptr, 0,
+                                 nullptr),
+            HOTH_SUCCESS);
+}
+
+TEST_F(LibHothTest, receive_timeout_saturates_at_int_max) {
+  hoth_dev_.command_timeout_ms = UINT32_MAX;
+  const uint32_t dummy = 0;
+  EXPECT_CALL(mock_, send(_, UsesCommand(kCmd), _))
+      .WillOnce(Return(LIBHOTH_OK));
+  EXPECT_CALL(mock_, receive(_, _, _, _, INT_MAX))
+      .WillOnce(DoAll(CopyResp(&dummy, 0), Return(LIBHOTH_OK)));
+
+  EXPECT_EQ(libhoth_hostcmd_exec(&hoth_dev_, kCmd, 0, nullptr, 0, nullptr, 0,
+                                 nullptr),
+            HOTH_SUCCESS);
 }

@@ -42,6 +42,12 @@ struct libhoth_device {
   libhoth_error (*reconnect)(struct libhoth_device* dev);
 
   void* user_ctx;
+
+  // Timeout in milliseconds for the response to each host command sent with
+  // libhoth_hostcmd_exec(). 0 selects HOTH_CMD_TIMEOUT_MS_DEFAULT. Transports
+  // allocate this struct zero-initialized, so callers only set it to override
+  // the default.
+  uint32_t command_timeout_ms;
 };
 
 // Request is a buffer containing the EC request header and trailing payload.
