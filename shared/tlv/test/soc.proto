@@ -1,0 +1,138 @@
+// Copyright 2026 Google LLC
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+syntax = "proto3";
+
+package openprot.tlv.test.soc;
+
+import "shared/tlv/options.proto";
+
+message System {
+  option (openprot.tlv.tlv_fourcc) = "SYS_";
+
+  uint32 vendor_id = 1 [(openprot.tlv.offset) = 0];
+  uint32 product_id = 2 [(openprot.tlv.offset) = 4];
+  uint32 total_mem_mib = 3 [(openprot.tlv.offset) = 8];
+
+  // Inline fixed-size string buffer (16 bytes)
+  string system_name = 6
+      [(openprot.tlv.offset) = 12, (openprot.tlv.type) = "[u8; 16]"];
+
+  // Inline fixed-size byte array (16 bytes)
+  bytes system_uuid = 7
+      [(openprot.tlv.offset) = 28, (openprot.tlv.type) = "[u32; 4]"];
+
+  repeated CpuCore cores = 4;
+  SystemBus bus = 5;
+  repeated Accelerator accelerators = 8;
+}
+
+message CoreIdentifier {
+  uint32 model_id = 1 [(openprot.tlv.offset) = 0];
+  uint32 revision = 2 [(openprot.tlv.offset) = 4];
+}
+
+message CpuCore {
+  option (openprot.tlv.tlv_fourcc) = "CORE";
+
+  uint32 base_frequency_mhz = 1 [(openprot.tlv.offset) = 0];
+
+  CoreIdentifier id = 4 [(openprot.tlv.offset) = 4];
+
+  CacheInfo cache = 2;
+  repeated ExecutionUnit execution_units = 3;
+}
+
+message BusFeatures {
+  option (openprot.tlv.bit_packed) = "u8";
+
+  bool is_primary = 1 [(openprot.tlv.bit_range) = "0"];
+  bool supports_dma = 2 [(openprot.tlv.bit_range) = "1"];
+  bool supports_coherent = 3 [(openprot.tlv.bit_range) = "2"];
+  uint32 burst_len_log2 = 4 [(openprot.tlv.bit_range) = "7:3"];
+}
+
+message SystemBus {
+  option (openprot.tlv.tlv_fourcc) = "SBUS";
+
+  uint32 bus_type = 1 [(openprot.tlv.offset) = 0];
+  uint32 width_bits = 2 [(openprot.tlv.offset) = 4];
+  uint32 speed_mhz = 3 [(openprot.tlv.offset) = 8];
+
+  BusFeatures features = 4 [(openprot.tlv.offset) = 12];
+}
+
+message CacheInfo {
+  option (openprot.tlv.tlv_fourcc) = "CACH";
+
+  uint32 level = 1 [(openprot.tlv.offset) = 0];
+  uint32 size_kib = 2 [(openprot.tlv.offset) = 4];
+  uint32 associativity = 3 [(openprot.tlv.offset) = 8];
+}
+
+enum ExecutionUnitState {
+  option (openprot.tlv.raw_type) = "u8";
+  option allow_alias = true;
+
+  EU_STATE_IDLE = 0;
+  EU_STATE_BUSY = 1;
+  EU_STATE_STALLED = 2;
+  EU_STATE_LARGE = 150;
+  EU_STATE_ALIAS = 0;  // Alias for IDLE to test duplicate variant values!
+}
+
+message ExecutionUnit {
+  option (openprot.tlv.tlv_fourcc) = "EXEU";
+
+  // Pack as 1 byte at offset 0
+  uint32 unit_type = 1 [(openprot.tlv.offset) = 0, (openprot.tlv.type) = "u8"];
+
+  // Pack as 1 byte at offset 1
+  uint32 pipeline_stages = 2
+      [(openprot.tlv.offset) = 1, (openprot.tlv.type) = "u8"];
+
+  // Pack an enum at offset 2. Backing size is resolved automatically from
+  // raw_type!
+  ExecutionUnitState state = 3 [(openprot.tlv.offset) = 2];
+
+  // Pack as 2 bytes at offset 4
+  uint32 power_mw = 4 [(openprot.tlv.offset) = 4, (openprot.tlv.type) = "u16"];
+}
+
+message GpuAccelerator {
+  option (openprot.tlv.tlv_fourcc) = "GPU_";
+  uint32 cores = 1 [(openprot.tlv.offset) = 0];
+  uint32 frequency_mhz = 2 [(openprot.tlv.offset) = 4];
+}
+
+message NpuAccelerator {
+  option (openprot.tlv.tlv_fourcc) = "NPU_";
+  uint32 tops = 1 [(openprot.tlv.offset) = 0];
+}
+
+message CryptoAccelerator {
+  option (openprot.tlv.tlv_fourcc) = "CRYP";
+  uint32 key_size_bits = 1 [(openprot.tlv.offset) = 0];
+  bytes supported_ciphers = 2
+      [(openprot.tlv.extra_data) = true, (openprot.tlv.type) = "[u8]"];
+}
+
+message Accelerator {
+  option (openprot.tlv.tlv_fourcc) = "ACCL";
+  oneof config {
+    GpuAccelerator gpu = 1;
+    NpuAccelerator npu = 2;
+    CryptoAccelerator crypto = 3;
+  }
+}

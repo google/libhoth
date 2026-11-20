@@ -1,0 +1,53 @@
+// Copyright 2026 Google LLC
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+syntax = "proto3";
+
+package openprot.tlv;
+
+import "google/protobuf/descriptor.proto";
+
+extend google.protobuf.FieldOptions {
+  // The byte offset to a particular field in the zerocopy struct that
+  // represents the fixed fields. Must be naturally aligned.
+  uint32 offset = 12345;
+
+  // The packed Rust type of the field in the fixed struct. E.g., "u32", "u8",
+  // "[u8; 16]", or "[u32; 4]". If omitted, defaults to the size/type of the
+  // field's Protobuf type.
+  string type = 12346;
+
+  // The bit range of a field in a bit-packed message using Verilog notation.
+  // Can be a multi-bit range (e.g., "7:3") or a single bit (e.g., "0").
+  string bit_range = 12347;
+
+  // Indicates that a string or bytes field is stored as the unpadded
+  // variable-length extra data following the fixed payload fields of the TLV
+  // record.
+  bool extra_data = 12348;
+}
+
+extend google.protobuf.MessageOptions {
+  string tlv_fourcc = 12345;
+
+  // The backing integer type of a bit-packed message ("u8", "u16", or "u32").
+  string bit_packed = 12346;
+}
+
+extend google.protobuf.EnumOptions {
+  // The backing primitive integer type for this enum (e.g. "u8", "u16", "i32",
+  // "u32"). If present, this enum is generated as a zero-copy open enum
+  // wrapping this type.
+  string raw_type = 12345;
+}
