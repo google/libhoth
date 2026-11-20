@@ -24,7 +24,7 @@ permissions:
 
 # A workflow run is made up of one or more jobs that can run sequentially or in parallel
 jobs:
-  build:
+  build-linux:
     strategy:
       fail-fast: false
       matrix:
@@ -109,8 +109,24 @@ jobs:
           name: htool-macos-arm64
           path: htool-macos-arm64
 
+  # Aggregator job that preserves the required "build" check name (used by
+  # branch protection and Copybara) across the multi-arch matrix and macOS.
+  build:
+    needs: [build-linux, build-macos]
+    if: always()
+    runs-on: 'ubuntu-24.04'
+    steps:
+      - name: Check build results
+        env:
+          LINUX_RESULT: ${{ needs.build-linux.result }}
+          MACOS_RESULT: ${{ needs.build-macos.result }}
+        run: |
+          echo "build-linux: $LINUX_RESULT"
+          echo "build-macos: $MACOS_RESULT"
+          test "$LINUX_RESULT" = "success" && test "$MACOS_RESULT" = "success"
+
   release:
-    needs: [build, build-macos]
+    needs: [build]
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     runs-on: 'ubuntu-24.04'
     permissions:
