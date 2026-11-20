@@ -230,7 +230,71 @@ if gtest_dep.found() and gmock_dep.found()
         ),
     )
 
+    test(
+        'htool_i2c_test_asan',
+        executable(
+            'htool_i2c_test_asan_exe',
+            sources: [
+                'htool_target_control.c',
+                'htool_i2c.c',
+                'htool_i2c_test.cc',
+                '../../host/protocol/test/libhoth_device_mock.cc',
+            ],
+            include_directories: incdir,
+            link_with: [libhoth.get_static_lib()],
+            dependencies: [gtest_dep, gmock_dep],
+            c_args: ['-fsanitize=address'],
+            cpp_args: ['-fsanitize=address'],
+            link_args: ['-fsanitize=address'],
+        ),
+    )
+    test(
+        'htool_i2c_test',
+        executable(
+            'htool_i2c_test_exe',
+            sources: [
+                'htool_target_control.c',
+                'htool_i2c.c',
+                'htool_i2c_test.cc',
+                '../../host/protocol/test/libhoth_device_mock.cc',
+            ],
+            include_directories: incdir,
+            link_with: [libhoth.get_static_lib()],
+            dependencies: [gtest_dep, gmock_dep],
+        ),
+    )
 
+    test(
+        'htool_jtag_test_asan',
+        executable(
+            'htool_jtag_test_asan_exe',
+            sources: [
+                'htool_jtag.c',
+                'htool_jtag_test.cc',
+                '../../host/protocol/test/libhoth_device_mock.cc',
+            ],
+            include_directories: incdir,
+            link_with: [libhoth.get_static_lib()],
+            dependencies: [gtest_dep, gmock_dep],
+            c_args: ['-fsanitize=address'],
+            cpp_args: ['-fsanitize=address'],
+            link_args: ['-fsanitize=address'],
+        ),
+    )
+    test(
+        'htool_jtag_test',
+        executable(
+            'htool_jtag_test_exe',
+            sources: [
+                'htool_jtag.c',
+                'htool_jtag_test.cc',
+                '../../host/protocol/test/libhoth_device_mock.cc',
+            ],
+            include_directories: incdir,
+            link_with: [libhoth.get_static_lib()],
+            dependencies: [gtest_dep, gmock_dep],
+        ),
+    )
 
 endif
 

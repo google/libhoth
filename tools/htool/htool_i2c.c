@@ -15,6 +15,7 @@
 #include "htool_i2c.h"
 
 #include <assert.h>
+#include <ctype.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -123,6 +124,37 @@ static int i2c_read(struct libhoth_device* dev,
   return 0;
 }
 
+// Parse space-separated uint8_t tokens from `byte_stream` without modifying
+// the input buffer.
+static int parse_byte_stream(const char* byte_stream, uint8_t* out,
+                             size_t max_bytes, size_t* num_bytes) {
+  size_t count = 0;
+  const char* p = byte_stream;
+  for (;;) {
+    while (*p == ' ') {
+      p++;
+    }
+    if (*p == '\0') {
+      break;
+    }
+    if (count >= max_bytes) {
+      fprintf(stderr, "Request overflow!\n");
+      return -1;
+    }
+    char* endptr = NULL;
+    unsigned long parsed = strtoul(p, &endptr, 0);
+    if (isspace((unsigned char)*p) || *p == '-' || p == endptr ||
+        parsed > UINT8_MAX || (*endptr != '\0' && *endptr != ' ')) {
+      fprintf(stderr, "Invalid input data.\n");
+      return -1;
+    }
+    out[count++] = (uint8_t)parsed;
+    p = endptr;
+  }
+  *num_bytes = count;
+  return 0;
+}
+
 static int i2c_write(struct libhoth_device* dev,
                      const struct htool_invocation* inv) {
   uint32_t bus;
@@ -130,14 +162,14 @@ static int i2c_write(struct libhoth_device* dev,
   uint32_t addr;
   uint32_t offset;
   bool no_stop;
-  char* byte_stream = NULL;
+  const char* byte_stream = NULL;
 
   if (htool_get_param_u32(inv, "bus", &bus) ||
       htool_get_param_u32(inv, "frequency", &freq) ||
       htool_get_param_u32(inv, "address", &addr) ||
       htool_get_param_u32(inv, "offset", &offset) ||
       htool_get_param_bool(inv, "no_stop", &no_stop) ||
-      htool_get_param_string(inv, "byte_stream", (const char**)&byte_stream)) {
+      htool_get_param_string(inv, "byte_stream", &byte_stream)) {
     return -1;
   }
 
@@ -145,7 +177,7 @@ static int i2c_write(struct libhoth_device* dev,
     return -1;
   }
 
-  struct hoth_request_i2c_transfer request;
+  struct hoth_request_i2c_transfer request = {0};
   request.bus_number = (uint8_t)(bus & 0xFF);
   request.dev_address = (uint8_t)(addr & 0x7F);
   request.speed_khz = (uint16_t)(freq & 0xFFFF);
@@ -158,18 +190,13 @@ static int i2c_write(struct libhoth_device* dev,
     request.arg_bytes[idx++] = (uint8_t)(offset & 0xFF);
   }
 
-  char* tk = strtok(byte_stream, " ");
-  while (tk && (idx < I2C_TRANSFER_DATA_MAX_SIZE_BYTES)) {
-    char* endptr;
-    unsigned long int parsed = strtoul(tk, &endptr, 0);
-    if (tk == endptr || parsed > UINT8_MAX || *endptr != '\0') {
-      fprintf(stderr, "Invalid input data.\n");
-      return -1;
-    }
-    request.arg_bytes[idx++] = (uint8_t)parsed;
-    tk = strtok(NULL, " ");
+  size_t num_bytes = 0;
+  if (parse_byte_stream(byte_stream, &request.arg_bytes[idx],
+                        I2C_TRANSFER_DATA_MAX_SIZE_BYTES - idx,
+                        &num_bytes) != 0) {
+    return -1;
   }
-  request.size_write = idx;
+  request.size_write = (uint16_t)(idx + num_bytes);
 
   struct hoth_response_i2c_transfer response;
   libhoth_error err = libhoth_i2c_transfer(dev, &request, &response);
@@ -300,9 +327,9 @@ int htool_i2c_filtering_enable_endpoints(const struct htool_invocation* inv) {
   }
 
   uint32_t ids_count = 0;
-  char* byte_stream = NULL;
+  const char* byte_stream = NULL;
   if (htool_get_param_u32(inv, "ids_count", &ids_count) ||
-      htool_get_param_string(inv, "byte_stream", (const char**)&byte_stream)) {
+      htool_get_param_string(inv, "byte_stream", &byte_stream)) {
     return -1;
   }
 
@@ -324,27 +351,18 @@ int htool_i2c_filtering_enable_endpoints(const struct htool_invocation* inv) {
       (struct hoth_request_enable_i2c_endpoints_for_filtering*)request_payload;
   req->ids_count = (uint8_t)ids_count;
   memset(req->reserved, 0, sizeof(req->reserved));
-  size_t idx = sizeof(*req);
 
-  char* tk = strtok(byte_stream, " ");
-  while (tk && (idx < sizeof(request_payload))) {
-    char* endptr;
-    unsigned long int parsed = strtoul(tk, &endptr, 0);
-    if (tk == endptr || parsed > UINT8_MAX || *endptr != '\0') {
-      fprintf(stderr, "Invalid input data.\n");
-      return -1;
-    }
-    request_payload[idx++] = (uint8_t)parsed;
-    tk = strtok(NULL, " ");
-  }
-  if (tk != NULL) {
-    fprintf(stderr, "Request overflow!\n");
+  size_t num_bytes = 0;
+  if (parse_byte_stream(byte_stream, &request_payload[sizeof(*req)],
+                        sizeof(request_payload) - sizeof(*req),
+                        &num_bytes) != 0) {
     return -1;
   }
-  if ((ids_count == 0) != (idx == sizeof(*req))) {
+  if ((ids_count == 0) != (num_bytes == 0)) {
     fprintf(stderr, "Invalid input data.\n");
     return -1;
   }
+  size_t idx = sizeof(*req) + num_bytes;
 
   uint8_t __attribute__((aligned(4)))
   response_payload[LIBHOTH_MAILBOX_SIZE - sizeof(struct hoth_host_response)];
