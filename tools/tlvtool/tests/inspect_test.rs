@@ -28,8 +28,10 @@
 use openprot_golden::assert_eq_golden;
 use tlvtool::Algorithm;
 use tlvtool::HybridMaterial;
-use tlvtool::RecordBuilder;
-use tlvtool::SignedRecordBuilder;
+use tlvtool::KrrRecordBuilder;
+use tlvtool::MauvRecordBuilder;
+use tlvtool::SignedKrrRecordBuilder;
+use tlvtool::SignedMauvRecordBuilder;
 use tlvtool::inspect_file;
 
 /// Filler P-256 public key: `x = [0x30..0x4f]`, `y = [0x50..0x6f]`.
@@ -46,7 +48,7 @@ fn v1_unsigned() -> Vec<u8> {
         mldsa_fp[i] = i as u8 + 0x21;
     }
 
-    RecordBuilder::new()
+    KrrRecordBuilder::new()
         .version(1)
         .image_vendor("GOOGLE")
         .image_family("FAMILYV1")
@@ -68,8 +70,8 @@ fn v1_unsigned() -> Vec<u8> {
 }
 
 /// An unsigned v2 record carrying a single fingerprint and an image digest.
-fn v2_unsigned() -> tlvtool::UnsignedRecord {
-    RecordBuilder::new()
+fn v2_unsigned() -> tlvtool::UnsignedKrrRecord {
+    KrrRecordBuilder::new()
         .version(2)
         .image_vendor("GOOGLE")
         .image_family("FAMILYV1")
@@ -98,7 +100,7 @@ fn test_inspect_krr_v2_unsigned() {
 #[test]
 fn test_inspect_krr_v2_signed_hybrid() {
     let ec = ec_public_key();
-    let signed = SignedRecordBuilder::new(v2_unsigned())
+    let signed = SignedKrrRecordBuilder::new(v2_unsigned())
         .add_hybrid_signature(
             crypto_rust_proto::KeyDomain::Rotr,
             &HybridMaterial {
@@ -114,4 +116,39 @@ fn test_inspect_krr_v2_signed_hybrid() {
 
     let report = inspect_file(signed.as_bytes()).unwrap();
     assert_eq_golden!(&report, "testdata/inspect_test/krr_v2_signed_hybrid.golden");
+}
+
+/// An unsigned MAUV record raising the floor to 7 for GOOGLE / EARLGREY.
+fn mauv_unsigned() -> tlvtool::UnsignedMauvRecord {
+    MauvRecordBuilder::new()
+        .min_security_version_bl0(7)
+        .build_unsigned()
+        .expect("failed to build the MAUV record")
+}
+
+#[test]
+fn test_inspect_mauv_unsigned() {
+    let report = inspect_file(mauv_unsigned().as_bytes()).unwrap();
+    assert_eq_golden!(&report, "testdata/inspect_test/mauv_unsigned.golden");
+}
+
+#[test]
+fn test_inspect_mauv_signed_hybrid() {
+    let ec = ec_public_key();
+    let signed = SignedMauvRecordBuilder::new(mauv_unsigned())
+        .add_hybrid_signature(
+            crypto_rust_proto::KeyDomain::Mauv,
+            &HybridMaterial {
+                ec_public_key: ec.as_slice(),
+                mldsa_public_key: &[0xbb; 1312],
+                ec_signature: &[0x88; 64],
+                mldsa_signature: &[0xaa; 2420],
+            },
+        )
+        .expect("failed to attach the hybrid signature")
+        .build()
+        .expect("failed to build the signed record");
+
+    let report = inspect_file(signed.as_bytes()).unwrap();
+    assert_eq_golden!(&report, "testdata/inspect_test/mauv_signed_hybrid.golden");
 }

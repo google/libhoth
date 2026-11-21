@@ -28,6 +28,7 @@ enum KeyDomain {
   KEY_DOMAIN_BIOS_PROD = 0x504f4942;     // "BIOP"
   KEY_DOMAIN_BIOS_DEV = 0x444f4942;      // "BIOD"
   KEY_DOMAIN_ROTR = 0x52544f52;          // "ROTR"
+  KEY_DOMAIN_MAUV = 0x5655414d;          // "MAUV"
 }
 
 // -----------------------------------------------------------------------------

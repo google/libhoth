@@ -40,6 +40,7 @@ impl KeyDomain {
     pub const BIOS_PROD: Self = Self(1347373378);
     pub const BIOS_DEV: Self = Self(1146046786);
     pub const ROTR: Self = Self(1381257042);
+    pub const MAUV: Self = Self(1448427853);
 }
 impl ::core::fmt::Debug for KeyDomain {
     fn fmt(&self, f: &mut ::core::fmt::Formatter<'_>) -> ::core::fmt::Result {
@@ -51,6 +52,7 @@ impl ::core::fmt::Debug for KeyDomain {
             Self::BIOS_PROD => write!(f, "BIOS_PROD"),
             Self::BIOS_DEV => write!(f, "BIOS_DEV"),
             Self::ROTR => write!(f, "ROTR"),
+            Self::MAUV => write!(f, "MAUV"),
             other => write!(f, "{}({})", stringify!(KeyDomain), other.0),
         }
     }

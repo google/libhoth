@@ -16,19 +16,30 @@
 
 extern crate alloc;
 
-pub mod builder;
 pub mod cli;
 pub mod crypto;
 pub mod inspect;
+pub mod krr;
+pub mod mauv;
+pub mod record;
 pub mod signature;
 
-pub use builder::RecordBuilder;
-pub use builder::UnsignedRecord;
 pub use crypto::Algorithm;
 pub use crypto::KeyBytes;
 pub use inspect::inspect_file;
 pub use inspect::inspect_words;
+pub use krr::Krr;
+pub use krr::KrrRecordBuilder;
+pub use krr::UnsignedKrrRecord;
+pub use mauv::Mauv;
+pub use mauv::MauvBuildConfig;
+pub use mauv::MauvRecordBuilder;
+pub use mauv::UnsignedMauvRecord;
+pub use record::RecordKind;
+pub use record::Unsigned;
 pub use signature::HybridMaterial;
 pub use signature::HybridSignatureFiles;
+pub use signature::SignedBuilder;
+pub use signature::SignedKrrRecordBuilder;
+pub use signature::SignedMauvRecordBuilder;
 pub use signature::SignedRecord;
-pub use signature::SignedRecordBuilder;

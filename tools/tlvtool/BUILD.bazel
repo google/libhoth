@@ -19,11 +19,13 @@ package(default_visibility = ["//visibility:public"])
 rust_library(
     name = "tlvtool_lib",
     srcs = [
-        "src/builder.rs",
         "src/cli.rs",
         "src/crypto.rs",
         "src/inspect.rs",
+        "src/krr.rs",
         "src/lib.rs",
+        "src/mauv.rs",
+        "src/record.rs",
         "src/signature.rs",
     ],
     crate_name = "tlvtool",
@@ -37,6 +39,7 @@ rust_library(
         "//shared/openprot/proto:crypto_tlv",
         "//shared/openprot/proto:identity_rust_proto",
         "//shared/openprot/proto:key_rotation_rust_proto",
+        "//shared/openprot/proto:mauv_rust_proto",
         "//shared/tlv",
         "//shared/tlv:proto_conv",
         "//shared/tlv:proto_meta",
