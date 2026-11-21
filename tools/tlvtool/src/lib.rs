@@ -41,4 +41,5 @@ pub use signature::HybridMaterial;
 pub use signature::HybridSignatureFiles;
 pub use signature::SignedBuilder;
 pub use signature::SignedKrrRecordBuilder;
+pub use signature::SignedMauvRecordBuilder;
 pub use signature::SignedRecord;

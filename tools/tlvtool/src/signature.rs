@@ -22,6 +22,7 @@ use crate::crypto::parse_p256_public_key;
 use crate::crypto::parse_p256_signature;
 use crate::crypto::to_hex;
 use crate::krr::Krr;
+use crate::mauv::Mauv;
 use crate::record::RecordKind;
 use crate::record::Unsigned;
 use crate::record::fourcc;
@@ -140,6 +141,9 @@ pub struct SignedBuilder<K> {
 
 /// Integrates offline signatures into a key rotation `SignedDescriptor` (`KRSD`).
 pub type SignedKrrRecordBuilder = SignedBuilder<Krr>;
+
+/// Integrates offline signatures into a MAUV `SignedDescriptor` (`MVSD`).
+pub type SignedMauvRecordBuilder = SignedBuilder<Mauv>;
 
 impl<K: RecordKind> SignedBuilder<K> {
     pub fn new(unsigned: Unsigned<K>) -> Self {
@@ -566,5 +570,53 @@ mod tests {
 
         // Verify that `tlvtool inspect` surfaces the outer containers.
         assert_signed_shape(signed_bytes);
+    }
+
+    #[test]
+    fn test_mauv_record_signing() {
+        use crate::mauv::MAX_MAUV_SIGNED_RECORD_SIZE_BYTES;
+        use crate::mauv::MauvRecordBuilder;
+        use proto::crypto::SignatureContainerExt;
+        use proto::mauv::SignedDescriptorExt;
+
+        let unsigned = MauvRecordBuilder::new()
+            .min_security_version_bl0(7)
+            .build_unsigned()
+            .unwrap();
+        let signed = SignedMauvRecordBuilder::new(unsigned.clone())
+            .add_hybrid_signature(crypto_rust_proto::KeyDomain::Mauv, &MATERIAL)
+            .unwrap()
+            .build()
+            .expect("Signing a MAUV record failed");
+        let bytes = signed.as_bytes();
+
+        // `MVSD` header, then the unsigned `MAUV` descriptor byte-for-byte.
+        let header_len = size_of::<TlvHeader>();
+        assert_eq!(&bytes[..4], b"MVSD");
+        assert_eq!(
+            &bytes[header_len..header_len + unsigned.as_bytes().len()],
+            unsigned.as_bytes()
+        );
+        assert_eq!(signed.unsigned_size(), unsigned.as_bytes().len());
+        assert!(signed.signed_size() <= MAX_MAUV_SIGNED_RECORD_SIZE_BYTES);
+        assert_eq!(signed.otp_fingerprint(), Some(EXPECTED_OTP_FP));
+
+        // The firmware reads N and the signer's key domain back out.
+        let sd = TlvData::overlay_bytes(bytes)
+            .unwrap()
+            .iter::<proto::mauv::SignedDescriptor>()
+            .next()
+            .expect("no MVSD");
+        assert_eq!(sd.descriptor().unwrap().data.min_security_version_bl0, 7);
+        let sigc = sd.signature().next().expect("no SIGC");
+        assert_eq!(
+            sigc.public_key().unwrap().data.key_domain,
+            proto::crypto::KeyDomain::MAUV
+        );
+
+        let report = crate::inspect::inspect_file(bytes).unwrap();
+        for tag in ["MVSD", "MAUV", "SIGC"] {
+            assert!(report.contains(&format!("Tag: '{tag}'")), "{report}");
+        }
     }
 }
