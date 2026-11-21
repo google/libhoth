@@ -410,3 +410,169 @@ fn test_sign_rejects_an_unexpected_signing_authority() {
     );
     assert!(stderr.contains("OTP fingerprint mismatch"), "{stderr}");
 }
+
+/// Returns the path of `name` in the test's scratch directory.
+fn scratch(name: &str) -> PathBuf {
+    PathBuf::from(std::env::var(TEST_TEMPDIR).expect("TEST_TMPDIR is not set")).join(name)
+}
+
+/// Writes `json` to a scratch MAUV build config and returns its path.
+fn write_mauv_config(name: &str, json: &str) -> PathBuf {
+    let path = scratch(name);
+    std::fs::write(&path, json).expect("failed to write the MAUV build config");
+    path
+}
+
+/// Builds an unsigned MAUV record (N = 7) with `mauv build` and returns its path.
+fn build_mauv_unsigned(prefix: &str) -> PathBuf {
+    let config = write_mauv_config(
+        &format!("{prefix}_mauv.json"),
+        r#"{ "min_security_version_bl0": 7 }"#,
+    );
+    let record = scratch(&format!("{prefix}.mauv.unsigned"));
+    run(&[
+        "mauv",
+        "build",
+        config.to_str().unwrap(),
+        "-o",
+        record.to_str().unwrap(),
+    ]);
+    record
+}
+
+/// Returns `mauv sign` arguments for `record`, writing to `out` if given.
+fn mauv_sign_args(record: &Path, keys: &[PathBuf; 4], out: Option<&Path>) -> Vec<String> {
+    let mut args = sign_args(record, keys, out);
+    args[0] = "mauv".to_string();
+    args
+}
+
+#[test]
+fn test_mauv_build_writes_the_output_file() {
+    let config = write_mauv_config(
+        "mauv_build_emit.json",
+        r#"{ "min_security_version_bl0": 7 }"#,
+    );
+    let out = scratch("mauv_build_emit.unsigned");
+
+    let msg = run(&[
+        "mauv",
+        "build",
+        config.to_str().unwrap(),
+        "-o",
+        out.to_str().unwrap(),
+    ]);
+    assert!(msg.contains("MAUV record successfully written"), "{msg}");
+
+    // One 28-byte `MAUV` TLV: 8-byte header, then N = 7 little-endian.
+    let bytes = std::fs::read(&out).unwrap();
+    assert_eq!(bytes.len(), 28, "{bytes:02x?}");
+    assert_eq!(&bytes[..4], b"MAUV");
+    assert_eq!(&bytes[8..12], &7u32.to_le_bytes());
+}
+
+#[test]
+fn test_mauv_build_prints_the_record_without_an_output_path() {
+    let config = write_mauv_config(
+        "mauv_build_dump.json",
+        r#"{ "min_security_version_bl0": 7 }"#,
+    );
+
+    let report = run(&["mauv", "build", config.to_str().unwrap()]);
+    assert!(report.contains("Tag: 'MAUV'"), "{report}");
+    assert!(report.contains("TLV Structure Tree:"), "{report}");
+}
+
+#[test]
+fn test_mauv_build_rejects_bad_configs() {
+    let cases = [
+        (
+            "mauv_bad_syntax.json",
+            "{ not json }",
+            "Failed to parse JSON config",
+        ),
+        (
+            "mauv_bad_missing.json",
+            r#"{ "image_vendor": "GOOGLE" }"#,
+            "missing field",
+        ),
+        (
+            "mauv_bad_typo.json",
+            r#"{ "min_security_version_bl0": 3, "image_famliy": "OTHER" }"#,
+            "unknown field",
+        ),
+        (
+            "mauv_bad_zero.json",
+            r#"{ "min_security_version_bl0": 0 }"#,
+            "must be > 0",
+        ),
+    ];
+    for (name, json, needle) in cases {
+        let config = write_mauv_config(name, json);
+        let stderr = run_failing(&["mauv", "build", config.to_str().unwrap()]);
+        assert!(stderr.contains(needle), "{name}: {stderr}");
+    }
+}
+
+#[test]
+fn test_mauv_build_has_no_test_key_opt_in() {
+    // A MAUV record carries no keys, so the KRR flag is not accepted.
+    let config = write_mauv_config(
+        "mauv_build_flag.json",
+        r#"{ "min_security_version_bl0": 7 }"#,
+    );
+    let stderr = run_failing(&[
+        "mauv",
+        "build",
+        config.to_str().unwrap(),
+        "--allow-test-keys",
+    ]);
+    assert!(stderr.contains("--allow-test-keys"), "{stderr}");
+}
+
+#[test]
+fn test_mauv_sign_writes_the_output_file() {
+    let record = build_mauv_unsigned("mauv_sign_emit");
+    let keys = write_key_material("mauv_sign_emit");
+    let signed = scratch("mauv_sign_emit.signed");
+
+    let args = mauv_sign_args(&record, &keys, Some(&signed));
+    let msg = run(&args.iter().map(String::as_str).collect::<Vec<_>>());
+    assert!(
+        msg.contains("Signed MAUV record successfully written"),
+        "{msg}"
+    );
+    assert!(msg.contains("Unsigned Body Size : 28 bytes"), "{msg}");
+    assert!(msg.contains("Target RoT OTP FP"), "{msg}");
+
+    // An `MVSD` that embeds the unsigned record byte-for-byte.
+    let unsigned = std::fs::read(&record).unwrap();
+    let bytes = std::fs::read(&signed).unwrap();
+    assert_eq!(&bytes[..4], b"MVSD");
+    assert_eq!(&bytes[8..8 + unsigned.len()], &unsigned[..]);
+    assert!(bytes.len() <= 6144, "{} bytes", bytes.len());
+
+    let report = run(&["inspect", signed.to_str().unwrap()]);
+    for tag in ["MVSD", "MAUV", "SIGC"] {
+        assert!(report.contains(&format!("Tag: '{tag}'")), "{report}");
+    }
+}
+
+#[test]
+fn test_mauv_sign_rejects_a_key_rotation_record() {
+    let record = build_unsigned("mauv_sign_krr");
+    let keys = write_key_material("mauv_sign_krr");
+
+    let args = mauv_sign_args(&record, &keys, None);
+    let stderr = run_failing(&args.iter().map(String::as_str).collect::<Vec<_>>());
+    assert!(stderr.contains("No 'MAUV' descriptor"), "{stderr}");
+}
+
+#[test]
+fn test_krr_sign_rejects_a_mauv_record() {
+    let record = build_mauv_unsigned("krr_sign_mauv");
+    let keys = write_key_material("krr_sign_mauv");
+
+    let stderr = sign_failing(&record, &keys, &[]);
+    assert!(stderr.contains("No 'KROT' descriptor"), "{stderr}");
+}
