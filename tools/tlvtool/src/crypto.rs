@@ -22,12 +22,10 @@
 //!
 //! # Byte order
 //!
-//! Big integers are stored **little-endian** on the wire: `crypto.proto` says
-//! so for P-256 coordinates and scalars, and RSA moduli follow the OpenPRoT
-//! manifest convention the firmware verifier uses (the proto is silent on
-//! them). Parsers return the big-endian bytes found in DER; the conversion
-//! happens exactly once, in [`le_bytes`] / [`le_words`] / [`rsa_modulus_le`],
-//! when the TLV material is built.
+//! `crypto.proto` stores P-256 coordinates and scalars **little-endian** on
+//! the wire, so their parsers return big-endian DER bytes and convert once in
+//! [`le_bytes`] / [`le_words`]. RSA moduli stay **big-endian** to match the
+//! V1 payload `ImageDescriptor` bytes that firmware fingerprints on flash.
 
 use alloc::string::String;
 use alloc::vec::Vec;
@@ -369,13 +367,6 @@ fn slhdsa_words(key: &[u8]) -> Result<[u32; 8]> {
     Ok(words_of(&parse_slhdsa128s_public_key(key)?))
 }
 
-/// The OpenPRoT manifest stores RSA moduli little-endian.
-fn rsa_modulus_le<const N: usize>(key: &[u8]) -> Result<[u8; N]> {
-    let mut modulus = parse_rsa_public_key::<N>(key)?;
-    modulus.reverse();
-    Ok(modulus)
-}
-
 impl KeyMaterial {
     /// Parses `bytes` as an `algorithm` public key.
     pub fn parse(algorithm: Algorithm, bytes: KeyBytes<'_>) -> Result<Self> {
@@ -401,13 +392,13 @@ impl KeyMaterial {
                 mldsa: parse_mldsa44_public_key(key)?,
             }),
             Algorithm::Rsa2048 => Self::Rsa2048(Rsa2048PublicMaterial {
-                modulus: rsa_modulus_le(key)?,
+                modulus: parse_rsa_public_key(key)?,
             }),
             Algorithm::Rsa3072 => Self::Rsa3072(Rsa3072PublicMaterial {
-                modulus: rsa_modulus_le(key)?,
+                modulus: parse_rsa_public_key(key)?,
             }),
             Algorithm::Rsa4096 => Self::Rsa4096(Rsa4096PublicMaterial {
-                modulus: rsa_modulus_le(key)?,
+                modulus: parse_rsa_public_key(key)?,
             }),
             Algorithm::HybridP256Slhdsa => {
                 let (x, y) = p256_words(key)?;
@@ -665,14 +656,19 @@ MDAwCwYJYIZIAWUDBAMjAyEAszRCBKbhiZP2Hu/mtVAvQTdyraaLL9+cqDB6gKhS
         };
         assert_eq!(km, KeyMaterial::P256(expected));
 
-        // RSA: modulus reversed into little-endian, then hashed as the device would.
+        // RSA: modulus kept big-endian to match V1 ImageDescriptor bytes on flash.
         let pkcs1 = rsa_pkcs1_der::<256>(&RSA_PUBLIC_EXPONENT_F4);
         let km = KeyMaterial::parse(Algorithm::Rsa2048, KeyBytes::Single(&pkcs1)).unwrap();
-        let mut modulus = parse_rsa_public_key::<256>(&pkcs1).unwrap();
-        modulus.reverse();
+        let modulus = parse_rsa_public_key::<256>(&pkcs1).unwrap();
         assert_eq!(
             km.fingerprint_sha256(),
             Rsa2048PublicMaterial { modulus }.fingerprint_sha256()
+        );
+        let mut reversed = modulus;
+        reversed.reverse();
+        assert_ne!(
+            km.fingerprint_sha256(),
+            Rsa2048PublicMaterial { modulus: reversed }.fingerprint_sha256()
         );
 
         // Hybrid: EC + PQ parts feed one digest.
