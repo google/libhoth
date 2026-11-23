@@ -55,10 +55,6 @@ rust_binary(
     name = "tlvtool",
     srcs = ["src/main.rs"],
     edition = "2024",
-    rustc_flags = [
-        "-C",
-        "link-arg=-lgcc",
-    ],
     visibility = ["//visibility:public"],
     deps = [
         ":tlvtool_lib",
@@ -71,8 +67,4 @@ rust_test(
     name = "tlvtool_test",
     crate = ":tlvtool_lib",
     edition = "2024",
-    rustc_flags = [
-        "-C",
-        "link-arg=-lgcc",
-    ],
 )

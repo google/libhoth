@@ -29,10 +29,6 @@ rust_test(
     srcs = ["inspect_test.rs"],
     compile_data = glob(["testdata/inspect_test/*.golden"]),
     edition = "2024",
-    rustc_flags = [
-        "-C",
-        "link-arg=-lgcc",
-    ],
     deps = [
         "//shared/golden",
         "//shared/openprot/proto:crypto_rust_proto",
