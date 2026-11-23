@@ -129,8 +129,8 @@ TEST_F(LibHothSpiAtomicTest, NonAtomicReceiveRejectsResponseAbove1KiBMailbox) {
                                   LIBHOTH_ERR_RESPONSE_BUFFER_OVERFLOW));
 }
 
-TEST_F(LibHothSpiAtomicTest, AtomicSinglePageSendAndReceiveClampsRxTo1KiB) {
-  std::vector<uint8_t> req(SPI_NOR_FLASH_PAGE_SIZE, 0x3c);
+TEST_F(LibHothSpiAtomicTest, AtomicSendAndReceiveAccepts1KiBAndClampsRx) {
+  std::vector<uint8_t> req(LIBHOTH_MAILBOX_SIZE, 0x3c);
   ASSERT_EQ(libhoth_spi_buffer_request(&dev_, req.data(), req.size()),
             HOTH_SUCCESS);
 
@@ -142,15 +142,23 @@ TEST_F(LibHothSpiAtomicTest, AtomicSinglePageSendAndReceiveClampsRxTo1KiB) {
   EXPECT_EQ(actual_size, sizeof(struct hoth_host_response));
   EXPECT_EQ(captured_.call_count, 1);
   ASSERT_EQ(captured_.xfers.size(), 5u);
+  EXPECT_EQ(captured_.xfers[2].len, static_cast<size_t>(LIBHOTH_MAILBOX_SIZE));
+  EXPECT_EQ(captured_.tx_payloads[2], req);
   EXPECT_EQ(captured_.xfers[4].len, static_cast<size_t>(LIBHOTH_MAILBOX_SIZE));
   EXPECT_EQ(spi_dev_.buffered_request, nullptr);
 }
 
 TEST_F(LibHothSpiAtomicTest,
-       AtomicBufferRequestRejectsMultiPageAndFreesOnInvalidReceive) {
-  std::vector<uint8_t> multi_page(SPI_NOR_FLASH_PAGE_SIZE + 1, 0xaa);
+       AtomicBufferRequestRejectsOversizedAndFreesOnInvalidReceive) {
+  uint8_t dummy = 0;
+  EXPECT_EQ(libhoth_spi_buffer_request(&dev_, &dummy, 0),
+            LIBHOTH_ERR_CONSTRUCT(HOTH_CTX_SPI, HOTH_HOST_SPACE_LIBHOTH,
+                                  LIBHOTH_ERR_INVALID_PARAMETER));
+  EXPECT_EQ(spi_dev_.buffered_request, nullptr);
+
+  std::vector<uint8_t> oversized(LIBHOTH_MAILBOX_SIZE + 1, 0xaa);
   EXPECT_EQ(
-      libhoth_spi_buffer_request(&dev_, multi_page.data(), multi_page.size()),
+      libhoth_spi_buffer_request(&dev_, oversized.data(), oversized.size()),
       LIBHOTH_ERR_CONSTRUCT(HOTH_CTX_SPI, HOTH_HOST_SPACE_LIBHOTH,
                             LIBHOTH_ERR_INVALID_PARAMETER));
   EXPECT_EQ(spi_dev_.buffered_request, nullptr);
@@ -165,6 +173,17 @@ TEST_F(LibHothSpiAtomicTest,
             LIBHOTH_ERR_CONSTRUCT(HOTH_CTX_SPI, HOTH_HOST_SPACE_LIBHOTH,
                                   LIBHOTH_ERR_INVALID_PARAMETER));
   EXPECT_EQ(spi_dev_.buffered_request, nullptr);
+
+  ASSERT_EQ(libhoth_spi_buffer_request(&dev_, small_req, sizeof(small_req)),
+            HOTH_SUCCESS);
+  spi_dev_.buffered_request_size = LIBHOTH_MAILBOX_SIZE + 1;
+  std::vector<uint8_t> resp_buf(LIBHOTH_MAILBOX_SIZE, 0);
+  EXPECT_EQ(libhoth_spi_send_and_receive_response(
+                &dev_, resp_buf.data(), resp_buf.size(), &actual_size, 1000),
+            LIBHOTH_ERR_CONSTRUCT(HOTH_CTX_SPI, HOTH_HOST_SPACE_LIBHOTH,
+                                  LIBHOTH_ERR_INVALID_PARAMETER));
+  EXPECT_EQ(spi_dev_.buffered_request, nullptr);
+  EXPECT_EQ(spi_dev_.buffered_request_size, 0u);
 }
 
 }  // namespace

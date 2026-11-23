@@ -447,8 +447,11 @@ libhoth_error libhoth_spi_receive_response(struct libhoth_device* dev,
 libhoth_error libhoth_spi_buffer_request(struct libhoth_device* dev,
                                          const void* request,
                                          size_t request_size) {
+  // Bound atomic writes to the 1 KiB hardware SPI mailbox. Requests larger
+  // than SPI_NOR_FLASH_PAGE_SIZE (256 bytes) rely on the kernel spidev driver
+  // to split the single PAGE_PROGRAM transfer into controller-sized chunks.
   if (dev == NULL || dev->user_ctx == NULL || request == NULL ||
-      request_size == 0 || request_size > SPI_NOR_FLASH_PAGE_SIZE) {
+      request_size == 0 || request_size > LIBHOTH_MAILBOX_SIZE) {
     return spi_err_libhoth(LIBHOTH_ERR_INVALID_PARAMETER);
   }
 
@@ -489,7 +492,7 @@ libhoth_error libhoth_spi_send_and_receive_response(struct libhoth_device* dev,
   if (response == NULL ||
       max_response_size < sizeof(struct hoth_host_response) ||
       spi_dev->buffered_request_size == 0 ||
-      spi_dev->buffered_request_size > SPI_NOR_FLASH_PAGE_SIZE) {
+      spi_dev->buffered_request_size > LIBHOTH_MAILBOX_SIZE) {
     free(spi_dev->buffered_request);
     spi_dev->buffered_request = NULL;
     spi_dev->buffered_request_size = 0;
