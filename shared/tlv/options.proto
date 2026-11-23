@@ -18,36 +18,39 @@ package openprot.tlv;
 
 import "google/protobuf/descriptor.proto";
 
+// Custom option numbers are allocated from Protobuf's internal/organization
+// range (50000-99999). Each *Options message has its own extension number
+// namespace.
 extend google.protobuf.FieldOptions {
   // The byte offset to a particular field in the zerocopy struct that
   // represents the fixed fields. Must be naturally aligned.
-  uint32 offset = 12345;
+  uint32 offset = 68410;
 
   // The packed Rust type of the field in the fixed struct. E.g., "u32", "u8",
   // "[u8; 16]", or "[u32; 4]". If omitted, defaults to the size/type of the
   // field's Protobuf type.
-  string type = 12346;
+  string type = 68411;
 
   // The bit range of a field in a bit-packed message using Verilog notation.
   // Can be a multi-bit range (e.g., "7:3") or a single bit (e.g., "0").
-  string bit_range = 12347;
+  string bit_range = 68412;
 
   // Indicates that a string or bytes field is stored as the unpadded
   // variable-length extra data following the fixed payload fields of the TLV
   // record.
-  bool extra_data = 12348;
+  bool extra_data = 68413;
 }
 
 extend google.protobuf.MessageOptions {
-  string tlv_fourcc = 12345;
+  string tlv_fourcc = 68410;
 
   // The backing integer type of a bit-packed message ("u8", "u16", or "u32").
-  string bit_packed = 12346;
+  string bit_packed = 68411;
 }
 
 extend google.protobuf.EnumOptions {
   // The backing primitive integer type for this enum (e.g. "u8", "u16", "i32",
   // "u32"). If present, this enum is generated as a zero-copy open enum
   // wrapping this type.
-  string raw_type = 12345;
+  string raw_type = 68410;
 }

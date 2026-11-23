@@ -20,13 +20,13 @@ use openprot_proto_reflect::TypeExt;
 use protobuf::Parse;
 use protobuf::Serialize;
 
-const TLV_FOURCC_OPTION_NUMBER: u32 = 12345;
-const BIT_PACKED_OPTION_NUMBER: u32 = 12346;
+const TLV_FOURCC_OPTION_NUMBER: u32 = 68410;
+const BIT_PACKED_OPTION_NUMBER: u32 = 68411;
 
-const OFFSET_OPTION_NUMBER: u32 = 12345;
-const TYPE_OPTION_NUMBER: u32 = 12346;
-const BIT_RANGE_OPTION_NUMBER: u32 = 12347;
-const EXTRA_DATA_OPTION_NUMBER: u32 = 12348;
+const OFFSET_OPTION_NUMBER: u32 = 68410;
+const TYPE_OPTION_NUMBER: u32 = 68411;
+const BIT_RANGE_OPTION_NUMBER: u32 = 68412;
+const EXTRA_DATA_OPTION_NUMBER: u32 = 68413;
 
 pub use ::protobuf::__internal::runtime::__unstable::DescriptorInfo;
 /// Re-export the Type enum so clients of proto_meta can easily use it.
@@ -769,7 +769,7 @@ impl<'a> DescriptorProtoTlvExt for DescriptorProtoView<'a> {
     }
 }
 
-const RAW_TYPE_OPTION_NUMBER: u32 = 12345;
+const RAW_TYPE_OPTION_NUMBER: u32 = 68410;
 
 /// Extension trait providing convenient access to TLV custom options on enum descriptors.
 pub trait EnumDescriptorProtoTlvExt {
