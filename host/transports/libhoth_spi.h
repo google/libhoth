@@ -77,6 +77,10 @@ libhoth_error libhoth_spi_receive_response(struct libhoth_device* dev,
                                            size_t max_response_size,
                                            size_t* actual_size, int timeout_ms);
 
+// Buffers a request of up to LIBHOTH_MAILBOX_SIZE (1 KiB) bytes to be sent by
+// libhoth_spi_send_and_receive_response() as a single atomic SPI_IOC_MESSAGE(5)
+// ioctl. Requests larger than SPI_NOR_FLASH_PAGE_SIZE (256 bytes) rely on the
+// kernel spidev driver to split the PAGE_PROGRAM transfer as needed.
 libhoth_error libhoth_spi_buffer_request(struct libhoth_device* dev,
                                          const void* request,
                                          size_t request_size);
