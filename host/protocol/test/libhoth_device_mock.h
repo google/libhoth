@@ -45,7 +45,7 @@ class LibHothDeviceMock {
 class LibHothTest : public testing::Test {
  protected:
   LibHothTest();
-  struct libhoth_device hoth_dev_;
+  struct libhoth_device hoth_dev_ = {};
   LibHothDeviceMock mock_;
 };
 

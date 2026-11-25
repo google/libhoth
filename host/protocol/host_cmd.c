@@ -15,6 +15,7 @@
 
 #include <ctype.h>
 #include <errno.h>
+#include <limits.h>
 #include <stddef.h>
 #include <stdint.h>
 #include <stdio.h>
@@ -215,8 +216,15 @@ libhoth_error libhoth_hostcmd_exec(struct libhoth_device* dev, uint16_t command,
     max_resp_size = LIBHOTH_MAILBOX_SIZE;
   }
   size_t resp_size = 0;
+  // 0 selects the default; receive() takes an int, so saturate larger values.
+  int timeout_ms = HOTH_CMD_TIMEOUT_MS_DEFAULT;
+  if (dev->command_timeout_ms != 0) {
+    timeout_ms = dev->command_timeout_ms > INT_MAX
+                     ? INT_MAX
+                     : (int)dev->command_timeout_ms;
+  }
   err = libhoth_receive_response(dev, &buf.resp, max_resp_size, &resp_size,
-                                 HOTH_CMD_TIMEOUT_MS_DEFAULT);
+                                 timeout_ms);
   if (err != HOTH_SUCCESS) {
     fprintf(stderr, "libhoth_receive_response() failed: 0x%016llx\n",
             (unsigned long long)err);
