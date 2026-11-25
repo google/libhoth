@@ -183,6 +183,9 @@ libhoth_error libhoth_key_rotation_get_status(
 libhoth_error libhoth_key_rotation_payload_status(
     struct libhoth_device* dev,
     struct hoth_response_key_rotation_payload_status* payload_status);
+// Writes titan class TLV records (KRSD magic) with WRITE_COMMIT and hoth class
+// records with INITIATE/WRITE/COMMIT. Returns the failing operation's error
+// unchanged.
 libhoth_error libhoth_key_rotation_update(struct libhoth_device* dev,
                                           const uint8_t* image, size_t size);
 libhoth_error libhoth_key_rotation_read(
