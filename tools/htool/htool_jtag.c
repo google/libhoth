@@ -14,6 +14,7 @@
 
 #include "htool_jtag.h"
 
+#include <ctype.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -25,9 +26,8 @@
 #include "protocol/jtag.h"
 #include "tools/common/htool_cmd.h"
 
-// Used if no data is provided for data to send over TDI. This needs to be
-// modifiable for use with `strtok_r` later
-static char JTAG_TEST_BYPASS_PATTERN_DEFAULT_VALUE[] =
+// Used if no data is provided for data to send over TDI.
+static const char JTAG_TEST_BYPASS_PATTERN_DEFAULT_VALUE[] =
     // PRBS9 with '0' bit added at the beginning to make it exactly 64 bytes
     "0x42 0x30 0x9c 0xab 0xd 0xe9 0xb9 0x14 0x2b 0x4f 0xd9 0x25 0xbf 0x26 0xa6 "
     "0x60 0x31 0x94 0x69 0x7f 0x45 0x8e 0xb2 0xcf 0x1f 0x74 0x1a 0xdb 0xb0 "
@@ -76,31 +76,36 @@ static int jtag_read_idcode(struct libhoth_device* dev,
 // If more than `expected_bytes_count` byte tokens are present in `param_value`,
 // return code indicates error.
 static int parse_string_param_into_byte_sequence(
-    char* param_value, uint8_t* const byte_sequence,
+    const char* param_value, uint8_t* const byte_sequence,
     const size_t expected_bytes_count) {
-  char* saveptr = NULL;
-  char* token = strtok_r(param_value, " ", &saveptr);
+  const char* p = param_value;
   for (size_t i = 0; i < expected_bytes_count; i++) {
-    if (token == NULL) {
+    while (*p == ' ') {
+      p++;
+    }
+    if (*p == '\0') {
       fprintf(stderr, "Expected %zu bytes, found %zu\n", expected_bytes_count,
               i);
       return -1;
     }
     char* endptr = NULL;
-    unsigned long int parsed_value = strtoul(token, &endptr, 0);
-    if ((token == endptr) || (parsed_value > UINT8_MAX) || (*endptr != '\0')) {
-      fprintf(stderr, "Invalid byte token '%s'\n", token);
+    unsigned long parsed_value = strtoul(p, &endptr, 0);
+    if (isspace((unsigned char)*p) || *p == '-' || p == endptr ||
+        parsed_value > UINT8_MAX || (*endptr != '\0' && *endptr != ' ')) {
+      fprintf(stderr, "Invalid byte token '%.*s'\n", (int)strcspn(p, " "), p);
       return -1;
     }
     byte_sequence[i] = (uint8_t)parsed_value;
-    token = strtok_r(NULL, " ", &saveptr);
+    p = endptr;
   }
 
-  // Check the last token after parsing `expected_bytes_count` tokens
-  if (token != NULL) {
+  while (*p == ' ') {
+    p++;
+  }
+  if (*p != '\0') {
     fprintf(stderr,
-            "Expected %zu bytes, but found more starting at token '%s'\n",
-            expected_bytes_count, token);
+            "Expected %zu bytes, but found more starting at token '%.*s'\n",
+            expected_bytes_count, (int)strcspn(p, " "), p);
     return -1;
   }
 
@@ -109,12 +114,16 @@ static int parse_string_param_into_byte_sequence(
 
 static int jtag_test_bypass(struct libhoth_device* dev,
                             const struct htool_invocation* inv) {
-  char* tdi_bytes_str = NULL;
+  const char* tdi_bytes_str = NULL;
   uint32_t clk_idiv;
   uint32_t interface_id;
 
   if (htool_get_param_u32(inv, "clk_idiv", &clk_idiv) ||
-      htool_get_param_string(inv, "tdi_bytes", (const char**)&tdi_bytes_str)) {
+      htool_get_param_string(inv, "tdi_bytes", &tdi_bytes_str)) {
+    return -1;
+  }
+
+  if (tdi_bytes_str == NULL) {
     return -1;
   }
 
